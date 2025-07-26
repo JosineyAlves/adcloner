@@ -8,9 +8,10 @@ import { toast } from 'react-hot-toast'
 interface ConnectFacebookModalProps {
   isOpen: boolean
   onClose: () => void
+  onSuccess?: (newAccounts: any[]) => void
 }
 
-export default function ConnectFacebookModal({ isOpen, onClose }: ConnectFacebookModalProps) {
+export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: ConnectFacebookModalProps) {
   const [isConnecting, setIsConnecting] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'connecting' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
@@ -64,6 +65,11 @@ export default function ConnectFacebookModal({ isOpen, onClose }: ConnectFaceboo
           setIsConnecting(false)
           setConnectionStatus('success')
           toast.success('Conta do Facebook conectada com sucesso!')
+          
+          // Chamar callback de sucesso se fornecido
+          if (onSuccess) {
+            onSuccess([]) // Por enquanto, array vazio. Em produção, buscar contas reais
+          }
           
           // Recarregar dados das contas
           setTimeout(() => {
