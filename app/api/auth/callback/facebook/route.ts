@@ -1,0 +1,429 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { FacebookAPI } from '@/lib/facebook-api'
+
+const facebookAPI = new FacebookAPI()
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const accessToken = searchParams.get('access_token')
+    const error = searchParams.get('error')
+    const errorReason = searchParams.get('error_reason')
+    const errorDescription = searchParams.get('error_description')
+
+    // Se houve erro no OAuth
+    if (error) {
+      console.error('Facebook OAuth error:', { error, errorReason, errorDescription })
+      
+      const errorHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Erro de Conexão</title>
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              text-align: center; 
+              padding: 50px; 
+              background: #f8f9fa;
+              color: #333;
+            }
+            .error { color: #dc2626; }
+            .container {
+              max-width: 500px;
+              margin: 0 auto;
+              background: white;
+              padding: 40px;
+              border-radius: 10px;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            .icon {
+              font-size: 48px;
+              margin-bottom: 20px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="icon">❌</div>
+            <h1 class="error">Erro ao conectar com Facebook</h1>
+            <p>${errorDescription || 'Ocorreu um erro durante a conexão.'}</p>
+            <p><small>${errorReason || error}</small></p>
+            <script>
+              // Enviar mensagem de erro para o popup pai
+              if (window.opener) {
+                window.opener.postMessage({
+                  type: 'FACEBOOK_ERROR',
+                  message: '${errorDescription || 'Erro ao conectar com Facebook'}'
+                }, '*');
+              }
+              setTimeout(() => {
+                window.close();
+              }, 3000);
+            </script>
+          </div>
+        </body>
+        </html>
+      `
+      
+      return new NextResponse(errorHtml, {
+        headers: { 'Content-Type': 'text/html' }
+      })
+    }
+
+    // Se temos o token de acesso
+    if (accessToken) {
+      console.log('Facebook access token received:', accessToken.substring(0, 20) + '...')
+      
+      try {
+        // Validar o token
+        const isValid = await facebookAPI.validateToken(accessToken)
+        if (!isValid) {
+          throw new Error('Token inválido')
+        }
+
+        // Obter informações do usuário
+        const userInfo = await facebookAPI.getUserInfo(accessToken)
+        console.log('User info:', userInfo)
+
+        // Obter permissões do usuário
+        const permissions = await facebookAPI.getUserPermissions(accessToken)
+        console.log('User permissions:', permissions)
+
+        // Verificar permissões necessárias
+        const requiredPermissions = [
+          'ads_read', 
+          'ads_management', 
+          'public_profile', 
+          'email',
+          'pages_show_list',
+          'pages_read_engagement'
+        ]
+        const missingPermissions = requiredPermissions.filter(perm => !permissions.includes(perm))
+
+        if (missingPermissions.length > 0) {
+          const errorHtml = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Permissões Insuficientes</title>
+              <style>
+                body { 
+                  font-family: Arial, sans-serif; 
+                  text-align: center; 
+                  padding: 50px; 
+                  background: #f8f9fa;
+                  color: #333;
+                }
+                .warning { color: #f59e0b; }
+                .container {
+                  max-width: 500px;
+                  margin: 0 auto;
+                  background: white;
+                  padding: 40px;
+                  border-radius: 10px;
+                  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                }
+                .icon {
+                  font-size: 48px;
+                  margin-bottom: 20px;
+                }
+                .permissions {
+                  background: #fef3c7;
+                  padding: 15px;
+                  border-radius: 5px;
+                  margin: 20px 0;
+                  text-align: left;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="icon">⚠️</div>
+                <h1 class="warning">Permissões Insuficientes</h1>
+                <p>Para usar o AdCloner Pro, você precisa conceder as seguintes permissões:</p>
+                <div class="permissions">
+                  <ul>
+                    ${missingPermissions.map(perm => `<li><strong>${perm}</strong></li>`).join('')}
+                  </ul>
+                </div>
+                <p>Por favor, feche esta janela e tente novamente, concedendo todas as permissões solicitadas.</p>
+                <script>
+                  // Enviar mensagem de erro para o popup pai
+                  if (window.opener) {
+                    window.opener.postMessage({
+                      type: 'FACEBOOK_ERROR',
+                      message: 'Permissões insuficientes: ${missingPermissions.join(', ')}'
+                    }, '*');
+                  }
+                  setTimeout(() => {
+                    window.close();
+                  }, 5000);
+                </script>
+              </div>
+            </body>
+            </html>
+          `
+          
+          return new NextResponse(errorHtml, {
+            headers: { 'Content-Type': 'text/html' }
+          })
+        }
+
+        // Salvar token em cookie (em produção, você salvaria no banco de dados)
+        const response = NextResponse.redirect(new URL('/', request.url))
+        response.cookies.set('fb_access_token', accessToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 60 * 60 * 24 * 60 // 60 dias
+        })
+        
+        const successHtml = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Conexão Bem-sucedida</title>
+            <style>
+              body { 
+                font-family: Arial, sans-serif; 
+                text-align: center; 
+                padding: 50px; 
+                background: #f0fdf4;
+                color: #333;
+              }
+              .success { color: #059669; }
+              .container {
+                max-width: 500px;
+                margin: 0 auto;
+                background: white;
+                padding: 40px;
+                border-radius: 10px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+              }
+              .icon {
+                font-size: 48px;
+                margin-bottom: 20px;
+              }
+              .loading {
+                color: #6b7280;
+                margin-top: 20px;
+              }
+              .spinner {
+                border: 3px solid #f3f3f3;
+                border-top: 3px solid #059669;
+                border-radius: 50%;
+                width: 30px;
+                height: 30px;
+                animation: spin 1s linear infinite;
+                margin: 20px auto;
+              }
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="icon">✅</div>
+              <h1 class="success">Conexão Realizada!</h1>
+              <p>Sua conta do Facebook foi conectada com sucesso.</p>
+              <p><strong>Usuário:</strong> ${userInfo.name}</p>
+              <p><strong>ID:</strong> ${userInfo.id}</p>
+              <div class="spinner"></div>
+              <p class="loading">Fechando popup...</p>
+              <script>
+                // Enviar mensagem de sucesso para o popup pai
+                if (window.opener) {
+                  window.opener.postMessage({
+                    type: 'FACEBOOK_SUCCESS',
+                    userInfo: ${JSON.stringify(userInfo)}
+                  }, '*');
+                }
+                setTimeout(() => {
+                  window.close();
+                }, 2000);
+              </script>
+            </div>
+          </body>
+          </html>
+        `
+        
+        return new NextResponse(successHtml, {
+          headers: { 'Content-Type': 'text/html' }
+        })
+
+      } catch (apiError) {
+        console.error('Facebook API error:', apiError)
+        
+        const errorHtml = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Erro de API</title>
+            <style>
+              body { 
+                font-family: Arial, sans-serif; 
+                text-align: center; 
+                padding: 50px; 
+                background: #f8f9fa;
+                color: #333;
+              }
+              .error { color: #dc2626; }
+              .container {
+                max-width: 500px;
+                margin: 0 auto;
+                background: white;
+                padding: 40px;
+                border-radius: 10px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+              }
+              .icon {
+                font-size: 48px;
+                margin-bottom: 20px;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="icon">❌</div>
+              <h1 class="error">Erro de API</h1>
+              <p>Não foi possível processar sua conta do Facebook.</p>
+              <p><small>${apiError instanceof Error ? apiError.message : 'Erro desconhecido'}</small></p>
+              <script>
+                // Enviar mensagem de erro para o popup pai
+                if (window.opener) {
+                  window.opener.postMessage({
+                    type: 'FACEBOOK_ERROR',
+                    message: '${apiError instanceof Error ? apiError.message : 'Erro desconhecido'}'
+                  }, '*');
+                }
+                setTimeout(() => {
+                  window.close();
+                }, 3000);
+              </script>
+            </div>
+          </body>
+          </html>
+        `
+        
+        return new NextResponse(errorHtml, {
+          headers: { 'Content-Type': 'text/html' }
+        })
+      }
+    }
+
+    // Se não temos token nem erro, algo deu errado
+    const errorHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Erro de Conexão</title>
+        <style>
+          body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            padding: 50px; 
+            background: #f8f9fa;
+            color: #333;
+          }
+          .error { color: #dc2626; }
+          .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          }
+          .icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="icon">❌</div>
+          <h1 class="error">Erro de Conexão</h1>
+          <p>Não foi possível processar a resposta do Facebook.</p>
+          <script>
+            // Enviar mensagem de erro para o popup pai
+            if (window.opener) {
+              window.opener.postMessage({
+                type: 'FACEBOOK_ERROR',
+                message: 'Não foi possível processar a resposta do Facebook'
+              }, '*');
+            }
+            setTimeout(() => {
+              window.close();
+            }, 3000);
+          </script>
+        </div>
+      </body>
+      </html>
+    `
+    
+    return new NextResponse(errorHtml, {
+      headers: { 'Content-Type': 'text/html' }
+    })
+
+  } catch (error) {
+    console.error('Facebook callback error:', error)
+    
+    const errorHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Erro Interno</title>
+        <style>
+          body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            padding: 50px; 
+            background: #f8f9fa;
+            color: #333;
+          }
+          .error { color: #dc2626; }
+          .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          }
+          .icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="icon">❌</div>
+          <h1 class="error">Erro Interno</h1>
+          <p>Ocorreu um erro interno durante a conexão.</p>
+          <script>
+            // Enviar mensagem de erro para o popup pai
+            if (window.opener) {
+              window.opener.postMessage({
+                type: 'FACEBOOK_ERROR',
+                message: 'Erro interno do servidor'
+              }, '*');
+            }
+            setTimeout(() => {
+              window.close();
+            }, 3000);
+          </script>
+        </div>
+      </body>
+      </html>
+    `
+    
+    return new NextResponse(errorHtml, {
+      headers: { 'Content-Type': 'text/html' }
+    })
+  }
+} 
