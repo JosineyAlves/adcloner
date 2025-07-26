@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUserInfo } from '@/lib/facebook-api'
+import { FacebookAPI } from '@/lib/facebook-api'
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,7 +14,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Verificar se o token ainda é válido
-    const userInfo = await getUserInfo(accessToken)
+    const facebookAPI = new FacebookAPI()
+    const userInfo = await facebookAPI.getUserInfo(accessToken)
 
     return NextResponse.json({
       authenticated: true,
