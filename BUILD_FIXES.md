@@ -35,6 +35,10 @@ const userInfo = await facebookAPI.getUserInfo(accessToken)
 - `app/api/facebook/campaigns/route.ts` - Rota de campanhas
 - `app/api/facebook/clone/route.ts` - Rota de clonagem
 
+### **4. Erro de TypeScript - Propriedade onSuccess**
+**Problema:** `ConnectFacebookModal` não tinha propriedade `onSuccess`
+**Solução:** Adicionada propriedade opcional `onSuccess` na interface
+
 ```typescript
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -64,6 +68,7 @@ export async function GET(request: NextRequest) {
 3. **`app/api/auth/facebook/route.ts`** - Adicionado conteúdo completo
 4. **`app/api/facebook/campaigns/route.ts`** - Adicionado conteúdo completo
 5. **`app/api/facebook/clone/route.ts`** - Adicionado conteúdo completo
+6. **`components/accounts/ConnectFacebookModal.tsx`** - Adicionada propriedade onSuccess
 
 ## 🚀 Próximos Passos
 

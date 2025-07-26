@@ -29,7 +29,7 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
 
       // Configurar URLs de redirecionamento
       const redirectUri = encodeURIComponent(`${window.location.origin}/api/auth/callback/facebook`)
-      const scope = encodeURIComponent('ads_read,ads_management,public_profile,email,pages_show_list,pages_read_engagement')
+      const scope = encodeURIComponent('public_profile,email')
       
       // URL do popup do Facebook
       const popupUrl = `https://www.facebook.com/v23.0/dialog/oauth?client_id=${appId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=token&display=popup`
