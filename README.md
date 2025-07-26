@@ -26,8 +26,8 @@ Um SaaS moderno para clonar campanhas do Facebook Ads em múltiplas contas de an
 
 1. **Clone o repositório**
 ```bash
-git clone https://github.com/seu-usuario/adcloner-pro.git
-cd adcloner-pro
+git clone https://github.com/JosineyAlves/adcloner.git
+cd adcloner
 ```
 
 2. **Instale as dependências**
@@ -39,7 +39,7 @@ yarn install
 
 3. **Configure as variáveis de ambiente**
 ```bash
-cp .env.example .env.local
+cp env.example .env.local
 ```
 
 Edite o arquivo `.env.local` com suas configurações:
@@ -70,7 +70,7 @@ Acesse [http://localhost:3000](http://localhost:3000) para ver o projeto.
 ## 📁 Estrutura do Projeto
 
 ```
-adcloner-pro/
+adcloner/
 ├── app/                    # App Router (Next.js 14)
 │   ├── dashboard/         # Página do dashboard
 │   ├── login/            # Página de login
@@ -171,4 +171,4 @@ MIT License - veja o arquivo [LICENSE](LICENSE) para detalhes.
 - [ ] Acesso multiusuário por equipe
 - [ ] Exportação de dados
 - [ ] API pública
-- [ ] Mobile app 
+- [ ] Mobile app
