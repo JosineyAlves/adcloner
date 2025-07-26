@@ -91,13 +91,28 @@ adcloner/
 
 ## 🔧 Configuração do Facebook
 
+### ⚠️ IMPORTANTE: Se você está recebendo o erro "App não está disponível"
+
+**Solução Rápida:**
+1. Execute: `node scripts/setup-env.js` para configurar as variáveis de ambiente
+2. Siga o guia completo: [FACEBOOK_APP_SETUP.md](./FACEBOOK_APP_SETUP.md)
+3. Ou use a solução rápida: [SOLUCAO_RAPIDA.md](./SOLUCAO_RAPIDA.md)
+
+### Configuração Padrão
+
 1. **Crie um app no Facebook Developers**
    - Acesse [developers.facebook.com](https://developers.facebook.com)
-   - Crie um novo app
-   - Adicione o produto "Facebook Login"
+   - Crie um novo app do tipo "Business"
+   - Adicione os produtos "Facebook Login" e "Marketing API"
 
 2. **Configure as permissões necessárias**
-   - `ads_management`
+   - `ads_management` - **OBRIGATÓRIO**
+   - `ads_read` - **OBRIGATÓRIO**
+   - `business_management` - **OBRIGATÓRIO**
+   - `pages_show_list` - **OBRIGATÓRIO**
+   - `pages_read_engagement` - **OBRIGATÓRIO**
+   - `public_profile` (já incluída)
+   - `email` (já incluída)
    - `business_management`
    - `pages_show_list`
 
