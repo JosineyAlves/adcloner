@@ -1,9 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Facebook, AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
+
+// Declarações de tipos para o Facebook SDK
+declare global {
+  interface Window {
+    FB: any
+    fbAsyncInit: () => void
+  }
+}
 
 interface ConnectFacebookModalProps {
   isOpen: boolean
@@ -15,103 +23,103 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
   const [isConnecting, setIsConnecting] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'connecting' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
+  const [fbInitialized, setFbInitialized] = useState(false)
+
+  // Inicializar SDK do Facebook
+  useEffect(() => {
+    // Carregar SDK do Facebook
+    const loadFacebookSDK = () => {
+      if (window.FB) {
+        setFbInitialized(true)
+        return
+      }
+
+      // Adicionar o Facebook SDK para Javascript
+      ;(function(d: Document, s: string, id: string) {
+        var js: HTMLScriptElement, fjs = d.getElementsByTagName(s)[0] as HTMLScriptElement;
+        if (d.getElementById(id)) return;
+        js = d.createElement(s) as HTMLScriptElement; js.id = id;
+        js.src = "https://connect.facebook.net/en_US/sdk.js";
+        if (fjs.parentNode) {
+          fjs.parentNode.insertBefore(js, fjs);
+        }
+      }(document, 'script', 'facebook-jssdk'));
+
+      // Inicializar quando o SDK carregar
+      window.fbAsyncInit = function() {
+        const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID
+        if (!appId) {
+          console.error('Facebook App ID não configurado')
+          return
+        }
+
+        // Inicializar o SDK com seu aplicativo e a versão da API Graph
+        window.FB.init({
+          appId: appId,
+          xfbml: true,
+          version: 'v20.0'
+        });
+
+        console.log('✅ Facebook SDK inicializado')
+        setFbInitialized(true)
+      };
+    }
+
+    loadFacebookSDK()
+  }, [])
 
   const handleConnectFacebook = async () => {
+    if (!fbInitialized) {
+      setErrorMessage('Facebook SDK não foi inicializado. Aguarde um momento e tente novamente.')
+      setConnectionStatus('error')
+      return
+    }
+
     setIsConnecting(true)
     setConnectionStatus('connecting')
     setErrorMessage('')
 
     try {
-      console.log('🔗 Iniciando conexão com Facebook...')
+      console.log('🔗 Iniciando conexão com Facebook via SDK...')
       
-      // Usar a API do servidor para gerar URL correta
-      const response = await fetch('/api/auth/facebook')
-      const data = await response.json()
-      
-      console.log('📋 Resposta da API:', data)
-      
-      if (!data.authUrl) {
-        throw new Error('Erro ao gerar URL de autenticação')
-      }
-      
-      // URL do popup do Facebook
-      const popupUrl = data.authUrl + '&display=popup'
-      console.log('🔗 URL do popup:', popupUrl)
-
-      // Abrir popup
-      const popup = window.open(
-        popupUrl,
-        'facebook-login',
-        'width=600,height=600,scrollbars=yes,resizable=yes'
-      )
-
-      if (!popup) {
-        throw new Error('Popup bloqueado pelo navegador. Permita popups para este site.')
-      }
-
-      console.log('✅ Popup aberto com sucesso')
-
-      // Aguardar resposta do popup
-      const checkClosed = setInterval(() => {
-        if (popup.closed) {
-          console.log('❌ Popup fechado sem resposta')
-          clearInterval(checkClosed)
-          setIsConnecting(false)
-          setConnectionStatus('error')
-          setErrorMessage('Conexão cancelada ou falhou. Verifique se o popup não foi bloqueado.')
-        }
-      }, 1000)
-
-      // Aguardar mensagem do popup
-      const messageHandler = (event: MessageEvent) => {
-        console.log('📨 Mensagem recebida do popup:', event.data)
-        console.log('📋 Tipo da mensagem:', typeof event.data)
-        console.log('📋 Conteúdo completo:', JSON.stringify(event.data, null, 2))
-        console.log('🌐 Origem da mensagem:', event.origin)
-        console.log('🌐 Origem atual:', window.location.origin)
+      // Usar o SDK JavaScript do Facebook
+      window.FB.login(function(response: any) {
+        console.log('📨 Resposta do Facebook SDK:', response)
         
-        if (event.origin !== window.location.origin) {
-          console.log('⚠️ Mensagem de origem diferente, ignorando')
-          return
-        }
-        
-        if (event.data.type === 'FACEBOOK_SUCCESS') {
-          console.log('✅ Conexão Facebook bem-sucedida:', event.data.userInfo)
-          clearInterval(checkClosed)
-          popup.close()
-          setIsConnecting(false)
-          setConnectionStatus('success')
-          toast.success('Conta do Facebook conectada com sucesso!')
+        if (response.status === 'connected') {
+          console.log('✅ Login bem-sucedido!')
+          console.log('🔑 Access Token:', response.authResponse.accessToken)
+          console.log('👤 User ID:', response.authResponse.userID)
           
-          // Chamar callback de sucesso se fornecido
-          if (onSuccess) {
-            onSuccess([]) // Por enquanto, array vazio. Em produção, buscar contas reais
-          }
+          // Obter informações do usuário
+          window.FB.api('/me', {fields: 'id,name,email'}, function(userInfo: any) {
+            console.log('👤 Informações do usuário:', userInfo)
+            
+            setIsConnecting(false)
+            setConnectionStatus('success')
+            toast.success('Conta do Facebook conectada com sucesso!')
+            
+            // Chamar callback de sucesso se fornecido
+            if (onSuccess) {
+              onSuccess([userInfo]) // Passar informações do usuário
+            }
+            
+            // Recarregar dados das contas
+            setTimeout(() => {
+              onClose()
+              window.location.reload()
+            }, 2000)
+          });
           
-          // Recarregar dados das contas
-          setTimeout(() => {
-            onClose()
-            window.location.reload()
-          }, 2000)
-        } else if (event.data.type === 'FACEBOOK_ERROR') {
-          console.error('❌ Erro na conexão Facebook:', event.data.message)
-          clearInterval(checkClosed)
-          popup.close()
-          setIsConnecting(false)
-          setConnectionStatus('error')
-          setErrorMessage(event.data.message || 'Erro ao conectar com Facebook')
         } else {
-          console.log('❓ Mensagem desconhecida:', event.data)
+          console.log('❌ Login cancelado ou falhou')
+          setIsConnecting(false)
+          setConnectionStatus('error')
+          setErrorMessage('Login cancelado ou falhou. Tente novamente.')
         }
-      }
-      
-      window.addEventListener('message', messageHandler)
-      
-      // Cleanup function
-      return () => {
-        window.removeEventListener('message', messageHandler)
-        clearInterval(checkClosed)
-      }
+      }, {
+        scope: 'ads_management,business_management,pages_show_list,pages_read_engagement,public_profile,email,pages_manage_metadata,ads_read'
+      });
 
     } catch (error) {
       console.error('❌ Erro ao conectar com Facebook:', error)
@@ -122,101 +130,57 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
   }
 
   const handleConnectFacebookSimple = async () => {
+    if (!fbInitialized) {
+      setErrorMessage('Facebook SDK não foi inicializado. Aguarde um momento e tente novamente.')
+      setConnectionStatus('error')
+      return
+    }
+
     setIsConnecting(true)
     setConnectionStatus('connecting')
     setErrorMessage('')
 
     try {
-      console.log('🔗 Iniciando conexão com Facebook (método simples)...')
+      console.log('🔗 Iniciando conexão com Facebook via SDK (simples)...')
       
-      // Usar a API alternativa com scope
-      const response = await fetch('/api/auth/facebook/simple')
-      const data = await response.json()
-      
-      console.log('📋 Resposta da API (simples):', data)
-      
-      if (!data.authUrl) {
-        throw new Error('Erro ao gerar URL de autenticação')
-      }
-      
-      // URL do popup do Facebook
-      const popupUrl = data.authUrl + '&display=popup'
-      console.log('🔗 URL do popup (simples):', popupUrl)
-
-      // Abrir popup
-      const popup = window.open(
-        popupUrl,
-        'facebook-login',
-        'width=600,height=600,scrollbars=yes,resizable=yes'
-      )
-
-      if (!popup) {
-        throw new Error('Popup bloqueado pelo navegador. Permita popups para este site.')
-      }
-
-      console.log('✅ Popup aberto com sucesso (método simples)')
-
-      // Aguardar resposta do popup
-      const checkClosed = setInterval(() => {
-        if (popup.closed) {
-          console.log('❌ Popup fechado sem resposta')
-          clearInterval(checkClosed)
-          setIsConnecting(false)
-          setConnectionStatus('error')
-          setErrorMessage('Conexão cancelada ou falhou. Verifique se o popup não foi bloqueado.')
-        }
-      }, 1000)
-
-      // Aguardar mensagem do popup
-      const messageHandler = (event: MessageEvent) => {
-        console.log('📨 Mensagem recebida do popup (simples):', event.data)
-        console.log('📋 Tipo da mensagem:', typeof event.data)
-        console.log('📋 Conteúdo completo:', JSON.stringify(event.data, null, 2))
-        console.log('🌐 Origem da mensagem:', event.origin)
-        console.log('🌐 Origem atual:', window.location.origin)
+      // Usar o SDK JavaScript do Facebook com permissões básicas
+      window.FB.login(function(response: any) {
+        console.log('📨 Resposta do Facebook SDK (simples):', response)
         
-        if (event.origin !== window.location.origin) {
-          console.log('⚠️ Mensagem de origem diferente, ignorando')
-          return
-        }
-        
-        if (event.data.type === 'FACEBOOK_SUCCESS') {
-          console.log('✅ Conexão Facebook bem-sucedida (simples):', event.data.userInfo)
-          clearInterval(checkClosed)
-          popup.close()
-          setIsConnecting(false)
-          setConnectionStatus('success')
-          toast.success('Conta do Facebook conectada com sucesso!')
+        if (response.status === 'connected') {
+          console.log('✅ Login bem-sucedido (simples)!')
+          console.log('🔑 Access Token:', response.authResponse.accessToken)
+          console.log('👤 User ID:', response.authResponse.userID)
           
-          // Chamar callback de sucesso se fornecido
-          if (onSuccess) {
-            onSuccess([]) // Por enquanto, array vazio. Em produção, buscar contas reais
-          }
+          // Obter informações do usuário
+          window.FB.api('/me', {fields: 'id,name,email'}, function(userInfo: any) {
+            console.log('👤 Informações do usuário (simples):', userInfo)
+            
+            setIsConnecting(false)
+            setConnectionStatus('success')
+            toast.success('Conta do Facebook conectada com sucesso!')
+            
+            // Chamar callback de sucesso se fornecido
+            if (onSuccess) {
+              onSuccess([userInfo]) // Passar informações do usuário
+            }
+            
+            // Recarregar dados das contas
+            setTimeout(() => {
+              onClose()
+              window.location.reload()
+            }, 2000)
+          });
           
-          // Recarregar dados das contas
-          setTimeout(() => {
-            onClose()
-            window.location.reload()
-          }, 2000)
-        } else if (event.data.type === 'FACEBOOK_ERROR') {
-          console.error('❌ Erro na conexão Facebook (simples):', event.data.message)
-          clearInterval(checkClosed)
-          popup.close()
-          setIsConnecting(false)
-          setConnectionStatus('error')
-          setErrorMessage(event.data.message || 'Erro ao conectar com Facebook')
         } else {
-          console.log('❓ Mensagem desconhecida (simples):', event.data)
+          console.log('❌ Login cancelado ou falhou (simples)')
+          setIsConnecting(false)
+          setConnectionStatus('error')
+          setErrorMessage('Login cancelado ou falhou. Tente novamente.')
         }
-      }
-      
-      window.addEventListener('message', messageHandler)
-      
-      // Cleanup function
-      return () => {
-        window.removeEventListener('message', messageHandler)
-        clearInterval(checkClosed)
-      }
+      }, {
+        scope: 'public_profile,email'
+      });
 
     } catch (error) {
       console.error('❌ Erro ao conectar com Facebook (simples):', error)
@@ -305,6 +269,11 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
                     errorMessage
                   }
                 </p>
+                {!fbInitialized && connectionStatus === 'idle' && (
+                  <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
+                    ⏳ Inicializando Facebook SDK...
+                  </p>
+                )}
               </div>
 
               {connectionStatus === 'error' && (
@@ -349,7 +318,7 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
                 <>
                   <button
                     onClick={handleConnectFacebook}
-                    disabled={isConnecting}
+                    disabled={isConnecting || !fbInitialized}
                     className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
                   >
                     {isConnecting ? (
@@ -366,7 +335,7 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
                   </button>
                   <button
                     onClick={handleConnectFacebookSimple}
-                    disabled={isConnecting}
+                    disabled={isConnecting || !fbInitialized}
                     className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
                   >
                     {isConnecting ? (
