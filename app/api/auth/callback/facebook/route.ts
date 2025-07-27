@@ -110,7 +110,15 @@ export async function POST(request: NextRequest) {
       tokenType: responseData.token_type
     })
 
-    return NextResponse.json(responseData)
+    return NextResponse.json(responseData, { 
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      }
+    })
 
   } catch (error) {
     console.error('❌ Erro interno no processamento:', error)
@@ -119,6 +127,17 @@ export async function POST(request: NextRequest) {
       error: error instanceof Error ? error.message : 'Erro interno do servidor' 
     }, { status: 500 })
   }
+}
+
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    }
+  })
 }
 
 export async function GET(request: NextRequest) {
