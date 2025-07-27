@@ -12,45 +12,54 @@ interface ConnectFacebookModalProps {
 }
 
 export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: ConnectFacebookModalProps) {
-  const [isConnecting, setIsConnecting] = useState(false)
+  const [isConnecting, setIsConnecting] = useState<boolean>(false)
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'connecting' | 'success' | 'error'>('idle')
-  const [errorMessage, setErrorMessage] = useState('')
+  const [errorMessage, setErrorMessage] = useState<string>('')
 
   // Verificar se SDK está carregado
   const isSDKReady = () => {
-    return typeof window !== 'undefined' && window.FB
+    try {
+      return typeof window !== 'undefined' && window.FB
+    } catch (error) {
+      console.error('Erro ao verificar SDK:', error)
+      return false
+    }
   }
 
   // Verificar status de login
   const checkLoginStatus = () => {
-    if (!isSDKReady()) {
-      console.log('SDK não está pronto')
-      return
-    }
-
-    window.FB.getLoginStatus((response: any) => {
-      console.log('Status de login:', response)
-      
-      if (response.status === 'connected') {
-        console.log('Usuário já está conectado')
-        handleLoginSuccess(response.authResponse)
+    try {
+      if (!isSDKReady()) {
+        console.log('SDK não está pronto')
+        return
       }
-    })
+
+      window.FB.getLoginStatus((response: any) => {
+        console.log('Status de login:', response)
+        
+        if (response.status === 'connected') {
+          console.log('Usuário já está conectado')
+          handleLoginSuccess(response.authResponse)
+        }
+      })
+    } catch (error) {
+      console.error('Erro ao verificar status de login:', error)
+    }
   }
 
   // Fazer login com Facebook usando Login para Empresas
   const handleConnectFacebook = async () => {
-    if (!isSDKReady()) {
-      setErrorMessage('SDK do Facebook não está carregado. Recarregue a página.')
-      setConnectionStatus('error')
-      return
-    }
-
-    setIsConnecting(true)
-    setConnectionStatus('connecting')
-    setErrorMessage('')
-
     try {
+      if (!isSDKReady()) {
+        setErrorMessage('SDK do Facebook não está carregado. Recarregue a página.')
+        setConnectionStatus('error')
+        return
+      }
+
+      setIsConnecting(true)
+      setConnectionStatus('connecting')
+      setErrorMessage('')
+
       console.log('🔗 Iniciando login com Facebook SDK (Login para Empresas)...')
 
       // Usar config_id para Login para Empresas
@@ -61,16 +70,23 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
       }
 
       window.FB.login((response: any) => {
-        console.log('Resposta do login:', response)
+        try {
+          console.log('Resposta do login:', response)
 
-        if (response.status === 'connected') {
-          console.log('✅ Login bem-sucedido!')
-          handleLoginSuccess(response.authResponse)
-        } else {
-          console.log('❌ Login cancelado ou falhou')
+          if (response.status === 'connected') {
+            console.log('✅ Login bem-sucedido!')
+            handleLoginSuccess(response.authResponse)
+          } else {
+            console.log('❌ Login cancelado ou falhou')
+            setIsConnecting(false)
+            setConnectionStatus('error')
+            setErrorMessage('Login cancelado ou falhou. Tente novamente.')
+          }
+        } catch (error) {
+          console.error('Erro no callback do login:', error)
           setIsConnecting(false)
           setConnectionStatus('error')
-          setErrorMessage('Login cancelado ou falhou. Tente novamente.')
+          setErrorMessage('Erro interno no login. Tente novamente.')
         }
       }, {
         config_id: configId,
@@ -93,24 +109,31 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
       
       // Obter informações do usuário
       window.FB.api('/me', { fields: 'id,name,email' }, (userInfo: any) => {
-        console.log('Informações do usuário:', userInfo)
-        
-        setIsConnecting(false)
-        setConnectionStatus('success')
-        toast.success('Conta do Facebook conectada com sucesso!')
-        
-        // Chamar callback de sucesso
-        if (onSuccess) {
-          onSuccess({
-            ...userInfo,
-            accessToken: authResponse.accessToken
-          })
+        try {
+          console.log('Informações do usuário:', userInfo)
+          
+          setIsConnecting(false)
+          setConnectionStatus('success')
+          toast.success('Conta do Facebook conectada com sucesso!')
+          
+          // Chamar callback de sucesso
+          if (onSuccess) {
+            onSuccess({
+              ...userInfo,
+              accessToken: authResponse.accessToken
+            })
+          }
+          
+          // Fechar modal após delay
+          setTimeout(() => {
+            onClose()
+          }, 2000)
+        } catch (error) {
+          console.error('Erro ao processar informações do usuário:', error)
+          setIsConnecting(false)
+          setConnectionStatus('error')
+          setErrorMessage('Erro ao processar informações do usuário')
         }
-        
-        // Fechar modal após delay
-        setTimeout(() => {
-          onClose()
-        }, 2000)
       })
 
     } catch (error) {
@@ -123,8 +146,12 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
 
   // Verificar status quando modal abrir
   useEffect(() => {
-    if (isOpen && isSDKReady()) {
-      checkLoginStatus()
+    try {
+      if (isOpen && isSDKReady()) {
+        checkLoginStatus()
+      }
+    } catch (error) {
+      console.error('Erro ao verificar status de login:', error)
     }
   }, [isOpen])
 

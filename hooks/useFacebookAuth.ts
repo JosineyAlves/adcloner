@@ -12,9 +12,9 @@ interface UseFacebookAuthReturn {
 }
 
 export function useFacebookAuth(): UseFacebookAuthReturn {
-  const [isSDKReady, setIsSDKReady] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [userInfo, setUserInfo] = useState(null)
+  const [isSDKReady, setIsSDKReady] = useState<boolean>(false)
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false)
+  const [userInfo, setUserInfo] = useState<any>(null)
 
   useEffect(() => {
     const checkSDK = () => {
