@@ -1,7 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { FacebookAPI } from '@/lib/facebook-api'
-
-const facebookAPI = new FacebookAPI()
 
 export async function GET(request: NextRequest) {
   try {
@@ -83,9 +80,152 @@ export async function GET(request: NextRequest) {
     if (code) {
       console.log('Facebook authorization code received:', code.substring(0, 20) + '...')
       
-      // TEMPORÁRIO: Redirecionar para debug detalhado
-      const debugUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/debug/facebook-callback-test?code=${code}`
-      return NextResponse.redirect(debugUrl)
+      try {
+        // Trocar code por access_token
+        const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID
+        const appSecret = process.env.FACEBOOK_APP_SECRET
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL
+
+        if (!appId || !appSecret || !appUrl) {
+          throw new Error('Variáveis de ambiente não configuradas')
+        }
+
+        const redirectUri = `${appUrl}/api/auth/callback/facebook`
+        const tokenUrl = `https://graph.facebook.com/v23.0/oauth/access_token?client_id=${appId}&client_secret=${appSecret}&code=${code}&redirect_uri=${encodeURIComponent(redirectUri)}`
+
+        console.log('Trocando code por access_token...')
+        const tokenResponse = await fetch(tokenUrl)
+        const tokenData = await tokenResponse.json()
+
+        console.log('Token response status:', tokenResponse.status)
+        console.log('Token response data:', tokenData)
+
+        if (tokenData.error) {
+          throw new Error(`Facebook API error: ${tokenData.error.message || 'Unknown error'}`)
+        }
+
+        if (!tokenData.access_token) {
+          throw new Error('No access token received from Facebook')
+        }
+
+        // Obter informações do usuário
+        const userInfoUrl = `https://graph.facebook.com/v23.0/me?access_token=${tokenData.access_token}&fields=id,name,email`
+        const userResponse = await fetch(userInfoUrl)
+        const userData = await userResponse.json()
+
+        console.log('User info:', userData)
+
+        // Retornar página de sucesso
+        const successHtml = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Conexão Realizada</title>
+            <style>
+              body { 
+                font-family: Arial, sans-serif; 
+                text-align: center; 
+                padding: 50px; 
+                background: #f8f9fa;
+                color: #333;
+              }
+              .success { color: #059669; }
+              .container {
+                max-width: 500px;
+                margin: 0 auto;
+                background: white;
+                padding: 40px;
+                border-radius: 10px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+              }
+              .icon {
+                font-size: 48px;
+                margin-bottom: 20px;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="icon">✅</div>
+              <h1 class="success">Conexão Realizada!</h1>
+              <p>Sua conta do Facebook foi conectada com sucesso.</p>
+              <p><small>Usuário: ${userData.name || 'N/A'}</small></p>
+              <script>
+                if (window.opener) {
+                  window.opener.postMessage({
+                    type: 'FACEBOOK_SUCCESS',
+                    userInfo: ${JSON.stringify(userData)}
+                  }, '*');
+                }
+                setTimeout(() => {
+                  window.close();
+                }, 2000);
+              </script>
+            </div>
+          </body>
+          </html>
+        `
+        
+        return new NextResponse(successHtml, {
+          headers: { 'Content-Type': 'text/html' }
+        })
+
+      } catch (tokenError) {
+        console.error('Error exchanging code for token:', tokenError)
+        
+        const errorHtml = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Erro na Troca de Token</title>
+            <style>
+              body { 
+                font-family: Arial, sans-serif; 
+                text-align: center; 
+                padding: 50px; 
+                background: #f8f9fa;
+                color: #333;
+              }
+              .error { color: #dc2626; }
+              .container {
+                max-width: 500px;
+                margin: 0 auto;
+                background: white;
+                padding: 40px;
+                border-radius: 10px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+              }
+              .icon {
+                font-size: 48px;
+                margin-bottom: 20px;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="icon">❌</div>
+              <h1 class="error">Erro na Troca de Token</h1>
+              <p>${tokenError instanceof Error ? tokenError.message : 'Erro desconhecido'}</p>
+              <script>
+                if (window.opener) {
+                  window.opener.postMessage({
+                    type: 'FACEBOOK_ERROR',
+                    message: '${tokenError instanceof Error ? tokenError.message : 'Erro na troca de token'}'
+                  }, '*');
+                }
+                setTimeout(() => {
+                  window.close();
+                }, 3000);
+              </script>
+            </div>
+          </body>
+          </html>
+        `
+        
+        return new NextResponse(errorHtml, {
+          headers: { 'Content-Type': 'text/html' }
+        })
+      }
     }
 
     // Se não temos token nem erro, algo deu errado
