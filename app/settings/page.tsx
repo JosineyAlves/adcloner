@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { 
   User, 
@@ -20,6 +20,8 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile')
   const [darkMode, setDarkMode] = useState(false)
   const [notifications, setNotifications] = useState(true)
+  const [connectedAccountsCount, setConnectedAccountsCount] = useState(0)
+  const [isLoadingAccounts, setIsLoadingAccounts] = useState(true)
 
   const tabs = [
     { id: 'profile', name: 'Perfil', icon: User },
@@ -29,6 +31,32 @@ export default function SettingsPage() {
     { id: 'security', name: 'Segurança', icon: Shield },
     { id: 'billing', name: 'Cobrança', icon: CreditCard },
   ]
+
+  // Buscar contas conectadas
+  const fetchConnectedAccounts = async () => {
+    try {
+      setIsLoadingAccounts(true)
+      const response = await fetch('/api/facebook/accounts', {
+        credentials: 'include'
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setConnectedAccountsCount(data.accounts?.length || 0)
+      } else {
+        setConnectedAccountsCount(0)
+      }
+    } catch (error) {
+      console.error('Erro ao buscar contas:', error)
+      setConnectedAccountsCount(0)
+    } finally {
+      setIsLoadingAccounts(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchConnectedAccounts()
+  }, [])
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
@@ -143,7 +171,7 @@ export default function SettingsPage() {
                               Facebook Ads
                             </h3>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                              3 contas conectadas
+                              {connectedAccountsCount} conta(s) conectada(s)
                             </p>
                           </div>
                         </div>

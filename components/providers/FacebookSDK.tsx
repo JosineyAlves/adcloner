@@ -19,13 +19,55 @@ export default function FacebookSDK() {
 
     // Verificar se já existe
     if (window.FB) {
+      console.log('✅ Facebook SDK já carregado')
       setIsLoaded(true)
       return
     }
 
-    // Carregar SDK do Facebook
+    const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID
+    
+    if (!appId) {
+      console.error('❌ NEXT_PUBLIC_FACEBOOK_APP_ID não configurado')
+      setHasError(true)
+      return
+    }
+
+    console.log('🔧 Iniciando carregamento do Facebook SDK...')
+
+    // Configurar fbAsyncInit antes de carregar o script
+    window.fbAsyncInit = function() {
+      try {
+        console.log('🔧 Inicializando Facebook SDK com App ID:', appId)
+
+        window.FB.init({
+          appId: appId,
+          cookie: true,
+          xfbml: true,
+          version: 'v20.0'
+        })
+
+        console.log('✅ Facebook SDK inicializado com sucesso')
+        setIsLoaded(true)
+        setHasError(false)
+      } catch (error) {
+        console.error('❌ Erro ao inicializar SDK do Facebook:', error)
+        setHasError(true)
+        setIsLoaded(false)
+      }
+    }
+
+    // Função para carregar o script
     const loadFacebookSDK = () => {
       try {
+        // Verificar se já existe um script do Facebook
+        const existingScript = document.querySelector('script[src*="connect.facebook.net"]')
+        if (existingScript) {
+          console.log('📝 Script do Facebook já existe, aguardando inicialização...')
+          return
+        }
+
+        console.log('📥 Carregando script do Facebook...')
+        
         const script = document.createElement('script')
         script.src = 'https://connect.facebook.net/en_US/sdk.js'
         script.async = true
@@ -33,61 +75,41 @@ export default function FacebookSDK() {
         script.crossOrigin = 'anonymous'
         
         script.onload = () => {
-          console.log('Script do Facebook carregado')
+          console.log('✅ Script do Facebook carregado com sucesso')
         }
         
-        script.onerror = () => {
-          console.error('Erro ao carregar script do Facebook')
+        script.onerror = (error) => {
+          console.error('❌ Erro ao carregar script do Facebook:', error)
           setHasError(true)
+          setIsLoaded(false)
         }
         
         document.head.appendChild(script)
       } catch (error) {
-        console.error('Erro ao carregar SDK do Facebook:', error)
+        console.error('❌ Erro ao carregar SDK do Facebook:', error)
         setHasError(true)
+        setIsLoaded(false)
       }
     }
 
-    // Inicializar SDK
-    window.fbAsyncInit = function() {
-      try {
-        const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID
-        
-        if (!appId) {
-          console.error('NEXT_PUBLIC_FACEBOOK_APP_ID não configurado')
-          setHasError(true)
-          return
-        }
+    // Carregar SDK
+    loadFacebookSDK()
 
-        window.FB.init({
-          appId: appId,
-          cookie: true,
-          xfbml: true,
-          version: 'v20.0' // Usar versão compatível
-        })
-
-        console.log('Facebook SDK inicializado')
+    // Verificar periodicamente se o SDK foi carregado
+    const checkSDKLoaded = () => {
+      if (window.FB) {
+        console.log('✅ Facebook SDK detectado como carregado')
         setIsLoaded(true)
-      } catch (error) {
-        console.error('Erro ao inicializar SDK do Facebook:', error)
-        setHasError(true)
+        setHasError(false)
+        return
       }
+      
+      // Continuar verificando por até 10 segundos
+      setTimeout(checkSDKLoaded, 500)
     }
 
-    // Carregar SDK se ainda não foi carregado
-    if (!document.querySelector('script[src*="connect.facebook.net"]')) {
-      loadFacebookSDK()
-    } else {
-      // Se o script já existe, verificar se FB está disponível
-      const checkFB = () => {
-        if (window.FB) {
-          setIsLoaded(true)
-        } else {
-          setTimeout(checkFB, 100)
-        }
-      }
-      checkFB()
-    }
+    // Iniciar verificação após 1 segundo
+    setTimeout(checkSDKLoaded, 1000)
 
     return () => {
       // Cleanup se necessário

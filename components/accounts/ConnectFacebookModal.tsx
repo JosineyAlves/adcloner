@@ -19,9 +19,11 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
   // Verificar se SDK está carregado
   const isSDKReady = () => {
     try {
-      return typeof window !== 'undefined' && window.FB
+      const isReady = typeof window !== 'undefined' && window.FB
+      console.log('🔍 SDK Status:', isReady ? 'Pronto' : 'Não carregado')
+      return isReady
     } catch (error) {
-      console.error('Erro ao verificar SDK:', error)
+      console.error('❌ Erro ao verificar SDK:', error)
       return false
     }
   }
@@ -278,7 +280,7 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
                 <>
                   <button
                     onClick={handleConnectFacebook}
-                    disabled={isConnecting || !isSDKReady()}
+                    disabled={isConnecting}
                     className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
                   >
                     {isConnecting ? (
