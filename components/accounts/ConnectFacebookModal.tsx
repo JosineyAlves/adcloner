@@ -39,9 +39,11 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
       window.FB.getLoginStatus((response: any) => {
         console.log('Status de login:', response)
         
+        // Para Login para Empresas, não processar automaticamente
+        // O usuário deve clicar no botão para iniciar o fluxo
         if (response.status === 'connected') {
-          console.log('Usuário já está conectado')
-          handleLoginSuccess(response.authResponse)
+          console.log('Usuário já está conectado, mas não processando automaticamente')
+          // Não chamar handleLoginSuccess aqui
         }
       })
     } catch (error) {
