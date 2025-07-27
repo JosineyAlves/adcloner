@@ -91,7 +91,8 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
       }, {
         config_id: configId,
         response_type: 'code',
-        override_default_response_type: true
+        override_default_response_type: true,
+        redirect_uri: `${window.location.origin}/accounts`
       })
 
     } catch (error) {

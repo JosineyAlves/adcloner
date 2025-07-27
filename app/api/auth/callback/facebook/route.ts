@@ -28,7 +28,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Trocar código por token de acesso
-    const redirectUri = `${appUrl}/api/auth/callback/facebook`
+    // Usar o mesmo redirect URI que o Facebook SDK está usando
+    const redirectUri = `${appUrl}/accounts`
+    console.log('🔧 Redirect URI:', redirectUri)
     const tokenUrl = `https://graph.facebook.com/v23.0/oauth/access_token`
     
     console.log('📤 Trocando código por token...')
