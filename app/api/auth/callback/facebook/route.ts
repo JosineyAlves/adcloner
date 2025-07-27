@@ -90,6 +90,10 @@ export async function GET(request: NextRequest) {
     if (code) {
       console.log('Facebook authorization code received:', code.substring(0, 20) + '...')
       
+      // TEMPORÁRIO: Redirecionar para debug
+      const debugUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/debug/callback-test?code=${code}`
+      return NextResponse.redirect(debugUrl)
+      
       try {
         // Log das variáveis de ambiente para debug
         console.log('Debug - Environment variables:')
