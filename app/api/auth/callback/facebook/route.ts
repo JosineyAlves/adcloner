@@ -20,13 +20,6 @@ export async function GET(request: NextRequest) {
       errorDescription 
     })
 
-    console.log('Facebook callback - Params:', { 
-      hasAccessToken: !!accessToken, 
-      error, 
-      errorReason, 
-      errorDescription 
-    })
-
     // Se houve erro no OAuth
     if (error) {
       console.error('Facebook OAuth error:', { error, errorReason, errorDescription })
@@ -89,10 +82,6 @@ export async function GET(request: NextRequest) {
     // Se temos o código de autorização
     if (code) {
       console.log('Facebook authorization code received:', code.substring(0, 20) + '...')
-      
-      // TEMPORÁRIO: Redirecionar para debug
-      const debugUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/debug/callback-test?code=${code}`
-      return NextResponse.redirect(debugUrl)
       
       try {
         // Log das variáveis de ambiente para debug
@@ -213,8 +202,10 @@ export async function GET(request: NextRequest) {
           headers: { 'Content-Type': 'text/html' }
         })
 
-      } catch (apiError) {
+      } catch (apiError: unknown) {
         console.error('Facebook API error:', apiError)
+        
+        const errorMessage = apiError instanceof Error ? apiError.message : String(apiError)
         
         const errorHtml = `
           <!DOCTYPE html>
@@ -249,12 +240,12 @@ export async function GET(request: NextRequest) {
               <div class="icon">❌</div>
               <h1 class="error">Erro de API</h1>
               <p>Não foi possível processar sua conta do Facebook.</p>
-              <p><small>${apiError instanceof Error ? apiError.message : 'Erro desconhecido'}</small></p>
+              <p><small>${errorMessage}</small></p>
               <script>
                 if (window.opener) {
                   window.opener.postMessage({
                     type: 'FACEBOOK_ERROR',
-                    message: '${apiError instanceof Error ? apiError.message : 'Erro desconhecido'}'
+                    message: '${errorMessage}'
                   }, '*');
                 }
                 setTimeout(() => {
@@ -364,8 +355,10 @@ export async function GET(request: NextRequest) {
           headers: { 'Content-Type': 'text/html' }
         })
 
-      } catch (apiError) {
+      } catch (apiError: unknown) {
         console.error('Facebook API error:', apiError)
+        
+        const errorMessage = apiError instanceof Error ? apiError.message : String(apiError)
         
         const errorHtml = `
           <!DOCTYPE html>
@@ -400,12 +393,12 @@ export async function GET(request: NextRequest) {
               <div class="icon">❌</div>
               <h1 class="error">Erro de API</h1>
               <p>Não foi possível processar sua conta do Facebook.</p>
-              <p><small>${apiError instanceof Error ? apiError.message : 'Erro desconhecido'}</small></p>
+              <p><small>${errorMessage}</small></p>
               <script>
                 if (window.opener) {
                   window.opener.postMessage({
                     type: 'FACEBOOK_ERROR',
-                    message: '${apiError instanceof Error ? apiError.message : 'Erro desconhecido'}'
+                    message: '${errorMessage}'
                   }, '*');
                 }
                 setTimeout(() => {
@@ -477,8 +470,10 @@ export async function GET(request: NextRequest) {
       headers: { 'Content-Type': 'text/html' }
     })
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Facebook callback error:', error)
+    
+    const errorMessage = error instanceof Error ? error.message : String(error)
     
     const errorHtml = `
       <!DOCTYPE html>
