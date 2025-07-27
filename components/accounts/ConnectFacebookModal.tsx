@@ -65,6 +65,8 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
       // Aguardar mensagem do popup
       const messageHandler = (event: MessageEvent) => {
         console.log('📨 Mensagem recebida do popup:', event.data)
+        console.log('📋 Tipo da mensagem:', typeof event.data)
+        console.log('📋 Conteúdo completo:', JSON.stringify(event.data, null, 2))
         console.log('🌐 Origem da mensagem:', event.origin)
         console.log('🌐 Origem atual:', window.location.origin)
         
@@ -98,6 +100,8 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
           setIsConnecting(false)
           setConnectionStatus('error')
           setErrorMessage(event.data.message || 'Erro ao conectar com Facebook')
+        } else {
+          console.log('❓ Mensagem desconhecida:', event.data)
         }
       }
       
