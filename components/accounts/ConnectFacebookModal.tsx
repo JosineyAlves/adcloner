@@ -27,12 +27,16 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
         throw new Error('Facebook App ID não configurado')
       }
 
-      // Configurar URLs de redirecionamento
-      const redirectUri = encodeURIComponent(`${window.location.origin}/api/auth/callback/facebook`)
-      const scope = encodeURIComponent('public_profile,email')
+      // Usar a API do servidor para gerar URL correta
+      const response = await fetch('/api/auth/facebook')
+      const data = await response.json()
+      
+      if (!data.authUrl) {
+        throw new Error('Erro ao gerar URL de autenticação')
+      }
       
       // URL do popup do Facebook
-      const popupUrl = `https://www.facebook.com/v23.0/dialog/oauth?client_id=${appId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=token&display=popup`
+      const popupUrl = data.authUrl + '&display=popup'
 
       // Abrir popup
       const popup = window.open(
