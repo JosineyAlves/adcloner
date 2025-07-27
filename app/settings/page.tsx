@@ -17,11 +17,11 @@ import {
 import Sidebar from '@/components/layout/Sidebar'
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState('profile')
-  const [darkMode, setDarkMode] = useState(false)
-  const [notifications, setNotifications] = useState(true)
-  const [connectedAccountsCount, setConnectedAccountsCount] = useState(0)
-  const [isLoadingAccounts, setIsLoadingAccounts] = useState(true)
+  const [activeTab, setActiveTab] = useState<string>('profile')
+  const [darkMode, setDarkMode] = useState<boolean>(false)
+  const [notifications, setNotifications] = useState<boolean>(true)
+  const [connectedAccountsCount, setConnectedAccountsCount] = useState<number>(0)
+  const [isLoadingAccounts, setIsLoadingAccounts] = useState<boolean>(true)
 
   const tabs = [
     { id: 'profile', name: 'Perfil', icon: User },

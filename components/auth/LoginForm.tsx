@@ -6,9 +6,12 @@ import { Mail, Lock, Loader2, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function LoginForm() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [formData, setFormData] = useState({
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [showPassword, setShowPassword] = useState<boolean>(false)
+  const [formData, setFormData] = useState<{
+    email: string
+    password: string
+  }>({
     email: '',
     password: ''
   })

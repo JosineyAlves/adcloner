@@ -11,9 +11,9 @@ import toast from 'react-hot-toast'
 export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [clones, setClones] = useState<CampaignClone[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterStatus, setFilterStatus] = useState('all')
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [searchTerm, setSearchTerm] = useState<string>('')
+  const [filterStatus, setFilterStatus] = useState<string>('all')
 
   useEffect(() => {
     fetchCampaigns()

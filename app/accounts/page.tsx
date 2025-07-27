@@ -12,11 +12,11 @@ import toast from 'react-hot-toast'
 
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<FacebookAccount[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const [showConnectModal, setShowConnectModal] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterStatus, setFilterStatus] = useState('all')
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
+  const [showConnectModal, setShowConnectModal] = useState<boolean>(false)
+  const [searchTerm, setSearchTerm] = useState<string>('')
+  const [filterStatus, setFilterStatus] = useState<string>('all')
 
   useEffect(() => {
     fetchAccounts()

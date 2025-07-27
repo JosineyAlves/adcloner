@@ -11,8 +11,8 @@ import toast from 'react-hot-toast'
 
 export default function DashboardPage() {
   const [accounts, setAccounts] = useState<FacebookAccount[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
 
   useEffect(() => {
     fetchAccounts()

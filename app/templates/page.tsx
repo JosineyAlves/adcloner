@@ -10,9 +10,9 @@ import toast from 'react-hot-toast'
 
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterType, setFilterType] = useState('all')
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [searchTerm, setSearchTerm] = useState<string>('')
+  const [filterType, setFilterType] = useState<string>('all')
 
   useEffect(() => {
     fetchTemplates()

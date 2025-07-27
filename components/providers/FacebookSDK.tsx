@@ -10,8 +10,8 @@ declare global {
 }
 
 export default function FacebookSDK() {
-  const [isLoaded, setIsLoaded] = useState(false)
-  const [hasError, setHasError] = useState(false)
+  const [isLoaded, setIsLoaded] = useState<boolean>(false)
+  const [hasError, setHasError] = useState<boolean>(false)
 
   useEffect(() => {
     // Verificar se já foi carregado

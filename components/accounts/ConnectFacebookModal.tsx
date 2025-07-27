@@ -108,22 +108,36 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
   const handleLoginSuccess = async (authResponse: any) => {
     try {
       console.log('🎉 Processando sucesso do login...')
+      console.log('Auth Response:', authResponse)
+      
+      // Verificar se temos dados válidos
+      if (!authResponse || !authResponse.accessToken) {
+        throw new Error('Token de acesso não recebido')
+      }
       
       // Obter informações do usuário
       window.FB.api('/me', { fields: 'id,name,email' }, (userInfo: any) => {
         try {
           console.log('Informações do usuário:', userInfo)
           
+          // Verificar se temos dados válidos do usuário
+          if (!userInfo || userInfo.error) {
+            throw new Error('Erro ao obter informações do usuário')
+          }
+          
           setIsConnecting(false)
           setConnectionStatus('success')
           toast.success('Conta do Facebook conectada com sucesso!')
           
-          // Chamar callback de sucesso
+          // Chamar callback de sucesso com dados seguros
           if (onSuccess) {
-            onSuccess({
-              ...userInfo,
+            const safeUserInfo = {
+              id: userInfo.id || '',
+              name: userInfo.name || '',
+              email: userInfo.email || '',
               accessToken: authResponse.accessToken
-            })
+            }
+            onSuccess(safeUserInfo)
           }
           
           // Fechar modal após delay
@@ -131,7 +145,7 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
             onClose()
           }, 2000)
         } catch (error) {
-          console.error('Erro ao processar informações do usuário:', error)
+          console.error('❌ Erro ao processar informações do usuário:', error)
           setIsConnecting(false)
           setConnectionStatus('error')
           setErrorMessage('Erro ao processar informações do usuário')
@@ -139,7 +153,7 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
       })
 
     } catch (error) {
-      console.error('Erro ao obter informações do usuário:', error)
+      console.error('❌ Erro ao obter informações do usuário:', error)
       setIsConnecting(false)
       setConnectionStatus('error')
       setErrorMessage('Erro ao obter informações do usuário')

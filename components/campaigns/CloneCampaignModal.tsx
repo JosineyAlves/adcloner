@@ -28,7 +28,7 @@ export default function CloneCampaignModal({
   accounts 
 }: CloneCampaignModalProps) {
   const [selectedAccounts, setSelectedAccounts] = useState<string[]>([])
-  const [isCloning, setIsCloning] = useState(false)
+  const [isCloning, setIsCloning] = useState<boolean>(false)
   const [cloneResults, setCloneResults] = useState<CloneResult[]>([])
 
   const handleAccountToggle = (accountId: string) => {

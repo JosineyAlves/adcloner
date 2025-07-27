@@ -10,9 +10,9 @@ import ConnectFacebookModal from './ConnectFacebookModal'
 
 export default function AccountsSection() {
   const [accounts, setAccounts] = useState<FacebookAccount[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const [showConnectModal, setShowConnectModal] = useState(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
+  const [showConnectModal, setShowConnectModal] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
 
   const fetchAccounts = async () => {

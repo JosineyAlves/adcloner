@@ -23,8 +23,8 @@ interface AccountCardProps {
 }
 
 export default function AccountCard({ account, onUpdate }: AccountCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isExpanded, setIsExpanded] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const getStatusIcon = () => {
     switch (account.status) {
