@@ -22,14 +22,13 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
     setErrorMessage('')
 
     try {
-      const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID
-      if (!appId) {
-        throw new Error('Facebook App ID não configurado')
-      }
-
+      console.log('🔗 Iniciando conexão com Facebook...')
+      
       // Usar a API do servidor para gerar URL correta
       const response = await fetch('/api/auth/facebook')
       const data = await response.json()
+      
+      console.log('📋 Resposta da API:', data)
       
       if (!data.authUrl) {
         throw new Error('Erro ao gerar URL de autenticação')
@@ -37,6 +36,7 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
       
       // URL do popup do Facebook
       const popupUrl = data.authUrl + '&display=popup'
+      console.log('🔗 URL do popup:', popupUrl)
 
       // Abrir popup
       const popup = window.open(
@@ -49,27 +49,32 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
         throw new Error('Popup bloqueado pelo navegador. Permita popups para este site.')
       }
 
+      console.log('✅ Popup aberto com sucesso')
+
       // Aguardar resposta do popup
       const checkClosed = setInterval(() => {
         if (popup.closed) {
+          console.log('❌ Popup fechado sem resposta')
           clearInterval(checkClosed)
           setIsConnecting(false)
           setConnectionStatus('error')
-          setErrorMessage('Conexão cancelada ou falhou')
+          setErrorMessage('Conexão cancelada ou falhou. Verifique se o popup não foi bloqueado.')
         }
       }, 1000)
 
       // Aguardar mensagem do popup
       const messageHandler = (event: MessageEvent) => {
-        console.log('Facebook popup message received:', event.data)
+        console.log('📨 Mensagem recebida do popup:', event.data)
+        console.log('🌐 Origem da mensagem:', event.origin)
+        console.log('🌐 Origem atual:', window.location.origin)
         
         if (event.origin !== window.location.origin) {
-          console.log('Message from different origin, ignoring')
+          console.log('⚠️ Mensagem de origem diferente, ignorando')
           return
         }
         
         if (event.data.type === 'FACEBOOK_SUCCESS') {
-          console.log('Facebook connection successful:', event.data.userInfo)
+          console.log('✅ Conexão Facebook bem-sucedida:', event.data.userInfo)
           clearInterval(checkClosed)
           popup.close()
           setIsConnecting(false)
@@ -87,7 +92,7 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
             window.location.reload()
           }, 2000)
         } else if (event.data.type === 'FACEBOOK_ERROR') {
-          console.error('Facebook connection error:', event.data.message)
+          console.error('❌ Erro na conexão Facebook:', event.data.message)
           clearInterval(checkClosed)
           popup.close()
           setIsConnecting(false)
@@ -105,7 +110,7 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
       }
 
     } catch (error) {
-      console.error('Error connecting to Facebook:', error)
+      console.error('❌ Erro ao conectar com Facebook:', error)
       setIsConnecting(false)
       setConnectionStatus('error')
       setErrorMessage(error instanceof Error ? error.message : 'Erro desconhecido')
@@ -203,6 +208,9 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
                       </h4>
                       <p className="text-sm text-red-700 dark:text-red-300 mt-1">
                         {errorMessage}
+                      </p>
+                      <p className="text-xs text-red-600 dark:text-red-400 mt-2">
+                        💡 Dica: Verifique se o popup não foi bloqueado pelo navegador
                       </p>
                     </div>
                   </div>
