@@ -91,15 +91,32 @@ export async function GET(request: NextRequest) {
       console.log('Facebook authorization code received:', code.substring(0, 20) + '...')
       
       try {
+        // Log das variáveis de ambiente para debug
+        console.log('Debug - Environment variables:')
+        console.log('NEXT_PUBLIC_FACEBOOK_APP_ID:', process.env.NEXT_PUBLIC_FACEBOOK_APP_ID)
+        console.log('FACEBOOK_APP_SECRET:', process.env.FACEBOOK_APP_SECRET ? 'PRESENT' : 'MISSING')
+        console.log('NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL)
+        
         // Trocar código por token de acesso
-        const tokenResponse = await fetch(
-          `https://graph.facebook.com/v23.0/oauth/access_token?client_id=${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID}&client_secret=${process.env.FACEBOOK_APP_SECRET}&code=${code}&redirect_uri=${encodeURIComponent(`${process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback/facebook`)}`
-        )
+        const tokenUrl = `https://graph.facebook.com/v23.0/oauth/access_token?client_id=${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID}&client_secret=${process.env.FACEBOOK_APP_SECRET}&code=${code}&redirect_uri=${encodeURIComponent(`${process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback/facebook`)}`
+        
+        console.log('Debug - Token URL:', tokenUrl.replace(process.env.FACEBOOK_APP_SECRET || '', '[SECRET]'))
+        
+        const tokenResponse = await fetch(tokenUrl)
+        
+        console.log('Debug - Token response status:', tokenResponse.status)
         
         const tokenData = await tokenResponse.json()
+        console.log('Debug - Token response data:', tokenData)
         
         if (tokenData.error) {
+          console.error('Facebook token error:', tokenData.error)
           throw new Error(tokenData.error.message)
+        }
+        
+        if (!tokenData.access_token) {
+          console.error('No access token in response:', tokenData)
+          throw new Error('No access token received from Facebook')
         }
         
         const accessToken = tokenData.access_token
