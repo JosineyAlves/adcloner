@@ -60,10 +60,16 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
       }, 1000)
 
       // Aguardar mensagem do popup
-      window.addEventListener('message', (event) => {
-        if (event.origin !== window.location.origin) return
+      const messageHandler = (event: MessageEvent) => {
+        console.log('Facebook popup message received:', event.data)
+        
+        if (event.origin !== window.location.origin) {
+          console.log('Message from different origin, ignoring')
+          return
+        }
         
         if (event.data.type === 'FACEBOOK_SUCCESS') {
+          console.log('Facebook connection successful:', event.data.userInfo)
           clearInterval(checkClosed)
           popup.close()
           setIsConnecting(false)
@@ -81,13 +87,22 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
             window.location.reload()
           }, 2000)
         } else if (event.data.type === 'FACEBOOK_ERROR') {
+          console.error('Facebook connection error:', event.data.message)
           clearInterval(checkClosed)
           popup.close()
           setIsConnecting(false)
           setConnectionStatus('error')
           setErrorMessage(event.data.message || 'Erro ao conectar com Facebook')
         }
-      })
+      }
+      
+      window.addEventListener('message', messageHandler)
+      
+      // Cleanup function
+      return () => {
+        window.removeEventListener('message', messageHandler)
+        clearInterval(checkClosed)
+      }
 
     } catch (error) {
       console.error('Error connecting to Facebook:', error)
