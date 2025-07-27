@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>facebook_login_integration_guide</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<h1 id="guia-detalhado-de-integração-do-facebook-login">Guia Detalhado de Integração do Facebook Login</h1>
+<p>Este guia fornecerá um passo a passo detalhado para integrar o Facebook Login em seu aplicativo web usando o SDK JavaScript, incluindo exemplos de código.</p>
+<h2 id="antes-de-começar">1. Antes de Começar</h2>
+<p>Para integrar o Facebook Login, você precisará do seguinte:</p>
+<ul>
+<li><strong>Um ID de Aplicativo do Facebook</strong> para um site.</li>
+<li><strong>Uma conta de Desenvolvedor do Facebook</strong>.</li>
+</ul>
+<h2 id="configuração-básica-e-sdk-javascript">2. Configuração Básica e SDK JavaScript</h2>
+<p>O primeiro passo é adicionar o SDK JavaScript do Facebook à sua página web e inicializá-lo com seu ID de aplicativo e a versão da API Graph.</p>
+<h3 id="adicionar-o-sdk-javascript">Adicionar o SDK JavaScript</h3>
+<p>Inclua o seguinte código HTML no corpo da sua página, preferencialmente logo após a tag <code>&lt;body&gt;</code> de abertura:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode html"><code class="sourceCode html"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="dt">&lt;!DOCTYPE </span>html<span class="dt">&gt;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a><span class="kw">&lt;html</span><span class="ot"> lang=</span><span class="st">&quot;en&quot;</span><span class="kw">&gt;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>  <span class="kw">&lt;head&gt;&lt;/head&gt;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>  <span class="kw">&lt;body&gt;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a>    <span class="kw">&lt;h2&gt;</span>Adicionar Facebook Login à sua página web<span class="kw">&lt;/h2&gt;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a>    <span class="kw">&lt;p</span><span class="ot"> id=</span><span class="st">&quot;profile&quot;</span><span class="kw">&gt;&lt;/p&gt;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a>    <span class="kw">&lt;script&gt;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true"></a>      <span class="co">// Adicionar o Facebook SDK para Javascript</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true"></a>      (<span class="kw">function</span>(d<span class="op">,</span> s<span class="op">,</span> id){</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true"></a>        <span class="kw">var</span> js<span class="op">,</span> fjs <span class="op">=</span> d<span class="op">.</span><span class="fu">getElementsByTagName</span>(s)[<span class="dv">0</span>]<span class="op">;</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true"></a>        <span class="cf">if</span> (d<span class="op">.</span><span class="fu">getElementById</span>(id)) {<span class="cf">return</span><span class="op">;</span>}</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true"></a>        js <span class="op">=</span> d<span class="op">.</span><span class="fu">createElement</span>(s)<span class="op">;</span> js<span class="op">.</span><span class="at">id</span> <span class="op">=</span> id<span class="op">;</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true"></a>        js<span class="op">.</span><span class="at">src</span> <span class="op">=</span> <span class="st">&quot;https://connect.facebook.net/en_US/sdk.js&quot;</span><span class="op">;</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true"></a>        fjs<span class="op">.</span><span class="at">parentNode</span><span class="op">.</span><span class="fu">insertBefore</span>(js<span class="op">,</span> fjs)<span class="op">;</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true"></a>      }(<span class="bu">document</span><span class="op">,</span> <span class="st">&#39;script&#39;</span><span class="op">,</span> <span class="st">&#39;facebook-jssdk&#39;</span>))<span class="op">;</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true"></a>      <span class="bu">window</span><span class="op">.</span><span class="at">fbAsyncInit</span> <span class="op">=</span> <span class="kw">function</span>() {</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true"></a>        <span class="co">// Inicializar o SDK com seu aplicativo e a versão da API Graph</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true"></a>        FB<span class="op">.</span><span class="fu">init</span>({</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true"></a>          <span class="dt">appId</span>            <span class="op">:</span> <span class="st">&#39;{seu-id-de-aplicativo-facebook}&#39;</span><span class="op">,</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true"></a>          <span class="dt">xfbml</span>            <span class="op">:</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true"></a>          <span class="dt">version</span>          <span class="op">:</span> <span class="st">&#39;{a-versao-da-api-graph-para-seu-aplicativo}&#39;</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true"></a>        })<span class="op">;</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true"></a>        <span class="co">// Se você estiver logado, obtenha automaticamente seu nome e endereço de e-mail</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true"></a>        FB<span class="op">.</span><span class="fu">login</span>(<span class="kw">function</span>(response) {</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true"></a>          <span class="cf">if</span> (response<span class="op">.</span><span class="at">authResponse</span>) {</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true"></a>            <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">&#39;Bem-vindo! Buscando suas informações.... &#39;</span>)<span class="op">;</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true"></a>            FB<span class="op">.</span><span class="fu">api</span>(<span class="st">&#39;/me&#39;</span><span class="op">,</span> {<span class="dt">fields</span><span class="op">:</span> <span class="st">&#39;name, email&#39;</span>}<span class="op">,</span> <span class="kw">function</span>(response) {</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true"></a>              <span class="bu">document</span><span class="op">.</span><span class="fu">getElementById</span>(<span class="st">&quot;profile&quot;</span>)<span class="op">.</span><span class="at">innerHTML</span> <span class="op">=</span> <span class="st">&quot;Que bom te ver, &quot;</span> <span class="op">+</span> response<span class="op">.</span><span class="at">name</span> <span class="op">+</span> <span class="st">&quot;. Seu endereço de e-mail é &quot;</span> <span class="op">+</span> response<span class="op">.</span><span class="at">email</span><span class="op">;</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true"></a>            })<span class="op">;</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true"></a>          } <span class="cf">else</span> {</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true"></a>            <span class="co">// Se você não estiver logado, a caixa de diálogo de login será aberta para você fazer login</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true"></a>            <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">&#39;Usuário cancelou o login ou não autorizou totalmente.&#39;</span>)<span class="op">;</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true"></a>          }</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true"></a>        })<span class="op">;</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true"></a>      }<span class="op">;</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true"></a>    <span class="kw">&lt;/script&gt;</span></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true"></a></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true"></a>  <span class="kw">&lt;/body&gt;</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true"></a><span class="kw">&lt;/html&gt;</span></span></code></pre></div>
+<p><strong>Observações:</strong></p>
+<ul>
+<li>Substitua <code>{seu-id-de-aplicativo-facebook}</code> pelo ID real do seu aplicativo.</li>
+<li>Substitua <code>{a-versao-da-api-graph-para-seu-aplicativo}</code> pela versão da API Graph que você deseja usar (ex: <code>v19.0</code>).</li>
+<li>As permissões <code>public_profile</code> e <code>email</code> não exigem revisão do aplicativo e são concedidas automaticamente a todos os aplicativos que usam o Facebook Login.</li>
+</ul>
+<h3 id="habilitar-sdk-javascript-para-facebook-login-no-painel-do-aplicativo">Habilitar SDK JavaScript para Facebook Login no Painel do Aplicativo</h3>
+<p>No <a href="https://developers.facebook.com/apps/">Painel do Aplicativo</a>, escolha seu aplicativo e navegue até <strong>Adicionar um Produto</strong>. Clique em <strong>Configurar</strong> no cartão <strong>Facebook Login</strong>. Selecione <strong>Configurações</strong> no painel de navegação esquerdo e, em <strong>Client OAuth Settings</strong>, insira sua URL de redirecionamento no campo <strong>Valid OAuth Redirect URIs</strong> para autorização bem-sucedida.</p>
+<p>Indique que você está usando o SDK JavaScript para login definindo a opção <strong>Login with JavaScript SDK</strong> como “sim”, e insira o domínio da sua página que hospeda o SDK na lista <strong>Allowed Domains for JavaScript SDK</strong>. Isso garante que os tokens de acesso sejam retornados apenas para callbacks em domínios autorizados. Apenas páginas HTTPS são suportadas para ações de autenticação com o SDK JavaScript do Facebook.</p>
+<h2 id="verificar-o-status-de-login-de-uma-pessoa">3. Verificar o Status de Login de uma Pessoa</h2>
+<p>Ao carregar sua página web, é importante determinar se uma pessoa já está logada em sua página com o Facebook Login. Uma chamada para <code>FB.getLoginStatus()</code> inicia uma chamada para o Facebook para obter o status de login. O Facebook então chama sua função de callback com os resultados.</p>
+<h3 id="exemplo-de-chamada">Exemplo de Chamada</h3>
+<div class="sourceCode" id="cb2"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>FB<span class="op">.</span><span class="fu">getLoginStatus</span>(<span class="kw">function</span>(response) {</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>    <span class="fu">statusChangeCallback</span>(response)<span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>})<span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a><span class="kw">function</span> <span class="fu">statusChangeCallback</span>(response) {</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>  <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(response)<span class="op">;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>  <span class="co">// A resposta inclui o status de login e o authResponse, se conectado</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a>  <span class="cf">if</span> (response<span class="op">.</span><span class="at">status</span> <span class="op">===</span> <span class="st">&#39;connected&#39;</span>) {</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a>    <span class="co">// Logado em sua página web e no Facebook.</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>    <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">&#39;Usuário conectado.&#39;</span>)<span class="op">;</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a>    <span class="co">// Você pode agora chamar a API Graph para obter informações do usuário</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a>    FB<span class="op">.</span><span class="fu">api</span>(<span class="st">&#39;/me&#39;</span><span class="op">,</span> {<span class="dt">fields</span><span class="op">:</span> <span class="st">&#39;name,email&#39;</span>}<span class="op">,</span> <span class="kw">function</span>(response) {</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a>      <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">&#39;Informações do usuário: &#39;</span> <span class="op">+</span> <span class="bu">JSON</span><span class="op">.</span><span class="fu">stringify</span>(response))<span class="op">;</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a>    })<span class="op">;</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true"></a>  } <span class="cf">else</span> <span class="cf">if</span> (response<span class="op">.</span><span class="at">status</span> <span class="op">===</span> <span class="st">&#39;not_authorized&#39;</span>) {</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true"></a>    <span class="co">// Logado no Facebook, mas não autorizou seu aplicativo.</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true"></a>    <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">&#39;Usuário não autorizou o aplicativo.&#39;</span>)<span class="op">;</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true"></a>  } <span class="cf">else</span> {</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true"></a>    <span class="co">// Não logado no Facebook, ou não é possível determinar.</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true"></a>    <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">&#39;Usuário não logado no Facebook.&#39;</span>)<span class="op">;</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true"></a>  }</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true"></a>}</span></code></pre></div>
+<h3 id="exemplo-de-resposta-json">Exemplo de Resposta JSON</h3>
+<div class="sourceCode" id="cb3"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="fu">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>    <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="st">&quot;connected&quot;</span><span class="fu">,</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>    <span class="dt">&quot;authResponse&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>        <span class="dt">&quot;accessToken&quot;</span><span class="fu">:</span> <span class="st">&quot;{access-token}&quot;</span><span class="fu">,</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>        <span class="dt">&quot;expiresIn&quot;</span><span class="fu">:</span> <span class="st">&quot;{unix-timestamp}&quot;</span><span class="fu">,</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>        <span class="dt">&quot;reauthorize_required_in&quot;</span><span class="fu">:</span> <span class="st">&quot;{seconds-until-token-expires}&quot;</span><span class="fu">,</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a>        <span class="dt">&quot;signedRequest&quot;</span><span class="fu">:</span> <span class="st">&quot;{signed-parameter}&quot;</span><span class="fu">,</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a>        <span class="dt">&quot;userID&quot;</span><span class="fu">:</span> <span class="st">&quot;{user-id}&quot;</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true"></a>    <span class="fu">}</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true"></a><span class="fu">}</span></span></code></pre></div>
+<p>O campo <code>status</code> especifica o status de login da pessoa usando a página web. Os possíveis valores são:</p>
+<ul>
+<li><code>connected</code>: A pessoa está logada no Facebook e logou em sua página web.</li>
+<li><code>not_authorized</code>: A pessoa está logada no Facebook, mas não logou em sua página web.</li>
+<li><code>unknown</code>: A pessoa não está logada no Facebook, então você não sabe se ela logou em sua página web. Ou <code>FB.logout()</code> foi chamado antes, e, portanto, não é possível conectar ao Facebook.</li>
+</ul>
+<p>Se o status for <code>connected</code>, os seguintes parâmetros <code>authResponse</code> são incluídos na resposta:</p>
+<ul>
+<li><code>accessToken</code>: Um token de acesso para a pessoa usando a página web.</li>
+<li><code>expiresIn</code>: Um timestamp UNIX quando o token expira. Uma vez que o token expira, a pessoa precisará fazer login novamente.</li>
+<li><code>reauthorize_required_in</code>: A quantidade de tempo antes que o login expire, em segundos, e a pessoa precisará fazer login novamente.</li>
+<li><code>signedRequest</code>: Um parâmetro assinado que contém informações sobre a pessoa usando sua página web.</li>
+<li><code>userID</code>: O ID da pessoa usando sua página web.</li>
+</ul>
+<p>O SDK JavaScript detecta automaticamente o status de login, então você não precisa fazer nada para habilitar esse comportamento.</p>
+<h2 id="fazer-login-de-uma-pessoa">4. Fazer Login de uma Pessoa</h2>
+<p>Se uma pessoa abrir sua página web, mas não estiver logada ou não estiver logada no Facebook, você pode usar a <a href="https://developers.facebook.com/docs/facebook-login/web/login-button">caixa de diálogo de Login</a> para solicitar que ela faça login em ambos. Se ela não estiver logada no Facebook, será solicitado primeiro que ela faça login no Facebook, e depois que faça login em sua página web.</p>
+<p>Existem duas maneiras de fazer login de alguém:</p>
+<ul>
+<li>O <a href="https://developers.facebook.com/docs/facebook-login/web/login-button">Botão de Login do Facebook</a></li>
+<li>A <a href="https://developers.facebook.com/docs/facebook-login/web/login-button">Caixa de Diálogo de Login</a> do SDK JavaScript</li>
+</ul>
+<h3 id="a.-usando-o-botão-de-login-do-facebook">A. Usando o Botão de Login do Facebook</h3>
+<p>Para usar o Botão de Login do Facebook, utilize o <a href="https://developers.facebook.com/docs/plugins/login-button">Configurador de Plugin</a> para personalizar o botão de login e obter o código HTML. O configurador permite definir largura, tamanho do botão, texto, layout, e se deve incluir o nome e a foto do perfil quando o usuário estiver logado.</p>
+<h3 id="b.-fazer-login-com-a-caixa-de-diálogo-de-login-do-sdk-javascript">B. Fazer Login com a Caixa de Diálogo de Login do SDK JavaScript</h3>
+<p>Para usar seu próprio botão de login, invoque a Caixa de Diálogo de Login com uma chamada para <code>FB.login()</code>.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>FB<span class="op">.</span><span class="fu">login</span>(<span class="kw">function</span>(response){</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>  <span class="co">// handle the response</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>})<span class="op">;</span></span></code></pre></div>
+<h3 id="solicitar-permissões-adicionais">Solicitar Permissões Adicionais</h3>
+<p>Quando uma pessoa clica em seu botão HTML, uma janela pop-up com a caixa de diálogo de Login é exibida. Esta caixa de diálogo permite que você <a href="https://developers.facebook.com/docs/facebook-login/permissions">solicite permissão</a> para acessar os dados de uma pessoa. O parâmetro <code>scope</code> pode ser passado junto com a chamada da função <code>FB.login()</code>. Este parâmetro opcional é uma lista de <a href="https://developers.facebook.com/docs/facebook-login/permissions">permissões</a>, separadas por vírgulas, que uma pessoa deve confirmar para dar à sua página web acesso aos seus dados. O Facebook Login requer a permissão <code>public_profile</code> avançada, a ser usada por usuários externos.</p>
+<h3 id="exemplo-de-chamada-com-permissões">Exemplo de Chamada com Permissões</h3>
+<p>Este exemplo solicita à pessoa que está fazendo login se sua página web pode ter permissão para acessar seu perfil público e e-mail.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>FB<span class="op">.</span><span class="fu">login</span>(<span class="kw">function</span>(response) {</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>  <span class="co">// handle the response</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>}<span class="op">,</span> {<span class="dt">scope</span><span class="op">:</span> <span class="st">&#39;public_profile,email&#39;</span>})<span class="op">;</span></span></code></pre></div>
+<h3 id="lidar-com-a-resposta-da-caixa-de-diálogo-de-login">Lidar com a Resposta da Caixa de Diálogo de Login</h3>
+<p>A resposta, seja para conectar ou cancelar, retorna um objeto <code>authResponse</code> para o callback especificado quando você chamou <code>FB.login()</code>. Esta resposta pode ser detectada e tratada dentro da função <code>FB.login()</code>.</p>
+<h3 id="exemplo-de-tratamento-de-resposta">Exemplo de Tratamento de Resposta</h3>
+<div class="sourceCode" id="cb6"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a>FB<span class="op">.</span><span class="fu">login</span>(<span class="kw">function</span>(response) {</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>  <span class="cf">if</span> (response<span class="op">.</span><span class="at">status</span> <span class="op">===</span> <span class="st">&#39;connected&#39;</span>) {</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>    <span class="co">// Logado em sua página web e no Facebook.</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>    <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">&#39;Login bem-sucedido!&#39;</span>)<span class="op">;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>    <span class="co">// Você pode agora redirecionar o usuário ou carregar conteúdo personalizado</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>  } <span class="cf">else</span> {</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>    <span class="co">// A pessoa não está logada em sua página web ou não é possível determinar.</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a>    <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">&#39;Login cancelado ou falhou.&#39;</span>)<span class="op">;</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a>  }</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a>})<span class="op">;</span></span></code></pre></div>
+<h2 id="fazer-logout-de-uma-pessoa">5. Fazer Logout de uma Pessoa</h2>
+<p>Para fazer logout de uma pessoa da sua página web, você pode anexar a função <code>FB.logout()</code> do SDK JavaScript a um botão ou a um evento.</p>
+<h3 id="exemplo-de-logout">Exemplo de Logout</h3>
+<div class="sourceCode" id="cb7"><pre class="sourceCode html"><code class="sourceCode html"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="kw">&lt;a</span><span class="ot"> href=</span><span class="st">&quot;#&quot;</span><span class="ot"> onclick=</span><span class="st">&quot;FB.logout(function(response) { alert(&#39;Você foi desconectado.&#39;); });&quot;</span><span class="kw">&gt;</span>Sair do Facebook<span class="kw">&lt;/a&gt;</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a>FB<span class="op">.</span><span class="fu">logout</span>(<span class="kw">function</span>(response) {</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>  <span class="co">// A pessoa agora está desconectada do seu aplicativo e do Facebook.</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>  <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">&#39;Usuário desconectado.&#39;</span>)<span class="op">;</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a>})<span class="op">;</span></span></code></pre></div>
+<h2 id="recursos-adicionais">Recursos Adicionais</h2>
+<ul>
+<li><a href="https://developers.facebook.com/docs/facebook-login/web/login-button">Documentação do Botão de Login</a></li>
+<li><a href="https://developers.facebook.com/docs/reference/javascript/FB.login/">Referência FB.login()</a></li>
+<li><a href="https://developers.facebook.com/docs/reference/javascript/FB.getLoginStatus/">Referência FB.getLoginStatus()</a></li>
+<li><a href="https://developers.facebook.com/docs/javascript/reference/">Referência do SDK JavaScript</a></li>
+</ul>
+<p>Este guia cobre os aspectos essenciais da integração do Facebook Login para a web. Para implementações em iOS, Android ou outros dispositivos, consulte a documentação específica da plataforma no site do Facebook para Desenvolvedores.</p>
+</body>
+</html>

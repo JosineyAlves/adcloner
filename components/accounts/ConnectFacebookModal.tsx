@@ -121,6 +121,111 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
     }
   }
 
+  const handleConnectFacebookSimple = async () => {
+    setIsConnecting(true)
+    setConnectionStatus('connecting')
+    setErrorMessage('')
+
+    try {
+      console.log('🔗 Iniciando conexão com Facebook (método simples)...')
+      
+      // Usar a API alternativa com scope
+      const response = await fetch('/api/auth/facebook/simple')
+      const data = await response.json()
+      
+      console.log('📋 Resposta da API (simples):', data)
+      
+      if (!data.authUrl) {
+        throw new Error('Erro ao gerar URL de autenticação')
+      }
+      
+      // URL do popup do Facebook
+      const popupUrl = data.authUrl + '&display=popup'
+      console.log('🔗 URL do popup (simples):', popupUrl)
+
+      // Abrir popup
+      const popup = window.open(
+        popupUrl,
+        'facebook-login',
+        'width=600,height=600,scrollbars=yes,resizable=yes'
+      )
+
+      if (!popup) {
+        throw new Error('Popup bloqueado pelo navegador. Permita popups para este site.')
+      }
+
+      console.log('✅ Popup aberto com sucesso (método simples)')
+
+      // Aguardar resposta do popup
+      const checkClosed = setInterval(() => {
+        if (popup.closed) {
+          console.log('❌ Popup fechado sem resposta')
+          clearInterval(checkClosed)
+          setIsConnecting(false)
+          setConnectionStatus('error')
+          setErrorMessage('Conexão cancelada ou falhou. Verifique se o popup não foi bloqueado.')
+        }
+      }, 1000)
+
+      // Aguardar mensagem do popup
+      const messageHandler = (event: MessageEvent) => {
+        console.log('📨 Mensagem recebida do popup (simples):', event.data)
+        console.log('📋 Tipo da mensagem:', typeof event.data)
+        console.log('📋 Conteúdo completo:', JSON.stringify(event.data, null, 2))
+        console.log('🌐 Origem da mensagem:', event.origin)
+        console.log('🌐 Origem atual:', window.location.origin)
+        
+        if (event.origin !== window.location.origin) {
+          console.log('⚠️ Mensagem de origem diferente, ignorando')
+          return
+        }
+        
+        if (event.data.type === 'FACEBOOK_SUCCESS') {
+          console.log('✅ Conexão Facebook bem-sucedida (simples):', event.data.userInfo)
+          clearInterval(checkClosed)
+          popup.close()
+          setIsConnecting(false)
+          setConnectionStatus('success')
+          toast.success('Conta do Facebook conectada com sucesso!')
+          
+          // Chamar callback de sucesso se fornecido
+          if (onSuccess) {
+            onSuccess([]) // Por enquanto, array vazio. Em produção, buscar contas reais
+          }
+          
+          // Recarregar dados das contas
+          setTimeout(() => {
+            onClose()
+            window.location.reload()
+          }, 2000)
+        } else if (event.data.type === 'FACEBOOK_ERROR') {
+          console.error('❌ Erro na conexão Facebook (simples):', event.data.message)
+          clearInterval(checkClosed)
+          popup.close()
+          setIsConnecting(false)
+          setConnectionStatus('error')
+          setErrorMessage(event.data.message || 'Erro ao conectar com Facebook')
+        } else {
+          console.log('❓ Mensagem desconhecida (simples):', event.data)
+        }
+      }
+      
+      window.addEventListener('message', messageHandler)
+      
+      // Cleanup function
+      return () => {
+        window.removeEventListener('message', messageHandler)
+        clearInterval(checkClosed)
+      }
+
+    } catch (error) {
+      console.error('❌ Erro ao conectar com Facebook (simples):', error)
+      setIsConnecting(false)
+      setConnectionStatus('error')
+      setErrorMessage(error instanceof Error ? error.message : 'Erro desconhecido')
+    }
+  }
+
   const getStatusIcon = () => {
     switch (connectionStatus) {
       case 'connecting':
@@ -256,6 +361,23 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
                       <>
                         <Facebook className="w-4 h-4" />
                         Conectar Facebook
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={handleConnectFacebookSimple}
+                    disabled={isConnecting}
+                    className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    {isConnecting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Conectando (Simples)...
+                      </>
+                    ) : (
+                      <>
+                        <Facebook className="w-4 h-4" />
+                        Conectar Facebook (Simples)
                       </>
                     )}
                   </button>
