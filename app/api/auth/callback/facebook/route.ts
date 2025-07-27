@@ -1,5 +1,114 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// Função POST para processar código do Login para Empresas
+export async function POST(request: NextRequest) {
+  try {
+    const { code } = await request.json()
+    
+    console.log('🔄 Processando código de autorização:', code ? code.substring(0, 20) + '...' : 'não fornecido')
+    
+    if (!code) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Código de autorização não fornecido' 
+      }, { status: 400 })
+    }
+
+    // Variáveis de ambiente
+    const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID
+    const appSecret = process.env.FACEBOOK_APP_SECRET
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL
+
+    if (!appId || !appSecret || !appUrl) {
+      console.error('❌ Variáveis de ambiente não configuradas')
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Configuração do servidor incompleta' 
+      }, { status: 500 })
+    }
+
+    // Trocar código por token de acesso
+    const redirectUri = `${appUrl}/api/auth/callback/facebook`
+    const tokenUrl = `https://graph.facebook.com/v23.0/oauth/access_token`
+    
+    console.log('📤 Trocando código por token...')
+    
+    const tokenResponse = await fetch(tokenUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: appId,
+        client_secret: appSecret,
+        code: code,
+        redirect_uri: redirectUri
+      })
+    })
+
+    const tokenData = await tokenResponse.json()
+    console.log('📥 Resposta da troca de token:', tokenData)
+
+    if (tokenData.error) {
+      console.error('❌ Erro na troca de token:', tokenData.error)
+      return NextResponse.json({ 
+        success: false, 
+        error: `Erro na troca de token: ${tokenData.error.message || 'Erro desconhecido'}` 
+      }, { status: 400 })
+    }
+
+    if (!tokenData.access_token) {
+      console.error('❌ Token não recebido')
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Token de acesso não recebido' 
+      }, { status: 400 })
+    }
+
+    // Obter Client Business ID (para token do sistema)
+    console.log('🔍 Obtendo Client Business ID...')
+    const businessResponse = await fetch(
+      `https://graph.facebook.com/v23.0/me?fields=client_business_id&access_token=${tokenData.access_token}`
+    )
+    
+    const businessData = await businessResponse.json()
+    console.log('📊 Dados do negócio:', businessData)
+
+    if (businessData.error) {
+      console.error('❌ Erro ao obter Client Business ID:', businessData.error)
+      return NextResponse.json({ 
+        success: false, 
+        error: `Erro ao obter dados do negócio: ${businessData.error.message || 'Erro desconhecido'}` 
+      }, { status: 400 })
+    }
+
+    // Retornar dados do token do sistema
+    const responseData = {
+      success: true,
+      access_token: tokenData.access_token,
+      client_business_id: businessData.client_business_id,
+      system_user_id: businessData.id,
+      token_type: 'system_user_token',
+      expires_in: tokenData.expires_in || null
+    }
+
+    console.log('✅ Token do sistema obtido com sucesso')
+    console.log('📋 Dados retornados:', {
+      hasToken: !!responseData.access_token,
+      hasBusinessId: !!responseData.client_business_id,
+      hasSystemUserId: !!responseData.system_user_id,
+      tokenType: responseData.token_type
+    })
+
+    return NextResponse.json(responseData)
+
+  } catch (error) {
+    console.error('❌ Erro interno no processamento:', error)
+    return NextResponse.json({ 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Erro interno do servidor' 
+    }, { status: 500 })
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)

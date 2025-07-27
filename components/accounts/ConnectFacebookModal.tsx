@@ -64,19 +64,17 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
 
       console.log('🔗 Iniciando login com Facebook SDK (Login para Empresas)...')
 
-      // Usar config_id para Login para Empresas
-      const configId = process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID
+      // Usar config_id para Login para Empresas (Nova configuração)
+      const configId = '757815830318736' // Nova configuração correta
       
-      if (!configId) {
-        throw new Error('Config ID não configurado. Configure NEXT_PUBLIC_FACEBOOK_CONFIG_ID.')
-      }
+      console.log('🔧 Usando Config ID:', configId)
 
       window.FB.login((response: any) => {
         try {
           console.log('Resposta do login:', response)
 
-          if (response.status === 'connected') {
-            console.log('✅ Login bem-sucedido!')
+          if (response.authResponse && response.authResponse.code) {
+            console.log('✅ Login bem-sucedido! Código recebido:', response.authResponse.code)
             handleLoginSuccess(response.authResponse)
           } else {
             console.log('❌ Login cancelado ou falhou')
@@ -110,53 +108,56 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
       console.log('🎉 Processando sucesso do login...')
       console.log('Auth Response:', authResponse)
       
-      // Verificar se temos dados válidos
-      if (!authResponse || !authResponse.accessToken) {
-        throw new Error('Token de acesso não recebido')
+      // Verificar se temos o código de autorização
+      if (!authResponse || !authResponse.code) {
+        throw new Error('Código de autorização não recebido')
       }
       
-      // Obter informações do usuário
-      window.FB.api('/me', { fields: 'id,name,email' }, (userInfo: any) => {
-        try {
-          console.log('Informações do usuário:', userInfo)
-          
-          // Verificar se temos dados válidos do usuário
-          if (!userInfo || userInfo.error) {
-            throw new Error('Erro ao obter informações do usuário')
-          }
-          
-          setIsConnecting(false)
-          setConnectionStatus('success')
-          toast.success('Conta do Facebook conectada com sucesso!')
-          
-          // Chamar callback de sucesso com dados seguros
-          if (onSuccess) {
-            const safeUserInfo = {
-              id: userInfo.id || '',
-              name: userInfo.name || '',
-              email: userInfo.email || '',
-              accessToken: authResponse.accessToken
-            }
-            onSuccess(safeUserInfo)
-          }
-          
-          // Fechar modal após delay
-          setTimeout(() => {
-            onClose()
-          }, 2000)
-        } catch (error) {
-          console.error('❌ Erro ao processar informações do usuário:', error)
-          setIsConnecting(false)
-          setConnectionStatus('error')
-          setErrorMessage('Erro ao processar informações do usuário')
-        }
+      console.log('📤 Enviando código para servidor...')
+      
+      // Enviar código para servidor para trocar por token
+      const response = await fetch('/api/auth/callback/facebook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: authResponse.code })
       })
+      
+      if (!response.ok) {
+        throw new Error('Erro ao processar código no servidor')
+      }
+      
+      const data = await response.json()
+      console.log('✅ Resposta do servidor:', data)
+      
+      if (data.success) {
+        setIsConnecting(false)
+        setConnectionStatus('success')
+        toast.success('Conta do Facebook conectada com sucesso!')
+        
+        // Chamar callback de sucesso com dados do sistema
+        if (onSuccess) {
+          const systemUserInfo = {
+            accessToken: data.access_token,
+            clientBusinessId: data.client_business_id,
+            systemUserId: data.system_user_id,
+            type: 'system_user_token'
+          }
+          onSuccess(systemUserInfo)
+        }
+        
+        // Fechar modal após delay
+        setTimeout(() => {
+          onClose()
+        }, 2000)
+      } else {
+        throw new Error(data.error || 'Erro desconhecido no servidor')
+      }
 
     } catch (error) {
-      console.error('❌ Erro ao obter informações do usuário:', error)
+      console.error('❌ Erro ao processar login:', error)
       setIsConnecting(false)
       setConnectionStatus('error')
-      setErrorMessage('Erro ao obter informações do usuário')
+      setErrorMessage(error instanceof Error ? error.message : 'Erro ao processar login')
     }
   }
 
