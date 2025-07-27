@@ -28,25 +28,27 @@ export async function POST(request: NextRequest) {
     }
 
     // Trocar código por token de acesso
-    // Para Login para Empresas, usar o redirect URI configurado
-    const redirectUri = `${appUrl}/accounts`
-    console.log('🔧 Redirect URI:', redirectUri)
+    // Para popup do Facebook SDK, NÃO enviar redirect_uri
+    // O Facebook usa seu próprio redirect URI interno
     console.log('🔧 App URL:', appUrl)
+    console.log('🔧 Não enviando redirect_uri para popup')
     const tokenUrl = `https://graph.facebook.com/v23.0/oauth/access_token`
     
     console.log('📤 Trocando código por token...')
     
     // Preparar parâmetros para a requisição
+    // Para popup, não enviar redirect_uri
     const params: any = {
       client_id: appId,
       client_secret: appSecret,
       code: code
     }
     
-    // Só adicionar redirect_uri se definido
-    if (redirectUri) {
-      params.redirect_uri = redirectUri
-    }
+    console.log('🔧 Parâmetros da requisição:', {
+      client_id: appId,
+      client_secret: '***',
+      code: code ? code.substring(0, 20) + '...' : 'não fornecido'
+    })
     
     const tokenResponse = await fetch(tokenUrl, {
       method: 'POST',
