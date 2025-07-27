@@ -28,22 +28,30 @@ export async function POST(request: NextRequest) {
     }
 
     // Trocar código por token de acesso
-    // Usar o mesmo redirect URI que o Facebook SDK está usando
+    // Para Login para Empresas, usar o redirect URI configurado
     const redirectUri = `${appUrl}/accounts`
     console.log('🔧 Redirect URI:', redirectUri)
+    console.log('🔧 App URL:', appUrl)
     const tokenUrl = `https://graph.facebook.com/v23.0/oauth/access_token`
     
     console.log('📤 Trocando código por token...')
     
+    // Preparar parâmetros para a requisição
+    const params: any = {
+      client_id: appId,
+      client_secret: appSecret,
+      code: code
+    }
+    
+    // Só adicionar redirect_uri se definido
+    if (redirectUri) {
+      params.redirect_uri = redirectUri
+    }
+    
     const tokenResponse = await fetch(tokenUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        client_id: appId,
-        client_secret: appSecret,
-        code: code,
-        redirect_uri: redirectUri
-      })
+      body: new URLSearchParams(params)
     })
 
     const tokenData = await tokenResponse.json()
