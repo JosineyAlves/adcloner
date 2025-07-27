@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Facebook, AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
@@ -16,53 +16,31 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'connecting' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
 
-  // Listener para mensagens do popup
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data.type === 'FACEBOOK_SUCCESS') {
-        console.log('✅ Conexão realizada com sucesso via popup')
-        setIsConnecting(false)
-        setConnectionStatus('success')
-        toast.success('Conta do Facebook conectada com sucesso!')
-        
-        if (onSuccess) {
-          onSuccess([event.data.userInfo])
-        }
-        
-        setTimeout(() => {
-          onClose()
-        }, 2000)
-      } else if (event.data.type === 'FACEBOOK_ERROR') {
-        console.error('❌ Erro na conexão via popup:', event.data.message)
-        setIsConnecting(false)
-        setConnectionStatus('error')
-        setErrorMessage(event.data.message || 'Erro desconhecido')
-      }
-    }
-
-    window.addEventListener('message', handleMessage)
-    return () => window.removeEventListener('message', handleMessage)
-  }, [onSuccess, onClose])
-
   const handleConnectFacebook = async () => {
     setIsConnecting(true)
     setConnectionStatus('connecting')
     setErrorMessage('')
 
     try {
-      console.log('🔗 Iniciando conexão com Facebook via OAuth...')
+      console.log('🔗 Iniciando conexão com Facebook...')
       
-      // Obter URL de autenticação do servidor
+      // Usar a API do servidor para gerar URL correta
       const response = await fetch('/api/auth/facebook')
       const data = await response.json()
       
-      if (!data.success) {
-        throw new Error(data.error || 'Erro ao gerar URL de autenticação')
+      console.log('📋 Resposta da API:', data)
+      
+      if (!data.authUrl) {
+        throw new Error('Erro ao gerar URL de autenticação')
       }
+      
+      // URL do popup do Facebook
+      const popupUrl = data.authUrl + '&display=popup'
+      console.log('🔗 URL do popup:', popupUrl)
 
-      // Abrir popup para autenticação
+      // Abrir popup
       const popup = window.open(
-        data.authUrl,
+        popupUrl,
         'facebook-login',
         'width=600,height=600,scrollbars=yes,resizable=yes'
       )
@@ -71,17 +49,69 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
         throw new Error('Popup bloqueado pelo navegador. Permita popups para este site.')
       }
 
-      // Verificar se o popup foi fechado
+      console.log('✅ Popup aberto com sucesso')
+
+      // Aguardar resposta do popup
       const checkClosed = setInterval(() => {
         if (popup.closed) {
+          console.log('❌ Popup fechado sem resposta')
           clearInterval(checkClosed)
-          if (connectionStatus === 'connecting') {
-            setIsConnecting(false)
-            setConnectionStatus('error')
-            setErrorMessage('Conexão cancelada pelo usuário')
-          }
+          setIsConnecting(false)
+          setConnectionStatus('error')
+          setErrorMessage('Conexão cancelada ou falhou. Verifique se o popup não foi bloqueado.')
         }
       }, 1000)
+
+      // Aguardar mensagem do popup
+      const messageHandler = (event: MessageEvent) => {
+        console.log('📨 Mensagem recebida do popup:', event.data)
+        console.log('📋 Tipo da mensagem:', typeof event.data)
+        console.log('📋 Conteúdo completo:', JSON.stringify(event.data, null, 2))
+        console.log('🌐 Origem da mensagem:', event.origin)
+        console.log('🌐 Origem atual:', window.location.origin)
+        
+        if (event.origin !== window.location.origin) {
+          console.log('⚠️ Mensagem de origem diferente, ignorando')
+          return
+        }
+        
+        if (event.data.type === 'FACEBOOK_SUCCESS') {
+          console.log('✅ Conexão Facebook bem-sucedida:', event.data.userInfo)
+          clearInterval(checkClosed)
+          popup.close()
+          setIsConnecting(false)
+          setConnectionStatus('success')
+          toast.success('Conta do Facebook conectada com sucesso!')
+          
+          // Chamar callback de sucesso se fornecido
+          if (onSuccess) {
+            onSuccess([]) // Por enquanto, array vazio. Em produção, buscar contas reais
+          }
+          
+          // Recarregar dados das contas
+          setTimeout(() => {
+            onClose()
+            window.location.reload()
+          }, 2000)
+        } else if (event.data.type === 'FACEBOOK_ERROR') {
+          console.error('❌ Erro na conexão Facebook:', event.data.message)
+          clearInterval(checkClosed)
+          popup.close()
+          setIsConnecting(false)
+          setConnectionStatus('error')
+          setErrorMessage(event.data.message || 'Erro ao conectar com Facebook')
+        } else {
+          console.log('❓ Mensagem desconhecida:', event.data)
+        }
+      }
+      
+      window.addEventListener('message', messageHandler)
+      
+      // Cleanup function
+      return () => {
+        window.removeEventListener('message', messageHandler)
+        clearInterval(checkClosed)
+      }
 
     } catch (error) {
       console.error('❌ Erro ao conectar com Facebook:', error)

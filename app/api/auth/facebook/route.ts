@@ -2,35 +2,20 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
     const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID
+    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/callback/facebook`
+    
+    // NOVO: Usando config_id em vez de scope para Login para Empresas
     const configId = process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL
+    const authUrl = `https://www.facebook.com/v23.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&config_id=${configId}&response_type=code`
 
-    if (!appId || !configId || !appUrl) {
-      return NextResponse.json({
-        success: false,
-        error: 'Variáveis de ambiente não configuradas'
-      })
-    }
-
-    const redirectUri = `${appUrl}/api/auth/callback/facebook`
-    
-    // NOVA ABORDAGEM: Usando parâmetros similares ao UTMify
-    const authUrl = `https://www.facebook.com/v20.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&config_id=${configId}&response_type=code&_rdc=1&_rdr`
-
-    console.log('Gerando URL de autenticação:', authUrl)
-
-    return NextResponse.json({
-      success: true,
-      authUrl
-    })
-
+    return NextResponse.json({ authUrl })
   } catch (error) {
-    console.error('Erro ao gerar URL de autenticação:', error)
-    
-    return NextResponse.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Erro desconhecido'
-    })
+    console.error('Facebook auth error:', error)
+    return NextResponse.json(
+      { error: 'Failed to generate auth URL' },
+      { status: 500 }
+    )
   }
 } 
