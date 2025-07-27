@@ -122,14 +122,10 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
         body: JSON.stringify({ code: authResponse.code })
       })
       
-      if (!response.ok) {
-        throw new Error('Erro ao processar código no servidor')
-      }
-      
       const data = await response.json()
       console.log('✅ Resposta do servidor:', data)
       
-      if (data.success) {
+      if (response.ok && data.success) {
         setIsConnecting(false)
         setConnectionStatus('success')
         toast.success('Conta do Facebook conectada com sucesso!')
@@ -150,6 +146,7 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
           onClose()
         }, 2000)
       } else {
+        console.error('❌ Erro na resposta do servidor:', data)
         throw new Error(data.error || 'Erro desconhecido no servidor')
       }
 
