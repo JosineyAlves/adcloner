@@ -1144,7 +1144,7 @@ export class FacebookAPI {
     level: string = 'campaign'
   ) {
     try {
-      // Campos válidos da API de Insights do Facebook
+      // Campos básicos e seguros da API de Insights do Facebook
       const fields = [
         // Identificação
         'campaign_id',
@@ -1154,73 +1154,31 @@ export class FacebookAPI {
         'ad_id',
         'ad_name',
         
-        // Métricas básicas (válidas)
+        // Métricas básicas (garantidas)
         'impressions',
         'clicks',
         'spend',
         'reach',
         'frequency',
         
-        // Métricas de custo (válidas)
+        // Métricas de custo (garantidas)
         'cpm',
         'cpc',
         'ctr',
         
-        // Métricas de engajamento (válidas)
+        // Métricas de engajamento (garantidas)
         'inline_link_clicks',
         'inline_post_engagement',
         
-        // Métricas de qualidade (válidas)
+        // Métricas de qualidade (garantidas)
         'quality_ranking',
         'engagement_rate_ranking',
         'conversion_rate_ranking',
         
-        // Métricas de conversão (válidas)
+        // Métricas de conversão (garantidas)
         'conversions',
         'cost_per_conversion',
-        'conversion_values',
-        
-        // Métricas de vídeo (válidas)
-        'video_p25_watched_actions',
-        'video_p50_watched_actions',
-        'video_p75_watched_actions',
-        'video_p95_watched_actions',
-        'video_p100_watched_actions',
-        'video_play_actions',
-        'video_play_curve_actions',
-        
-        // Métricas de aplicativo (válidas)
-        'mobile_app_installs',
-        'mobile_app_install_rate',
-        
-        // Métricas de lead (válidas)
-        'leads',
-        'cost_per_lead',
-        
-        // Métricas de página (válidas)
-        'page_likes',
-        'page_engagement',
-        'page_impressions',
-        'page_posts_impressions',
-        
-        // Métricas de evento (válidas)
-        'onsite_conversion',
-        'purchase',
-        'add_to_cart',
-        'initiated_checkout',
-        'complete_registration',
-        'view_content',
-        'search',
-        'add_to_wishlist',
-        'start_order',
-        'add_payment_info',
-        'contact',
-        'custom',
-        'donate',
-        'find_location',
-        'schedule',
-        'subscribe',
-        'tutorial_completion'
+        'conversion_values'
       ].join(',')
 
       const response = await fetch(
@@ -1248,7 +1206,7 @@ export class FacebookAPI {
     datePreset: string = 'last_7d'
   ) {
     try {
-      // Campos válidos da API de Insights do Facebook para contas
+      // Campos básicos e seguros da API de Insights do Facebook para contas
       const fields = [
         // Identificação
         'campaign_id',
@@ -1258,73 +1216,31 @@ export class FacebookAPI {
         'ad_id',
         'ad_name',
         
-        // Métricas básicas (válidas)
+        // Métricas básicas (garantidas)
         'impressions',
         'clicks',
         'spend',
         'reach',
         'frequency',
         
-        // Métricas de custo (válidas)
+        // Métricas de custo (garantidas)
         'cpm',
         'cpc',
         'ctr',
         
-        // Métricas de engajamento (válidas)
+        // Métricas de engajamento (garantidas)
         'inline_link_clicks',
         'inline_post_engagement',
         
-        // Métricas de qualidade (válidas)
+        // Métricas de qualidade (garantidas)
         'quality_ranking',
         'engagement_rate_ranking',
         'conversion_rate_ranking',
         
-        // Métricas de conversão (válidas)
+        // Métricas de conversão (garantidas)
         'conversions',
         'cost_per_conversion',
-        'conversion_values',
-        
-        // Métricas de vídeo (válidas)
-        'video_p25_watched_actions',
-        'video_p50_watched_actions',
-        'video_p75_watched_actions',
-        'video_p95_watched_actions',
-        'video_p100_watched_actions',
-        'video_play_actions',
-        'video_play_curve_actions',
-        
-        // Métricas de aplicativo (válidas)
-        'mobile_app_installs',
-        'mobile_app_install_rate',
-        
-        // Métricas de lead (válidas)
-        'leads',
-        'cost_per_lead',
-        
-        // Métricas de página (válidas)
-        'page_likes',
-        'page_engagement',
-        'page_impressions',
-        'page_posts_impressions',
-        
-        // Métricas de evento (válidas)
-        'onsite_conversion',
-        'purchase',
-        'add_to_cart',
-        'initiated_checkout',
-        'complete_registration',
-        'view_content',
-        'search',
-        'add_to_wishlist',
-        'start_order',
-        'add_payment_info',
-        'contact',
-        'custom',
-        'donate',
-        'find_location',
-        'schedule',
-        'subscribe',
-        'tutorial_completion'
+        'conversion_values'
       ].join(',')
 
       const response = await fetch(
