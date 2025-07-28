@@ -122,7 +122,10 @@ export default function CampaignsPage() {
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               Campanhas
             </h1>
-            <button className="btn-primary flex items-center space-x-2">
+            <button 
+              onClick={handleCreateCampaign}
+              className="btn-primary flex items-center space-x-2"
+            >
               <Plus className="w-4 h-4" />
               <span>Nova Campanha</span>
             </button>

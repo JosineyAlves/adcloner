@@ -733,19 +733,21 @@ export class FacebookAPI {
         bid_strategy: 'HIGHEST_VOLUME_OR_VALUE'
       },
       
-      // Dados dos Ad Sets (sem IDs)
+      // Dados dos Ad Sets (preservando configurações originais)
       adSets: campaignData.adSets?.map((adSet: any) => ({
         name: adSet.name,
-        status: 'PAUSED',
+        status: 'PAUSED', // Sempre pausado para evitar gastos
         daily_budget: adSet.daily_budget || 1000,
-        billing_event: 'IMPRESSIONS',
+        billing_event: adSet.billing_event || 'IMPRESSIONS',
         optimization_goal: adSet.optimization_goal || 'REACH',
-        targeting: adSet.targeting || {
-          geo_locations: { countries: ['BR'] },
-          age_min: 18,
-          age_max: 65
+        targeting: {
+          ...adSet.targeting, // Preservar targeting original
+          geo_locations: adSet.targeting?.geo_locations || { countries: ['BR'] },
+          age_min: adSet.targeting?.age_min || 18,
+          age_max: adSet.targeting?.age_max || 65
         },
-        bid_amount: '1000'
+        bid_amount: adSet.bid_amount || '1000',
+        bid_strategy: adSet.bid_strategy || 'LOWEST_COST_WITHOUT_CAP'
       })) || [],
       
       // Dados dos Ads (sem IDs, mas com criativos)
@@ -882,24 +884,29 @@ export class FacebookAPI {
         throw new Error(campaignData.error.message)
       }
       
-      // Buscar conjuntos de anúncios da campanha
+      // Buscar conjuntos de anúncios da campanha (incluindo rascunhos)
       const adSetsResponse = await fetch(
-        `${this.baseUrl}/${campaignId}/adsets?fields=id,name,targeting,daily_budget,optimization_goal&access_token=${accessToken}`
+        `${this.baseUrl}/${campaignId}/adsets?fields=id,name,targeting,daily_budget,optimization_goal,billing_event,bid_amount,bid_strategy,status&include_drafts=true&access_token=${accessToken}`
       )
       const adSetsData = await adSetsResponse.json()
       
-      // Buscar anúncios da campanha com detalhes completos
+      console.log(`📊 Ad Sets encontrados: ${adSetsData.data?.length || 0}`)
+      adSetsData.data?.forEach((adSet: any) => {
+        console.log(`📋 Ad Set: ${adSet.name} - Status: ${adSet.status} - Budget: ${adSet.daily_budget}`)
+      })
+      
+      // Buscar anúncios da campanha com detalhes completos (incluindo rascunhos)
       const adsResponse = await fetch(
-        `${this.baseUrl}/${campaignId}/ads?fields=id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id}}}&access_token=${accessToken}`
+        `${this.baseUrl}/${campaignId}/ads?fields=id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id}}}&include_drafts=true&access_token=${accessToken}`
       )
       const adsData = await adsResponse.json()
       
       console.log(`📊 Anúncios encontrados: ${adsData.data?.length || 0}`)
       if (adsData.data?.length === 0) {
-        // Tentar buscar anúncios via Ad Sets
+        // Tentar buscar anúncios via Ad Sets (incluindo rascunhos)
         console.log(`🔍 Tentando buscar anúncios via Ad Sets...`)
         const adSetsResponse = await fetch(
-          `${this.baseUrl}/${campaignId}/adsets?fields=id,name,ads{id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id}}}&access_token=${accessToken}`
+          `${this.baseUrl}/${campaignId}/adsets?fields=id,name,ads{id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id}}}&include_drafts=true&access_token=${accessToken}`
         )
         const adSetsData = await adSetsResponse.json()
         
@@ -912,13 +919,13 @@ export class FacebookAPI {
         
         console.log(`📊 Anúncios encontrados via Ad Sets: ${allAds.length}`)
         allAds.forEach((ad: any) => {
-          console.log(`📋 Ad: ${ad.name} - Creative: ${ad.creative?.id || 'Nenhum'}`)
+          console.log(`📋 Ad: ${ad.name} - Creative: ${ad.creative?.id || 'Nenhum'} - Status: ${ad.status}`)
         })
         
         adsData.data = allAds
       } else {
         adsData.data?.forEach((ad: any) => {
-          console.log(`📋 Ad: ${ad.name} - Creative: ${ad.creative?.id || 'Nenhum'}`)
+          console.log(`📋 Ad: ${ad.name} - Creative: ${ad.creative?.id || 'Nenhum'} - Status: ${ad.status}`)
         })
       }
       
