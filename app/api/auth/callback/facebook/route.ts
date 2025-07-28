@@ -110,7 +110,8 @@ export async function POST(request: NextRequest) {
       tokenType: responseData.token_type
     })
 
-    return NextResponse.json(responseData, { 
+    // Criar resposta com cookie para salvar o token
+    const response = NextResponse.json(responseData, { 
       status: 200,
       headers: {
         'Content-Type': 'application/json',
@@ -119,6 +120,26 @@ export async function POST(request: NextRequest) {
         'Access-Control-Allow-Headers': 'Content-Type'
       }
     })
+
+    // Salvar token em cookie seguro (httpOnly para segurança)
+    response.cookies.set('fb_access_token', responseData.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 30, // 30 dias
+      path: '/'
+    })
+
+    // Salvar dados do negócio em cookie
+    response.cookies.set('fb_business_id', responseData.client_business_id, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 30, // 30 dias
+      path: '/'
+    })
+
+    return response
 
   } catch (error) {
     console.error('❌ Erro interno no processamento:', error)
