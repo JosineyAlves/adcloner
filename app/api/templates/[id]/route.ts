@@ -9,9 +9,31 @@ let templates = [
     fileName: 'conversao.csv',
     processedAt: '2024-01-15T10:30:00Z',
     campaignCount: 5,
-    status: 'active'
+    status: 'active',
+    processedData: [] // Dados processados do template
   }
 ]
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { id } = params
+    
+    // Encontrar template
+    const template = templates.find(t => t.id === id)
+    
+    if (!template) {
+      return NextResponse.json({ error: 'Template não encontrado' }, { status: 404 })
+    }
+    
+    return NextResponse.json(template)
+  } catch (error) {
+    console.error('Erro ao buscar template:', error)
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
+  }
+}
 
 export async function DELETE(
   request: NextRequest,

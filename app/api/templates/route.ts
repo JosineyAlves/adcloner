@@ -10,7 +10,8 @@ let templates = [
     fileName: 'conversao.csv',
     processedAt: '2024-01-15T10:30:00Z',
     campaignCount: 5,
-    status: 'active'
+    status: 'active',
+    processedData: [] // Dados processados do template
   }
 ]
 
@@ -43,7 +44,8 @@ export async function POST(request: NextRequest) {
       fileName: file.name,
       processedAt: new Date().toISOString(),
       campaignCount: JSON.parse(processedData).length,
-      status: 'active' as const
+      status: 'active' as const,
+      processedData: JSON.parse(processedData)
     }
 
     templates.push(newTemplate)
