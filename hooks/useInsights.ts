@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react'
 interface Insight {
   impressions?: string
   clicks?: string
-  link_clicks?: string
   spend?: string
   conversions?: string
   cpm?: string
@@ -85,7 +84,6 @@ export function useInsights({
     return {
       impressions: (acc.impressions || 0) + (parseInt(insight.impressions || '0') || 0),
       clicks: (acc.clicks || 0) + (parseInt(insight.clicks || '0') || 0),
-      link_clicks: (acc.link_clicks || 0) + (parseInt(insight.link_clicks || '0') || 0),
       spend: (acc.spend || 0) + (parseFloat(insight.spend || '0') || 0),
       reach: (acc.reach || 0) + (parseInt(insight.reach || '0') || 0),
       conversions: (acc.conversions || 0) + (parseInt(insight.conversions || '0') || 0)

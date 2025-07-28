@@ -1144,26 +1144,15 @@ export class FacebookAPI {
     level: string = 'campaign'
   ) {
     try {
+      // Campos básicos e seguros para insights
       const fields = [
         'impressions',
         'clicks',
-        'link_clicks',
         'spend',
-        'conversions',
         'cpm',
         'cpc',
         'reach',
-        'frequency',
-        'actions',
-        'cost_per_action_type',
-        'unique_clicks',
-        'unique_link_clicks',
-        'unique_ctr',
-        'social_impressions',
-        'social_clicks',
-        'social_spend',
-        'social_reach',
-        'social_frequency'
+        'frequency'
       ].join(',')
 
       const response = await fetch(
@@ -1191,12 +1180,11 @@ export class FacebookAPI {
     datePreset: string = 'last_7d'
   ) {
     try {
+      // Campos básicos e seguros para insights de conta
       const fields = [
         'impressions',
         'clicks',
-        'link_clicks',
         'spend',
-        'conversions',
         'cpm',
         'cpc',
         'reach',

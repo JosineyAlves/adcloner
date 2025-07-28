@@ -94,11 +94,10 @@ export default function DashboardPage() {
   // Calcular métricas agregadas dos insights
   const aggregatedMetrics = insights.reduce((acc, insight) => {
     return {
-      impressions: (acc.impressions || 0) + (parseInt(insight.impressions) || 0),
-      clicks: (acc.clicks || 0) + (parseInt(insight.clicks) || 0),
-      spend: (acc.spend || 0) + (parseFloat(insight.spend) || 0),
-      reach: (acc.reach || 0) + (parseInt(insight.reach) || 0),
-      conversions: (acc.conversions || 0) + (parseInt(insight.conversions) || 0)
+      impressions: (acc.impressions || 0) + (parseInt(insight.impressions || '0') || 0),
+      clicks: (acc.clicks || 0) + (parseInt(insight.clicks || '0') || 0),
+      spend: (acc.spend || 0) + (parseFloat(insight.spend || '0') || 0),
+      reach: (acc.reach || 0) + (parseInt(insight.reach || '0') || 0)
     }
   }, {})
 
