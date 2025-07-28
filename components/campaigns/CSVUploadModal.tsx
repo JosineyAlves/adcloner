@@ -212,6 +212,17 @@ export default function CSVUploadModal({ isOpen, onClose, accounts }: CSVUploadM
       processedRow['Windows Store ID'] = ''
       processedRow['Mockup ID'] = ''
       
+      // Validar e limpar dados importantes
+      processedRow['Campaign Name'] = processedRow['Campaign Name'] || 'Campanha do Template'
+      processedRow['Ad Set Name'] = processedRow['Ad Set Name'] || 'Conjunto do Template'
+      processedRow['Ad Name'] = processedRow['Ad Name'] || 'Anúncio do Template'
+      processedRow['Campaign Objective'] = processedRow['Campaign Objective'] || 'OUTCOME_TRAFFIC'
+      processedRow['Campaign Status'] = processedRow['Campaign Status'] || 'PAUSED'
+      processedRow['Ad Set Daily Budget'] = processedRow['Ad Set Daily Budget'] || '1000'
+      processedRow['Countries'] = processedRow['Countries'] || 'BR'
+      processedRow['Link'] = processedRow['Link'] || 'https://example.com'
+      processedRow['Body'] = processedRow['Body'] || 'Confira nosso produto!'
+      
       return processedRow
     })
   }

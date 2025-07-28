@@ -1233,13 +1233,16 @@ export class FacebookAPI {
             special_ad_categories: '[]'
           })
           
+          // Validar e processar código de país
+          const countries = this.validateCountries(row['Countries'])
+          
           // Criar ad set
           const adSetId = await this.createAdSet(accountId, accessToken, {
             name: row['Ad Set Name'] || 'Conjunto do Template',
             campaignId: campaignId,
             targeting: {
               geo_locations: {
-                countries: row['Countries'] ? [row['Countries']] : ['BR']
+                countries: countries
               }
             },
             dailyBudget: parseInt(row['Ad Set Daily Budget']) || 1000,
@@ -1249,7 +1252,7 @@ export class FacebookAPI {
           // Criar ad
           const adId = await this.createAd(accountId, accessToken, {
             name: row['Ad Name'] || 'Anúncio do Template',
-            adset_id: adSetId,
+            adset_id: parseInt(adSetId), // Garantir que seja número
             creative: {
               name: 'Criativo do Template',
               object_story_spec: {
@@ -1307,5 +1310,33 @@ export class FacebookAPI {
     }
     
     return objectiveMap[objective] || 'OUTCOME_TRAFFIC'
+  }
+
+  /**
+   * Valida e processa códigos de países
+   */
+  private validateCountries(countriesInput: string): string[] {
+    if (!countriesInput) {
+      return ['BR'] // Padrão Brasil
+    }
+
+    // Limpar e dividir países
+    const countries = countriesInput
+      .split(',')
+      .map(country => country.trim().toUpperCase())
+      .filter(country => country.length > 0)
+
+    // Validar códigos de país (ISO 3166-1 alpha-2)
+    const validCountries = countries.filter(country => {
+      // Lista de códigos válidos comuns
+      const validCodes = [
+        'BR', 'US', 'CA', 'MX', 'AR', 'CL', 'CO', 'PE', 'VE', 'EC', 'BO', 'PY', 'UY', 'GY', 'SR', 'GF',
+        'GB', 'DE', 'FR', 'IT', 'ES', 'PT', 'NL', 'BE', 'CH', 'AT', 'SE', 'NO', 'DK', 'FI', 'PL', 'CZ',
+        'AU', 'NZ', 'JP', 'KR', 'CN', 'IN', 'SG', 'MY', 'TH', 'VN', 'PH', 'ID', 'HK', 'TW'
+      ]
+      return validCodes.includes(country)
+    })
+
+    return validCountries.length > 0 ? validCountries : ['BR']
   }
 } 
