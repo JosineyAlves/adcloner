@@ -1,4 +1,4 @@
-import { FacebookAccount, FacebookPage, FacebookPixel, Campaign, CampaignClone } from './types'
+import { FacebookAccount, FacebookPage, FacebookPixel, Campaign, CampaignClone, CampaignObjective } from './types'
 
 export class FacebookAPI {
   private appId: string
@@ -247,6 +247,106 @@ export class FacebookAPI {
       console.error('Error getting pixels:', error)
       return [] // Retornar array vazio em caso de erro
     }
+  }
+
+  /**
+   * Obtém campanhas de uma conta de anúncios
+   */
+  async getCampaigns(adAccountId: string, accessToken: string): Promise<Campaign[]> {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/${adAccountId}/campaigns?fields=id,name,objective,status,created_time,updated_time,insights{impressions,clicks,spend}&access_token=${accessToken}`
+      )
+      const data = await response.json()
+      
+      if (data.error) {
+        console.error('Error getting campaigns:', data.error)
+        return []
+      }
+      
+      const campaigns: Campaign[] = []
+      if (data.data) {
+        data.data.forEach((campaign: any) => {
+          const insights = campaign.insights?.data?.[0] || {}
+          
+          campaigns.push({
+            id: campaign.id,
+            name: campaign.name,
+            objective: this.mapCampaignObjective(campaign.objective),
+            adSetName: `Ad Set for ${campaign.name}`,
+            targeting: {
+              ageMin: 18,
+              ageMax: 65,
+              locations: ['BR'],
+              interests: [],
+              gender: 'all'
+            },
+            budget: {
+              amount: 100,
+              currency: 'BRL',
+              type: 'daily'
+            },
+            scheduling: {
+              startDate: campaign.created_time,
+              timezone: 'America/Sao_Paulo'
+            },
+            adName: `Ad for ${campaign.name}`,
+            creative: {
+              type: 'image',
+              url: 'https://via.placeholder.com/1200x630',
+              title: campaign.name,
+              description: 'Descrição do anúncio'
+            },
+            destination: {
+              url: 'https://example.com',
+              utmSource: 'facebook',
+              utmMedium: 'cpc',
+              utmCampaign: campaign.name
+            },
+            pixelId: '',
+            status: this.mapCampaignStatus(campaign.status),
+            createdAt: campaign.created_time,
+            updatedAt: campaign.updated_time
+          })
+        })
+      }
+      
+      console.log(`📊 Campanhas encontradas para conta ${adAccountId}:`, campaigns.length)
+      return campaigns
+    } catch (error) {
+      console.error('Error getting campaigns:', error)
+      return []
+    }
+  }
+
+  /**
+   * Mapeia objetivo da campanha do Facebook para nosso tipo
+   */
+  private mapCampaignObjective(objective: string): CampaignObjective {
+    const mapping: Record<string, CampaignObjective> = {
+      'CONVERSIONS': 'CONVERSIONS',
+      'LINK_CLICKS': 'TRAFFIC',
+      'REACH': 'REACH',
+      'BRAND_AWARENESS': 'BRAND_AWARENESS',
+      'VIDEO_VIEWS': 'VIDEO_VIEWS',
+      'LEAD_GENERATION': 'LEAD_GENERATION'
+    }
+    
+    return mapping[objective] || 'TRAFFIC'
+  }
+
+  /**
+   * Mapeia status da campanha do Facebook para nosso tipo
+   */
+  private mapCampaignStatus(status: string): 'draft' | 'active' | 'paused' | 'deleted' {
+    const mapping: Record<string, 'draft' | 'active' | 'paused' | 'deleted'> = {
+      'ACTIVE': 'active',
+      'PAUSED': 'paused',
+      'DELETED': 'deleted',
+      'DRAFT': 'draft'
+    }
+    
+    return mapping[status] || 'draft'
   }
 
   // ===== CAMPANHAS E ANÚNCIOS =====

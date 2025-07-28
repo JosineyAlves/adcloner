@@ -49,38 +49,51 @@ export default function CloneCampaignModal({
     setCloneResults([])
 
     try {
-      const response = await fetch('/api/facebook/clone', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          sourceAdAccountId: campaign.id, // Assumindo que temos o ID da conta fonte
-          targetAdAccountIds: selectedAccounts,
-          campaignId: campaign.id,
-          campaignData: {
-            name: campaign.name,
-            objective: campaign.objective,
-            adSetData: {
-              name: campaign.adSetName,
-              dailyBudget: campaign.budget.amount,
-              optimizationGoal: campaign.objective === 'CONVERSIONS' ? 'OFFSITE_CONVERSIONS' : 'REACH',
-              bidAmount: campaign.budget.amount * 0.1, // 10% do orçamento diário
-              targeting: campaign.targeting
-            }
+      // Clonar para cada conta selecionada
+      const results: CloneResult[] = []
+      
+      for (const accountId of selectedAccounts) {
+        try {
+          const response = await fetch('/api/campaigns/clones', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              sourceCampaignId: campaign.id,
+              targetAccountId: accountId,
+              campaignName: `${campaign.name} - Clone`
+            })
+          })
+
+          const data = await response.json()
+
+          if (data.success) {
+            results.push({
+              targetAdAccountId: accountId,
+              success: true,
+              campaign: data.clone
+            })
+          } else {
+            results.push({
+              targetAdAccountId: accountId,
+              success: false,
+              error: data.error || 'Erro desconhecido'
+            })
           }
-        })
-      })
-
-      const data = await response.json()
-
-      if (data.success) {
-        setCloneResults(data.results)
-        toast.success(`Campanha clonada para ${data.results.filter((r: CloneResult) => r.success).length} contas`)
-      } else {
-        toast.error('Erro ao clonar campanha')
+        } catch (error) {
+          results.push({
+            targetAdAccountId: accountId,
+            success: false,
+            error: 'Erro de rede'
+          })
+        }
       }
+
+      setCloneResults(results)
+      const successCount = results.filter(r => r.success).length
+      toast.success(`Campanha clonada para ${successCount} de ${selectedAccounts.length} contas`)
     } catch (error) {
       console.error('Clone error:', error)
       toast.error('Erro ao clonar campanha')
