@@ -192,32 +192,56 @@ export class FacebookAPI {
    */
   async getPixels(userAccessToken: string): Promise<FacebookPixel[]> {
     try {
-      // Buscar pixels através das contas de anúncios
+      // Buscar pixels através das contas de anúncios usando a nova estrutura
       const adAccounts = await this.getAdAccounts(userAccessToken)
       const allPixels: FacebookPixel[] = []
       
       for (const account of adAccounts) {
         try {
+          // Nova estrutura: buscar data_sets (que incluem pixels)
           const response = await fetch(
-            `${this.baseUrl}/${account.id}/pixels?fields=id,name,code&access_token=${userAccessToken}`
+            `${this.baseUrl}/${account.id}/data_sets?fields=id,name,type,data_sources&access_token=${userAccessToken}`
           )
           const data = await response.json()
           
           if (data.data) {
-            data.data.forEach((pixel: any) => {
-              allPixels.push({
-                id: pixel.id,
-                name: pixel.name,
-                code: pixel.code
-              })
+            data.data.forEach((dataSet: any) => {
+              // Filtrar apenas pixels (type = 'PIXEL')
+              if (dataSet.type === 'PIXEL') {
+                allPixels.push({
+                  id: dataSet.id,
+                  name: dataSet.name,
+                  code: dataSet.id // Usar ID como código temporário
+                })
+              }
             })
           }
         } catch (error) {
-          console.error(`Error getting pixels for account ${account.id}:`, error)
+          console.error(`Error getting data sets for account ${account.id}:`, error)
+          
+          // Fallback: tentar buscar pixels diretamente (método antigo)
+          try {
+            const fallbackResponse = await fetch(
+              `${this.baseUrl}/${account.id}/pixels?fields=id,name,code&access_token=${userAccessToken}`
+            )
+            const fallbackData = await fallbackResponse.json()
+            
+            if (fallbackData.data) {
+              fallbackData.data.forEach((pixel: any) => {
+                allPixels.push({
+                  id: pixel.id,
+                  name: pixel.name,
+                  code: pixel.code
+                })
+              })
+            }
+          } catch (fallbackError) {
+            console.error(`Error getting pixels (fallback) for account ${account.id}:`, fallbackError)
+          }
         }
       }
       
-      console.log('📊 Pixels encontrados:', allPixels.length)
+      console.log('📊 Pixels/Data Sets encontrados:', allPixels.length)
       return allPixels
     } catch (error) {
       console.error('Error getting pixels:', error)

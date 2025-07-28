@@ -265,10 +265,10 @@ Digite o número da opção (1-4):
             )}
           </div>
 
-          {/* Pixels */}
+          {/* Pixels e Data Sets */}
           <div className="mb-4">
             <h4 className="font-medium text-gray-900 dark:text-white mb-2">
-              Pixels ({account.pixels.length})
+              Pixels/Data Sets ({account.pixels.length})
             </h4>
             {account.pixels.length > 0 ? (
               <div className="space-y-2">
@@ -288,7 +288,7 @@ Digite o número da opção (1-4):
               </div>
             ) : (
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Nenhum pixel encontrado
+                Nenhum pixel/data set encontrado
               </p>
             )}
           </div>
