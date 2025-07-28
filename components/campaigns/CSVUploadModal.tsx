@@ -56,30 +56,40 @@ export default function CSVUploadModal({ isOpen, onClose, accounts }: CSVUploadM
     for (const line of lines) {
       const values = line.split('\t')
       
-      // Mapear campos específicos do Facebook
+      // Mapear campos específicos do Facebook (mantendo estrutura original)
       const row = {
-        'Campaign ID': values[0] || '',
+        // Campos da Campanha
         'Campaign Name': values[2] || '',
         'Campaign Status': values[3] || '',
         'Campaign Objective': values[4] || '',
         'Campaign Daily Budget': values[8] || '',
-        'Ad Set ID': values[22] || '',
+        'Campaign Bid Strategy': values[9] || '',
+        
+        // Campos do Ad Set
         'Ad Set Name': values[25] || '',
         'Ad Set Daily Budget': values[29] || '',
-        'Ad ID': values[45] || '',
+        'Ad Set Optimization Goal': values[58] || '',
+        'Ad Set Billing Event': values[59] || '',
+        'Ad Set Bid Amount': values[60] || '',
+        
+        // Campos do Anúncio
         'Ad Name': values[48] || '',
-        'Title': values[49] || '',
-        'Body': values[50] || '',
-        'Link': values[51] || '',
-        'Image Hash': values[52] || '',
-        'Video ID': values[53] || '',
+        'Ad Title': values[49] || '',
+        'Ad Body': values[50] || '',
+        'Ad Link': values[51] || '',
+        'Ad Image Hash': values[52] || '',
+        'Ad Video ID': values[53] || '',
+        
+        // Targeting
         'Countries': values[54] || '',
         'Age Min': values[55] || '',
         'Age Max': values[56] || '',
         'Placements': values[57] || '',
-        'Optimization Goal': values[58] || '',
-        'Billing Event': values[59] || '',
-        'Bid Amount': values[60] || '',
+        
+        // IDs (serão removidos no template)
+        'Campaign ID': values[0] || '',
+        'Ad Set ID': values[22] || '',
+        'Ad ID': values[45] || '',
         'Page ID': values[23] || '',
         'Pixel ID': values[24] || ''
       }
@@ -91,21 +101,36 @@ export default function CSVUploadModal({ isOpen, onClose, accounts }: CSVUploadM
   }
 
   const processCSVData = (data: any[]) => {
-    // Remover IDs que impedem a clonagem
+    // Criar template limpo (como no Google Sheets)
     return data.map(row => {
-      const processedRow = { ...row }
+      const templateRow: any = {}
       
-      // Remover IDs específicos
-      delete processedRow['Campaign ID']
-      delete processedRow['Ad Set ID']
-      delete processedRow['Ad ID']
-      delete processedRow['Creation Package Config ID']
-      delete processedRow['Story ID']
-      delete processedRow['Video ID']
-      delete processedRow['Image Hash']
-      delete processedRow['Instagram Platform Image Hash']
+      // Manter apenas campos necessários para clonagem
+      templateRow['Campaign Name'] = row['Campaign Name']
+      templateRow['Campaign Status'] = row['Campaign Status']
+      templateRow['Campaign Objective'] = row['Campaign Objective']
+      templateRow['Campaign Daily Budget'] = row['Campaign Daily Budget']
+      templateRow['Campaign Bid Strategy'] = row['Campaign Bid Strategy']
       
-      return processedRow
+      templateRow['Ad Set Name'] = row['Ad Set Name']
+      templateRow['Ad Set Daily Budget'] = row['Ad Set Daily Budget']
+      templateRow['Ad Set Optimization Goal'] = row['Ad Set Optimization Goal']
+      templateRow['Ad Set Billing Event'] = row['Ad Set Billing Event']
+      templateRow['Ad Set Bid Amount'] = row['Ad Set Bid Amount']
+      
+      templateRow['Ad Name'] = row['Ad Name']
+      templateRow['Ad Title'] = row['Ad Title']
+      templateRow['Ad Body'] = row['Ad Body']
+      templateRow['Ad Link'] = row['Ad Link']
+      templateRow['Ad Image Hash'] = row['Ad Image Hash']
+      templateRow['Ad Video ID'] = row['Ad Video ID']
+      
+      templateRow['Countries'] = row['Countries']
+      templateRow['Age Min'] = row['Age Min']
+      templateRow['Age Max'] = row['Age Max']
+      templateRow['Placements'] = row['Placements']
+      
+      return templateRow
     })
   }
 
@@ -171,8 +196,8 @@ export default function CSVUploadModal({ isOpen, onClose, accounts }: CSVUploadM
 
   const downloadTemplate = () => {
     const template = [
-      'Campaign Name\tCampaign Status\tCampaign Objective\tCampaign Daily Budget\tAd Set Name\tAd Set Daily Budget\tAd Name\tTitle\tBody\tLink',
-      'Minha Campanha\tPAUSED\tOUTCOME_SALES\t50\tMeu Ad Set\t50\tMeu Anúncio\tTítulo do Anúncio\tDescrição do anúncio\thttps://example.com'
+      'Campaign Name\tCampaign Status\tCampaign Objective\tCampaign Daily Budget\tCampaign Bid Strategy\tAd Set Name\tAd Set Daily Budget\tAd Set Optimization Goal\tAd Set Billing Event\tAd Set Bid Amount\tAd Name\tAd Title\tAd Body\tAd Link\tAd Image Hash\tAd Video ID\tCountries\tAge Min\tAge Max\tPlacements',
+      'Minha Campanha\tPAUSED\tOUTCOME_SALES\t50\tLOWEST_COST_WITHOUT_CAP\tMeu Ad Set\t50\tREACH\tIMPRESSIONS\t1000\tMeu Anúncio\tTítulo do Anúncio\tDescrição do anúncio\thttps://example.com\t\t\tBR\t18\t65\thome,recent'
     ].join('\n')
 
     const blob = new Blob([template], { type: 'text/csv' })
@@ -180,6 +205,25 @@ export default function CSVUploadModal({ isOpen, onClose, accounts }: CSVUploadM
     const a = document.createElement('a')
     a.href = url
     a.download = 'template-campanha.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const downloadProcessedTemplate = () => {
+    if (processedData.length === 0) return
+    
+    // Criar headers baseados nos dados processados
+    const headers = Object.keys(processedData[0]).join('\t')
+    const rows = processedData.map(row => 
+      Object.values(row).join('\t')
+    ).join('\n')
+    
+    const csvContent = `${headers}\n${rows}`
+    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'template-processado.csv'
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -353,7 +397,18 @@ export default function CSVUploadModal({ isOpen, onClose, accounts }: CSVUploadM
                   <li>• Arquivo CSV processado: {csvData.length} linhas</li>
                   <li>• Contas selecionadas: {accountConfigs.filter(c => c.enabled).length}</li>
                   <li>• IDs removidos automaticamente</li>
+                  <li>• Template limpo criado</li>
                 </ul>
+                
+                <div className="mt-4">
+                  <button
+                    onClick={downloadProcessedTemplate}
+                    className="btn-secondary flex items-center"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Baixar Template Processado
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-2">
