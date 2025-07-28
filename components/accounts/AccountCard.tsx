@@ -88,10 +88,52 @@ ${account.pixels.map(pixel => `• ${pixel.name} (${pixel.code})`).join('\n')}
   }
 
   const handleManage = () => {
-    // Abrir página de gerenciamento da conta
-    const manageUrl = `https://business.facebook.com/adsmanager/manage/accounts?act=${account.id}`
-    window.open(manageUrl, '_blank')
-    toast.success('Abrindo gerenciador do Facebook...')
+    // Criar menu de opções de gerenciamento
+    const options = [
+      {
+        name: 'Facebook Ads Manager',
+        url: `https://business.facebook.com/adsmanager/manage/accounts?act=${account.id}`,
+        description: 'Gerenciar campanhas e anúncios'
+      },
+      {
+        name: 'Business Manager',
+        url: `https://business.facebook.com/settings`,
+        description: 'Configurações do Business Manager'
+      },
+      {
+        name: 'Páginas do Facebook',
+        url: `https://business.facebook.com/pages`,
+        description: 'Gerenciar páginas conectadas'
+      },
+      {
+        name: 'Pixels do Facebook',
+        url: `https://business.facebook.com/events_manager2/list/pixel/${account.businessManagerId}`,
+        description: 'Configurar pixels de conversão'
+      }
+    ]
+
+    // Criar modal de seleção
+    const option = prompt(`
+🎯 Escolha uma opção de gerenciamento:
+
+1. Facebook Ads Manager - Gerenciar campanhas e anúncios
+2. Business Manager - Configurações do Business Manager  
+3. Páginas do Facebook - Gerenciar páginas conectadas
+4. Pixels do Facebook - Configurar pixels de conversão
+
+Digite o número da opção (1-4):
+    `)
+
+    if (option) {
+      const selectedIndex = parseInt(option) - 1
+      if (selectedIndex >= 0 && selectedIndex < options.length) {
+        const selectedOption = options[selectedIndex]
+        window.open(selectedOption.url, '_blank')
+        toast.success(`Abrindo ${selectedOption.name}...`)
+      } else {
+        toast.error('Opção inválida')
+      }
+    }
   }
 
   const handleDisconnect = async () => {
