@@ -779,68 +779,85 @@ export class FacebookAPI {
     bulkData: any
   ): Promise<string> {
     try {
+      // Verificar se a conta tem permissões
+      console.log(`🔍 Verificando permissões da conta: ${adAccountId}`)
+      
       // 1. Criar campanha
       const campaignId = await this.createCampaign(adAccountId, accessToken, bulkData.campaign)
+      console.log(`✅ Campanha criada: ${campaignId}`)
       
       // 2. Criar Ad Sets
       const adSetIds = []
       for (const adSetData of bulkData.adSets) {
-        const adSetId = await this.createAdSet(adAccountId, accessToken, {
-          ...adSetData,
-          campaignId: campaignId
-        })
-        adSetIds.push(adSetId)
+        try {
+          const adSetId = await this.createAdSet(adAccountId, accessToken, {
+            ...adSetData,
+            campaignId: campaignId
+          })
+          adSetIds.push(adSetId)
+          console.log(`✅ Ad Set criado: ${adSetId}`)
+        } catch (adSetError) {
+          console.error('Error creating ad set:', adSetError)
+          // Continuar mesmo se um Ad Set falhar
+        }
       }
       
-      // 3. Criar Ads com criativos
-      for (let i = 0; i < bulkData.ads.length; i++) {
-        const adData = bulkData.ads[i]
-        const adSetId = adSetIds[i] || adSetIds[0] // Fallback para primeiro Ad Set
-        
-        if (adSetId) {
-          // Criar creative primeiro
-          let creativeId = null
-          if (adData.creative) {
-            try {
-              // Verificar se temos image_hash ou video_id válidos
-              const hasImage = adData.creative.object_story_spec?.link_data?.image_hash
-              const hasVideo = adData.creative.object_story_spec?.link_data?.video_id
-              
-              if (hasImage || hasVideo) {
-                console.log(`🎨 Criando creative com ${hasImage ? 'imagem' : ''}${hasImage && hasVideo ? ' e ' : ''}${hasVideo ? 'vídeo' : ''}`)
-                creativeId = await this.createCreative(adAccountId, adData.creative, accessToken)
-                console.log(`✅ Creative criado: ${creativeId}`)
-              } else {
-                console.log(`⚠️ Creative sem imagem/vídeo válidos, criando básico`)
-                // Criar creative básico sem imagem/vídeo
-                const basicCreative = {
-                  name: `${adData.name} Creative`,
-                  object_story_spec: {
-                    page_id: adData.creative.object_story_spec.page_id,
-                    link_data: {
-                      link: adData.creative.object_story_spec.link_data.link,
-                      message: adData.creative.object_story_spec.link_data.message
+      // 3. Criar Ads com criativos (apenas se temos Ad Sets)
+      if (adSetIds.length > 0 && bulkData.ads.length > 0) {
+        for (let i = 0; i < bulkData.ads.length; i++) {
+          const adData = bulkData.ads[i]
+          const adSetId = adSetIds[i] || adSetIds[0] // Fallback para primeiro Ad Set
+          
+          try {
+            // Criar creative primeiro
+            let creativeId = null
+            if (adData.creative) {
+              try {
+                // Verificar se temos image_hash ou video_id válidos
+                const hasImage = adData.creative.object_story_spec?.link_data?.image_hash
+                const hasVideo = adData.creative.object_story_spec?.link_data?.video_id
+                
+                if (hasImage || hasVideo) {
+                  console.log(`🎨 Criando creative com ${hasImage ? 'imagem' : ''}${hasImage && hasVideo ? ' e ' : ''}${hasVideo ? 'vídeo' : ''}`)
+                  creativeId = await this.createCreative(adAccountId, adData.creative, accessToken)
+                  console.log(`✅ Creative criado: ${creativeId}`)
+                } else {
+                  console.log(`⚠️ Creative sem imagem/vídeo válidos, criando básico`)
+                  // Criar creative básico sem imagem/vídeo
+                  const basicCreative = {
+                    name: `${adData.name} Creative`,
+                    object_story_spec: {
+                      page_id: adData.creative.object_story_spec.page_id,
+                      link_data: {
+                        link: adData.creative.object_story_spec.link_data.link,
+                        message: adData.creative.object_story_spec.link_data.message
+                      }
                     }
                   }
+                  creativeId = await this.createCreative(adAccountId, basicCreative, accessToken)
+                  console.log(`✅ Creative básico criado: ${creativeId}`)
                 }
-                creativeId = await this.createCreative(adAccountId, basicCreative, accessToken)
-                console.log(`✅ Creative básico criado: ${creativeId}`)
+              } catch (creativeError) {
+                console.error('Error creating creative:', creativeError)
+                console.log(`⚠️ Tentando criar ad sem creative`)
               }
-            } catch (creativeError) {
-              console.error('Error creating creative:', creativeError)
-              console.log(`⚠️ Tentando criar ad sem creative`)
             }
+            
+            // Criar ad
+            await this.createAd(adAccountId, accessToken, {
+              name: adData.name,
+              adSetId: adSetId,
+              creativeId: creativeId
+            })
+            
+            console.log(`✅ Ad criado: ${adData.name}`)
+          } catch (adError) {
+            console.error(`Error creating ad ${adData.name}:`, adError)
+            // Continuar mesmo se um Ad falhar
           }
-          
-          // Criar ad
-          await this.createAd(adAccountId, accessToken, {
-            name: adData.name,
-            adSetId: adSetId,
-            creativeId: creativeId
-          })
-          
-          console.log(`✅ Ad criado: ${adData.name}`)
         }
+      } else {
+        console.log(`⚠️ Nenhum Ad Set criado ou nenhum Ad para criar`)
       }
       
       return campaignId
@@ -873,14 +890,37 @@ export class FacebookAPI {
       
       // Buscar anúncios da campanha com detalhes completos
       const adsResponse = await fetch(
-        `${this.baseUrl}/${campaignId}/ads?fields=id,name,creative{id,name,object_story_spec}&access_token=${accessToken}`
+        `${this.baseUrl}/${campaignId}/ads?fields=id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id}}}&access_token=${accessToken}`
       )
       const adsData = await adsResponse.json()
       
       console.log(`📊 Anúncios encontrados: ${adsData.data?.length || 0}`)
-      adsData.data?.forEach((ad: any) => {
-        console.log(`📋 Ad: ${ad.name} - Creative: ${ad.creative?.id || 'Nenhum'}`)
-      })
+      if (adsData.data?.length === 0) {
+        // Tentar buscar anúncios via Ad Sets
+        console.log(`🔍 Tentando buscar anúncios via Ad Sets...`)
+        const adSetsResponse = await fetch(
+          `${this.baseUrl}/${campaignId}/adsets?fields=id,name,ads{id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id}}}&access_token=${accessToken}`
+        )
+        const adSetsData = await adSetsResponse.json()
+        
+        let allAds: any[] = []
+        adSetsData.data?.forEach((adSet: any) => {
+          if (adSet.ads?.data) {
+            allAds = allAds.concat(adSet.ads.data)
+          }
+        })
+        
+        console.log(`📊 Anúncios encontrados via Ad Sets: ${allAds.length}`)
+        allAds.forEach((ad: any) => {
+          console.log(`📋 Ad: ${ad.name} - Creative: ${ad.creative?.id || 'Nenhum'}`)
+        })
+        
+        adsData.data = allAds
+      } else {
+        adsData.data?.forEach((ad: any) => {
+          console.log(`📋 Ad: ${ad.name} - Creative: ${ad.creative?.id || 'Nenhum'}`)
+        })
+      }
       
       const result = {
         ...campaignData,
