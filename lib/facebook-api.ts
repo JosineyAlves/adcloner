@@ -371,7 +371,7 @@ export class FacebookAPI {
             access_token: accessToken,
             ...(campaignData.daily_budget && { daily_budget: campaignData.daily_budget.toString() }),
             ...(campaignData.lifetime_budget && { lifetime_budget: campaignData.lifetime_budget.toString() }),
-            ...(campaignData.bid_strategy && { bid_strategy: campaignData.bid_strategy })
+            bid_strategy: campaignData.bid_strategy || 'LOWEST_COST_WITHOUT_CAP'
           })
         }
       )
@@ -737,33 +737,33 @@ export class FacebookAPI {
     }
     
     const bulkData = {
-      // Dados da campanha (preservando configurações originais)
-      campaign: {
-        name: `${campaignData.name} (Clone)`,
-        status: 'PAUSED', // Sempre pausado para evitar gastos
-        objective: campaignData.objective,
-        special_ad_categories: campaignData.special_ad_categories || '[]',
-        daily_budget: campaignData.daily_budget,
-        lifetime_budget: campaignData.lifetime_budget,
-        bid_strategy: campaignData.bid_strategy || 'HIGHEST_VOLUME_OR_VALUE'
-      },
+              // Dados da campanha (preservando configurações originais)
+        campaign: {
+          name: `${campaignData.name} (Clone)`,
+          status: 'PAUSED', // Sempre pausado para evitar gastos
+          objective: campaignData.objective,
+          special_ad_categories: campaignData.special_ad_categories || '[]',
+          daily_budget: campaignData.daily_budget,
+          lifetime_budget: campaignData.lifetime_budget,
+          bid_strategy: campaignData.bid_strategy || 'LOWEST_COST_WITHOUT_CAP'
+        },
       
-      // Dados dos Ad Sets (preservando TODAS as configurações originais)
-      adSets: campaignData.adSets?.map((adSet: any) => ({
-        name: adSet.name,
-        status: 'PAUSED', // Sempre pausado para evitar gastos
-        daily_budget: adSet.daily_budget,
-        lifetime_budget: adSet.lifetime_budget,
-        billing_event: adSet.billing_event,
-        optimization_goal: adSet.optimization_goal,
-        targeting: adSet.targeting, // Preservar targeting completo
-        bid_amount: adSet.bid_amount,
-        bid_strategy: adSet.bid_strategy,
-        start_time: adSet.start_time,
-        end_time: adSet.end_time,
-        time_start: adSet.time_start,
-        time_stop: adSet.time_stop
-      })) || [],
+              // Dados dos Ad Sets (preservando TODAS as configurações originais)
+        adSets: campaignData.adSets?.map((adSet: any) => ({
+          name: adSet.name,
+          status: 'PAUSED', // Sempre pausado para evitar gastos
+          daily_budget: adSet.daily_budget,
+          lifetime_budget: adSet.lifetime_budget,
+          billing_event: adSet.billing_event,
+          optimization_goal: adSet.optimization_goal,
+          targeting: adSet.targeting, // Preservar targeting completo
+          bid_amount: adSet.bid_amount,
+          bid_strategy: adSet.bid_strategy || 'LOWEST_COST_WITHOUT_CAP',
+          start_time: adSet.start_time,
+          end_time: adSet.end_time,
+          time_start: adSet.time_start,
+          time_stop: adSet.time_stop
+        })) || [],
       
       // Dados dos Ads (preservando criativos originais)
       ads: campaignData.ads?.map((ad: any) => {
@@ -973,7 +973,7 @@ export class FacebookAPI {
       // Buscar anúncios da campanha com detalhes completos incluindo criativos
       console.log(`🔍 Buscando anúncios para campanha: ${campaignId}`)
       const adsResponse = await fetch(
-        `${this.baseUrl}/${campaignId}/ads?fields=id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id,description,title,call_to_action{type,value}}},adset_id&access_token=${accessToken}`
+        `${this.baseUrl}/${campaignId}/ads?fields=id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id,description,call_to_action{type,value}}},adset_id&access_token=${accessToken}`
       )
       const adsData = await adsResponse.json()
       
@@ -986,7 +986,7 @@ export class FacebookAPI {
         // Tentar buscar anúncios via Ad Sets
         console.log(`🔍 Tentando buscar anúncios via Ad Sets...`)
         const adSetsResponse = await fetch(
-          `${this.baseUrl}/${campaignId}/adsets?fields=id,name,ads{id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id,description,title,call_to_action{type,value}}},adset_id}&access_token=${accessToken}`
+          `${this.baseUrl}/${campaignId}/adsets?fields=id,name,ads{id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id,description,call_to_action{type,value}}},adset_id}&access_token=${accessToken}`
         )
         const adSetsData = await adSetsResponse.json()
         
