@@ -255,7 +255,7 @@ export class FacebookAPI {
   async getCampaigns(adAccountId: string, accessToken: string): Promise<Campaign[]> {
     try {
       const response = await fetch(
-        `${this.baseUrl}/${adAccountId}/campaigns?fields=id,name,objective,status,created_time,updated_time,insights{impressions,clicks,spend}&include_drafts=true&access_token=${accessToken}`
+        `${this.baseUrl}/${adAccountId}/campaigns?fields=id,name,objective,status,created_time,updated_time,insights{impressions,clicks,spend}&access_token=${accessToken}`
       )
       const data = await response.json()
       
@@ -884,10 +884,10 @@ export class FacebookAPI {
         throw new Error(campaignData.error.message)
       }
       
-      // Buscar conjuntos de anúncios da campanha (incluindo rascunhos)
+      // Buscar conjuntos de anúncios da campanha
       console.log(`🔍 Buscando Ad Sets para campanha: ${campaignId}`)
       const adSetsResponse = await fetch(
-        `${this.baseUrl}/${campaignId}/adsets?fields=id,name,targeting,daily_budget,optimization_goal,billing_event,bid_amount,bid_strategy,status&include_drafts=true&access_token=${accessToken}`
+        `${this.baseUrl}/${campaignId}/adsets?fields=id,name,targeting,daily_budget,optimization_goal,billing_event,bid_amount,bid_strategy,status&access_token=${accessToken}`
       )
       const adSetsData = await adSetsResponse.json()
       
@@ -917,10 +917,10 @@ export class FacebookAPI {
         }
       }
       
-      // Buscar anúncios da campanha com detalhes completos (incluindo rascunhos)
+      // Buscar anúncios da campanha com detalhes completos
       console.log(`🔍 Buscando anúncios para campanha: ${campaignId}`)
       const adsResponse = await fetch(
-        `${this.baseUrl}/${campaignId}/ads?fields=id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id}}}&include_drafts=true&access_token=${accessToken}`
+        `${this.baseUrl}/${campaignId}/ads?fields=id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id}}}&access_token=${accessToken}`
       )
       const adsData = await adsResponse.json()
       
@@ -930,10 +930,10 @@ export class FacebookAPI {
       }
       
       if (adsData.data?.length === 0) {
-        // Tentar buscar anúncios via Ad Sets (incluindo rascunhos)
+        // Tentar buscar anúncios via Ad Sets
         console.log(`🔍 Tentando buscar anúncios via Ad Sets...`)
         const adSetsResponse = await fetch(
-          `${this.baseUrl}/${campaignId}/adsets?fields=id,name,ads{id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id}}}&include_drafts=true&access_token=${accessToken}`
+          `${this.baseUrl}/${campaignId}/adsets?fields=id,name,ads{id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id}}}&access_token=${accessToken}`
         )
         const adSetsData = await adSetsResponse.json()
         
