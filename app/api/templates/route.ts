@@ -16,25 +16,51 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData()
-    const file = formData.get('file') as File
-    const name = formData.get('name') as string
-    const description = formData.get('description') as string
-    const processedData = formData.get('processedData') as string
+    const contentType = request.headers.get('content-type') || ''
+    
+    let templateData: any = {}
+    
+    if (contentType.includes('application/json')) {
+      // Processar JSON
+      templateData = await request.json()
+    } else if (contentType.includes('multipart/form-data')) {
+      // Processar FormData
+      const formData = await request.formData()
+      const file = formData.get('file') as File
+      const name = formData.get('name') as string
+      const description = formData.get('description') as string
+      const processedData = formData.get('processedData') as string
 
-    if (!file || !name) {
-      return NextResponse.json({ error: 'Arquivo e nome são obrigatórios' }, { status: 400 })
+      if (!file || !name) {
+        return NextResponse.json({ error: 'Arquivo e nome são obrigatórios' }, { status: 400 })
+      }
+
+      templateData = {
+        name,
+        description: description || '',
+        fileName: file.name,
+        processedData: JSON.parse(processedData),
+        campaignCount: JSON.parse(processedData).length,
+        status: 'active'
+      }
+    } else {
+      return NextResponse.json({ error: 'Content-Type não suportado' }, { status: 400 })
+    }
+
+    // Validar dados obrigatórios
+    if (!templateData.name || !templateData.processedData) {
+      return NextResponse.json({ error: 'Nome e dados processados são obrigatórios' }, { status: 400 })
     }
 
     // Criar novo template
     const newTemplate = await templateStorage.createTemplate({
-      name,
-      description: description || '',
-      fileName: file.name,
+      name: templateData.name,
+      description: templateData.description || '',
+      fileName: templateData.fileName || 'template.csv',
       processedAt: new Date().toISOString(),
-      campaignCount: JSON.parse(processedData).length,
-      status: 'active',
-      processedData: JSON.parse(processedData)
+      campaignCount: templateData.campaignCount || templateData.processedData.length,
+      status: templateData.status || 'active',
+      processedData: templateData.processedData
     })
 
     return NextResponse.json({ 
