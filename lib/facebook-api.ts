@@ -885,23 +885,50 @@ export class FacebookAPI {
       }
       
       // Buscar conjuntos de anúncios da campanha (incluindo rascunhos)
+      console.log(`🔍 Buscando Ad Sets para campanha: ${campaignId}`)
       const adSetsResponse = await fetch(
         `${this.baseUrl}/${campaignId}/adsets?fields=id,name,targeting,daily_budget,optimization_goal,billing_event,bid_amount,bid_strategy,status&include_drafts=true&access_token=${accessToken}`
       )
       const adSetsData = await adSetsResponse.json()
       
       console.log(`📊 Ad Sets encontrados: ${adSetsData.data?.length || 0}`)
+      if (adSetsData.error) {
+        console.log(`❌ Erro ao buscar Ad Sets:`, adSetsData.error)
+      }
+      
       adSetsData.data?.forEach((adSet: any) => {
-        console.log(`📋 Ad Set: ${adSet.name} - Status: ${adSet.status} - Budget: ${adSet.daily_budget}`)
+        console.log(`📋 Ad Set: ${adSet.name} - ID: ${adSet.id} - Status: ${adSet.status} - Budget: ${adSet.daily_budget}`)
       })
       
+      // Se não encontrou Ad Sets, tentar buscar diretamente pelo ID conhecido
+      if (!adSetsData.data || adSetsData.data.length === 0) {
+        console.log(`🔍 Tentando buscar Ad Set específico...`)
+        const specificAdSetId = '120227772217250699' // ID da planilha
+        const specificAdSetResponse = await fetch(
+          `${this.baseUrl}/${specificAdSetId}?fields=id,name,targeting,daily_budget,optimization_goal,billing_event,bid_amount,bid_strategy,status&access_token=${accessToken}`
+        )
+        const specificAdSetData = await specificAdSetResponse.json()
+        
+        if (specificAdSetData.error) {
+          console.log(`❌ Erro ao buscar Ad Set específico:`, specificAdSetData.error)
+        } else {
+          console.log(`✅ Ad Set específico encontrado:`, specificAdSetData)
+          adSetsData.data = [specificAdSetData]
+        }
+      }
+      
       // Buscar anúncios da campanha com detalhes completos (incluindo rascunhos)
+      console.log(`🔍 Buscando anúncios para campanha: ${campaignId}`)
       const adsResponse = await fetch(
         `${this.baseUrl}/${campaignId}/ads?fields=id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id}}}&include_drafts=true&access_token=${accessToken}`
       )
       const adsData = await adsResponse.json()
       
       console.log(`📊 Anúncios encontrados: ${adsData.data?.length || 0}`)
+      if (adsData.error) {
+        console.log(`❌ Erro ao buscar anúncios:`, adsData.error)
+      }
+      
       if (adsData.data?.length === 0) {
         // Tentar buscar anúncios via Ad Sets (incluindo rascunhos)
         console.log(`🔍 Tentando buscar anúncios via Ad Sets...`)
@@ -927,6 +954,42 @@ export class FacebookAPI {
         adsData.data?.forEach((ad: any) => {
           console.log(`📋 Ad: ${ad.name} - Creative: ${ad.creative?.id || 'Nenhum'} - Status: ${ad.status}`)
         })
+      }
+      
+      // Se ainda não encontrou anúncios, tentar buscar pelos IDs conhecidos da planilha
+      if (!adsData.data || adsData.data.length === 0) {
+        console.log(`🔍 Tentando buscar anúncios específicos da planilha...`)
+        const adIds = [
+          '120227772217290699', // AD06
+          '120227772217280699', // AD07
+          '120227772217270699', // AD08
+          '120227772217260699', // AD09
+          '120227772217300699'  // AD10
+        ]
+        
+        let foundAds: any[] = []
+        for (const adId of adIds) {
+          try {
+            const adResponse = await fetch(
+              `${this.baseUrl}/${adId}?fields=id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id}}}&access_token=${accessToken}`
+            )
+            const adData = await adResponse.json()
+            
+            if (!adData.error) {
+              console.log(`✅ Anúncio específico encontrado: ${adData.name} (${adData.id})`)
+              foundAds.push(adData)
+            } else {
+              console.log(`❌ Erro ao buscar anúncio ${adId}:`, adData.error)
+            }
+          } catch (error) {
+            console.log(`❌ Erro ao buscar anúncio ${adId}:`, error)
+          }
+        }
+        
+        if (foundAds.length > 0) {
+          console.log(`✅ Encontrados ${foundAds.length} anúncios específicos`)
+          adsData.data = foundAds
+        }
       }
       
       const result = {
