@@ -32,6 +32,14 @@ export default function AccountCard({ account }: AccountCardProps) {
       </div>
 
       <div className="space-y-3">
+        {/* Profile Info */}
+        {account.profileName && (
+          <div className="flex items-center space-x-2 text-sm text-blue-600 dark:text-blue-400">
+            <Users className="w-4 h-4" />
+            <span>{account.profileName}</span>
+          </div>
+        )}
+        
         <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
           <Building2 className="w-4 h-4" />
           <span>{account.businessManagerName}</span>

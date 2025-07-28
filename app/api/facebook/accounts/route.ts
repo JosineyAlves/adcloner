@@ -30,6 +30,8 @@ export async function GET(request: NextRequest) {
 
     // Buscar dados reais do Facebook
     try {
+      // Buscar informações do perfil
+      const userInfo = await facebookAPI.getUserInfo(accessToken)
       const accounts = await facebookAPI.getAdAccounts(accessToken)
       
       // Para cada conta, buscar páginas e pixels
@@ -42,17 +44,31 @@ export async function GET(request: NextRequest) {
             return {
               ...account,
               pages,
-              pixels
+              pixels,
+              // Adicionar informações do perfil
+              profileName: userInfo.name,
+              profileEmail: userInfo.email,
+              profileId: userInfo.id
             }
           } catch (error) {
             console.error(`Error getting details for account ${account.id}:`, error)
-            return account
+            return {
+              ...account,
+              profileName: userInfo.name,
+              profileEmail: userInfo.email,
+              profileId: userInfo.id
+            }
           }
         })
       )
       
       return NextResponse.json({ 
         accounts: accountsWithDetails,
+        profile: {
+          name: userInfo.name,
+          email: userInfo.email,
+          id: userInfo.id
+        },
         success: true 
       })
       

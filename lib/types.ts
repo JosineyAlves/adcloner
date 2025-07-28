@@ -7,6 +7,10 @@ export interface FacebookAccount {
   tokenStatus: 'valid' | 'expired' | 'invalid'
   pages: FacebookPage[]
   pixels: FacebookPixel[]
+  // Informações do perfil do Facebook
+  profileName?: string
+  profileEmail?: string
+  profileId?: string
   createdAt: string
   updatedAt: string
 }

@@ -12,7 +12,8 @@ import {
   Trash2,
   CheckCircle,
   AlertCircle,
-  Clock
+  Clock,
+  Users
 } from 'lucide-react'
 import { FacebookAccount } from '@/lib/types'
 import { toast } from 'react-hot-toast'
@@ -186,6 +187,22 @@ Digite o número da opção (1-4):
           </span>
         </div>
       </div>
+
+      {/* Profile Info */}
+      {account.profileName && (
+        <div className="space-y-2 mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <div className="flex items-center gap-2 text-sm font-medium text-blue-700 dark:text-blue-300">
+            <Users className="w-4 h-4" />
+            <span>Perfil Conectado</span>
+          </div>
+          <div className="text-sm text-blue-600 dark:text-blue-400">
+            <div>👤 {account.profileName}</div>
+            {account.profileEmail && (
+              <div>📧 {account.profileEmail}</div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Business Manager Info */}
       <div className="space-y-3 mb-4">
