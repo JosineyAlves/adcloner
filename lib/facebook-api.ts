@@ -1220,73 +1220,144 @@ export class FacebookAPI {
         throw new Error('Nenhuma página encontrada para criar anúncios')
       }
       
-      for (const row of templateData) {
+      // Agrupar dados por campanha
+      const campaigns = this.groupTemplateDataByCampaign(templateData)
+      
+      console.log(`📊 Processando ${campaigns.length} campanhas do template`)
+      
+      for (const campaign of campaigns) {
         try {
-          // Mapear objetivo da campanha para valores válidos
-          const objective = this.mapTemplateObjective(row['Campaign Objective'])
+          console.log(`🚀 Criando campanha: ${campaign.name}`)
           
-          // Criar campanha baseada nos dados do template
+          // Mapear objetivo da campanha para valores válidos
+          const objective = this.mapTemplateObjective(campaign.objective)
+          
+          // Criar campanha
           const campaignId = await this.createCampaign(accountId, accessToken, {
-            name: row['Campaign Name'] || 'Campanha do Template',
+            name: campaign.name,
             objective: objective,
             status: 'PAUSED',
             special_ad_categories: '[]'
           })
           
-          // Validar e processar código de país
-          const countries = this.validateCountries(row['Countries'])
+          console.log(`✅ Campanha criada: ${campaignId}`)
           
-          // Criar ad set
-          const adSetId = await this.createAdSet(accountId, accessToken, {
-            name: row['Ad Set Name'] || 'Conjunto do Template',
-            campaignId: campaignId,
-            targeting: {
-              geo_locations: {
-                countries: countries
-              }
-            },
-            dailyBudget: parseInt(row['Ad Set Daily Budget']) || 1000,
-            optimizationGoal: 'LINK_CLICKS'
-          })
-          
-          // Criar ad
-          const adId = await this.createAd(accountId, accessToken, {
-            name: row['Ad Name'] || 'Anúncio do Template',
-            adset_id: parseInt(adSetId), // Garantir que seja número
-            creative: {
-              name: 'Criativo do Template',
-              object_story_spec: {
-                page_id: pageId,
-                link_data: {
-                  link: row['Link'] || 'https://example.com',
-                  message: row['Body'] || 'Confira nosso produto!',
-                  image_hash: row['Image Hash'] || ''
+          // Processar ad sets da campanha
+          for (const adSet of campaign.adSets) {
+            console.log(`📋 Criando ad set: ${adSet.name}`)
+            
+            // Validar e processar código de país
+            const countries = this.validateCountries(adSet.countries)
+            
+            // Criar ad set
+            const adSetId = await this.createAdSet(accountId, accessToken, {
+              name: adSet.name,
+              campaignId: campaignId,
+              targeting: {
+                geo_locations: {
+                  countries: countries
                 }
-              }
-            },
-            status: 'PAUSED'
-          })
-          
-          results.push({
-            campaignId: campaignId,
-            adSetId: adSetId,
-            adId: adId
-          })
+              },
+              dailyBudget: adSet.dailyBudget,
+              optimizationGoal: 'LINK_CLICKS'
+            })
+            
+            console.log(`✅ Ad set criado: ${adSetId}`)
+            
+            // Processar anúncios do ad set
+            for (const ad of adSet.ads) {
+              console.log(`📋 Criando anúncio: ${ad.name}`)
+              
+              // Criar anúncio
+              const adId = await this.createAd(accountId, accessToken, {
+                name: ad.name,
+                adset_id: parseInt(adSetId), // Garantir que seja número
+                creative: {
+                  name: `Criativo para ${ad.name}`,
+                  object_story_spec: {
+                    page_id: pageId,
+                    link_data: {
+                      link: ad.link,
+                      message: ad.body,
+                      image_hash: ad.imageHash || ''
+                    }
+                  }
+                },
+                status: 'PAUSED'
+              })
+              
+              console.log(`✅ Anúncio criado: ${adId}`)
+              
+              results.push({
+                campaignId: campaignId,
+                adSetId: adSetId,
+                adId: adId,
+                name: campaign.name
+              })
+            }
+          }
         } catch (error) {
-          console.error(`Erro ao criar campanha do template:`, error)
+          console.error(`❌ Erro ao criar campanha do template:`, error)
           // Continuar com próxima campanha mesmo se uma falhar
         }
       }
       
+      console.log(`✅ Clonagem concluída: ${results.length} anúncios criados`)
       return {
         success: true,
         results,
-        message: `${results.length} campanhas criadas com sucesso`
+        message: `${results.length} anúncios criados em ${campaigns.length} campanhas`
       }
     } catch (error) {
       console.error('Erro na clonagem por template:', error)
       throw error
     }
+  }
+
+  /**
+   * Agrupa dados do template por campanha
+   */
+  private groupTemplateDataByCampaign(templateData: any[]) {
+    const campaigns: { [key: string]: any } = {}
+    
+    for (const row of templateData) {
+      const campaignName = row['Campaign Name'] || 'Campanha Padrão'
+      const adSetName = row['Ad Set Name'] || 'Conjunto Padrão'
+      const adName = row['Ad Name'] || 'Anúncio Padrão'
+      
+      // Criar campanha se não existir
+      if (!campaigns[campaignName]) {
+        campaigns[campaignName] = {
+          name: campaignName,
+          objective: row['Campaign Objective'] || 'OUTCOME_TRAFFIC',
+          adSets: {}
+        }
+      }
+      
+      // Criar ad set se não existir
+      if (!campaigns[campaignName].adSets[adSetName]) {
+        campaigns[campaignName].adSets[adSetName] = {
+          name: adSetName,
+          dailyBudget: parseInt(row['Ad Set Daily Budget']) || 1000,
+          countries: row['Countries'] || 'BR',
+          ads: []
+        }
+      }
+      
+      // Adicionar anúncio ao ad set
+      campaigns[campaignName].adSets[adSetName].ads.push({
+        name: adName,
+        link: row['Link'] || 'https://example.com',
+        body: row['Body'] || 'Confira nosso produto!',
+        imageHash: row['Image Hash'] || ''
+      })
+    }
+    
+    // Converter para array
+    return Object.values(campaigns).map(campaign => ({
+      ...campaign,
+      adSets: Object.values(campaign.adSets)
+    }))
   }
 
   /**
