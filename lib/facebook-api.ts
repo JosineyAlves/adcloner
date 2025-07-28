@@ -529,7 +529,7 @@ export class FacebookAPI {
           },
           body: new URLSearchParams({
             name: adData.name,
-            adset_id: adData.adSetId,
+            adset_id: adData.adset_id.toString(),
             creative: `{"creative_id":"${creativeId}"}`,
             status: 'PAUSED',
             access_token: accessToken
@@ -1271,7 +1271,7 @@ export class FacebookAPI {
               // Criar anúncio
               const adId = await this.createAd(accountId, accessToken, {
                 name: ad.name,
-                adset_id: parseInt(adSetId), // Garantir que seja número
+                adSetId: adSetId, // Usar o ID do ad set criado
                 creative: {
                   name: `Criativo para ${ad.name}`,
                   object_story_spec: {
