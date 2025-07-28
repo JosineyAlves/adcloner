@@ -90,15 +90,16 @@ export interface Destination {
 }
 
 export interface CampaignClone {
-  id: string
+  id?: string
   originalCampaignId: string
-  accountId: string
-  accountName: string
+  newCampaignId?: string
+  accountId?: string
+  accountName?: string
   status: 'pending' | 'success' | 'failed' | 'review'
   facebookCampaignId?: string
   error?: string
-  createdAt: string
-  updatedAt: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface Template {

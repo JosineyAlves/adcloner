@@ -674,6 +674,148 @@ export class FacebookAPI {
   }
 
   /**
+   * Clona uma campanha usando método de importação em massa (similar ao CSV)
+   */
+  async cloneCampaignBulk(
+    sourceAccountId: string, 
+    targetAccountId: string, 
+    accessToken: string, 
+    campaignId: string
+  ): Promise<CampaignClone> {
+    try {
+      console.log(`🚀 Iniciando clonagem em massa: ${campaignId}`)
+      
+      // 1. Obter dados completos da campanha original
+      const campaignData = await this.getCampaignDetails(campaignId, accessToken)
+      
+      // 2. Preparar dados para importação em massa
+      const bulkData = this.prepareBulkImportData(campaignData, targetAccountId)
+      
+      // 3. Criar campanha via importação em massa
+      const newCampaignId = await this.createCampaignFromBulkData(targetAccountId, accessToken, bulkData)
+      
+      console.log(`✅ Campanha clonada com sucesso: ${newCampaignId}`)
+      
+      return {
+        originalCampaignId: campaignId,
+        newCampaignId: newCampaignId,
+        status: 'success'
+      }
+    } catch (error) {
+      console.error('Error cloning campaign via bulk import:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Prepara dados para importação em massa (remove IDs específicos)
+   */
+  private prepareBulkImportData(campaignData: any, targetAccountId: string): any {
+    const bulkData = {
+      // Dados da campanha (sem IDs)
+      campaign: {
+        name: `${campaignData.name} (Clone)`,
+        status: 'PAUSED',
+        objective: campaignData.objective,
+        special_ad_categories: '[]',
+        daily_budget: campaignData.daily_budget || 1000,
+        bid_strategy: 'HIGHEST_VOLUME_OR_VALUE'
+      },
+      
+      // Dados dos Ad Sets (sem IDs)
+      adSets: campaignData.adSets?.map((adSet: any) => ({
+        name: adSet.name,
+        status: 'PAUSED',
+        daily_budget: adSet.daily_budget || 1000,
+        billing_event: 'IMPRESSIONS',
+        optimization_goal: adSet.optimization_goal || 'REACH',
+        targeting: adSet.targeting || {
+          geo_locations: { countries: ['BR'] },
+          age_min: 18,
+          age_max: 65
+        },
+        bid_amount: '1000'
+      })) || [],
+      
+      // Dados dos Ads (sem IDs, mas com criativos)
+      ads: campaignData.ads?.map((ad: any) => ({
+        name: ad.name,
+        status: 'PAUSED',
+        creative: {
+          name: `${ad.name} Creative`,
+          object_story_spec: {
+            page_id: ad.creative?.object_story_spec?.page_id || null,
+            link_data: {
+              link: ad.creative?.object_story_spec?.link_data?.link || 'https://example.com',
+              message: ad.creative?.object_story_spec?.link_data?.message || 'Confira nosso produto!',
+              image_hash: ad.creative?.object_story_spec?.link_data?.image_hash || null
+            }
+          }
+        }
+      })) || []
+    }
+    
+    return bulkData
+  }
+
+  /**
+   * Cria campanha a partir de dados de importação em massa
+   */
+  private async createCampaignFromBulkData(
+    adAccountId: string, 
+    accessToken: string, 
+    bulkData: any
+  ): Promise<string> {
+    try {
+      // 1. Criar campanha
+      const campaignId = await this.createCampaign(adAccountId, accessToken, bulkData.campaign)
+      
+      // 2. Criar Ad Sets
+      const adSetIds = []
+      for (const adSetData of bulkData.adSets) {
+        const adSetId = await this.createAdSet(adAccountId, accessToken, {
+          ...adSetData,
+          campaignId: campaignId
+        })
+        adSetIds.push(adSetId)
+      }
+      
+      // 3. Criar Ads com criativos
+      for (let i = 0; i < bulkData.ads.length; i++) {
+        const adData = bulkData.ads[i]
+        const adSetId = adSetIds[i] || adSetIds[0] // Fallback para primeiro Ad Set
+        
+        if (adSetId) {
+          // Criar creative primeiro
+          let creativeId = null
+          if (adData.creative) {
+            try {
+              creativeId = await this.createCreative(adAccountId, adData.creative, accessToken)
+              console.log(`✅ Creative criado: ${creativeId}`)
+            } catch (creativeError) {
+              console.error('Error creating creative:', creativeError)
+            }
+          }
+          
+          // Criar ad
+          await this.createAd(adAccountId, accessToken, {
+            name: adData.name,
+            adSetId: adSetId,
+            creativeId: creativeId
+          })
+          
+          console.log(`✅ Ad criado: ${adData.name}`)
+        }
+      }
+      
+      return campaignId
+    } catch (error) {
+      console.error('Error creating campaign from bulk data:', error)
+      throw error
+    }
+  }
+
+  /**
    * Obtém detalhes de uma campanha
    */
   async getCampaignDetails(campaignId: string, accessToken: string) {
