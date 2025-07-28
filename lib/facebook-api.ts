@@ -688,6 +688,56 @@ export class FacebookAPI {
   }
 
   /**
+   * Clona uma campanha usando método nativo do Facebook (/copies)
+   */
+  async cloneCampaignNative(
+    sourceCampaignId: string, 
+    targetAccountId: string, 
+    accessToken: string
+  ): Promise<CampaignClone> {
+    try {
+      console.log(`🚀 Iniciando clonagem nativa: ${sourceCampaignId}`)
+      
+      // Usar endpoint nativo /copies com deep_copy
+      const response = await fetch(
+        `${this.baseUrl}/${sourceCampaignId}/copies`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            deep_copy: 'true',
+            status_option: 'PAUSED',
+            rename_options: JSON.stringify({ name_suffix: ' - Clone' }),
+            parameter_overrides: JSON.stringify({
+              ad_account_id: targetAccountId
+            }),
+            access_token: accessToken
+          })
+        }
+      )
+      
+      const data = await response.json()
+      
+      if (data.error) {
+        console.error('Facebook API error:', data.error)
+        throw new Error(data.error.message)
+      }
+      
+      console.log(`✅ Campanha clonada nativamente: ${data.copied_campaign_id}`)
+      console.log(`📊 Objetos copiados: ${data.ad_object_ids?.length || 0}`)
+      
+      return {
+        originalCampaignId: sourceCampaignId,
+        newCampaignId: data.copied_campaign_id,
+        status: 'success'
+      }
+    } catch (error) {
+      console.error('Error cloning campaign via native method:', error)
+      throw error
+    }
+  }
+
+  /**
    * Clona uma campanha usando método de importação em massa (similar ao CSV)
    */
   async cloneCampaignBulk(
@@ -697,26 +747,36 @@ export class FacebookAPI {
     campaignId: string
   ): Promise<CampaignClone> {
     try {
-      console.log(`🚀 Iniciando clonagem em massa: ${campaignId}`)
+      console.log(`🚀 Tentando clonagem nativa primeiro: ${campaignId}`)
       
-      // 1. Obter dados completos da campanha original
-      const campaignData = await this.getCampaignDetails(campaignId, accessToken)
-      
-      // 2. Preparar dados para importação em massa
-      const bulkData = await this.prepareBulkImportData(campaignData, targetAccountId, accessToken)
-      
-      // 3. Criar campanha via importação em massa
-      const newCampaignId = await this.createCampaignFromBulkData(targetAccountId, accessToken, bulkData)
-      
-      console.log(`✅ Campanha clonada com sucesso: ${newCampaignId}`)
-      
-      return {
-        originalCampaignId: campaignId,
-        newCampaignId: newCampaignId,
-        status: 'success'
+      // Tentar método nativo primeiro
+      try {
+        return await this.cloneCampaignNative(campaignId, targetAccountId, accessToken)
+      } catch (nativeError) {
+        console.log(`⚠️ Método nativo falhou, usando fallback: ${nativeError}`)
+        
+        // Fallback para método manual
+        console.log(`🔄 Usando método manual como fallback`)
+        
+        // 1. Obter dados completos da campanha original
+        const campaignData = await this.getCampaignDetails(campaignId, accessToken)
+        
+        // 2. Preparar dados para importação em massa
+        const bulkData = await this.prepareBulkImportData(campaignData, targetAccountId, accessToken)
+        
+        // 3. Criar campanha via importação em massa
+        const newCampaignId = await this.createCampaignFromBulkData(targetAccountId, accessToken, bulkData)
+        
+        console.log(`✅ Campanha clonada com fallback: ${newCampaignId}`)
+        
+        return {
+          originalCampaignId: campaignId,
+          newCampaignId: newCampaignId,
+          status: 'success'
+        }
       }
     } catch (error) {
-      console.error('Error cloning campaign via bulk import:', error)
+      console.error('Error cloning campaign:', error)
       throw error
     }
   }
@@ -1075,12 +1135,39 @@ export class FacebookAPI {
   // ===== INSIGHTS E RELATÓRIOS =====
 
   /**
-   * Obtém insights de uma campanha
+   * Obtém insights completos de uma campanha
    */
-  async getCampaignInsights(campaignId: string, accessToken: string, datePreset: string = 'last_7d') {
+  async getCampaignInsights(
+    campaignId: string, 
+    accessToken: string, 
+    datePreset: string = 'last_7d',
+    level: string = 'campaign'
+  ) {
     try {
+      const fields = [
+        'impressions',
+        'clicks',
+        'link_clicks',
+        'spend',
+        'conversions',
+        'cpm',
+        'cpc',
+        'reach',
+        'frequency',
+        'actions',
+        'cost_per_action_type',
+        'unique_clicks',
+        'unique_link_clicks',
+        'unique_ctr',
+        'social_impressions',
+        'social_clicks',
+        'social_spend',
+        'social_reach',
+        'social_frequency'
+      ].join(',')
+
       const response = await fetch(
-        `${this.baseUrl}/${campaignId}/insights?fields=impressions,clicks,spend,conversions&date_preset=${datePreset}&access_token=${accessToken}`
+        `${this.baseUrl}/${campaignId}/insights?fields=${fields}&date_preset=${datePreset}&level=${level}&access_token=${accessToken}`
       )
       const data = await response.json()
       
@@ -1088,9 +1175,88 @@ export class FacebookAPI {
         throw new Error(data.error.message)
       }
       
-      return data.data[0] || {}
+      return data.data || []
     } catch (error) {
       console.error('Error getting campaign insights:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Obtém insights de uma conta de anúncios
+   */
+  async getAccountInsights(
+    accountId: string, 
+    accessToken: string, 
+    datePreset: string = 'last_7d'
+  ) {
+    try {
+      const fields = [
+        'impressions',
+        'clicks',
+        'link_clicks',
+        'spend',
+        'conversions',
+        'cpm',
+        'cpc',
+        'reach',
+        'frequency',
+        'campaign_id',
+        'campaign_name',
+        'adset_id',
+        'adset_name',
+        'ad_id',
+        'ad_name'
+      ].join(',')
+
+      const response = await fetch(
+        `${this.baseUrl}/${accountId}/insights?fields=${fields}&date_preset=${datePreset}&level=ad&access_token=${accessToken}`
+      )
+      const data = await response.json()
+      
+      if (data.error) {
+        throw new Error(data.error.message)
+      }
+      
+      return data.data || []
+    } catch (error) {
+      console.error('Error getting account insights:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Obtém insights com breakdowns
+   */
+  async getInsightsWithBreakdowns(
+    objectId: string,
+    accessToken: string,
+    breakdowns: string[] = ['age', 'gender'],
+    datePreset: string = 'last_7d'
+  ) {
+    try {
+      const fields = [
+        'impressions',
+        'clicks',
+        'spend',
+        'reach',
+        'frequency'
+      ].join(',')
+
+      const breakdownsParam = breakdowns.join(',')
+
+      const response = await fetch(
+        `${this.baseUrl}/${objectId}/insights?fields=${fields}&breakdowns=${breakdownsParam}&date_preset=${datePreset}&access_token=${accessToken}`
+      )
+      const data = await response.json()
+      
+      if (data.error) {
+        throw new Error(data.error.message)
+      }
+      
+      return data.data || []
+    } catch (error) {
+      console.error('Error getting insights with breakdowns:', error)
       throw error
     }
   }

@@ -46,12 +46,9 @@ export async function POST(request: NextRequest) {
       }, { status: 401 })
     }
 
-    // Buscar detalhes da campanha original
-    const campaignDetails = await facebookAPI.getCampaignDetails(sourceCampaignId, accessToken)
-    
-    // Criar clone da campanha usando método original melhorado
+    // Clonar campanha usando método nativo (com fallback)
     const cloneResult = await facebookAPI.cloneCampaignBulk(
-      campaignDetails.accountId,
+      sourceCampaignId,
       targetAccountId,
       accessToken,
       sourceCampaignId

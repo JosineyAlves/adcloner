@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, TrendingUp, Users, BarChart3, Copy, RefreshCw } from 'lucide-react'
+import { Plus, TrendingUp, Users, BarChart3, Copy, RefreshCw, Eye, DollarSign, MousePointer, Target } from 'lucide-react'
 import Sidebar from '@/components/layout/Sidebar'
 import StatsCard from '@/components/dashboard/StatsCard'
 import AccountCard from '@/components/dashboard/AccountCard'
@@ -11,12 +11,15 @@ import toast from 'react-hot-toast'
 
 export default function DashboardPage() {
   const [accounts, setAccounts] = useState<FacebookAccount[]>([])
+  const [insights, setInsights] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
+  const [datePreset, setDatePreset] = useState<string>('last_7d')
 
   useEffect(() => {
     fetchAccounts()
-  }, [])
+    fetchInsights()
+  }, [datePreset])
 
   const fetchAccounts = async () => {
     try {
@@ -43,19 +46,67 @@ export default function DashboardPage() {
     }
   }
 
+  const fetchInsights = async () => {
+    try {
+      // Buscar insights de todas as contas ativas
+      const activeAccounts = accounts.filter(a => a.status === 'active')
+      
+      const allInsights = []
+      for (const account of activeAccounts) {
+        try {
+          const response = await fetch(`/api/insights?accountId=${account.id}&datePreset=${datePreset}`, {
+            credentials: 'include'
+          })
+          
+          if (response.ok) {
+            const data = await response.json()
+            if (data.insights && data.insights.length > 0) {
+              allInsights.push(...data.insights)
+            }
+          }
+        } catch (error) {
+          console.error(`Error fetching insights for account ${account.id}:`, error)
+        }
+      }
+      
+      setInsights(allInsights)
+    } catch (error) {
+      console.error('Error fetching insights:', error)
+    }
+  }
+
   const handleRefresh = async () => {
     setIsRefreshing(true)
     await fetchAccounts()
+    await fetchInsights()
     setIsRefreshing(false)
     toast.success('Dashboard atualizado!')
   }
 
-  // Calcular estatísticas baseadas nos dados reais
+  // Calcular estatísticas baseadas nos dados reais e insights
   const stats = {
     totalAccounts: accounts.length,
     activeAccounts: accounts.filter(a => a.status === 'active').length,
-    totalCampaigns: 0, // Será calculado quando implementarmos a API de campanhas
+    totalCampaigns: insights.length,
     totalClones: 0 // Será calculado quando implementarmos a API de clones
+  }
+
+  // Calcular métricas agregadas dos insights
+  const aggregatedMetrics = insights.reduce((acc, insight) => {
+    return {
+      impressions: (acc.impressions || 0) + (parseInt(insight.impressions) || 0),
+      clicks: (acc.clicks || 0) + (parseInt(insight.clicks) || 0),
+      spend: (acc.spend || 0) + (parseFloat(insight.spend) || 0),
+      reach: (acc.reach || 0) + (parseInt(insight.reach) || 0),
+      conversions: (acc.conversions || 0) + (parseInt(insight.conversions) || 0)
+    }
+  }, {})
+
+  // Calcular métricas derivadas
+  const derivedMetrics = {
+    cpm: aggregatedMetrics.impressions > 0 ? (aggregatedMetrics.spend / aggregatedMetrics.impressions) * 1000 : 0,
+    cpc: aggregatedMetrics.clicks > 0 ? aggregatedMetrics.spend / aggregatedMetrics.clicks : 0,
+    ctr: aggregatedMetrics.impressions > 0 ? (aggregatedMetrics.clicks / aggregatedMetrics.impressions) * 100 : 0
   }
 
   if (isLoading) {
@@ -88,6 +139,20 @@ export default function DashboardPage() {
               </p>
             </div>
             <div className="flex items-center space-x-3">
+              <select
+                value={datePreset}
+                onChange={(e) => setDatePreset(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="today">Hoje</option>
+                <option value="yesterday">Ontem</option>
+                <option value="last_3d">Últimos 3 dias</option>
+                <option value="last_7d">Últimos 7 dias</option>
+                <option value="last_14d">Últimos 14 dias</option>
+                <option value="last_28d">Últimos 28 dias</option>
+                <option value="last_30d">Últimos 30 dias</option>
+                <option value="last_90d">Últimos 90 dias</option>
+              </select>
               <button
                 onClick={handleRefresh}
                 disabled={isRefreshing}
@@ -169,6 +234,105 @@ export default function DashboardPage() {
                 />
               </motion.div>
             </div>
+
+            {/* Performance Metrics */}
+            {insights.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    Métricas de Performance
+                  </h2>
+                  <span className="text-sm text-gray-500">
+                    Período: {datePreset === 'last_7d' ? 'Últimos 7 dias' : 
+                              datePreset === 'last_30d' ? 'Últimos 30 dias' :
+                              datePreset === 'today' ? 'Hoje' : datePreset}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                  >
+                    <StatsCard
+                      title="Impressões"
+                      value={aggregatedMetrics.impressions?.toLocaleString() || '0'}
+                      icon={Eye}
+                      iconColor="text-blue-600"
+                    />
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                  >
+                    <StatsCard
+                      title="Cliques"
+                      value={aggregatedMetrics.clicks?.toLocaleString() || '0'}
+                      icon={MousePointer}
+                      iconColor="text-green-600"
+                    />
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                  >
+                    <StatsCard
+                      title="Gasto"
+                      value={`R$ ${aggregatedMetrics.spend?.toFixed(2) || '0.00'}`}
+                      icon={DollarSign}
+                      iconColor="text-red-600"
+                    />
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.4 }}
+                  >
+                    <StatsCard
+                      title="Alcance"
+                      value={aggregatedMetrics.reach?.toLocaleString() || '0'}
+                      icon={Target}
+                      iconColor="text-purple-600"
+                    />
+                  </motion.div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">CPM</span>
+                      <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                        R$ {derivedMetrics.cpm?.toFixed(2) || '0.00'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">CPC</span>
+                      <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                        R$ {derivedMetrics.cpc?.toFixed(2) || '0.00'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">CTR</span>
+                      <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {derivedMetrics.ctr?.toFixed(2) || '0.00'}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Connected Accounts */}
             <div>

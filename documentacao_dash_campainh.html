@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>combined_campaign_info</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<h1 id="replicação-de-campanhas-entre-contas-de-anúncios-no-facebook">Replicação de Campanhas entre Contas de Anúncios no Facebook</h1>
+<h1 id="replicação-de-campanhas-via-facebook-marketing-api">Replicação de Campanhas via Facebook Marketing API</h1>
+<p>Este documento detalha como criar uma campanha duplicada com base em uma campanha existente usando a Marketing API do Facebook.</p>
+<h2 id="visão-geral">Visão Geral</h2>
+<p>A Marketing API permite duplicar campanhas, conjuntos de anúncios e anúncios. Isso é fundamental para replicar campanhas de uma conta de anúncios para outra, ou para criar variações de campanhas existentes.</p>
+<h2 id="duplicando-campanhas">Duplicando Campanhas</h2>
+<p>Para duplicar uma campanha, você fará uma requisição <code>POST</code> para a <code>copies</code> edge de uma campanha existente. O endpoint é <code>/{campaign_id}/copies</code>.</p>
+<h3 id="parâmetros-para-criação-de-cópias-de-campanhas">Parâmetros para Criação de Cópias de Campanhas</h3>
+<p>Ao criar uma cópia de campanha, você pode usar os seguintes parâmetros:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Parâmetro</th>
+<th>Descrição</th>
+<th>Valores Padrão/Exemplos</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>deep_copy</code></td>
+<td>Booleano. Se <code>true</code>, copia todos os anúncios filhos (ads) e conjuntos de anúncios (ad sets) da campanha original. Limites: o número total de anúncios filhos a serem copiados não deve exceder 3 para uma chamada síncrona e 51 para uma chamada assíncrona.</td>
+<td><code>false</code> (padrão)</td>
+</tr>
+<tr class="even">
+<td><code>end_time</code></td>
+<td>Datetime. Para <code>deep_copy</code>, a hora de término dos conjuntos de anúncios sob a campanha copiada. Ex: <code>2015-03-12 23:59:59-07:00</code>. Se não definido, os conjuntos copiados herdarão a hora de término do conjunto original.</td>
+<td><code>0</code> para sem data de término (para orçamento diário)</td>
+</tr>
+<tr class="odd">
+<td><code>parameter_overrides</code></td>
+<td>Objeto Campaign spec. Permite substituir parâmetros da campanha original na cópia.</td>
+<td>N/A</td>
+</tr>
+<tr class="even">
+<td><code>rename_options</code></td>
+<td>JSON ou arrays tipo objeto. Opções de renomeação para a campanha copiada.</td>
+<td>N/A</td>
+</tr>
+<tr class="odd">
+<td><code>start_time</code></td>
+<td>Datetime. Para <code>deep_copy</code>, a hora de início dos conjuntos de anúncios sob a campanha copiada. Ex: <code>2015-03-12 23:59:59-07:00</code>. Se não definido, os conjuntos copiados herdarão a hora de início do conjunto original.</td>
+<td>N/A</td>
+</tr>
+<tr class="even">
+<td><code>status_option</code></td>
+<td>Enum. Define o status da campanha copiada.</td>
+<td><code>PAUSED</code> (padrão), <code>ACTIVE</code>, <code>INHERITED_FROM_SOURCE</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="exemplo-de-requisição-post-para-duplicar-uma-campanha">Exemplo de Requisição POST para Duplicar uma Campanha</h3>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ex">curl</span> -X POST <span class="kw">\</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>  <span class="st">&quot;https://graph.facebook.com/v23.0/{campaign-id}/copies&quot;</span> <span class="kw">\</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>  <span class="ex">-d</span> <span class="st">&quot;access_token=&lt;ACCESS_TOKEN&gt;&quot;</span> <span class="kw">\</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>  <span class="ex">-d</span> <span class="st">&quot;deep_copy=true&quot;</span> <span class="kw">\</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>  <span class="ex">-d</span> <span class="st">&quot;status_option=PAUSED&quot;</span> <span class="kw">\</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a>  <span class="ex">-d</span> <span class="st">&quot;rename_options={</span><span class="dt">\&quot;</span><span class="st">name_suffix</span><span class="dt">\&quot;</span><span class="st">:</span><span class="dt">\&quot;</span><span class="st"> - Cópia</span><span class="dt">\&quot;</span><span class="st">}&quot;</span> <span class="kw">\</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a>  <span class="ex">-d</span> <span class="st">&quot;parameter_overrides={</span><span class="dt">\&quot;</span><span class="st">objective</span><span class="dt">\&quot;</span><span class="st">:</span><span class="dt">\&quot;</span><span class="st">LINK_CLICKS</span><span class="dt">\&quot;</span><span class="st">}&quot;</span></span></code></pre></div>
+<p><strong>Observações:</strong></p>
+<ul>
+<li>Substitua <code>{campaign-id}</code> pelo ID da campanha que você deseja duplicar.</li>
+<li>Substitua <code>&lt;ACCESS_TOKEN&gt;</code> pelo seu token de acesso.</li>
+<li>O <code>deep_copy=true</code> é crucial para duplicar também os conjuntos de anúncios e anúncios associados.</li>
+<li><code>status_option=PAUSED</code> é uma boa prática para revisar a campanha copiada antes de ativá-la.</li>
+<li><code>rename_options</code> e <code>parameter_overrides</code> são úteis para personalizar a campanha duplicada.</li>
+</ul>
+<h3 id="retorno-da-requisição">Retorno da Requisição</h3>
+<p>A requisição retornará um objeto contendo o <code>copied_campaign_id</code> (o ID da nova campanha duplicada) e uma lista de <code>ad_object_ids</code> que mapeia os IDs dos objetos originais para os IDs dos objetos copiados (criativos, anúncios, conjuntos de anúncios, campanhas).</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="fu">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>  <span class="dt">&quot;copied_campaign_id&quot;</span><span class="fu">:</span> <span class="st">&quot;&lt;NEW_CAMPAIGN_ID&gt;&quot;</span><span class="fu">,</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>  <span class="dt">&quot;ad_object_ids&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>    <span class="fu">{</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>      <span class="dt">&quot;ad_object_type&quot;</span><span class="fu">:</span> <span class="st">&quot;campaign&quot;</span><span class="fu">,</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>      <span class="dt">&quot;source_id&quot;</span><span class="fu">:</span> <span class="st">&quot;&lt;ORIGINAL_CAMPAIGN_ID&gt;&quot;</span><span class="fu">,</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>      <span class="dt">&quot;copied_id&quot;</span><span class="fu">:</span> <span class="st">&quot;&lt;NEW_CAMPAIGN_ID&gt;&quot;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a>    <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a>    <span class="fu">{</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>      <span class="dt">&quot;ad_object_type&quot;</span><span class="fu">:</span> <span class="st">&quot;ad_set&quot;</span><span class="fu">,</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a>      <span class="dt">&quot;source_id&quot;</span><span class="fu">:</span> <span class="st">&quot;&lt;ORIGINAL_AD_SET_ID&gt;&quot;</span><span class="fu">,</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a>      <span class="dt">&quot;copied_id&quot;</span><span class="fu">:</span> <span class="st">&quot;&lt;NEW_AD_SET_ID&gt;&quot;</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a>    <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a>    <span class="fu">{</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true"></a>      <span class="dt">&quot;ad_object_type&quot;</span><span class="fu">:</span> <span class="st">&quot;ad&quot;</span><span class="fu">,</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true"></a>      <span class="dt">&quot;source_id&quot;</span><span class="fu">:</span> <span class="st">&quot;&lt;ORIGINAL_AD_ID&gt;&quot;</span><span class="fu">,</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true"></a>      <span class="dt">&quot;copied_id&quot;</span><span class="fu">:</span> <span class="st">&quot;&lt;NEW_AD_ID&gt;&quot;</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true"></a>    <span class="fu">}</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true"></a>  <span class="ot">]</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true"></a><span class="fu">}</span></span></code></pre></div>
+<h2 id="duplicando-conjuntos-de-anúncios-e-anúncios-individualmente">Duplicando Conjuntos de Anúncios e Anúncios Individualmente</h2>
+<p>Além de duplicar campanhas inteiras, você também pode duplicar conjuntos de anúncios e anúncios individualmente usando endpoints semelhantes:</p>
+<ul>
+<li><strong>Duplicar Conjunto de Anúncios:</strong> <code>/{ad_set_id}/copies</code></li>
+<li><strong>Duplicar Anúncio:</strong> <code>/{ad_id}/copies</code></li>
+</ul>
+<p>Os parâmetros para essas operações são análogos aos da duplicação de campanhas, permitindo controle granular sobre o processo de cópia.</p>
+<h2 id="estrutura-e-processo-para-evitar-erros">Estrutura e Processo para Evitar Erros</h2>
+<p>Para replicar campanhas de uma conta de anúncios para outra e evitar erros, siga a seguinte estrutura e processo:</p>
+<ol type="1">
+<li><strong>Obtenha os IDs da Campanha Original:</strong> Você precisará do ID da campanha que deseja replicar na conta de origem.</li>
+<li><strong>Autenticação para Ambas as Contas:</strong> Certifique-se de ter tokens de acesso válidos para a conta de anúncios de origem e para a conta de anúncios de destino. Se as contas pertencerem a diferentes Business Managers ou usuários, você precisará gerenciar os tokens de acesso adequadamente (por exemplo, usando System User Access Tokens ou User Access Tokens com as permissões corretas).</li>
+<li><strong>Duplicação da Campanha:</strong> Faça a chamada <code>POST</code> para <code>/{campaign_id}/copies</code> na conta de origem, especificando <code>deep_copy=true</code> para incluir os conjuntos de anúncios e anúncios. No <code>parameter_overrides</code>, você pode especificar a nova conta de anúncios de destino (<code>ad_account_id</code>).
+<ul>
+<li><strong>Importante:</strong> Ao copiar para uma nova conta de anúncios, você precisará garantir que os ativos (Páginas, Pixels, Catálogos de Produtos, etc.) referenciados na campanha original estejam disponíveis ou sejam criados na conta de destino. Se um ativo não estiver disponível, a cópia pode falhar ou a campanha pode não funcionar corretamente.</li>
+</ul></li>
+<li><strong>Verificação e Ajustes:</strong> Após a duplicação, verifique a nova campanha na conta de destino. Pode ser necessário ajustar manualmente alguns parâmetros, como orçamentos, datas de início/término, ou segmentação, se houver diferenças entre as contas ou requisitos específicos para a nova conta.</li>
+<li><strong>Tratamento de Erros:</strong> Implemente um tratamento de erros robusto para lidar com possíveis problemas, como limites de taxa, permissões insuficientes ou ativos ausentes. A API retornará códigos de erro específicos que podem ajudar na depuração.</li>
+</ol>
+<h3 id="considerações-importantes-para-evitar-erros">Considerações Importantes para Evitar Erros:</h3>
+<ul>
+<li><strong>Ativos Associados:</strong> Anúncios e conjuntos de anúncios frequentemente referenciam ativos como Páginas do Facebook, Pixels, públicos personalizados e criativos (imagens/vídeos). Certifique-se de que esses ativos existam na conta de destino ou que você os crie/associe antes de replicar a campanha. Por exemplo, se um anúncio usa uma imagem específica, você pode precisar fazer o upload dessa imagem para a conta de destino e obter um novo <code>image_hash</code> para usar na campanha copiada.</li>
+<li><strong>Permissões:</strong> Garanta que o token de acesso usado tenha as permissões necessárias (<code>ads_management</code>, <code>ads_read</code>, etc.) para ler da conta de origem e criar na conta de destino.</li>
+<li><strong>Limites de Taxa:</strong> Esteja ciente dos limites de taxa da Marketing API. Para grandes volumes de duplicação, considere usar chamadas assíncronas ou implementar um atraso entre as requisições para evitar exceder os limites.</li>
+<li><strong>Categorias de Anúncios Especiais:</strong> Se suas campanhas se enquadram em categorias de anúncios especiais (crédito, emprego, moradia, questões sociais, eleições ou política), você precisará garantir que as políticas de anúncios especiais sejam seguidas na conta de destino.</li>
+<li><strong>Versão da API:</strong> Sempre especifique a versão da API Graph em suas chamadas para garantir a compatibilidade e evitar comportamentos inesperados devido a atualizações da API.</li>
+</ul>
+<p>Ao seguir estas diretrizes, você pode replicar campanhas de forma eficiente e com menos erros entre suas contas de anúncios do Facebook.</p>
+<h1 id="obtenção-de-dados-de-desempenho-de-campanhas-para-dashboard">Obtenção de Dados de Desempenho de Campanhas para Dashboard</h1>
+<h1 id="obtenção-de-dados-de-desempenho-de-campanhas-via-insights-api">Obtenção de Dados de Desempenho de Campanhas via Insights API</h1>
+<p>Este documento detalha como usar a Insights API da Marketing API do Facebook para recuperar estatísticas de anúncios, que são essenciais para construir um dashboard de análise de dados.</p>
+<h2 id="visão-geral-da-insights-api">Visão Geral da Insights API</h2>
+<p>A Insights API fornece uma interface única e consistente para recuperar estatísticas de anúncios. Ela permite que você obtenha métricas de desempenho, como impressões, cliques, gastos, conversões, CPM, CPC e muitas outras, e as agrupe por diferentes dimensões (breakdowns).</p>
+<h2 id="pré-requisitos">Pré-requisitos</h2>
+<p>Para usar a Insights API, você precisará:</p>
+<ul>
+<li>A permissão <code>ads_read</code>.</li>
+<li>Um aplicativo do Facebook.</li>
+</ul>
+<h2 id="como-fazer-chamadas">Como Fazer Chamadas</h2>
+<p>A Insights API está disponível como uma <code>edge</code> em qualquer objeto de anúncios (campanha, conjunto de anúncios, anúncio).</p>
+<h3 id="requisição-básica-para-estatísticas-de-campanha">Requisição Básica para Estatísticas de Campanha</h3>
+<p>Para obter as estatísticas de desempenho de uma campanha nos últimos 7 dias:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="ex">curl</span> -G <span class="kw">\</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>  <span class="ex">-d</span> <span class="st">&quot;date_preset=last_7d&quot;</span> <span class="kw">\</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>  <span class="ex">-d</span> <span class="st">&quot;access_token=ACCESS_TOKEN&quot;</span> <span class="kw">\</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>  <span class="st">&quot;https://graph.facebook.com/v23.0/AD_CAMPAIGN_ID/insights&quot;</span></span></code></pre></div>
+<ul>
+<li>Substitua <code>v23.0</code> pela versão da API que você está usando.</li>
+<li>Substitua <code>AD_CAMPAIGN_ID</code> pelo ID da sua campanha de anúncios.</li>
+<li>Substitua <code>ACCESS_TOKEN</code> pelo seu token de acesso com a permissão <code>ads_read</code>.</li>
+</ul>
+<h3 id="solicitar-campos-específicos-métricas">Solicitar Campos Específicos (Métricas)</h3>
+<p>Você pode solicitar campos específicos (métricas) usando o parâmetro <code>fields</code>.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="ex">curl</span> -G <span class="kw">\</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>  <span class="ex">-d</span> <span class="st">&quot;fields=impressions,clicks,spend,conversions,cpm,cpc&quot;</span> <span class="kw">\</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>  <span class="ex">-d</span> <span class="st">&quot;access_token=ACCESS_TOKEN&quot;</span> <span class="kw">\</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>  <span class="st">&quot;https://graph.facebook.com/v23.0/AD_ID/insights&quot;</span></span></code></pre></div>
+<h3 id="níveis-de-agregação">Níveis de Agregação</h3>
+<p>Você pode agregar os resultados em diferentes níveis de objeto (campanha, conjunto de anúncios, anúncio). Isso deduplica automaticamente os dados.</p>
+<p><strong>Exemplo: Obter insights de uma campanha no nível do anúncio:</strong></p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="ex">curl</span> -G <span class="kw">\</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>  <span class="ex">-d</span> <span class="st">&quot;level=ad&quot;</span> <span class="kw">\</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>  <span class="ex">-d</span> <span class="st">&quot;fields=impressions,ad_id&quot;</span> <span class="kw">\</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>  <span class="ex">-d</span> <span class="st">&quot;access_token=ACCESS_TOKEN&quot;</span> <span class="kw">\</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>  <span class="st">&quot;https://graph.facebook.com/v23.0/CAMPAIGN_ID/insights&quot;</span></span></code></pre></div>
+<h3 id="filtragem-por-data">Filtragem por Data</h3>
+<p>Você pode usar <code>date_preset</code> para intervalos de tempo predefinidos ou <code>time_range</code> para um intervalo de data personalizado.</p>
+<p><strong>Exemplo com <code>time_range</code>:</strong></p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="ex">curl</span> -G <span class="kw">\</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>  <span class="ex">-d</span> <span class="st">&quot;time_range={\&#39;since\&#39;:\&#39;2024-01-01\&#39;,\&#39;until\&#39;:\&#39;2024-01-31\&#39;}&quot;</span> <span class="kw">\</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>  <span class="ex">-d</span> <span class="st">&quot;fields=impressions,clicks,spend&quot;</span> <span class="kw">\</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>  <span class="ex">-d</span> <span class="st">&quot;access_token=ACCESS_TOKEN&quot;</span> <span class="kw">\</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>  <span class="st">&quot;https://graph.facebook.com/v23.0/AD_ACCOUNT_ID/insights&quot;</span></span></code></pre></div>
+<h3 id="quebras-breakdowns">Quebras (Breakdowns)</h3>
+<p>Use o parâmetro <code>breakdowns</code> para agrupar os resultados por diferentes dimensões, como idade, gênero, país, posicionamento, etc.</p>
+<p><strong>Exemplo: Quebrar por idade e gênero:</strong></p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="ex">curl</span> -G <span class="kw">\</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>  <span class="ex">-d</span> <span class="st">&quot;breakdowns=age,gender&quot;</span> <span class="kw">\</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>  <span class="ex">-d</span> <span class="st">&quot;fields=impressions,clicks&quot;</span> <span class="kw">\</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>  <span class="ex">-d</span> <span class="st">&quot;access_token=ACCESS_TOKEN&quot;</span> <span class="kw">\</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a>  <span class="st">&quot;https://graph.facebook.com/v23.0/AD_ACCOUNT_ID/insights&quot;</span></span></code></pre></div>
+<h3 id="métricas-comuns-para-dashboard">Métricas Comuns para Dashboard</h3>
+<p>Para um dashboard, você provavelmente desejará as seguintes métricas:</p>
+<ul>
+<li><code>spend</code>: Gasto total.</li>
+<li><code>impressions</code>: Número de vezes que seus anúncios foram exibidos.</li>
+<li><code>clicks</code>: Número de cliques em seus anúncios (todos os cliques).</li>
+<li><code>link_clicks</code>: Número de cliques em links específicos dentro do anúncio.</li>
+<li><code>cpm</code>: Custo por mil impressões.</li>
+<li><code>cpc</code>: Custo por clique.</li>
+<li><code>conversions</code>: Número de conversões (você pode especificar tipos de conversão).</li>
+<li><code>actions</code>: Detalhes sobre diferentes tipos de ações (ex: <code>actions:purchase</code>, <code>actions:add_to_cart</code>).</li>
+<li><code>cost_per_action_type</code>: Custo por tipo de ação.</li>
+<li><code>reach</code>: Número de pessoas únicas que viram seus anúncios.</li>
+<li><code>frequency</code>: Média de vezes que cada pessoa viu seu anúncio.</li>
+</ul>
+<h3 id="janelas-de-atribuição">Janelas de Atribuição</h3>
+<p>A janela de atribuição de conversão define os períodos de tempo em que uma conversão é atribuída a um anúncio. Você pode especificar <code>action_attribution_windows</code> para ver ações atribuídas a diferentes janelas (ex: <code>1d_click</code>, <code>7d_view</code>).</p>
+<h3 id="expansão-de-campos">Expansão de Campos</h3>
+<p>Você pode solicitar campos aninhados usando a expansão de campos.</p>
+<p><strong>Exemplo:</strong></p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="ex">curl</span> -G <span class="kw">\</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>  <span class="ex">-d</span> <span class="st">&quot;fields=insights{impressions,clicks}&quot;</span> <span class="kw">\</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>  <span class="ex">-d</span> <span class="st">&quot;access_token=ACCESS_TOKEN&quot;</span> <span class="kw">\</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a>  <span class="st">&quot;https://graph.facebook.com/v23.0/AD_ID&quot;</span></span></code></pre></div>
+<h3 id="ordenação">Ordenação</h3>
+<p>Os resultados podem ser ordenados por qualquer campo, em ordem crescente ou decrescente, usando o parâmetro <code>sort</code>.</p>
+<p><strong>Exemplo: Ordenar por alcance decrescente:</strong></p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="ex">curl</span> -G <span class="kw">\</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>  <span class="ex">-d</span> <span class="st">&quot;sort=reach_descending&quot;</span> <span class="kw">\</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a>  <span class="ex">-d</span> <span class="st">&quot;level=ad&quot;</span> <span class="kw">\</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>  <span class="ex">-d</span> <span class="st">&quot;fields=reach&quot;</span> <span class="kw">\</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a>  <span class="ex">-d</span> <span class="st">&quot;access_token=ACCESS_TOKEN&quot;</span> <span class="kw">\</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a>  <span class="st">&quot;https://graph.facebook.com/v23.0/AD_SET_ID/insights&quot;</span></span></code></pre></div>
+<h2 id="considerações-para-o-dashboard">Considerações para o Dashboard</h2>
+<ul>
+<li><strong>Agregação de Dados:</strong> Para um dashboard que exibe dados de todas as contas/campanhas, você precisará iterar sobre as contas de anúncios conectadas ao seu SaaS e fazer chamadas à Insights API para cada uma. Em seguida, agregue os dados no seu backend.</li>
+<li><strong>Filtros de Data:</strong> Implemente a funcionalidade de filtro de data no seu dashboard usando o parâmetro <code>time_range</code> ou <code>date_preset</code> da API.</li>
+<li><strong>Atualização de Dados:</strong> Considere a frequência com que você precisa atualizar os dados no seu dashboard. Para dados em tempo quase real, você pode precisar de chamadas mais frequentes. Para dados históricos, chamadas diárias ou horárias podem ser suficientes.</li>
+<li><strong>Limites de Taxa:</strong> Esteja ciente dos limites de taxa da Insights API. Para grandes volumes de dados ou muitas contas, considere usar <a href="https://developers.facebook.com/docs/marketing-api/insights/async-jobs">jobs assíncronos</a> para obter os dados de forma mais eficiente.</li>
+<li><strong>Conversions API (CAPI):</strong> Para garantir a precisão dos dados de conversão, especialmente em um ambiente com restrições de rastreamento de navegador, certifique-se de que seus clientes estejam utilizando a <a href="https://developers.facebook.com/docs/marketing-api/conversions-api">Conversions API</a> para enviar eventos de conversão diretamente do servidor para o Facebook. Isso complementa o Meta Pixel e fornece dados mais confiáveis para o seu dashboard.</li>
+</ul>
+<p>Ao utilizar a Insights API de forma eficaz, você pode construir um dashboard robusto que fornece uma visão abrangente do desempenho das campanhas de anúncios de seus clientes, com a flexibilidade de filtrar e analisar dados de acordo com suas necessidades.</p>
+</body>
+</html>
