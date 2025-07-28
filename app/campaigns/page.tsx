@@ -6,7 +6,7 @@ import { Plus, Search, Filter, BarChart3, Calendar, DollarSign, Upload } from 'l
 import Sidebar from '@/components/layout/Sidebar'
 import CloneCampaignModal from '@/components/campaigns/CloneCampaignModal'
 import CreateCampaignModal from '@/components/campaigns/CreateCampaignModal'
-import CSVUploadModal from '@/components/campaigns/CSVUploadModal'
+import CloneFromTemplateModal from '@/components/campaigns/CloneFromTemplateModal'
 import { Campaign, CampaignClone, FacebookAccount } from '@/lib/types'
 import { formatDate, getStatusColor, getStatusIcon } from '@/lib/utils'
 import toast from 'react-hot-toast'
@@ -21,7 +21,7 @@ export default function CampaignsPage() {
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null)
   const [isCloneModalOpen, setIsCloneModalOpen] = useState<boolean>(false)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false)
-  const [isCSVModalOpen, setIsCSVModalOpen] = useState<boolean>(false)
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState<boolean>(false)
 
   useEffect(() => {
     fetchCampaigns()
@@ -126,7 +126,7 @@ export default function CampaignsPage() {
             </h1>
             <div className="flex items-center space-x-2">
               <button 
-                onClick={() => setIsCSVModalOpen(true)}
+                onClick={() => setIsTemplateModalOpen(true)}
                 className="btn-secondary flex items-center space-x-2"
               >
                 <Upload className="w-4 h-4" />
@@ -322,10 +322,10 @@ export default function CampaignsPage() {
         accounts={accounts}
       />
 
-      {/* CSV Upload Modal */}
-      <CSVUploadModal
-        isOpen={isCSVModalOpen}
-        onClose={() => setIsCSVModalOpen(false)}
+      {/* Clone From Template Modal */}
+      <CloneFromTemplateModal
+        isOpen={isTemplateModalOpen}
+        onClose={() => setIsTemplateModalOpen(false)}
         accounts={accounts}
       />
     </div>
