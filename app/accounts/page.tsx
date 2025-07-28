@@ -54,10 +54,12 @@ export default function AccountsPage() {
     toast.success('Contas atualizadas!')
   }
 
-  const handleConnectSuccess = (newAccounts: FacebookAccount[]) => {
-    setAccounts(prev => [...prev, ...newAccounts])
+  const handleConnectSuccess = (userInfo: any) => {
+    console.log('✅ Conectado com sucesso:', userInfo)
     setShowConnectModal(false)
-    toast.success(`${newAccounts.length} conta(s) conectada(s)!`)
+    // Recarregar contas após conexão
+    fetchAccounts()
+    toast.success('Conta do Facebook conectada com sucesso!')
   }
 
   const filteredAccounts = accounts.filter(account => {
