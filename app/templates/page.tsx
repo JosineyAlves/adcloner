@@ -62,51 +62,97 @@ export default function TemplatesPage() {
 
   const handleCreateBaseTemplate = async () => {
     try {
-      // Carregar o arquivo CSV base
-      const response = await fetch('/template-base.csv')
-      if (!response.ok) {
-        throw new Error('Não foi possível carregar o template base')
-      }
-      
-      const csvText = await response.text()
-      
-      // Processar o CSV (assumindo que é tab-separated como o Facebook exporta)
-      const lines = csvText.split('\n')
-      const headers = lines[0].split('\t')
-      const data = lines.slice(1).map(line => {
-        const values = line.split('\t')
-        const row: any = {}
-        headers.forEach((header, index) => {
-          row[header] = values[index] || ''
-        })
-        return row
-      }).filter(row => row['Campaign Name']) // Filtrar linhas vazias
-      
-      // Criar template com os dados processados
+      // Criar template base com dados reais da campanha Dog
       const templateResponse = await fetch('/api/templates', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: 'Template Base - Dog Campaign (CSV)',
-          description: 'Template base carregado do arquivo CSV com dados reais da campanha Dog',
-          processedData: data
+          name: 'Template Dog Campaign - Teste',
+          description: 'Template base para teste com dados reais da campanha Dog',
+          processedData: [
+            {
+              'Campaign Name': 'CA02 - THE DOG - CBO - 16/05',
+              'Campaign Objective': 'Outcome Sales',
+              'Campaign Status': 'PAUSED',
+              'Ad Set Name': 'CJ01',
+              'Ad Set Daily Budget': '5000',
+              'Countries': 'US, CA',
+              'Ad Name': 'AD06',
+              'Title': 'Your dog could be an influencer!',
+              'Body': 'Do you have a dog?\nTurn your pup\'s playful moments into something bigger while they have fun!\nIt\'s all about your dog enjoying life and you enjoying the perks.\nClick "Learn More" to see if your dog\'s breed can become an influencer.',
+              'Link': 'https://inlead.digital/the-dog-influencer/?sck=fb|cam2|g1|ad6',
+              'Image Hash': '864904627876681:30ffb9f08957ee8c222d4319f5e6f05d'
+            },
+            {
+              'Campaign Name': 'CA02 - THE DOG - CBO - 16/05',
+              'Campaign Objective': 'Outcome Sales',
+              'Campaign Status': 'PAUSED',
+              'Ad Set Name': 'CJ01',
+              'Ad Set Daily Budget': '5000',
+              'Countries': 'US, CA',
+              'Ad Name': 'AD07',
+              'Title': 'Your dog could be an influencer!',
+              'Body': 'Do you have a dog?\nTurn your pup\'s playful moments into something bigger while they have fun!\nIt\'s all about your dog enjoying life and you enjoying the perks.\nClick "Learn More" to see if your dog\'s breed can become an influencer.',
+              'Link': 'https://inlead.digital/the-dog-influencer/?sck=fb|cam2|g1|ad7',
+              'Image Hash': '864904627876681:0322382636f64a4df9b6825809ca97b1'
+            },
+            {
+              'Campaign Name': 'CA02 - THE DOG - CBO - 16/05',
+              'Campaign Objective': 'Outcome Sales',
+              'Campaign Status': 'PAUSED',
+              'Ad Set Name': 'CJ01',
+              'Ad Set Daily Budget': '5000',
+              'Countries': 'US, CA',
+              'Ad Name': 'AD08',
+              'Title': 'Your dog could be an influencer!',
+              'Body': 'Do you have a dog?\nTurn your pup\'s playful moments into something bigger while they have fun!\nIt\'s all about your dog enjoying life and you enjoying the perks.\nClick "Learn More" to see if your dog\'s breed can become an influencer.',
+              'Link': 'https://inlead.digital/the-dog-influencer/?sck=fb|cam2|g1|ad8',
+              'Image Hash': '864904627876681:13b238cb007c6963954b4ae623a2ae61'
+            },
+            {
+              'Campaign Name': 'CA02 - THE DOG - CBO - 16/05',
+              'Campaign Objective': 'Outcome Sales',
+              'Campaign Status': 'PAUSED',
+              'Ad Set Name': 'CJ01',
+              'Ad Set Daily Budget': '5000',
+              'Countries': 'US, CA',
+              'Ad Name': 'AD09',
+              'Title': 'Your dog could be an influencer!',
+              'Body': 'Do you have a dog?\nTurn your pup\'s playful moments into something bigger while they have fun!\nIt\'s all about your dog enjoying life and you enjoying the perks.\nClick "Learn More" to see if your dog\'s breed can become an influencer.',
+              'Link': 'https://inlead.digital/the-dog-influencer/?sck=fb|cam2|g1|ad9',
+              'Image Hash': '864904627876681:97385c9a2d58641989570ac50118f7e6'
+            },
+            {
+              'Campaign Name': 'CA02 - THE DOG - CBO - 16/05',
+              'Campaign Objective': 'Outcome Sales',
+              'Campaign Status': 'PAUSED',
+              'Ad Set Name': 'CJ01',
+              'Ad Set Daily Budget': '5000',
+              'Countries': 'US, CA',
+              'Ad Name': 'AD10',
+              'Title': 'Your dog could be an influencer!',
+              'Body': 'Do you have a dog?\nTurn your pup\'s playful moments into something bigger while they have fun!\nIt\'s all about your dog enjoying life and you enjoying the perks.\nClick "Learn More" to see if your dog\'s breed can become an influencer.',
+              'Link': 'https://inlead.digital/the-dog-influencer/?sck=fb|cam2|g1|ad10',
+              'Image Hash': '864904627876681:e48c883d825a6909760c1a3236eb9e0e'
+            }
+          ]
         })
       })
       
       if (templateResponse.ok) {
-        alert('Template base criado com sucesso a partir do CSV!')
+        alert('Template base criado com sucesso! Agora você pode testar a clonagem na seção Campanhas.')
         fetchTemplates()
       } else {
         const error = await templateResponse.text()
         console.error('Erro na resposta:', error)
         alert('Erro ao criar template base')
       }
-          } catch (error) {
-        console.error('Erro ao criar template base:', error)
-        alert('Erro ao criar template base: ' + (error as Error).message)
-      }
+    } catch (error) {
+      console.error('Erro ao criar template base:', error)
+      alert('Erro ao criar template base: ' + (error as Error).message)
+    }
   }
 
   return (
