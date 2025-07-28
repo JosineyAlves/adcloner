@@ -130,24 +130,6 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     visible: false,
     order: 13
   },
-  {
-    id: 'social_impressions',
-    label: 'Impressões Sociais',
-    category: 'Engajamento',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 14
-  },
-  {
-    id: 'social_clicks',
-    label: 'Cliques Sociais',
-    category: 'Engajamento',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 15
-  },
 
   // Métricas de conversão
   {
@@ -157,7 +139,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: false,
-    order: 16
+    order: 14
   },
   {
     id: 'cost_per_conversion',
@@ -166,16 +148,16 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'currency',
     format: (value) => `R$ ${parseFloat(value || '0').toFixed(2)}`,
     visible: false,
-    order: 17
+    order: 15
   },
   {
-    id: 'conversion_rate',
-    label: 'Taxa de Conversão',
+    id: 'conversion_values',
+    label: 'Valores de Conversão',
     category: 'Conversão',
-    type: 'percentage',
-    format: (value) => `${parseFloat(value || '0').toFixed(2)}%`,
+    type: 'currency',
+    format: (value) => `R$ ${parseFloat(value || '0').toFixed(2)}`,
     visible: false,
-    order: 18
+    order: 16
   },
 
   // Métricas de qualidade
@@ -185,7 +167,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     category: 'Qualidade',
     type: 'text',
     visible: false,
-    order: 19
+    order: 17
   },
   {
     id: 'engagement_rate_ranking',
@@ -193,7 +175,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     category: 'Qualidade',
     type: 'text',
     visible: false,
-    order: 20
+    order: 18
   },
 
   // Métricas de vídeo
@@ -204,7 +186,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: false,
-    order: 21
+    order: 19
   },
   {
     id: 'video_p50_watched_actions',
@@ -213,7 +195,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: false,
-    order: 22
+    order: 20
   },
   {
     id: 'video_p75_watched_actions',
@@ -222,7 +204,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: false,
-    order: 23
+    order: 21
   },
   {
     id: 'video_p100_watched_actions',
@@ -231,27 +213,27 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: false,
-    order: 24
+    order: 22
   },
 
   // Métricas de aplicativo
   {
-    id: 'app_installs',
-    label: 'Instalações de App',
+    id: 'mobile_app_installs',
+    label: 'Instalações Mobile',
     category: 'Aplicativo',
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: false,
-    order: 25
+    order: 23
   },
   {
-    id: 'cost_per_app_install',
-    label: 'Custo por Instalação',
+    id: 'mobile_app_install_rate',
+    label: 'Taxa de Instalação Mobile',
     category: 'Aplicativo',
-    type: 'currency',
-    format: (value) => `R$ ${parseFloat(value || '0').toFixed(2)}`,
+    type: 'percentage',
+    format: (value) => `${parseFloat(value || '0').toFixed(2)}%`,
     visible: false,
-    order: 26
+    order: 24
   },
 
   // Métricas de lead
@@ -262,7 +244,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: false,
-    order: 27
+    order: 25
   },
   {
     id: 'cost_per_lead',
@@ -271,7 +253,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'currency',
     format: (value) => `R$ ${parseFloat(value || '0').toFixed(2)}`,
     visible: false,
-    order: 28
+    order: 26
   },
 
   // Métricas de página
@@ -282,7 +264,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: false,
-    order: 29
+    order: 27
   },
   {
     id: 'page_engagement',
@@ -291,7 +273,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: false,
-    order: 30
+    order: 28
   },
 
   // Métricas de evento
@@ -302,7 +284,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: false,
-    order: 31
+    order: 29
   },
   {
     id: 'add_to_cart',
@@ -311,7 +293,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: false,
-    order: 32
+    order: 30
   },
   {
     id: 'initiated_checkout',
@@ -320,7 +302,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: false,
-    order: 33
+    order: 31
   },
   {
     id: 'complete_registration',
@@ -329,7 +311,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: false,
-    order: 34
+    order: 32
   },
   {
     id: 'view_content',
@@ -338,7 +320,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: false,
-    order: 35
+    order: 33
   }
 ]
 

@@ -1144,44 +1144,43 @@ export class FacebookAPI {
     level: string = 'campaign'
   ) {
     try {
-      // Todas as métricas disponíveis do Facebook
+      // Campos válidos da API de Insights do Facebook
       const fields = [
-        // Métricas básicas
+        // Identificação
+        'campaign_id',
+        'campaign_name',
+        'adset_id',
+        'adset_name',
+        'ad_id',
+        'ad_name',
+        
+        // Métricas básicas (válidas)
         'impressions',
         'clicks',
         'spend',
         'reach',
         'frequency',
         
-        // Métricas de custo
+        // Métricas de custo (válidas)
         'cpm',
         'cpc',
         'ctr',
-        'cpm_avg',
-        'cpc_avg',
-        'ctr_avg',
         
-        // Métricas de engajamento
+        // Métricas de engajamento (válidas)
         'inline_link_clicks',
         'inline_post_engagement',
-        'social_impressions',
-        'social_clicks',
-        'social_spend',
-        'social_reach',
-        'social_frequency',
         
-        // Métricas de qualidade
+        // Métricas de qualidade (válidas)
         'quality_ranking',
         'engagement_rate_ranking',
         'conversion_rate_ranking',
         
-        // Métricas de conversão
+        // Métricas de conversão (válidas)
         'conversions',
         'cost_per_conversion',
         'conversion_values',
-        'conversion_rate',
         
-        // Métricas de vídeo (se aplicável)
+        // Métricas de vídeo (válidas)
         'video_p25_watched_actions',
         'video_p50_watched_actions',
         'video_p75_watched_actions',
@@ -1190,24 +1189,21 @@ export class FacebookAPI {
         'video_play_actions',
         'video_play_curve_actions',
         
-        // Métricas de aplicativo
-        'app_installs',
-        'cost_per_app_install',
+        // Métricas de aplicativo (válidas)
         'mobile_app_installs',
         'mobile_app_install_rate',
         
-        // Métricas de lead
+        // Métricas de lead (válidas)
         'leads',
         'cost_per_lead',
-        'lead_gen_rate',
         
-        // Métricas de página
+        // Métricas de página (válidas)
         'page_likes',
         'page_engagement',
         'page_impressions',
         'page_posts_impressions',
         
-        // Métricas de evento
+        // Métricas de evento (válidas)
         'onsite_conversion',
         'purchase',
         'add_to_cart',
@@ -1252,7 +1248,7 @@ export class FacebookAPI {
     datePreset: string = 'last_7d'
   ) {
     try {
-      // Todas as métricas disponíveis do Facebook para contas
+      // Campos válidos da API de Insights do Facebook para contas
       const fields = [
         // Identificação
         'campaign_id',
@@ -1262,42 +1258,33 @@ export class FacebookAPI {
         'ad_id',
         'ad_name',
         
-        // Métricas básicas
+        // Métricas básicas (válidas)
         'impressions',
         'clicks',
         'spend',
         'reach',
         'frequency',
         
-        // Métricas de custo
+        // Métricas de custo (válidas)
         'cpm',
         'cpc',
         'ctr',
-        'cpm_avg',
-        'cpc_avg',
-        'ctr_avg',
         
-        // Métricas de engajamento
+        // Métricas de engajamento (válidas)
         'inline_link_clicks',
         'inline_post_engagement',
-        'social_impressions',
-        'social_clicks',
-        'social_spend',
-        'social_reach',
-        'social_frequency',
         
-        // Métricas de qualidade
+        // Métricas de qualidade (válidas)
         'quality_ranking',
         'engagement_rate_ranking',
         'conversion_rate_ranking',
         
-        // Métricas de conversão
+        // Métricas de conversão (válidas)
         'conversions',
         'cost_per_conversion',
         'conversion_values',
-        'conversion_rate',
         
-        // Métricas de vídeo
+        // Métricas de vídeo (válidas)
         'video_p25_watched_actions',
         'video_p50_watched_actions',
         'video_p75_watched_actions',
@@ -1306,24 +1293,21 @@ export class FacebookAPI {
         'video_play_actions',
         'video_play_curve_actions',
         
-        // Métricas de aplicativo
-        'app_installs',
-        'cost_per_app_install',
+        // Métricas de aplicativo (válidas)
         'mobile_app_installs',
         'mobile_app_install_rate',
         
-        // Métricas de lead
+        // Métricas de lead (válidas)
         'leads',
         'cost_per_lead',
-        'lead_gen_rate',
         
-        // Métricas de página
+        // Métricas de página (válidas)
         'page_likes',
         'page_engagement',
         'page_impressions',
         'page_posts_impressions',
         
-        // Métricas de evento
+        // Métricas de evento (válidas)
         'onsite_conversion',
         'purchase',
         'add_to_cart',
