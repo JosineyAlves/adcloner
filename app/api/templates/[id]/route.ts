@@ -1,49 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-// Mock data - em produção seria um banco de dados
-let templates = [
-  {
-    id: '1',
-    name: 'Campanha de Conversão',
-    description: 'Template para campanhas de conversão',
-    fileName: 'conversao.csv',
-    processedAt: '2024-01-15T10:30:00Z',
-    campaignCount: 2,
-    status: 'active',
-    processedData: [
-      {
-        'Campaign Name': 'Campanha Teste 1',
-        'Campaign Objective': 'LINK_CLICKS',
-        'Campaign Status': 'PAUSED',
-        'Ad Set Name': 'Conjunto Teste 1',
-        'Ad Set Daily Budget': '1000',
-        'Countries': 'BR',
-        'Ad Name': 'Anúncio Teste 1',
-        'Title': 'Título do Anúncio',
-        'Body': 'Descrição do anúncio',
-        'Link': 'https://example.com',
-        'Campaign ID': '',
-        'Ad Set ID': '',
-        'Ad ID': ''
-      },
-      {
-        'Campaign Name': 'Campanha Teste 2',
-        'Campaign Objective': 'CONVERSIONS',
-        'Campaign Status': 'PAUSED',
-        'Ad Set Name': 'Conjunto Teste 2',
-        'Ad Set Daily Budget': '2000',
-        'Countries': 'BR',
-        'Ad Name': 'Anúncio Teste 2',
-        'Title': 'Título do Anúncio 2',
-        'Body': 'Descrição do anúncio 2',
-        'Link': 'https://example2.com',
-        'Campaign ID': '',
-        'Ad Set ID': '',
-        'Ad ID': ''
-      }
-    ]
-  }
-]
+import { templateStorage } from '@/lib/template-storage'
 
 export async function GET(
   request: NextRequest,
@@ -52,8 +8,8 @@ export async function GET(
   try {
     const { id } = params
     
-    // Encontrar template
-    const template = templates.find(t => t.id === id)
+    // Buscar template
+    const template = await templateStorage.getTemplateById(id)
     
     if (!template) {
       return NextResponse.json({ error: 'Template não encontrado' }, { status: 404 })
@@ -73,14 +29,12 @@ export async function DELETE(
   try {
     const { id } = params
     
-    // Encontrar e remover template
-    const templateIndex = templates.findIndex(t => t.id === id)
+    // Deletar template
+    const success = await templateStorage.deleteTemplate(id)
     
-    if (templateIndex === -1) {
+    if (!success) {
       return NextResponse.json({ error: 'Template não encontrado' }, { status: 404 })
     }
-    
-    templates.splice(templateIndex, 1)
     
     return NextResponse.json({ success: true })
   } catch (error) {

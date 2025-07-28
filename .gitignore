@@ -41,4 +41,7 @@ next-env.d.ts
 .idea/
 
 # OS
-Thumbs.db 
+Thumbs.db
+
+# Data storage
+/data/ 

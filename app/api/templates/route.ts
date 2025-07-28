@@ -1,53 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-
-// Mock data - em produção seria um banco de dados
-let templates = [
-  {
-    id: '1',
-    name: 'Campanha de Conversão',
-    description: 'Template para campanhas de conversão',
-    fileName: 'conversao.csv',
-    processedAt: '2024-01-15T10:30:00Z',
-    campaignCount: 2,
-    status: 'active',
-    processedData: [
-      {
-        'Campaign Name': 'Campanha Teste 1',
-        'Campaign Objective': 'LINK_CLICKS',
-        'Campaign Status': 'PAUSED',
-        'Ad Set Name': 'Conjunto Teste 1',
-        'Ad Set Daily Budget': '1000',
-        'Countries': 'BR',
-        'Ad Name': 'Anúncio Teste 1',
-        'Title': 'Título do Anúncio',
-        'Body': 'Descrição do anúncio',
-        'Link': 'https://example.com',
-        'Campaign ID': '',
-        'Ad Set ID': '',
-        'Ad ID': ''
-      },
-      {
-        'Campaign Name': 'Campanha Teste 2',
-        'Campaign Objective': 'CONVERSIONS',
-        'Campaign Status': 'PAUSED',
-        'Ad Set Name': 'Conjunto Teste 2',
-        'Ad Set Daily Budget': '2000',
-        'Countries': 'BR',
-        'Ad Name': 'Anúncio Teste 2',
-        'Title': 'Título do Anúncio 2',
-        'Body': 'Descrição do anúncio 2',
-        'Link': 'https://example2.com',
-        'Campaign ID': '',
-        'Ad Set ID': '',
-        'Ad ID': ''
-      }
-    ]
-  }
-]
+import { templateStorage } from '@/lib/template-storage'
 
 export async function GET() {
   try {
+    // Inicializar com dados padrão se necessário
+    await templateStorage.initializeWithDefaultData()
+    
+    const templates = await templateStorage.getAllTemplates()
     return NextResponse.json({ templates })
   } catch (error) {
     console.error('Erro ao buscar templates:', error)
@@ -68,18 +27,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Criar novo template
-    const newTemplate = {
-      id: Date.now().toString(),
+    const newTemplate = await templateStorage.createTemplate({
       name,
       description: description || '',
       fileName: file.name,
       processedAt: new Date().toISOString(),
       campaignCount: JSON.parse(processedData).length,
-      status: 'active' as const,
+      status: 'active',
       processedData: JSON.parse(processedData)
-    }
-
-    templates.push(newTemplate)
+    })
 
     return NextResponse.json({ 
       success: true, 
