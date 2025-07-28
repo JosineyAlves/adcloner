@@ -367,7 +367,7 @@ export class FacebookAPI {
             name: campaignData.name,
             objective: campaignData.objective,
             status: 'PAUSED', // Sempre pausada para evitar gastos
-            special_ad_categories: campaignData.special_ad_categories || '[]',
+            special_ad_categories: '[]',
             access_token: accessToken,
             ...(campaignData.daily_budget && { daily_budget: campaignData.daily_budget.toString() }),
             ...(campaignData.lifetime_budget && { lifetime_budget: campaignData.lifetime_budget.toString() }),
@@ -950,7 +950,12 @@ export class FacebookAPI {
       }
       
       adSetsData.data?.forEach((adSet: any) => {
-        console.log(`📋 Ad Set: ${adSet.name} - ID: ${adSet.id} - Status: ${adSet.status} - Budget: ${adSet.daily_budget}`)
+        console.log(`📋 Ad Set: ${adSet.name} - ID: ${adSet.id} - Status: ${adSet.status} - Daily Budget: ${adSet.daily_budget} - Lifetime Budget: ${adSet.lifetime_budget}`)
+        console.log(`   - Targeting: ${JSON.stringify(adSet.targeting)}`)
+        console.log(`   - Optimization Goal: ${adSet.optimization_goal}`)
+        console.log(`   - Billing Event: ${adSet.billing_event}`)
+        console.log(`   - Bid Amount: ${adSet.bid_amount}`)
+        console.log(`   - Bid Strategy: ${adSet.bid_strategy}`)
       })
       
       // Se não encontrou Ad Sets, tentar buscar diretamente pelo ID conhecido
@@ -973,7 +978,7 @@ export class FacebookAPI {
       // Buscar anúncios da campanha com detalhes completos incluindo criativos
       console.log(`🔍 Buscando anúncios para campanha: ${campaignId}`)
       const adsResponse = await fetch(
-        `${this.baseUrl}/${campaignId}/ads?fields=id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id,description,call_to_action{type,value}}},adset_id&access_token=${accessToken}`
+        `${this.baseUrl}/${campaignId}/ads?fields=id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id,description}}},adset_id&access_token=${accessToken}`
       )
       const adsData = await adsResponse.json()
       
@@ -986,7 +991,7 @@ export class FacebookAPI {
         // Tentar buscar anúncios via Ad Sets
         console.log(`🔍 Tentando buscar anúncios via Ad Sets...`)
         const adSetsResponse = await fetch(
-          `${this.baseUrl}/${campaignId}/adsets?fields=id,name,ads{id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id,description,call_to_action{type,value}}},adset_id}&access_token=${accessToken}`
+          `${this.baseUrl}/${campaignId}/adsets?fields=id,name,ads{id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id,description}}},adset_id}&access_token=${accessToken}`
         )
         const adSetsData = await adSetsResponse.json()
         
@@ -1026,7 +1031,7 @@ export class FacebookAPI {
         for (const adId of adIds) {
           try {
             const adResponse = await fetch(
-              `${this.baseUrl}/${adId}?fields=id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id}}}&access_token=${accessToken}`
+              `${this.baseUrl}/${adId}?fields=id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id,description}}},adset_id&access_token=${accessToken}`
             )
             const adData = await adResponse.json()
             
