@@ -17,7 +17,7 @@ export const ALL_METRICS_CONFIG: ColumnConfig[] = [
     type: 'text',
     visible: true,
     order: 2,
-    fixed: true
+    fixed: true // SEMPRE VISÍVEL
   },
   {
     id: 'adset_id',
@@ -52,7 +52,7 @@ export const ALL_METRICS_CONFIG: ColumnConfig[] = [
     order: 6
   },
 
-  // Métricas básicas
+  // Métricas básicas - SEMPRE VISÍVEIS
   {
     id: 'impressions',
     label: 'Impressões',
@@ -61,7 +61,7 @@ export const ALL_METRICS_CONFIG: ColumnConfig[] = [
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: true,
     order: 7,
-    fixed: true
+    fixed: true // SEMPRE VISÍVEL
   },
   {
     id: 'clicks',
@@ -71,7 +71,7 @@ export const ALL_METRICS_CONFIG: ColumnConfig[] = [
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: true,
     order: 8,
-    fixed: true
+    fixed: true // SEMPRE VISÍVEL
   },
   {
     id: 'spend',
@@ -81,7 +81,7 @@ export const ALL_METRICS_CONFIG: ColumnConfig[] = [
     format: (value) => `R$ ${parseFloat(value || '0').toFixed(2)}`,
     visible: true,
     order: 9,
-    fixed: true
+    fixed: true // SEMPRE VISÍVEL
   },
   {
     id: 'reach',
@@ -91,7 +91,7 @@ export const ALL_METRICS_CONFIG: ColumnConfig[] = [
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: true,
     order: 10,
-    fixed: true
+    fixed: true // SEMPRE VISÍVEL
   },
   {
     id: 'frequency',
@@ -101,10 +101,10 @@ export const ALL_METRICS_CONFIG: ColumnConfig[] = [
     format: (value) => parseFloat(value || '0').toFixed(2),
     visible: true,
     order: 11,
-    fixed: true
+    fixed: true // SEMPRE VISÍVEL
   },
 
-  // Métricas de custo
+  // Métricas de custo - SEMPRE VISÍVEIS
   {
     id: 'cpm',
     label: 'CPM',
@@ -113,7 +113,7 @@ export const ALL_METRICS_CONFIG: ColumnConfig[] = [
     format: (value) => `R$ ${parseFloat(value || '0').toFixed(2)}`,
     visible: true,
     order: 12,
-    fixed: true
+    fixed: true // SEMPRE VISÍVEL
   },
   {
     id: 'cpc',
@@ -123,7 +123,7 @@ export const ALL_METRICS_CONFIG: ColumnConfig[] = [
     format: (value) => `R$ ${parseFloat(value || '0').toFixed(2)}`,
     visible: true,
     order: 13,
-    fixed: true
+    fixed: true // SEMPRE VISÍVEL
   },
   {
     id: 'ctr',
@@ -133,7 +133,7 @@ export const ALL_METRICS_CONFIG: ColumnConfig[] = [
     format: (value) => `${parseFloat(value || '0').toFixed(2)}%`,
     visible: true,
     order: 14,
-    fixed: true
+    fixed: true // SEMPRE VISÍVEL
   },
 
   // Métricas de engajamento
@@ -156,32 +156,6 @@ export const ALL_METRICS_CONFIG: ColumnConfig[] = [
     order: 16
   },
 
-  // Métricas de qualidade
-  {
-    id: 'quality_ranking',
-    label: 'Ranking de Qualidade',
-    category: 'Qualidade',
-    type: 'text',
-    visible: false,
-    order: 17
-  },
-  {
-    id: 'engagement_rate_ranking',
-    label: 'Ranking de Engajamento',
-    category: 'Qualidade',
-    type: 'text',
-    visible: false,
-    order: 18
-  },
-  {
-    id: 'conversion_rate_ranking',
-    label: 'Ranking de Conversão',
-    category: 'Qualidade',
-    type: 'text',
-    visible: false,
-    order: 19
-  },
-
   // Métricas de conversão
   {
     id: 'conversions',
@@ -190,7 +164,7 @@ export const ALL_METRICS_CONFIG: ColumnConfig[] = [
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: false,
-    order: 20
+    order: 17
   },
   {
     id: 'cost_per_conversion',
@@ -199,7 +173,7 @@ export const ALL_METRICS_CONFIG: ColumnConfig[] = [
     type: 'currency',
     format: (value) => `R$ ${parseFloat(value || '0').toFixed(2)}`,
     visible: false,
-    order: 21
+    order: 18
   },
   {
     id: 'conversion_values',
@@ -208,305 +182,33 @@ export const ALL_METRICS_CONFIG: ColumnConfig[] = [
     type: 'currency',
     format: (value) => `R$ ${parseFloat(value || '0').toFixed(2)}`,
     visible: false,
+    order: 19
+  },
+
+  // Métricas de qualidade
+  {
+    id: 'quality_ranking',
+    label: 'Ranking de Qualidade',
+    category: 'Qualidade',
+    type: 'text',
+    visible: false,
+    order: 20
+  },
+  {
+    id: 'engagement_rate_ranking',
+    label: 'Ranking de Engajamento',
+    category: 'Qualidade',
+    type: 'text',
+    visible: false,
+    order: 21
+  },
+  {
+    id: 'conversion_rate_ranking',
+    label: 'Ranking de Conversão',
+    category: 'Qualidade',
+    type: 'text',
+    visible: false,
     order: 22
-  },
-
-  // Métricas de vídeo
-  {
-    id: 'video_p25_watched_actions',
-    label: 'Vídeo 25% Assistido',
-    category: 'Vídeo',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 23
-  },
-  {
-    id: 'video_p50_watched_actions',
-    label: 'Vídeo 50% Assistido',
-    category: 'Vídeo',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 24
-  },
-  {
-    id: 'video_p75_watched_actions',
-    label: 'Vídeo 75% Assistido',
-    category: 'Vídeo',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 25
-  },
-  {
-    id: 'video_p95_watched_actions',
-    label: 'Vídeo 95% Assistido',
-    category: 'Vídeo',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 26
-  },
-  {
-    id: 'video_p100_watched_actions',
-    label: 'Vídeo 100% Assistido',
-    category: 'Vídeo',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 27
-  },
-  {
-    id: 'video_play_actions',
-    label: 'Reproduções de Vídeo',
-    category: 'Vídeo',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 28
-  },
-  {
-    id: 'video_play_curve_actions',
-    label: 'Curva de Reprodução',
-    category: 'Vídeo',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 29
-  },
-
-  // Métricas de aplicativo
-  {
-    id: 'mobile_app_installs',
-    label: 'Instalações Mobile',
-    category: 'Aplicativo',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 30
-  },
-  {
-    id: 'mobile_app_install_rate',
-    label: 'Taxa de Instalação Mobile',
-    category: 'Aplicativo',
-    type: 'percentage',
-    format: (value) => `${parseFloat(value || '0').toFixed(2)}%`,
-    visible: false,
-    order: 31
-  },
-
-  // Métricas de lead
-  {
-    id: 'leads',
-    label: 'Leads',
-    category: 'Lead',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 32
-  },
-  {
-    id: 'cost_per_lead',
-    label: 'Custo por Lead',
-    category: 'Lead',
-    type: 'currency',
-    format: (value) => `R$ ${parseFloat(value || '0').toFixed(2)}`,
-    visible: false,
-    order: 33
-  },
-
-  // Métricas de página
-  {
-    id: 'page_likes',
-    label: 'Curtidas da Página',
-    category: 'Página',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 34
-  },
-  {
-    id: 'page_engagement',
-    label: 'Engajamento da Página',
-    category: 'Página',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 35
-  },
-  {
-    id: 'page_impressions',
-    label: 'Impressões da Página',
-    category: 'Página',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 36
-  },
-  {
-    id: 'page_posts_impressions',
-    label: 'Impressões de Posts',
-    category: 'Página',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 37
-  },
-
-  // Métricas de evento
-  {
-    id: 'onsite_conversion',
-    label: 'Conversões no Site',
-    category: 'Eventos',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 38
-  },
-  {
-    id: 'purchase',
-    label: 'Compras',
-    category: 'Eventos',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 39
-  },
-  {
-    id: 'add_to_cart',
-    label: 'Adicionar ao Carrinho',
-    category: 'Eventos',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 40
-  },
-  {
-    id: 'initiated_checkout',
-    label: 'Iniciar Checkout',
-    category: 'Eventos',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 41
-  },
-  {
-    id: 'complete_registration',
-    label: 'Registros Completos',
-    category: 'Eventos',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 42
-  },
-  {
-    id: 'view_content',
-    label: 'Visualizações de Conteúdo',
-    category: 'Eventos',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 43
-  },
-  {
-    id: 'search',
-    label: 'Buscas',
-    category: 'Eventos',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 44
-  },
-  {
-    id: 'add_to_wishlist',
-    label: 'Adicionar à Lista de Desejos',
-    category: 'Eventos',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 45
-  },
-  {
-    id: 'start_order',
-    label: 'Iniciar Pedido',
-    category: 'Eventos',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 46
-  },
-  {
-    id: 'add_payment_info',
-    label: 'Adicionar Informações de Pagamento',
-    category: 'Eventos',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 47
-  },
-  {
-    id: 'contact',
-    label: 'Contatos',
-    category: 'Eventos',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 48
-  },
-  {
-    id: 'custom',
-    label: 'Eventos Personalizados',
-    category: 'Eventos',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 49
-  },
-  {
-    id: 'donate',
-    label: 'Doações',
-    category: 'Eventos',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 50
-  },
-  {
-    id: 'find_location',
-    label: 'Encontrar Localização',
-    category: 'Eventos',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 51
-  },
-  {
-    id: 'schedule',
-    label: 'Agendamentos',
-    category: 'Eventos',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 52
-  },
-  {
-    id: 'subscribe',
-    label: 'Inscrições',
-    category: 'Eventos',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 53
-  },
-  {
-    id: 'tutorial_completion',
-    label: 'Conclusão de Tutorial',
-    category: 'Eventos',
-    type: 'number',
-    format: (value) => parseInt(value || '0').toLocaleString(),
-    visible: false,
-    order: 54
   }
 ]
 

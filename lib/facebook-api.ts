@@ -1247,6 +1247,9 @@ export class FacebookAPI {
     accessToken: string, 
     datePreset: string = 'last_7d'
   ) {
+    console.log('🔍 FacebookAPI: Iniciando getAccountInsights para conta:', accountId)
+    console.log('🔍 FacebookAPI: datePreset:', datePreset)
+    
     try {
       // Campos básicos e seguros da API de Insights do Facebook para contas
       const fields = [
@@ -1285,18 +1288,40 @@ export class FacebookAPI {
         'conversion_values'
       ].join(',')
 
-      const response = await fetch(
-        `${this.baseUrl}/${accountId}/insights?fields=${fields}&date_preset=${datePreset}&level=campaign&access_token=${accessToken}`
-      )
+      const url = `${this.baseUrl}/${accountId}/insights?fields=${fields}&date_preset=${datePreset}&level=campaign&access_token=${accessToken}`
+      console.log('🔍 FacebookAPI: URL da requisição:', url.replace(accessToken, '***'))
+
+      const response = await fetch(url)
+      console.log('🔍 FacebookAPI: Status da resposta:', response.status)
+      console.log('🔍 FacebookAPI: Headers da resposta:', Object.fromEntries(response.headers.entries()))
+      
       const data = await response.json()
+      console.log('🔍 FacebookAPI: Dados recebidos:', JSON.stringify(data, null, 2))
       
       if (data.error) {
+        console.error('❌ FacebookAPI: Erro da API:', data.error)
         throw new Error(data.error.message)
+      }
+      
+      console.log('✅ FacebookAPI: Insights obtidos com sucesso:', data.data?.length || 0)
+      
+      if (data.data && data.data.length > 0) {
+        console.log('📊 FacebookAPI: Primeiro insight:', data.data[0])
+        console.log('📊 FacebookAPI: Campos disponíveis no primeiro insight:', Object.keys(data.data[0]))
+        
+        // Verificar se os campos esperados estão presentes
+        const expectedFields = ['campaign_id', 'campaign_name', 'impressions', 'clicks', 'spend']
+        expectedFields.forEach(field => {
+          const value = data.data[0][field]
+          console.log(`📊 FacebookAPI: Campo ${field}:`, value, 'Tipo:', typeof value)
+        })
+      } else {
+        console.log('⚠️ FacebookAPI: Nenhum insight encontrado')
       }
       
       return data.data || []
     } catch (error) {
-      console.error('Error getting account insights:', error)
+      console.error('❌ FacebookAPI: Error getting account insights:', error)
       throw error
     }
   }

@@ -13,6 +13,9 @@ import { ALL_METRICS_CONFIG } from '@/lib/all-metrics-config'
 import toast from 'react-hot-toast'
 
 export default function DashboardPage() {
+  console.log('🔍 Dashboard: ALL_METRICS_CONFIG carregado:', ALL_METRICS_CONFIG.length, 'colunas')
+  console.log('🔍 Dashboard: Métricas fixas no config:', ALL_METRICS_CONFIG.filter(col => col.fixed).length)
+  
   const [accounts, setAccounts] = useState<FacebookAccount[]>([])
   const [insights, setInsights] = useState<any[]>([])
   const [columns, setColumns] = useState<ColumnConfig[]>(ALL_METRICS_CONFIG)
@@ -21,34 +24,44 @@ export default function DashboardPage() {
   const [datePreset, setDatePreset] = useState<string>('last_7d')
   const [isConfigModalOpen, setIsConfigModalOpen] = useState<boolean>(false)
 
+  console.log('🔍 Dashboard: Estado inicial das colunas:', columns.length)
+  console.log('🔍 Dashboard: Colunas fixas no estado:', columns.filter(col => col.fixed).length)
+
   useEffect(() => {
+    console.log('🔄 Dashboard: useEffect inicial')
     fetchAccounts()
   }, [])
 
   useEffect(() => {
+    console.log('🔄 Dashboard: useEffect insights - accounts:', accounts.length, 'datePreset:', datePreset)
     if (accounts.length > 0) {
       fetchInsights()
     }
   }, [accounts, datePreset])
 
   const fetchAccounts = async () => {
+    console.log('📊 Dashboard: Iniciando fetchAccounts')
     try {
       const response = await fetch('/api/facebook/accounts', {
         credentials: 'include'
       })
 
+      console.log('📊 Dashboard: Resposta fetchAccounts:', response.status)
+
       if (response.ok) {
         const data = await response.json()
+        console.log('📊 Dashboard: Contas recebidas:', data.accounts?.length || 0)
         setAccounts(data.accounts || [])
       } else if (response.status === 401) {
+        console.log('📊 Dashboard: Não autorizado, redirecionando para login')
         window.location.href = '/login'
         return
       } else {
-        console.error('Failed to fetch accounts')
+        console.error('📊 Dashboard: Failed to fetch accounts')
         toast.error('Erro ao carregar contas do Facebook')
       }
     } catch (error) {
-      console.error('Error fetching accounts:', error)
+      console.error('📊 Dashboard: Error fetching accounts:', error)
       toast.error('Erro ao carregar contas do Facebook')
     } finally {
       setIsLoading(false)
@@ -56,40 +69,49 @@ export default function DashboardPage() {
   }
 
   const fetchInsights = async () => {
+    console.log('📊 Dashboard: Iniciando fetchInsights')
     try {
       const activeAccounts = accounts.filter(a => a.status === 'active')
-      console.log(`📊 Buscando insights de ${activeAccounts.length} contas ativas`)
+      console.log(`📊 Dashboard: Buscando insights de ${activeAccounts.length} contas ativas`)
       
       const allInsights = []
       for (const account of activeAccounts) {
         try {
-          console.log(`🔍 Buscando insights para conta: ${account.id}`)
+          console.log(`🔍 Dashboard: Buscando insights para conta: ${account.id}`)
+          
+          // Usar API real de insights
           const response = await fetch(`/api/insights?accountId=${account.id}&datePreset=${datePreset}`, {
             credentials: 'include'
           })
           
+          console.log(`📊 Dashboard: Status da resposta para ${account.id}:`, response.status)
+          
           if (response.ok) {
             const data = await response.json()
-            console.log(`✅ Insights recebidos para ${account.id}:`, data.insights?.length || 0)
+            console.log(`✅ Dashboard: Insights recebidos para ${account.id}:`, data.insights?.length || 0)
+            console.log(`📊 Dashboard: Dados completos:`, data)
             if (data.insights && data.insights.length > 0) {
               allInsights.push(...data.insights)
             }
           } else {
-            console.error(`❌ Erro ao buscar insights para ${account.id}:`, response.status)
+            const errorText = await response.text()
+            console.error(`❌ Dashboard: Erro ao buscar insights para ${account.id}:`, response.status, errorText)
           }
         } catch (error) {
-          console.error(`Error fetching insights for account ${account.id}:`, error)
+          console.error(`📊 Dashboard: Error fetching insights for account ${account.id}:`, error)
         }
       }
       
-      console.log(`📈 Total de insights encontrados: ${allInsights.length}`)
+      console.log(`📈 Dashboard: Total de insights encontrados: ${allInsights.length}`)
+      console.log(`📊 Dashboard: Primeiros insights:`, allInsights.slice(0, 2))
       setInsights(allInsights)
     } catch (error) {
-      console.error('Error fetching insights:', error)
+      console.error('📊 Dashboard: Error fetching insights:', error)
     }
   }
 
   const handleRefresh = async () => {
+    console.log('🔄 Dashboard: Iniciando refresh')
     setIsRefreshing(true)
     await fetchAccounts()
     setIsRefreshing(false)
@@ -97,11 +119,14 @@ export default function DashboardPage() {
   }
 
   const handleSaveColumns = (newColumns: ColumnConfig[]) => {
+    console.log('📊 Dashboard: Salvando colunas:', newColumns.length)
     setColumns(newColumns)
     toast.success('Configuração de colunas salva!')
   }
 
   const visibleColumns = getVisibleColumns(columns)
+  console.log('📊 Dashboard: Colunas visíveis:', visibleColumns.length)
+  console.log('📊 Dashboard: Colunas fixas:', visibleColumns.filter(col => col.fixed).length)
 
   // Calcular métricas agregadas dos insights
   const aggregatedMetrics = insights.reduce((acc, insight) => {
@@ -113,12 +138,16 @@ export default function DashboardPage() {
     }
   }, {})
 
+  console.log('📊 Dashboard: Métricas agregadas:', aggregatedMetrics)
+
   // Calcular métricas derivadas
   const derivedMetrics = {
     cpm: aggregatedMetrics.impressions > 0 ? (aggregatedMetrics.spend / aggregatedMetrics.impressions) * 1000 : 0,
     cpc: aggregatedMetrics.clicks > 0 ? aggregatedMetrics.spend / aggregatedMetrics.clicks : 0,
     ctr: aggregatedMetrics.impressions > 0 ? (aggregatedMetrics.clicks / aggregatedMetrics.impressions) * 100 : 0
   }
+
+  console.log('📊 Dashboard: Métricas derivadas:', derivedMetrics)
 
   if (isLoading) {
     return (
@@ -335,18 +364,26 @@ export default function DashboardPage() {
                         </tr>
                       </thead>
                       <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                        {insights.slice(0, 10).map((insight, index) => (
-                          <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                            {visibleColumns.map((column) => (
-                              <td 
-                                key={column.id}
-                                className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white"
-                              >
-                                {formatColumnValue(insight[column.id], column)}
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
+                        {insights.slice(0, 10).map((insight, index) => {
+                          console.log(`📊 Dashboard: Renderizando insight ${index}:`, insight)
+                          return (
+                            <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                              {visibleColumns.map((column) => {
+                                const value = insight[column.id]
+                                const formattedValue = formatColumnValue(value, column)
+                                console.log(`📊 Dashboard: Coluna ${column.id}:`, value, '->', formattedValue)
+                                return (
+                                  <td 
+                                    key={column.id}
+                                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white"
+                                  >
+                                    {formattedValue}
+                                  </td>
+                                )
+                              })}
+                            </tr>
+                          )
+                        })}
                       </tbody>
                     </table>
                   </div>

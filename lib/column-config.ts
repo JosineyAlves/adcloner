@@ -174,9 +174,23 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
 ]
 
 export function getVisibleColumns(columns: ColumnConfig[]): ColumnConfig[] {
-  return columns
-    .filter(col => col.visible || col.fixed) // Incluir colunas fixas mesmo se não visíveis
-    .sort((a, b) => a.order - b.order)
+  console.log('🔍 ColumnConfig: getVisibleColumns - Total de colunas:', columns.length)
+  
+  // Primeiro, pegar todas as colunas fixas (sempre visíveis)
+  const fixedColumns = columns.filter(col => col.fixed)
+  console.log('🔍 ColumnConfig: Colunas fixas encontradas:', fixedColumns.length)
+  
+  // Depois, pegar colunas visíveis que não são fixas
+  const visibleNonFixedColumns = columns.filter(col => col.visible && !col.fixed)
+  console.log('🔍 ColumnConfig: Colunas visíveis não-fixas:', visibleNonFixedColumns.length)
+  
+  // Combinar e ordenar
+  const visibleColumns = [...fixedColumns, ...visibleNonFixedColumns].sort((a, b) => a.order - b.order)
+  
+  console.log('🔍 ColumnConfig: Colunas visíveis finais:', visibleColumns.length)
+  console.log('🔍 ColumnConfig: IDs das colunas visíveis:', visibleColumns.map(col => col.id))
+  
+  return visibleColumns
 }
 
 export function getFixedColumns(columns: ColumnConfig[]): ColumnConfig[] {
@@ -186,24 +200,36 @@ export function getFixedColumns(columns: ColumnConfig[]): ColumnConfig[] {
 }
 
 export function formatColumnValue(value: any, column: ColumnConfig): string {
+  console.log(`🔍 ColumnConfig: formatColumnValue - Coluna: ${column.id}, Valor:`, value, 'Tipo:', typeof value)
+  
   if (value === null || value === undefined || value === '') {
+    console.log(`🔍 ColumnConfig: formatColumnValue - Valor vazio para ${column.id}`)
     return '-'
   }
 
   if (column.format) {
-    return column.format(value)
+    const formatted = column.format(value)
+    console.log(`🔍 ColumnConfig: formatColumnValue - Formatado para ${column.id}:`, formatted)
+    return formatted
   }
 
+  let result: string
   switch (column.type) {
     case 'currency':
-      return `R$ ${parseFloat(value || '0').toFixed(2)}`
+      result = `R$ ${parseFloat(value || '0').toFixed(2)}`
+      break
     case 'percentage':
-      return `${parseFloat(value || '0').toFixed(2)}%`
+      result = `${parseFloat(value || '0').toFixed(2)}%`
+      break
     case 'number':
-      return parseInt(value || '0').toLocaleString()
+      result = parseInt(value || '0').toLocaleString()
+      break
     default:
-      return String(value)
+      result = String(value)
   }
+  
+  console.log(`🔍 ColumnConfig: formatColumnValue - Resultado para ${column.id}:`, result)
+  return result
 }
 
 export function getCategories(columns: ColumnConfig[]): string[] {
