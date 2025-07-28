@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { Plus, Search, Filter, BarChart3, Calendar, DollarSign } from 'lucide-react'
 import Sidebar from '@/components/layout/Sidebar'
 import CloneCampaignModal from '@/components/campaigns/CloneCampaignModal'
+import CreateCampaignModal from '@/components/campaigns/CreateCampaignModal'
 import { Campaign, CampaignClone, FacebookAccount } from '@/lib/types'
 import { formatDate, getStatusColor, getStatusIcon } from '@/lib/utils'
 import toast from 'react-hot-toast'
@@ -18,6 +19,7 @@ export default function CampaignsPage() {
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null)
   const [isCloneModalOpen, setIsCloneModalOpen] = useState<boolean>(false)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false)
 
   useEffect(() => {
     fetchCampaigns()
@@ -43,6 +45,10 @@ export default function CampaignsPage() {
   const handleCloneCampaign = (campaign: Campaign) => {
     setSelectedCampaign(campaign)
     setIsCloneModalOpen(true)
+  }
+
+  const handleCreateCampaign = () => {
+    setIsCreateModalOpen(true)
   }
 
   const fetchCampaigns = async () => {
@@ -228,7 +234,10 @@ export default function CampaignsPage() {
                   }
                 </p>
                 {!searchTerm && filterStatus === 'all' && (
-                  <button className="btn-primary">
+                  <button 
+                    onClick={handleCreateCampaign}
+                    className="btn-primary"
+                  >
                     Criar Primeira Campanha
                   </button>
                 )}
@@ -289,6 +298,13 @@ export default function CampaignsPage() {
         isOpen={isCloneModalOpen}
         onClose={() => setIsCloneModalOpen(false)}
         campaign={selectedCampaign}
+        accounts={accounts}
+      />
+
+      {/* Create Campaign Modal */}
+      <CreateCampaignModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
         accounts={accounts}
       />
     </div>
