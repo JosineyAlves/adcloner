@@ -245,7 +245,7 @@ export default function CampaignsPage() {
                   <div className="space-y-4">
                     {clones.slice(0, 5).map((clone, index) => (
                       <motion.div
-                        key={clone.id}
+                        key={clone.id || `clone-${index}`}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.5, delay: index * 0.1 }}
@@ -257,10 +257,10 @@ export default function CampaignsPage() {
                           </div>
                           <div>
                             <p className="font-medium text-gray-900 dark:text-white">
-                              Clonagem para {clone.accountName}
+                              Clonagem para {clone.accountName || 'Conta não especificada'}
                             </p>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                              {formatDate(clone.createdAt)}
+                              {clone.createdAt ? formatDate(clone.createdAt) : 'Data não disponível'}
                             </p>
                           </div>
                         </div>
