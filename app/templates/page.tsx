@@ -60,6 +60,98 @@ export default function TemplatesPage() {
     fetchTemplates()
   }
 
+  const handleCreateBaseTemplate = async () => {
+    try {
+      const response = await fetch('/api/templates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: 'Template Base - Dog Campaign',
+          description: 'Template base para teste com dados reais da campanha Dog',
+          processedData: [
+            {
+              'Campaign Name': 'CA02 - THE DOG - CBO - 16/05',
+              'Campaign Objective': 'Outcome Sales',
+              'Campaign Status': 'PAUSED',
+              'Ad Set Name': 'CJ01',
+              'Ad Set Daily Budget': '5000',
+              'Countries': 'US, CA',
+              'Ad Name': 'AD06',
+              'Title': 'Your dog could be an influencer!',
+              'Body': 'Do you have a dog?\nTurn your pup\'s playful moments into something bigger while they have fun!\nIt\'s all about your dog enjoying life and you enjoying the perks.\nClick "Learn More" to see if your dog\'s breed can become an influencer.',
+              'Link': 'https://inlead.digital/the-dog-influencer/?sck=fb|cam2|g1|ad6',
+              'Image Hash': '864904627876681:30ffb9f08957ee8c222d4319f5e6f05d'
+            },
+            {
+              'Campaign Name': 'CA02 - THE DOG - CBO - 16/05',
+              'Campaign Objective': 'Outcome Sales',
+              'Campaign Status': 'PAUSED',
+              'Ad Set Name': 'CJ01',
+              'Ad Set Daily Budget': '5000',
+              'Countries': 'US, CA',
+              'Ad Name': 'AD07',
+              'Title': 'Your dog could be an influencer!',
+              'Body': 'Do you have a dog?\nTurn your pup\'s playful moments into something bigger while they have fun!\nIt\'s all about your dog enjoying life and you enjoying the perks.\nClick "Learn More" to see if your dog\'s breed can become an influencer.',
+              'Link': 'https://inlead.digital/the-dog-influencer/?sck=fb|cam2|g1|ad7',
+              'Image Hash': '864904627876681:0322382636f64a4df9b6825809ca97b1'
+            },
+            {
+              'Campaign Name': 'CA02 - THE DOG - CBO - 16/05',
+              'Campaign Objective': 'Outcome Sales',
+              'Campaign Status': 'PAUSED',
+              'Ad Set Name': 'CJ01',
+              'Ad Set Daily Budget': '5000',
+              'Countries': 'US, CA',
+              'Ad Name': 'AD08',
+              'Title': 'Your dog could be an influencer!',
+              'Body': 'Do you have a dog?\nTurn your pup\'s playful moments into something bigger while they have fun!\nIt\'s all about your dog enjoying life and you enjoying the perks.\nClick "Learn More" to see if your dog\'s breed can become an influencer.',
+              'Link': 'https://inlead.digital/the-dog-influencer/?sck=fb|cam2|g1|ad8',
+              'Image Hash': '864904627876681:13b238cb007c6963954b4ae623a2ae61'
+            },
+            {
+              'Campaign Name': 'CA02 - THE DOG - CBO - 16/05',
+              'Campaign Objective': 'Outcome Sales',
+              'Campaign Status': 'PAUSED',
+              'Ad Set Name': 'CJ01',
+              'Ad Set Daily Budget': '5000',
+              'Countries': 'US, CA',
+              'Ad Name': 'AD09',
+              'Title': 'Your dog could be an influencer!',
+              'Body': 'Do you have a dog?\nTurn your pup\'s playful moments into something bigger while they have fun!\nIt\'s all about your dog enjoying life and you enjoying the perks.\nClick "Learn More" to see if your dog\'s breed can become an influencer.',
+              'Link': 'https://inlead.digital/the-dog-influencer/?sck=fb|cam2|g1|ad9',
+              'Image Hash': '864904627876681:97385c9a2d58641989570ac50118f7e6'
+            },
+            {
+              'Campaign Name': 'CA02 - THE DOG - CBO - 16/05',
+              'Campaign Objective': 'Outcome Sales',
+              'Campaign Status': 'PAUSED',
+              'Ad Set Name': 'CJ01',
+              'Ad Set Daily Budget': '5000',
+              'Countries': 'US, CA',
+              'Ad Name': 'AD10',
+              'Title': 'Your dog could be an influencer!',
+              'Body': 'Do you have a dog?\nTurn your pup\'s playful moments into something bigger while they have fun!\nIt\'s all about your dog enjoying life and you enjoying the perks.\nClick "Learn More" to see if your dog\'s breed can become an influencer.',
+              'Link': 'https://inlead.digital/the-dog-influencer/?sck=fb|cam2|g1|ad10',
+              'Image Hash': '864904627876681:e48c883d825a6909760c1a3236eb9e0e'
+            }
+          ]
+        })
+      })
+      
+      if (response.ok) {
+        alert('Template base criado com sucesso!')
+        fetchTemplates()
+      } else {
+        alert('Erro ao criar template base')
+      }
+    } catch (error) {
+      console.error('Erro ao criar template base:', error)
+      alert('Erro ao criar template base')
+    }
+  }
+
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar />
@@ -76,13 +168,23 @@ export default function TemplatesPage() {
               </p>
             </div>
             
-            <button
-              onClick={() => setIsUploadModalOpen(true)}
-              className="btn-primary flex items-center space-x-2"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Novo Template</span>
-            </button>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setIsUploadModalOpen(true)}
+                className="btn-primary flex items-center space-x-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Novo Template</span>
+              </button>
+              
+              <button
+                onClick={handleCreateBaseTemplate}
+                className="btn-secondary flex items-center space-x-2"
+              >
+                <FileText className="w-4 h-4" />
+                <span>Criar Template Base</span>
+              </button>
+            </div>
           </div>
         </header>
 
