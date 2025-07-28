@@ -367,6 +367,7 @@ export class FacebookAPI {
             name: campaignData.name,
             objective: campaignData.objective,
             status: 'PAUSED', // Sempre criar pausada
+            special_ad_categories: '[]', // Parâmetro obrigatório - array vazio para nenhuma categoria especial
             access_token: accessToken
           })
         }
