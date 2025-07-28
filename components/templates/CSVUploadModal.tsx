@@ -223,14 +223,17 @@ export default function CSVUploadModal({ isOpen, onClose, onSuccess }: CSVUpload
       })
       
       if (response.ok) {
+        const result = await response.json()
+        console.log('Template criado:', result)
         onSuccess()
         onClose()
       } else {
-        throw new Error('Erro ao criar template')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Erro ao criar template')
       }
     } catch (error) {
       console.error('Erro ao processar template:', error)
-      alert('Erro ao processar template. Tente novamente.')
+      alert(`Erro ao processar template: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
     } finally {
       setIsProcessing(false)
     }

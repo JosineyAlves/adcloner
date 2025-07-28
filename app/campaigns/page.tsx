@@ -130,7 +130,7 @@ export default function CampaignsPage() {
                 className="btn-secondary flex items-center space-x-2"
               >
                 <Upload className="w-4 h-4" />
-                <span>CSV</span>
+                <span>Clonar de Template</span>
               </button>
               <button 
                 onClick={handleCreateCampaign}

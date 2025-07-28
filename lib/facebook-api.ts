@@ -1204,4 +1204,69 @@ export class FacebookAPI {
       throw error
     }
   }
+
+  /**
+   * Clona campanhas a partir de dados de template
+   */
+  async cloneCampaignFromTemplate(accountId: string, accessToken: string, templateData: any[]) {
+    try {
+      const results = []
+      
+      for (const row of templateData) {
+        // Criar campanha baseada nos dados do template
+        const campaignId = await this.createCampaign(accountId, accessToken, {
+          name: row['Campaign Name'] || 'Campanha do Template',
+          objective: row['Campaign Objective'] || 'LINK_CLICKS',
+          status: 'PAUSED',
+          special_ad_categories: '[]'
+        })
+        
+        // Criar ad set
+        const adSetId = await this.createAdSet(accountId, accessToken, {
+          name: row['Ad Set Name'] || 'Conjunto do Template',
+          campaignId: campaignId,
+          targeting: {
+            geo_locations: {
+              countries: row['Countries'] ? [row['Countries']] : ['BR']
+            }
+          },
+          dailyBudget: parseInt(row['Ad Set Daily Budget']) || 1000,
+          optimizationGoal: 'LINK_CLICKS'
+        })
+        
+        // Criar ad
+        const adId = await this.createAd(accountId, accessToken, {
+          name: row['Ad Name'] || 'Anúncio do Template',
+          adset_id: adSetId,
+          creative: {
+            name: 'Criativo do Template',
+            object_story_spec: {
+              page_id: row['Campaign Page ID'] || '123456789',
+              link_data: {
+                link: row['Link'] || 'https://example.com',
+                message: row['Body'] || 'Confira nosso produto!',
+                image_hash: row['Image Hash'] || ''
+              }
+            }
+          },
+          status: 'PAUSED'
+        })
+        
+        results.push({
+          campaignId: campaignId,
+          adSetId: adSetId,
+          adId: adId
+        })
+      }
+      
+      return {
+        success: true,
+        results,
+        message: `${results.length} campanhas criadas com sucesso`
+      }
+    } catch (error) {
+      console.error('Erro na clonagem por template:', error)
+      throw error
+    }
+  }
 } 
