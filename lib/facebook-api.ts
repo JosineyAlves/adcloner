@@ -414,6 +414,7 @@ export class FacebookAPI {
             daily_budget: (adSetData.dailyBudget || 1000).toString(),
             billing_event: 'IMPRESSIONS',
             optimization_goal: adSetData.optimizationGoal || 'REACH',
+            bid_amount: '1000', // Valor do lance obrigatório
             status: 'PAUSED',
             access_token: accessToken
           })
@@ -507,6 +508,14 @@ export class FacebookAPI {
       if (campaignData.adSets && campaignData.adSets.length > 0) {
         for (const adSet of campaignData.adSets) {
           try {
+            console.log(`Clonando Ad Set: ${adSet.name}`, {
+              name: adSet.name,
+              campaignId: newCampaignId,
+              targeting: adSet.targeting,
+              dailyBudget: adSet.daily_budget,
+              optimizationGoal: adSet.optimization_goal
+            })
+            
             const newAdSetId = await this.createAdSet(targetAccountId, accessToken, {
               name: adSet.name,
               campaignId: newCampaignId,
@@ -519,10 +528,14 @@ export class FacebookAPI {
               originalId: adSet.id,
               newId: newAdSetId
             })
+            
+            console.log(`✅ Ad Set clonado com sucesso: ${newAdSetId}`)
           } catch (error) {
             console.error(`Error cloning ad set ${adSet.id}:`, error)
           }
         }
+      } else {
+        console.log('⚠️ Nenhum Ad Set encontrado para clonar')
       }
       
       // 4. Clonar anúncios
@@ -589,11 +602,20 @@ export class FacebookAPI {
       )
       const adsData = await adsResponse.json()
       
-      return {
+      const result = {
         ...campaignData,
         adSets: adSetsData.data || [],
         ads: adsData.data || []
       }
+      
+      console.log('📊 Dados da campanha obtidos:', {
+        campaignId,
+        name: campaignData.name,
+        adSetsCount: result.adSets.length,
+        adsCount: result.ads.length
+      })
+      
+      return result
     } catch (error) {
       console.error('Error getting campaign details:', error)
       throw error
