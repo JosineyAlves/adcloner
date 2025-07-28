@@ -1244,7 +1244,7 @@ export class FacebookAPI {
       ].join(',')
 
       const response = await fetch(
-        `${this.baseUrl}/${accountId}/insights?fields=${fields}&date_preset=${datePreset}&level=ad&access_token=${accessToken}`
+        `${this.baseUrl}/${accountId}/insights?fields=${fields}&date_preset=${datePreset}&level=campaign&access_token=${accessToken}`
       )
       const data = await response.json()
       

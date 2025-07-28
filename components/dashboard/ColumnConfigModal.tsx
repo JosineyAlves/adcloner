@@ -30,7 +30,7 @@ export default function ColumnConfigModal({
   const handleToggleColumn = (columnId: string) => {
     setLocalColumns(prev => 
       prev.map(col => 
-        col.id === columnId 
+        col.id === columnId && !col.fixed
           ? { ...col, visible: !col.visible }
           : col
       )
@@ -164,21 +164,34 @@ export default function ColumnConfigModal({
                       </div>
                     </div>
                     
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => handleToggleColumn(column.id)}
-                        className={`p-2 rounded-lg transition-colors ${
-                          column.visible
-                            ? 'bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400'
-                            : 'bg-gray-100 text-gray-400 dark:bg-gray-600 dark:text-gray-500'
-                        }`}
-                      >
-                        {column.visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                      </button>
-                      {column.visible && (
-                        <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
-                      )}
-                    </div>
+                                         <div className="flex items-center space-x-2">
+                       {column.fixed ? (
+                         <div className="flex items-center space-x-2">
+                           <div className="p-2 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                             <Eye className="w-4 h-4" />
+                           </div>
+                           <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                             Fixa
+                           </span>
+                         </div>
+                       ) : (
+                         <>
+                           <button
+                             onClick={() => handleToggleColumn(column.id)}
+                             className={`p-2 rounded-lg transition-colors ${
+                               column.visible
+                                 ? 'bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400'
+                                 : 'bg-gray-100 text-gray-400 dark:bg-gray-600 dark:text-gray-500'
+                             }`}
+                           >
+                             {column.visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                           </button>
+                           {column.visible && (
+                             <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
+                           )}
+                         </>
+                       )}
+                     </div>
                   </motion.div>
                 ))}
               </div>
@@ -186,14 +199,18 @@ export default function ColumnConfigModal({
               {/* Summary */}
               <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-blue-900 dark:text-blue-200">
-                      Resumo da Configuração
-                    </p>
-                    <p className="text-xs text-blue-700 dark:text-blue-300">
-                      {localColumns.filter(col => col.visible).length} de {localColumns.length} colunas visíveis
-                    </p>
-                  </div>
+                                     <div>
+                     <p className="text-sm font-medium text-blue-900 dark:text-blue-200">
+                       Resumo da Configuração
+                     </p>
+                     <p className="text-xs text-blue-700 dark:text-blue-300">
+                       {localColumns.filter(col => col.visible || col.fixed).length} de {localColumns.length} colunas visíveis
+                       <br />
+                       <span className="text-blue-600 dark:text-blue-400">
+                         {localColumns.filter(col => col.fixed).length} colunas fixas
+                       </span>
+                     </p>
+                   </div>
                   <div className="text-right">
                     <p className="text-xs text-blue-700 dark:text-blue-300">
                       Arraste para reordenar • Clique no ícone para mostrar/ocultar

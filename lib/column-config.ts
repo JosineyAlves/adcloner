@@ -6,6 +6,7 @@ export interface ColumnConfig {
   format?: (value: any) => string
   visible: boolean
   order: number
+  fixed?: boolean // Colunas que sempre devem estar visíveis
 }
 
 export const DEFAULT_COLUMNS: ColumnConfig[] = [
@@ -16,26 +17,11 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     category: 'Identificação',
     type: 'text',
     visible: true,
-    order: 1
-  },
-  {
-    id: 'adset_name',
-    label: 'Conjunto de Anúncios',
-    category: 'Identificação',
-    type: 'text',
-    visible: true,
-    order: 2
-  },
-  {
-    id: 'ad_name',
-    label: 'Anúncio',
-    category: 'Identificação',
-    type: 'text',
-    visible: true,
-    order: 3
+    order: 1,
+    fixed: true // Sempre visível
   },
 
-  // Métricas básicas
+  // Métricas básicas (FIXAS - sempre visíveis)
   {
     id: 'impressions',
     label: 'Impressões',
@@ -43,7 +29,8 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: true,
-    order: 4
+    order: 2,
+    fixed: true // Sempre visível
   },
   {
     id: 'clicks',
@@ -52,7 +39,8 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: true,
-    order: 5
+    order: 3,
+    fixed: true // Sempre visível
   },
   {
     id: 'spend',
@@ -61,7 +49,8 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'currency',
     format: (value) => `R$ ${parseFloat(value || '0').toFixed(2)}`,
     visible: true,
-    order: 6
+    order: 4,
+    fixed: true // Sempre visível
   },
   {
     id: 'reach',
@@ -70,7 +59,8 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: true,
-    order: 7
+    order: 5,
+    fixed: true // Sempre visível
   },
   {
     id: 'frequency',
@@ -79,10 +69,11 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'number',
     format: (value) => parseFloat(value || '0').toFixed(2),
     visible: true,
-    order: 8
+    order: 6,
+    fixed: true // Sempre visível
   },
 
-  // Métricas de custo
+  // Métricas de custo (FIXAS - sempre visíveis)
   {
     id: 'cpm',
     label: 'CPM',
@@ -90,7 +81,8 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'currency',
     format: (value) => `R$ ${parseFloat(value || '0').toFixed(2)}`,
     visible: true,
-    order: 9
+    order: 7,
+    fixed: true // Sempre visível
   },
   {
     id: 'cpc',
@@ -99,7 +91,8 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'currency',
     format: (value) => `R$ ${parseFloat(value || '0').toFixed(2)}`,
     visible: true,
-    order: 10
+    order: 8,
+    fixed: true // Sempre visível
   },
   {
     id: 'ctr',
@@ -108,7 +101,8 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'percentage',
     format: (value) => `${parseFloat(value || '0').toFixed(2)}%`,
     visible: true,
-    order: 11
+    order: 9,
+    fixed: true // Sempre visível
   },
 
   // Métricas de engajamento
@@ -181,7 +175,13 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
 
 export function getVisibleColumns(columns: ColumnConfig[]): ColumnConfig[] {
   return columns
-    .filter(col => col.visible)
+    .filter(col => col.visible || col.fixed) // Incluir colunas fixas mesmo se não visíveis
+    .sort((a, b) => a.order - b.order)
+}
+
+export function getFixedColumns(columns: ColumnConfig[]): ColumnConfig[] {
+  return columns
+    .filter(col => col.fixed)
     .sort((a, b) => a.order - b.order)
 }
 
