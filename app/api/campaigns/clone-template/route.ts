@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Buscar dados do template
-    const templateResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/templates/${templateId}`)
+    const templateResponse = await fetch(`${request.nextUrl.origin}/api/templates/${templateId}`)
     if (!templateResponse.ok) {
       return NextResponse.json({ error: 'Template não encontrado' }, { status: 404 })
     }

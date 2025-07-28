@@ -252,19 +252,44 @@ export default function CSVUploadModal({ isOpen, onClose, accounts }: CSVUploadM
     setStep('cloning')
 
     try {
+      // Primeiro, salvar o template
+      console.log('💾 Salvando template...')
+      const templateResponse = await fetch('/api/templates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: `Template ${new Date().toLocaleDateString()}`,
+          description: `Template criado em ${new Date().toLocaleString()}`,
+          fileName: csvFile?.name || 'template.csv',
+          processedData: processedData,
+          campaignCount: processedData.length,
+          status: 'active'
+        })
+      })
+
+      if (!templateResponse.ok) {
+        throw new Error('Erro ao salvar template')
+      }
+
+      const templateResult = await templateResponse.json()
+      console.log('✅ Template salvo:', templateResult)
+
+      // Agora clonar para as contas selecionadas
       const enabledConfigs = accountConfigs.filter(config => config.enabled)
       
       for (const config of enabledConfigs) {
         console.log(`🚀 Clonando para conta: ${config.accountName}`)
         
-        const response = await fetch('/api/campaigns/clone-csv', {
+        const response = await fetch('/api/campaigns/clone-template', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            csvData: processedData,
-            accountConfig: config
+            templateId: templateResult.id,
+            accountIds: [config.accountId]
           })
         })
 
@@ -277,7 +302,7 @@ export default function CSVUploadModal({ isOpen, onClose, accounts }: CSVUploadM
         }
       }
 
-      alert('Clonagem concluída! Verifique as contas de destino.')
+      alert('Template salvo e clonagem concluída! Verifique as contas de destino.')
       onClose()
     } catch (error) {
       console.error('Error during cloning:', error)

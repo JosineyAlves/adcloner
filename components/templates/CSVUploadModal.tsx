@@ -211,15 +211,19 @@ export default function CSVUploadModal({ isOpen, onClose, onSuccess }: CSVUpload
       const cleanedData = processCSVData(processedData)
       
       // Enviar para API
-      const formData = new FormData()
-      formData.append('file', csvFile)
-      formData.append('name', templateName)
-      formData.append('description', templateDescription)
-      formData.append('processedData', JSON.stringify(cleanedData))
-      
       const response = await fetch('/api/templates', {
         method: 'POST',
-        body: formData
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: templateName,
+          description: templateDescription,
+          fileName: csvFile.name,
+          processedData: cleanedData,
+          campaignCount: cleanedData.length,
+          status: 'active'
+        })
       })
       
       if (response.ok) {
