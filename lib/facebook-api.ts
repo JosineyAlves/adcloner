@@ -478,37 +478,54 @@ export class FacebookAPI {
         objective: campaignData.objective
       })
       
-      // 3. Clonar conjuntos de anúncios
-      const adSetClones = await Promise.all(
-        campaignData.adSets.map(async (adSet: any) => {
-          const newAdSetId = await this.createAdSet(targetAccountId, accessToken, {
-            name: adSet.name,
-            campaignId: newCampaignId,
-            targeting: adSet.targeting,
-            dailyBudget: adSet.dailyBudget,
-            optimizationGoal: adSet.optimizationGoal
-          })
-          
-          return {
-            originalId: adSet.id,
-            newId: newAdSetId
-          }
-        })
-      )
-      
-      // 4. Clonar anúncios
-      await Promise.all(
-        campaignData.ads.map(async (ad: any, index: number) => {
-          const newAdSetId = adSetClones[index]?.newId
-          if (newAdSetId) {
-            await this.createAd(targetAccountId, accessToken, {
-              name: ad.name,
-              adSetId: newAdSetId,
-              creative: ad.creative
+      // 3. Clonar conjuntos de anúncios (se existirem)
+      const adSetClones = campaignData.adSets && campaignData.adSets.length > 0 
+        ? await Promise.all(
+            campaignData.adSets.map(async (adSet: any) => {
+              try {
+                const newAdSetId = await this.createAdSet(targetAccountId, accessToken, {
+                  name: adSet.name,
+                  campaignId: newCampaignId,
+                  targeting: adSet.targeting,
+                  dailyBudget: adSet.dailyBudget || 1000,
+                  optimizationGoal: adSet.optimization_goal || 'REACH'
+                })
+                
+                return {
+                  originalId: adSet.id,
+                  newId: newAdSetId
+                }
+              } catch (error) {
+                console.error(`Error cloning ad set ${adSet.id}:`, error)
+                return {
+                  originalId: adSet.id,
+                  newId: null,
+                  error: error instanceof Error ? error.message : 'Unknown error'
+                }
+              }
             })
-          }
-        })
-      )
+          )
+        : []
+      
+      // 4. Clonar anúncios (se existirem)
+      if (campaignData.ads && campaignData.ads.length > 0) {
+        await Promise.all(
+          campaignData.ads.map(async (ad: any, index: number) => {
+            const newAdSetId = adSetClones[index]?.newId
+            if (newAdSetId) {
+              try {
+                await this.createAd(targetAccountId, accessToken, {
+                  name: ad.name,
+                  adSetId: newAdSetId,
+                  creative: ad.creative
+                })
+              } catch (error) {
+                console.error(`Error cloning ad ${ad.id}:`, error)
+              }
+            }
+          })
+        )
+      }
       
       return {
         id: `clone_${Date.now()}`,
@@ -541,7 +558,14 @@ export class FacebookAPI {
         throw new Error(data.error.message)
       }
       
-      return data
+      // Garantir que adSets e ads existam
+      return {
+        id: data.id,
+        name: data.name,
+        objective: data.objective,
+        adSets: data.adsets?.data || [],
+        ads: data.ads?.data || []
+      }
     } catch (error) {
       console.error('Error getting campaign details:', error)
       throw error
