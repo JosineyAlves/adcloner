@@ -366,9 +366,12 @@ export class FacebookAPI {
           body: new URLSearchParams({
             name: campaignData.name,
             objective: campaignData.objective,
-            status: 'PAUSED', // Sempre criar pausada
-            special_ad_categories: '[]', // Parâmetro obrigatório - array vazio para nenhuma categoria especial
-            access_token: accessToken
+            status: 'PAUSED', // Sempre pausada para evitar gastos
+            special_ad_categories: campaignData.special_ad_categories || '[]',
+            access_token: accessToken,
+            ...(campaignData.daily_budget && { daily_budget: campaignData.daily_budget.toString() }),
+            ...(campaignData.lifetime_budget && { lifetime_budget: campaignData.lifetime_budget.toString() }),
+            ...(campaignData.bid_strategy && { bid_strategy: campaignData.bid_strategy })
           })
         }
       )
@@ -391,7 +394,7 @@ export class FacebookAPI {
    */
   async createAdSet(adAccountId: string, accessToken: string, adSetData: any): Promise<string> {
     try {
-      // Criar targeting básico se não fornecido
+      // Preservar targeting original ou usar padrão
       const targeting = adSetData.targeting || {
         geo_locations: {
           countries: ['BR']
@@ -400,6 +403,27 @@ export class FacebookAPI {
         age_max: 65
       }
 
+      // Preparar parâmetros preservando dados originais
+      const params: any = {
+        name: adSetData.name,
+        campaign_id: adSetData.campaignId,
+        targeting: JSON.stringify(targeting),
+        status: 'PAUSED', // Sempre pausado para evitar gastos
+        access_token: accessToken
+      }
+      
+      // Adicionar campos opcionais apenas se existirem
+      if (adSetData.daily_budget) params.daily_budget = adSetData.daily_budget.toString()
+      if (adSetData.lifetime_budget) params.lifetime_budget = adSetData.lifetime_budget.toString()
+      if (adSetData.billing_event) params.billing_event = adSetData.billing_event
+      if (adSetData.optimization_goal) params.optimization_goal = adSetData.optimization_goal
+      if (adSetData.bid_amount) params.bid_amount = adSetData.bid_amount.toString()
+      if (adSetData.bid_strategy) params.bid_strategy = adSetData.bid_strategy
+      if (adSetData.start_time) params.start_time = adSetData.start_time
+      if (adSetData.end_time) params.end_time = adSetData.end_time
+      if (adSetData.time_start) params.time_start = adSetData.time_start
+      if (adSetData.time_stop) params.time_stop = adSetData.time_stop
+
       const response = await fetch(
         `${this.baseUrl}/${adAccountId}/adsets`,
         {
@@ -407,17 +431,7 @@ export class FacebookAPI {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
-          body: new URLSearchParams({
-            name: adSetData.name,
-            campaign_id: adSetData.campaignId,
-            targeting: JSON.stringify(targeting),
-            daily_budget: (adSetData.dailyBudget || 1000).toString(),
-            billing_event: 'IMPRESSIONS',
-            optimization_goal: adSetData.optimizationGoal || 'REACH',
-            bid_amount: '1000', // Valor do lance obrigatório
-            status: 'PAUSED',
-            access_token: accessToken
-          })
+          body: new URLSearchParams(params)
         }
       )
       
@@ -723,51 +737,65 @@ export class FacebookAPI {
     }
     
     const bulkData = {
-      // Dados da campanha (sem IDs)
+      // Dados da campanha (preservando configurações originais)
       campaign: {
         name: `${campaignData.name} (Clone)`,
-        status: 'PAUSED',
+        status: 'PAUSED', // Sempre pausado para evitar gastos
         objective: campaignData.objective,
-        special_ad_categories: '[]',
-        daily_budget: campaignData.daily_budget || 1000,
-        bid_strategy: 'HIGHEST_VOLUME_OR_VALUE'
+        special_ad_categories: campaignData.special_ad_categories || '[]',
+        daily_budget: campaignData.daily_budget,
+        lifetime_budget: campaignData.lifetime_budget,
+        bid_strategy: campaignData.bid_strategy || 'HIGHEST_VOLUME_OR_VALUE'
       },
       
-      // Dados dos Ad Sets (preservando configurações originais)
+      // Dados dos Ad Sets (preservando TODAS as configurações originais)
       adSets: campaignData.adSets?.map((adSet: any) => ({
         name: adSet.name,
         status: 'PAUSED', // Sempre pausado para evitar gastos
-        daily_budget: adSet.daily_budget || 1000,
-        billing_event: adSet.billing_event || 'IMPRESSIONS',
-        optimization_goal: adSet.optimization_goal || 'REACH',
-        targeting: {
-          ...adSet.targeting, // Preservar targeting original
-          geo_locations: adSet.targeting?.geo_locations || { countries: ['BR'] },
-          age_min: adSet.targeting?.age_min || 18,
-          age_max: adSet.targeting?.age_max || 65
-        },
-        bid_amount: adSet.bid_amount || '1000',
-        bid_strategy: adSet.bid_strategy || 'LOWEST_COST_WITHOUT_CAP'
+        daily_budget: adSet.daily_budget,
+        lifetime_budget: adSet.lifetime_budget,
+        billing_event: adSet.billing_event,
+        optimization_goal: adSet.optimization_goal,
+        targeting: adSet.targeting, // Preservar targeting completo
+        bid_amount: adSet.bid_amount,
+        bid_strategy: adSet.bid_strategy,
+        start_time: adSet.start_time,
+        end_time: adSet.end_time,
+        time_start: adSet.time_start,
+        time_stop: adSet.time_stop
       })) || [],
       
-      // Dados dos Ads (sem IDs, mas com criativos)
-      ads: campaignData.ads?.map((ad: any) => ({
-        name: ad.name,
-        status: 'PAUSED',
-        creative: {
-          name: `${ad.name} Creative`,
-          object_story_spec: {
-            page_id: pageId, // Usar página da conta de destino
-            link_data: {
-              link: ad.creative?.object_story_spec?.link_data?.link || 'https://example.com',
-              message: ad.creative?.object_story_spec?.link_data?.message || 'Confira nosso produto!',
-              image_hash: ad.creative?.object_story_spec?.link_data?.image_hash || null,
-              video_id: ad.creative?.object_story_spec?.link_data?.video_id || null
+      // Dados dos Ads (preservando criativos originais)
+      ads: campaignData.ads?.map((ad: any) => {
+        const originalCreative = ad.creative?.object_story_spec?.link_data
+        
+        return {
+          name: ad.name,
+          status: 'PAUSED',
+          adset_id: ad.adset_id, // Preservar referência ao Ad Set
+          creative: {
+            name: `${ad.name} Creative`,
+            object_story_spec: {
+              page_id: pageId, // Usar página da conta de destino
+              link_data: {
+                link: originalCreative?.link || 'https://example.com',
+                message: originalCreative?.message || 'Confira nosso produto!',
+                title: originalCreative?.title || '',
+                description: originalCreative?.description || '',
+                image_hash: originalCreative?.image_hash || null,
+                video_id: originalCreative?.video_id || null,
+                call_to_action: originalCreative?.call_to_action || null
+              }
             }
           }
         }
-      })) || []
+      }) || []
     }
+    
+    console.log(`📋 Dados preparados para clonagem:`)
+    console.log(`   - Campanha: ${bulkData.campaign.name}`)
+    console.log(`   - Ad Sets: ${bulkData.adSets.length}`)
+    console.log(`   - Ads: ${bulkData.ads.length}`)
     
     return bulkData
   }
@@ -815,24 +843,49 @@ export class FacebookAPI {
             let creativeId = null
             if (adData.creative) {
               try {
-                // Verificar se temos image_hash ou video_id válidos
-                const hasImage = adData.creative.object_story_spec?.link_data?.image_hash
-                const hasVideo = adData.creative.object_story_spec?.link_data?.video_id
+                // Verificar se temos dados válidos do creative
+                const linkData = adData.creative.object_story_spec?.link_data
+                const hasImage = linkData?.image_hash
+                const hasVideo = linkData?.video_id
+                const hasMessage = linkData?.message
+                const hasLink = linkData?.link
                 
-                if (hasImage || hasVideo) {
-                  console.log(`🎨 Criando creative com ${hasImage ? 'imagem' : ''}${hasImage && hasVideo ? ' e ' : ''}${hasVideo ? 'vídeo' : ''}`)
-                  creativeId = await this.createCreative(adAccountId, adData.creative, accessToken)
-                  console.log(`✅ Creative criado: ${creativeId}`)
+                console.log(`🎨 Dados do creative original:`)
+                console.log(`   - Link: ${hasLink}`)
+                console.log(`   - Message: ${hasMessage}`)
+                console.log(`   - Image Hash: ${hasImage}`)
+                console.log(`   - Video ID: ${hasVideo}`)
+                
+                if (hasLink && hasMessage) {
+                  // Criar creative com dados originais
+                  const creativeData = {
+                    name: adData.creative.name,
+                    object_story_spec: {
+                      page_id: adData.creative.object_story_spec.page_id,
+                      link_data: {
+                        link: linkData.link,
+                        message: linkData.message,
+                        title: linkData.title || '',
+                        description: linkData.description || '',
+                        image_hash: linkData.image_hash || null,
+                        video_id: linkData.video_id || null,
+                        call_to_action: linkData.call_to_action || null
+                      }
+                    }
+                  }
+                  
+                  creativeId = await this.createCreative(adAccountId, creativeData, accessToken)
+                  console.log(`✅ Creative criado com dados originais: ${creativeId}`)
                 } else {
-                  console.log(`⚠️ Creative sem imagem/vídeo válidos, criando básico`)
-                  // Criar creative básico sem imagem/vídeo
+                  console.log(`⚠️ Creative sem dados suficientes, criando básico`)
+                  // Criar creative básico
                   const basicCreative = {
                     name: `${adData.name} Creative`,
                     object_story_spec: {
                       page_id: adData.creative.object_story_spec.page_id,
                       link_data: {
-                        link: adData.creative.object_story_spec.link_data.link,
-                        message: adData.creative.object_story_spec.link_data.message
+                        link: linkData?.link || 'https://example.com',
+                        message: linkData?.message || 'Confira nosso produto!'
                       }
                     }
                   }
@@ -874,9 +927,9 @@ export class FacebookAPI {
    */
   async getCampaignDetails(campaignId: string, accessToken: string) {
     try {
-      // Buscar detalhes da campanha
+      // Buscar detalhes completos da campanha
       const campaignResponse = await fetch(
-        `${this.baseUrl}/${campaignId}?fields=id,name,objective&access_token=${accessToken}`
+        `${this.baseUrl}/${campaignId}?fields=id,name,objective,status,daily_budget,lifetime_budget,special_ad_categories&access_token=${accessToken}`
       )
       const campaignData = await campaignResponse.json()
       
@@ -884,10 +937,10 @@ export class FacebookAPI {
         throw new Error(campaignData.error.message)
       }
       
-      // Buscar conjuntos de anúncios da campanha
+      // Buscar conjuntos de anúncios da campanha com todos os campos necessários
       console.log(`🔍 Buscando Ad Sets para campanha: ${campaignId}`)
       const adSetsResponse = await fetch(
-        `${this.baseUrl}/${campaignId}/adsets?fields=id,name,targeting,daily_budget,optimization_goal,billing_event,bid_amount,bid_strategy,status&access_token=${accessToken}`
+        `${this.baseUrl}/${campaignId}/adsets?fields=id,name,targeting,daily_budget,lifetime_budget,optimization_goal,billing_event,bid_amount,bid_strategy,status,start_time,end_time,time_start,time_stop&access_token=${accessToken}`
       )
       const adSetsData = await adSetsResponse.json()
       
@@ -917,10 +970,10 @@ export class FacebookAPI {
         }
       }
       
-      // Buscar anúncios da campanha com detalhes completos
+      // Buscar anúncios da campanha com detalhes completos incluindo criativos
       console.log(`🔍 Buscando anúncios para campanha: ${campaignId}`)
       const adsResponse = await fetch(
-        `${this.baseUrl}/${campaignId}/ads?fields=id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id}}}&access_token=${accessToken}`
+        `${this.baseUrl}/${campaignId}/ads?fields=id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id,description,title,call_to_action{type,value}}},adset_id&access_token=${accessToken}`
       )
       const adsData = await adsResponse.json()
       
@@ -933,7 +986,7 @@ export class FacebookAPI {
         // Tentar buscar anúncios via Ad Sets
         console.log(`🔍 Tentando buscar anúncios via Ad Sets...`)
         const adSetsResponse = await fetch(
-          `${this.baseUrl}/${campaignId}/adsets?fields=id,name,ads{id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id}}}&access_token=${accessToken}`
+          `${this.baseUrl}/${campaignId}/adsets?fields=id,name,ads{id,name,status,creative{id,name,object_story_spec{page_id,link_data{title,message,link,image_hash,video_id,description,title,call_to_action{type,value}}},adset_id}&access_token=${accessToken}`
         )
         const adSetsData = await adSetsResponse.json()
         
