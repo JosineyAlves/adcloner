@@ -14,13 +14,19 @@ export interface Template {
 
 class TemplateStorage {
   private storagePath: string
+  private isVercel: boolean
+  private memoryStorage: Template[] = []
 
   constructor() {
-    // Em produção, usar um banco de dados real
+    this.isVercel = process.env.VERCEL === '1'
     this.storagePath = path.join(process.cwd(), 'data', 'templates.json')
   }
 
   private async ensureStorageDir() {
+    if (this.isVercel) {
+      return // Não tentar criar pastas no Vercel
+    }
+    
     const dir = path.dirname(this.storagePath)
     try {
       await fs.access(dir)
@@ -30,17 +36,25 @@ class TemplateStorage {
   }
 
   private async readTemplates(): Promise<Template[]> {
+    if (this.isVercel) {
+      return this.memoryStorage
+    }
+    
     try {
       await this.ensureStorageDir()
       const data = await fs.readFile(this.storagePath, 'utf-8')
       return JSON.parse(data)
     } catch (error) {
-      // Se o arquivo não existe, retornar array vazio
       return []
     }
   }
 
   private async writeTemplates(templates: Template[]): Promise<void> {
+    if (this.isVercel) {
+      this.memoryStorage = templates
+      return
+    }
+    
     await this.ensureStorageDir()
     await fs.writeFile(this.storagePath, JSON.stringify(templates, null, 2))
   }
