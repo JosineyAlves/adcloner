@@ -6,14 +6,16 @@ import { Eye, DollarSign, MousePointer, Target, TrendingUp, BarChart3, RefreshCw
 import Sidebar from '@/components/layout/Sidebar'
 import StatsCard from '@/components/dashboard/StatsCard'
 import ColumnConfigModal from '@/components/dashboard/ColumnConfigModal'
+import MetricSelector from '@/components/dashboard/MetricSelector'
 import { FacebookAccount } from '@/lib/types'
-import { ColumnConfig, DEFAULT_COLUMNS, getVisibleColumns, formatColumnValue } from '@/lib/column-config'
+import { ColumnConfig, getVisibleColumns, formatColumnValue } from '@/lib/column-config'
+import { ALL_METRICS_CONFIG } from '@/lib/all-metrics-config'
 import toast from 'react-hot-toast'
 
 export default function DashboardPage() {
   const [accounts, setAccounts] = useState<FacebookAccount[]>([])
   const [insights, setInsights] = useState<any[]>([])
-  const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_COLUMNS)
+  const [columns, setColumns] = useState<ColumnConfig[]>(ALL_METRICS_CONFIG)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
   const [datePreset, setDatePreset] = useState<string>('last_7d')
@@ -162,6 +164,10 @@ export default function DashboardPage() {
                 <option value="last_30d">Últimos 30 dias</option>
                 <option value="last_90d">Últimos 90 dias</option>
               </select>
+              <MetricSelector 
+                columns={columns} 
+                onColumnsChange={setColumns} 
+              />
               <button
                 onClick={() => setIsConfigModalOpen(true)}
                 className="btn-secondary flex items-center space-x-2"

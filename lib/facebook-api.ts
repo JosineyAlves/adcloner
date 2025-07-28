@@ -1144,7 +1144,7 @@ export class FacebookAPI {
     level: string = 'campaign'
   ) {
     try {
-      // Campos básicos e seguros da API de Insights do Facebook
+      // Todas as métricas disponíveis da API de Insights do Facebook
       const fields = [
         // Identificação
         'campaign_id',
@@ -1154,31 +1154,73 @@ export class FacebookAPI {
         'ad_id',
         'ad_name',
         
-        // Métricas básicas (garantidas)
+        // Métricas básicas
         'impressions',
         'clicks',
         'spend',
         'reach',
         'frequency',
         
-        // Métricas de custo (garantidas)
+        // Métricas de custo
         'cpm',
         'cpc',
         'ctr',
         
-        // Métricas de engajamento (garantidas)
+        // Métricas de engajamento
         'inline_link_clicks',
         'inline_post_engagement',
         
-        // Métricas de qualidade (garantidas)
+        // Métricas de qualidade
         'quality_ranking',
         'engagement_rate_ranking',
         'conversion_rate_ranking',
         
-        // Métricas de conversão (garantidas)
+        // Métricas de conversão
         'conversions',
         'cost_per_conversion',
-        'conversion_values'
+        'conversion_values',
+        
+        // Métricas de vídeo
+        'video_p25_watched_actions',
+        'video_p50_watched_actions',
+        'video_p75_watched_actions',
+        'video_p95_watched_actions',
+        'video_p100_watched_actions',
+        'video_play_actions',
+        'video_play_curve_actions',
+        
+        // Métricas de aplicativo
+        'mobile_app_installs',
+        'mobile_app_install_rate',
+        
+        // Métricas de lead
+        'leads',
+        'cost_per_lead',
+        
+        // Métricas de página
+        'page_likes',
+        'page_engagement',
+        'page_impressions',
+        'page_posts_impressions',
+        
+        // Métricas de evento
+        'onsite_conversion',
+        'purchase',
+        'add_to_cart',
+        'initiated_checkout',
+        'complete_registration',
+        'view_content',
+        'search',
+        'add_to_wishlist',
+        'start_order',
+        'add_payment_info',
+        'contact',
+        'custom',
+        'donate',
+        'find_location',
+        'schedule',
+        'subscribe',
+        'tutorial_completion'
       ].join(',')
 
       const response = await fetch(
