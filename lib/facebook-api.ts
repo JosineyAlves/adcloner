@@ -192,32 +192,33 @@ export class FacebookAPI {
    */
   async getPixels(userAccessToken: string): Promise<FacebookPixel[]> {
     try {
+      // Buscar pixels diretamente do usuário
       const response = await fetch(
-        `${this.baseUrl}/me/adaccounts?fields=pixels{id,name,code}&access_token=${userAccessToken}`
+        `${this.baseUrl}/me/pixels?fields=id,name,code&access_token=${userAccessToken}`
       )
       const data = await response.json()
       
       if (data.error) {
-        throw new Error(data.error.message)
+        console.error('Error getting pixels:', data.error)
+        return [] // Retornar array vazio em caso de erro
       }
       
       const pixels: FacebookPixel[] = []
-      data.data.forEach((account: any) => {
-        if (account.pixels && account.pixels.data) {
-          account.pixels.data.forEach((pixel: any) => {
-            pixels.push({
-              id: pixel.id,
-              name: pixel.name,
-              code: pixel.code
-            })
+      if (data.data) {
+        data.data.forEach((pixel: any) => {
+          pixels.push({
+            id: pixel.id,
+            name: pixel.name,
+            code: pixel.code
           })
-        }
-      })
+        })
+      }
       
+      console.log('📊 Pixels encontrados:', pixels.length)
       return pixels
     } catch (error) {
       console.error('Error getting pixels:', error)
-      throw error
+      return [] // Retornar array vazio em caso de erro
     }
   }
 

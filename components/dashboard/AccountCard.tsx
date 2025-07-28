@@ -65,11 +65,38 @@ export default function AccountCard({ account }: AccountCardProps) {
 
       <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
         <div className="flex space-x-2">
-          <button className="flex-1 btn-secondary text-sm py-2">
+          <button 
+            onClick={() => {
+              const details = `
+📊 Detalhes da Conta:
+• Nome: ${account.name}
+• ID: ${account.id}
+• Business Manager: ${account.businessManagerName}
+• Status: ${account.status}
+• Token: ${account.tokenStatus === 'valid' ? '✅ Válido' : '❌ Inválido'}
+• Páginas: ${account.pages.length}
+• Pixels: ${account.pixels.length}
+
+📋 Páginas:
+${account.pages.map(page => `• ${page.name} (${page.category})`).join('\n')}
+
+🎯 Pixels:
+${account.pixels.map(pixel => `• ${pixel.name} (${pixel.code})`).join('\n')}
+              `
+              alert(details)
+            }}
+            className="flex-1 btn-secondary text-sm py-2"
+          >
             Ver detalhes
           </button>
-          <button className="flex-1 btn-primary text-sm py-2">
-            Clonar campanha
+          <button 
+            onClick={() => {
+              const manageUrl = `https://business.facebook.com/adsmanager/manage/accounts?act=${account.id}`
+              window.open(manageUrl, '_blank')
+            }}
+            className="flex-1 btn-primary text-sm py-2"
+          >
+            Gerenciar
           </button>
         </div>
       </div>

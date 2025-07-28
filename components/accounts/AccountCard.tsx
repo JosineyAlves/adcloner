@@ -65,6 +65,35 @@ export default function AccountCard({ account, onUpdate }: AccountCardProps) {
     }
   }
 
+  const handleViewDetails = () => {
+    // Abrir modal com detalhes da conta
+    const details = `
+📊 Detalhes da Conta:
+• Nome: ${account.name}
+• ID: ${account.id}
+• Business Manager: ${account.businessManagerName}
+• Status: ${account.status}
+• Token: ${account.tokenStatus === 'valid' ? '✅ Válido' : '❌ Inválido'}
+• Páginas: ${account.pages.length}
+• Pixels: ${account.pixels.length}
+
+📋 Páginas:
+${account.pages.map(page => `• ${page.name} (${page.category})`).join('\n')}
+
+🎯 Pixels:
+${account.pixels.map(pixel => `• ${pixel.name} (${pixel.code})`).join('\n')}
+    `
+    
+    alert(details)
+  }
+
+  const handleManage = () => {
+    // Abrir página de gerenciamento da conta
+    const manageUrl = `https://business.facebook.com/adsmanager/manage/accounts?act=${account.id}`
+    window.open(manageUrl, '_blank')
+    toast.success('Abrindo gerenciador do Facebook...')
+  }
+
   const handleDisconnect = async () => {
     if (!confirm('Tem certeza que deseja desconectar esta conta?')) {
       return
@@ -210,15 +239,23 @@ export default function AccountCard({ account, onUpdate }: AccountCardProps) {
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                // Implementar configurações
-                toast('Configurações em desenvolvimento', {
-                  icon: 'ℹ️'
-                })
+                handleViewDetails()
               }}
               className="flex-1 btn-secondary flex items-center justify-center gap-2 text-sm"
             >
+              <Eye className="w-4 h-4" />
+              Ver Detalhes
+            </button>
+            
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleManage()
+              }}
+              className="flex-1 btn-primary flex items-center justify-center gap-2 text-sm"
+            >
               <Settings className="w-4 h-4" />
-              Configurar
+              Gerenciar
             </button>
             
             <button
