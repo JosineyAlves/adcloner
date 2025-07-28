@@ -1144,15 +1144,87 @@ export class FacebookAPI {
     level: string = 'campaign'
   ) {
     try {
-      // Campos básicos e seguros para insights
+      // Todas as métricas disponíveis do Facebook
       const fields = [
+        // Métricas básicas
         'impressions',
         'clicks',
         'spend',
+        'reach',
+        'frequency',
+        
+        // Métricas de custo
         'cpm',
         'cpc',
-        'reach',
-        'frequency'
+        'ctr',
+        'cpm_avg',
+        'cpc_avg',
+        'ctr_avg',
+        
+        // Métricas de engajamento
+        'inline_link_clicks',
+        'inline_post_engagement',
+        'social_impressions',
+        'social_clicks',
+        'social_spend',
+        'social_reach',
+        'social_frequency',
+        
+        // Métricas de qualidade
+        'quality_ranking',
+        'engagement_rate_ranking',
+        'conversion_rate_ranking',
+        
+        // Métricas de conversão
+        'conversions',
+        'cost_per_conversion',
+        'conversion_values',
+        'conversion_rate',
+        
+        // Métricas de vídeo (se aplicável)
+        'video_p25_watched_actions',
+        'video_p50_watched_actions',
+        'video_p75_watched_actions',
+        'video_p95_watched_actions',
+        'video_p100_watched_actions',
+        'video_play_actions',
+        'video_play_curve_actions',
+        
+        // Métricas de aplicativo
+        'app_installs',
+        'cost_per_app_install',
+        'mobile_app_installs',
+        'mobile_app_install_rate',
+        
+        // Métricas de lead
+        'leads',
+        'cost_per_lead',
+        'lead_gen_rate',
+        
+        // Métricas de página
+        'page_likes',
+        'page_engagement',
+        'page_impressions',
+        'page_posts_impressions',
+        
+        // Métricas de evento
+        'onsite_conversion',
+        'purchase',
+        'add_to_cart',
+        'initiated_checkout',
+        'complete_registration',
+        'view_content',
+        'search',
+        'add_to_wishlist',
+        'start_order',
+        'add_payment_info',
+        'contact',
+        'custom',
+        'donate',
+        'find_location',
+        'schedule',
+        'subscribe',
+        'tutorial_completion'
       ].join(',')
 
       const response = await fetch(
@@ -1180,21 +1252,95 @@ export class FacebookAPI {
     datePreset: string = 'last_7d'
   ) {
     try {
-      // Campos básicos e seguros para insights de conta
+      // Todas as métricas disponíveis do Facebook para contas
       const fields = [
-        'impressions',
-        'clicks',
-        'spend',
-        'cpm',
-        'cpc',
-        'reach',
-        'frequency',
+        // Identificação
         'campaign_id',
         'campaign_name',
         'adset_id',
         'adset_name',
         'ad_id',
-        'ad_name'
+        'ad_name',
+        
+        // Métricas básicas
+        'impressions',
+        'clicks',
+        'spend',
+        'reach',
+        'frequency',
+        
+        // Métricas de custo
+        'cpm',
+        'cpc',
+        'ctr',
+        'cpm_avg',
+        'cpc_avg',
+        'ctr_avg',
+        
+        // Métricas de engajamento
+        'inline_link_clicks',
+        'inline_post_engagement',
+        'social_impressions',
+        'social_clicks',
+        'social_spend',
+        'social_reach',
+        'social_frequency',
+        
+        // Métricas de qualidade
+        'quality_ranking',
+        'engagement_rate_ranking',
+        'conversion_rate_ranking',
+        
+        // Métricas de conversão
+        'conversions',
+        'cost_per_conversion',
+        'conversion_values',
+        'conversion_rate',
+        
+        // Métricas de vídeo
+        'video_p25_watched_actions',
+        'video_p50_watched_actions',
+        'video_p75_watched_actions',
+        'video_p95_watched_actions',
+        'video_p100_watched_actions',
+        'video_play_actions',
+        'video_play_curve_actions',
+        
+        // Métricas de aplicativo
+        'app_installs',
+        'cost_per_app_install',
+        'mobile_app_installs',
+        'mobile_app_install_rate',
+        
+        // Métricas de lead
+        'leads',
+        'cost_per_lead',
+        'lead_gen_rate',
+        
+        // Métricas de página
+        'page_likes',
+        'page_engagement',
+        'page_impressions',
+        'page_posts_impressions',
+        
+        // Métricas de evento
+        'onsite_conversion',
+        'purchase',
+        'add_to_cart',
+        'initiated_checkout',
+        'complete_registration',
+        'view_content',
+        'search',
+        'add_to_wishlist',
+        'start_order',
+        'add_payment_info',
+        'contact',
+        'custom',
+        'donate',
+        'find_location',
+        'schedule',
+        'subscribe',
+        'tutorial_completion'
       ].join(',')
 
       const response = await fetch(

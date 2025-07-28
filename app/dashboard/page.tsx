@@ -2,18 +2,22 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Eye, DollarSign, MousePointer, Target, TrendingUp, BarChart3, RefreshCw, Calendar } from 'lucide-react'
+import { Eye, DollarSign, MousePointer, Target, TrendingUp, BarChart3, RefreshCw, Calendar, Settings } from 'lucide-react'
 import Sidebar from '@/components/layout/Sidebar'
 import StatsCard from '@/components/dashboard/StatsCard'
+import ColumnConfigModal from '@/components/dashboard/ColumnConfigModal'
 import { FacebookAccount } from '@/lib/types'
+import { ColumnConfig, DEFAULT_COLUMNS, getVisibleColumns, formatColumnValue } from '@/lib/column-config'
 import toast from 'react-hot-toast'
 
 export default function DashboardPage() {
   const [accounts, setAccounts] = useState<FacebookAccount[]>([])
   const [insights, setInsights] = useState<any[]>([])
+  const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_COLUMNS)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
   const [datePreset, setDatePreset] = useState<string>('last_7d')
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState<boolean>(false)
 
   useEffect(() => {
     fetchAccounts()
@@ -90,6 +94,13 @@ export default function DashboardPage() {
     toast.success('Dashboard atualizado!')
   }
 
+  const handleSaveColumns = (newColumns: ColumnConfig[]) => {
+    setColumns(newColumns)
+    toast.success('Configuração de colunas salva!')
+  }
+
+  const visibleColumns = getVisibleColumns(columns)
+
   // Calcular métricas agregadas dos insights
   const aggregatedMetrics = insights.reduce((acc, insight) => {
     return {
@@ -151,6 +162,13 @@ export default function DashboardPage() {
                 <option value="last_30d">Últimos 30 dias</option>
                 <option value="last_90d">Últimos 90 dias</option>
               </select>
+              <button
+                onClick={() => setIsConfigModalOpen(true)}
+                className="btn-secondary flex items-center space-x-2"
+              >
+                <Settings className="w-4 h-4" />
+                <span>Configurar Colunas</span>
+              </button>
               <button
                 onClick={handleRefresh}
                 disabled={isRefreshing}
@@ -278,52 +296,49 @@ export default function DashboardPage() {
                 {/* Detalhes das Campanhas */}
                 <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                   <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      Detalhes das Campanhas
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {insights.length} campanha(s) encontrada(s)
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                          Detalhes das Campanhas
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {insights.length} campanha(s) encontrada(s) • {visibleColumns.length} coluna(s) visível(is)
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setIsConfigModalOpen(true)}
+                        className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                      >
+                        <Settings className="w-4 h-4 inline mr-1" />
+                        Configurar
+                      </button>
+                    </div>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead className="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Campanha
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Impressões
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Cliques
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Gasto
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            CPM
-                          </th>
+                          {visibleColumns.map((column) => (
+                            <th 
+                              key={column.id}
+                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                            >
+                              {column.label}
+                            </th>
+                          ))}
                         </tr>
                       </thead>
                       <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         {insights.slice(0, 10).map((insight, index) => (
                           <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                              {insight.campaign_name || `Campanha ${index + 1}`}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                              {parseInt(insight.impressions || '0').toLocaleString()}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                              {parseInt(insight.clicks || '0').toLocaleString()}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                              R$ {parseFloat(insight.spend || '0').toFixed(2)}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                              R$ {parseFloat(insight.cpm || '0').toFixed(2)}
-                            </td>
+                            {visibleColumns.map((column) => (
+                              <td 
+                                key={column.id}
+                                className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white"
+                              >
+                                {formatColumnValue(insight[column.id], column)}
+                              </td>
+                            ))}
                           </tr>
                         ))}
                       </tbody>
@@ -348,6 +363,14 @@ export default function DashboardPage() {
           </motion.div>
         </main>
       </div>
+
+      {/* Modal de Configuração de Colunas */}
+      <ColumnConfigModal
+        isOpen={isConfigModalOpen}
+        onClose={() => setIsConfigModalOpen(false)}
+        columns={columns}
+        onSave={handleSaveColumns}
+      />
     </div>
   )
 } 
