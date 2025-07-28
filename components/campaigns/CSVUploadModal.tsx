@@ -23,7 +23,7 @@ export default function CSVUploadModal({ isOpen, onClose, accounts }: CSVUploadM
   const [accountConfigs, setAccountConfigs] = useState<AccountConfig[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [isCloning, setIsCloning] = useState(false)
-  const [step, setStep] = useState<'upload' | 'config' | 'review' | 'cloning'>('upload')
+  const [step, setStep] = useState<'upload' | 'cloning'>('upload')
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -41,7 +41,7 @@ export default function CSVUploadModal({ isOpen, onClose, accounts }: CSVUploadM
       
       setCsvData(processedData)
       setProcessedData(processedData)
-      setStep('config')
+      setStep('cloning')
     } catch (error) {
       console.error('Error processing CSV:', error)
       alert('Erro ao processar arquivo CSV')
@@ -56,43 +56,122 @@ export default function CSVUploadModal({ isOpen, onClose, accounts }: CSVUploadM
     for (const line of lines) {
       const values = line.split('\t')
       
-      // Mapear campos específicos do Facebook (mantendo estrutura original)
-      const row = {
-        // Campos da Campanha
-        'Campaign Name': values[2] || '',
-        'Campaign Status': values[3] || '',
-        'Campaign Objective': values[4] || '',
-        'Campaign Daily Budget': values[8] || '',
-        'Campaign Bid Strategy': values[9] || '',
-        
-        // Campos do Ad Set
-        'Ad Set Name': values[25] || '',
-        'Ad Set Daily Budget': values[29] || '',
-        'Ad Set Optimization Goal': values[58] || '',
-        'Ad Set Billing Event': values[59] || '',
-        'Ad Set Bid Amount': values[60] || '',
-        
-        // Campos do Anúncio
-        'Ad Name': values[48] || '',
-        'Ad Title': values[49] || '',
-        'Ad Body': values[50] || '',
-        'Ad Link': values[51] || '',
-        'Ad Image Hash': values[52] || '',
-        'Ad Video ID': values[53] || '',
-        
-        // Targeting
-        'Countries': values[54] || '',
-        'Age Min': values[55] || '',
-        'Age Max': values[56] || '',
-        'Placements': values[57] || '',
-        
-        // IDs (serão removidos no template)
-        'Campaign ID': values[0] || '',
-        'Ad Set ID': values[22] || '',
-        'Ad ID': values[45] || '',
-        'Page ID': values[23] || '',
-        'Pixel ID': values[24] || ''
-      }
+      // Criar objeto com TODAS as colunas do CSV original
+      const row: any = {}
+      
+      // Mapear todas as colunas do Facebook Ads Manager
+      const headers = [
+        'Campaign ID', 'Creation Package Config ID', 'Campaign Name', 'Special Ad Categories', 
+        'Special Ad Category Country', 'Campaign Status', 'Campaign Objective', 'Buying Type', 
+        'Campaign Spend Limit', 'Campaign Daily Budget', 'Campaign Lifetime Budget', 'Campaign Bid Strategy', 
+        'Tags', 'Campaign Is Using L3 Schedule', 'Campaign Start Time', 'Campaign Stop Time', 
+        'Product Catalog ID', 'Campaign Page ID', 'New Objective', 'Buy With Prime Type', 
+        'Is Budget Scheduling Enabled For Campaign', 'Campaign High Demand Periods', 'Buy With Integration Partner', 
+        'Ad Set ID', 'Ad Set Run Status', 'Ad Set Lifetime Impressions', 'Ad Set Name', 'Ad Set Time Start', 
+        'Ad Set Time Stop', 'Ad Set Daily Budget', 'Destination Type', 'Ad Set Lifetime Budget', 'Rate Card', 
+        'Ad Set Schedule', 'Use Accelerated Delivery', 'Frequency Control', 'Ad Set Minimum Spend Limit', 
+        'Ad Set Maximum Spend Limit', 'Is Budget Scheduling Enabled For Ad Set', 'Ad Set High Demand Periods', 
+        'Link Object ID', 'Optimized Conversion Tracking Pixels', 'Optimized Custom Conversion ID', 
+        'Optimized Pixel Rule', 'Optimized Event', 'Custom Event Name', 'Link', 'Application ID', 
+        'Product Set ID', 'Place Page Set ID', 'Object Store URL', 'Offer ID', 'Offline Event Data Set ID', 
+        'Countries', 'Cities', 'Regions', 'Electoral Districts', 'Zip', 'Addresses', 'Geo Markets (DMA)', 
+        'Global Regions', 'Large Geo Areas', 'Medium Geo Areas', 'Small Geo Areas', 'Metro Areas', 
+        'Neighborhoods', 'Subneighborhoods', 'Subcities', 'Location Types', 'Location Cluster IDs', 
+        'Location Set IDs', 'Excluded Countries', 'Excluded Cities', 'Excluded Large Geo Areas', 
+        'Excluded Medium Geo Areas', 'Excluded Metro Areas', 'Excluded Small Geo Areas', 'Excluded Subcities', 
+        'Excluded Neighborhoods', 'Excluded Subneighborhoods', 'Excluded Regions', 'Excluded Electoral Districts', 
+        'Excluded Zip', 'Excluded Addresses', 'Excluded Geo Markets (DMA)', 'Excluded Global Regions', 
+        'Excluded Location Cluster IDs', 'Gender', 'Age Min', 'Age Max', 'Education Status', 'Fields of Study', 
+        'Education Schools', 'Work Job Titles', 'Work Employers', 'College Start Year', 'College End Year', 
+        'Interested In', 'Relationship', 'Family Statuses', 'Industries', 'Life Events', 'Income', 
+        'Multicultural Affinity', 'Household Composition', 'Behaviors', 'Connections', 'Excluded Connections', 
+        'Friends of Connections', 'Locales', 'Site Category', 'Unified Interests', 'Excluded User AdClusters', 
+        'Broad Category Clusters', 'Targeting Categories - ALL OF', 'Custom Audiences', 'Excluded Custom Audiences', 
+        'Flexible Inclusions', 'Flexible Exclusions', 'Advantage Audience', 'Age Range', 'Targeting Optimization', 
+        'Targeting Relaxation', 'Product Audience Specs', 'Excluded Product Audience Specs', 'Targeted Business Locations', 
+        'Dynamic Audiences', 'Excluded Dynamic Audiences', 'Beneficiary', 'Payer', 'Publisher Platforms', 
+        'Facebook Positions', 'Instagram Positions', 'Audience Network Positions', 'Messenger Positions', 
+        'Oculus Positions', 'Device Platforms', 'User Device', 'Excluded User Device', 'User Operating System', 
+        'User OS Version', 'Wireless Carrier', 'Excluded Publisher Categories', 'Brand Safety Inventory Filtering Levels', 
+        'Optimization Goal', 'Attribution Spec', 'Billing Event', 'Bid Amount', 'Ad Set Bid Strategy', 
+        'Regional Regulated Categories', 'Beneficiary (financial ads in Australia)', 'Payer (financial ads in Australia)', 
+        'Beneficiary (financial ads in Taiwan)', 'Payer (financial ads in Taiwan)', 'Beneficiary (Taiwan)', 
+        'Payer (Taiwan)', 'Beneficiary (Singapore)', 'Payer (Singapore)', 'Beneficiary (securities ads in India)', 
+        'Payer (securities ads in India)', 'Story ID', 'Ad ID', 'Ad Status', 'Preview Link', 'Instagram Preview Link', 
+        'Ad Name', 'Title', 'Body', 'Display Link', 'Link Description', 'Optimize text per person', 'Retailer IDs', 
+        'Post Click Item Headline', 'Post Click Item Description', 'Conversion Tracking Pixels', 'Optimized Ad Creative', 
+        'Image Hash', 'Image File Name', 'Image Crops', 'Video Thumbnail URL', 'Instagram Platform Image Hash', 
+        'Instagram Platform Image Crops', 'Instagram Platform Image URL', 'Carousel Delivery Mode', 'Creative Type', 
+        'URL Tags', 'Event ID', 'Video ID', 'Video File Name', 'Instagram Account ID', 'Mobile App Deep Link', 
+        'Product Link', 'App Link Destination', 'Call Extension Phone Data ID', 'Call to Action', 
+        'Additional Call To Action 5', 'Additional Call To Action 6', 'Additional Call To Action 7', 
+        'Additional Call To Action 8', 'Additional Call To Action 9', 'Call to Action Link', 'Call to Action WhatsApp Number', 
+        'Additional Custom Tracking Specs', 'Video Retargeting', 'Lead Form ID', 'Permalink', 'Force Single Link', 
+        'Format Option', 'Dynamic Ad Voice', 'Creative Optimization', 'Template URL', 'Android App Name', 
+        'Android Package Name', 'Deep Link For Android', 'Facebook App ID', 'iOS App Name', 'iOS App Store ID', 
+        'Deep Link For iOS', 'iPad App Name', 'iPad App Store ID', 'Deep Link For iPad', 'iPhone App Name', 
+        'iPhone App Store ID', 'Deep Link For iPhone', 'Deep link to website', 'Windows Store ID', 'Windows App Name', 
+        'Deep Link For Windows Phone', 'Add End Card', 'Dynamic Ads Ad Context', 'Page Welcome Message', 
+        'App Destination', 'App Destination Page ID', 'Use Page as Actor', 'Image Overlay Template', 
+        'Image Overlay Text Type', 'Image Overlay Text Font', 'Image Overlay Position', 'Image Overlay Theme Color', 
+        'Image Overlay Float With Margin', 'Image Layer 1 - layer_type', 'Image Layer 1 - image_source', 
+        'Image Layer 1 - overlay_shape', 'Image Layer 1 - text_font', 'Image Layer 1 - shape_color', 
+        'Image Layer 1 - text_color', 'Image Layer 1 - content_type', 'Image Layer 1 - price', 
+        'Image Layer 1 - low_price', 'Image Layer 1 - high_price', 'Image Layer 1 - frame_source', 
+        'Image Layer 1 - frame_image_hash', 'Image Layer 1 - scale', 'Image Layer 1 - blending_mode', 
+        'Image Layer 1 - opacity', 'Image Layer 1 - overlay_position', 'Image Layer 1 - pad_image', 
+        'Image Layer 1 - crop_image', 'Image Layer 2 - layer_type', 'Image Layer 2 - image_source', 
+        'Image Layer 2 - overlay_shape', 'Image Layer 2 - text_font', 'Image Layer 2 - shape_color', 
+        'Image Layer 2 - text_color', 'Image Layer 2 - content_type', 'Image Layer 2 - price', 
+        'Image Layer 2 - low_price', 'Image Layer 2 - high_price', 'Image Layer 2 - frame_source', 
+        'Image Layer 2 - frame_image_hash', 'Image Layer 2 - scale', 'Image Layer 2 - blending_mode', 
+        'Image Layer 2 - opacity', 'Image Layer 2 - overlay_position', 'Image Layer 2 - pad_image', 
+        'Image Layer 2 - crop_image', 'Image Layer 3 - layer_type', 'Image Layer 3 - image_source', 
+        'Image Layer 3 - overlay_shape', 'Image Layer 3 - text_font', 'Image Layer 3 - shape_color', 
+        'Image Layer 3 - text_color', 'Image Layer 3 - content_type', 'Image Layer 3 - price', 
+        'Image Layer 3 - low_price', 'Image Layer 3 - high_price', 'Image Layer 3 - frame_source', 
+        'Image Layer 3 - frame_image_hash', 'Image Layer 3 - scale', 'Image Layer 3 - blending_mode', 
+        'Image Layer 3 - opacity', 'Image Layer 3 - overlay_position', 'Image Layer 3 - pad_image', 
+        'Image Layer 3 - crop_image', 'Product 1 - Link', 'Product 1 - Name', 'Product 1 - Description', 
+        'Product 1 - Image Hash', 'Product 1 - Image Crops', 'Product 1 - Video ID', 'Product 1 - Call To Action Link', 
+        'Product 1 - Mobile App Deep Link', 'Product 1 - Display Link', 'Product 1 - Place Data', 
+        'Product 1 - Is Static Card', 'Product 2 - Link', 'Product 2 - Name', 'Product 2 - Description', 
+        'Product 2 - Image Hash', 'Product 2 - Image Crops', 'Product 2 - Video ID', 'Product 2 - Call To Action Link', 
+        'Product 2 - Mobile App Deep Link', 'Product 2 - Display Link', 'Product 2 - Place Data', 
+        'Product 2 - Is Static Card', 'Product 3 - Link', 'Product 3 - Name', 'Product 3 - Description', 
+        'Product 3 - Image Hash', 'Product 3 - Image Crops', 'Product 3 - Video ID', 'Product 3 - Call To Action Link', 
+        'Product 3 - Mobile App Deep Link', 'Product 3 - Display Link', 'Product 3 - Place Data', 
+        'Product 3 - Is Static Card', 'Product 4 - Link', 'Product 4 - Name', 'Product 4 - Description', 
+        'Product 4 - Image Hash', 'Product 4 - Image Crops', 'Product 4 - Video ID', 'Product 4 - Call To Action Link', 
+        'Product 4 - Mobile App Deep Link', 'Product 4 - Display Link', 'Product 4 - Place Data', 
+        'Product 4 - Is Static Card', 'Product 5 - Link', 'Product 5 - Name', 'Product 5 - Description', 
+        'Product 5 - Image Hash', 'Product 5 - Image Crops', 'Product 5 - Video ID', 'Product 5 - Call To Action Link', 
+        'Product 5 - Mobile App Deep Link', 'Product 5 - Display Link', 'Product 5 - Place Data', 
+        'Product 5 - Is Static Card', 'Product 6 - Link', 'Product 6 - Name', 'Product 6 - Description', 
+        'Product 6 - Image Hash', 'Product 6 - Image Crops', 'Product 6 - Video ID', 'Product 6 - Call To Action Link', 
+        'Product 6 - Mobile App Deep Link', 'Product 6 - Display Link', 'Product 6 - Place Data', 
+        'Product 6 - Is Static Card', 'Product 7 - Link', 'Product 7 - Name', 'Product 7 - Description', 
+        'Product 7 - Image Hash', 'Product 7 - Image Crops', 'Product 7 - Video ID', 'Product 7 - Call To Action Link', 
+        'Product 7 - Mobile App Deep Link', 'Product 7 - Display Link', 'Product 7 - Place Data', 
+        'Product 7 - Is Static Card', 'Product 8 - Link', 'Product 8 - Name', 'Product 8 - Description', 
+        'Product 8 - Image Hash', 'Product 8 - Image Crops', 'Product 8 - Video ID', 'Product 8 - Call To Action Link', 
+        'Product 8 - Mobile App Deep Link', 'Product 8 - Display Link', 'Product 8 - Place Data', 
+        'Product 8 - Is Static Card', 'Product 9 - Link', 'Product 9 - Name', 'Product 9 - Description', 
+        'Product 9 - Image Hash', 'Product 9 - Image Crops', 'Product 9 - Video ID', 'Product 9 - Call To Action Link', 
+        'Product 9 - Mobile App Deep Link', 'Product 9 - Display Link', 'Product 9 - Place Data', 
+        'Product 9 - Is Static Card', 'Product 10 - Link', 'Product 10 - Name', 'Product 10 - Description', 
+        'Product 10 - Image Hash', 'Product 10 - Image Crops', 'Product 10 - Video ID', 'Product 10 - Call To Action Link', 
+        'Product 10 - Mobile App Deep Link', 'Product 10 - Display Link', 'Product 10 - Place Data', 
+        'Product 10 - Is Static Card', 'Product Sales Channel', 'Additional Dynamic Creative Call To Action Type 5', 
+        'Additional Dynamic Creative Call To Action Type 6', 'Additional Dynamic Creative Call To Action Type 7', 
+        'Additional Dynamic Creative Call To Action Type 8', 'Additional Dynamic Creative Call To Action Type 9', 
+        'Degrees of Freedom Type', 'Mockup ID', 'Text Transformations', 'Ad Stop Time', 'Ad Start Time'
+      ]
+      
+      // Mapear todos os valores para as colunas correspondentes
+      headers.forEach((header, index) => {
+        row[header] = values[index] || ''
+      })
       
       processedData.push(row)
     }
@@ -101,36 +180,39 @@ export default function CSVUploadModal({ isOpen, onClose, accounts }: CSVUploadM
   }
 
   const processCSVData = (data: any[]) => {
-    // Criar template limpo (como no Google Sheets)
+    // Processar dados para clonagem - remover apenas valores dos IDs
     return data.map(row => {
-      const templateRow: any = {}
+      const processedRow = { ...row }
       
-      // Manter apenas campos necessários para clonagem
-      templateRow['Campaign Name'] = row['Campaign Name']
-      templateRow['Campaign Status'] = row['Campaign Status']
-      templateRow['Campaign Objective'] = row['Campaign Objective']
-      templateRow['Campaign Daily Budget'] = row['Campaign Daily Budget']
-      templateRow['Campaign Bid Strategy'] = row['Campaign Bid Strategy']
+      // Limpar apenas os valores dos IDs específicos (mantendo colunas)
+      processedRow['Campaign ID'] = ''
+      processedRow['Ad Set ID'] = ''
+      processedRow['Ad ID'] = ''
+      processedRow['Creation Package Config ID'] = ''
+      processedRow['Story ID'] = ''
+      processedRow['Video ID'] = ''
+      processedRow['Image Hash'] = ''
+      processedRow['Instagram Platform Image Hash'] = ''
+      processedRow['Campaign Page ID'] = ''
+      processedRow['Link Object ID'] = ''
+      processedRow['Application ID'] = ''
+      processedRow['Product Set ID'] = ''
+      processedRow['Place Page Set ID'] = ''
+      processedRow['Offer ID'] = ''
+      processedRow['Offline Event Data Set ID'] = ''
+      processedRow['Event ID'] = ''
+      processedRow['Instagram Account ID'] = ''
+      processedRow['Call Extension Phone Data ID'] = ''
+      processedRow['Lead Form ID'] = ''
+      processedRow['App Destination Page ID'] = ''
+      processedRow['Facebook App ID'] = ''
+      processedRow['iOS App Store ID'] = ''
+      processedRow['iPad App Store ID'] = ''
+      processedRow['iPhone App Store ID'] = ''
+      processedRow['Windows Store ID'] = ''
+      processedRow['Mockup ID'] = ''
       
-      templateRow['Ad Set Name'] = row['Ad Set Name']
-      templateRow['Ad Set Daily Budget'] = row['Ad Set Daily Budget']
-      templateRow['Ad Set Optimization Goal'] = row['Ad Set Optimization Goal']
-      templateRow['Ad Set Billing Event'] = row['Ad Set Billing Event']
-      templateRow['Ad Set Bid Amount'] = row['Ad Set Bid Amount']
-      
-      templateRow['Ad Name'] = row['Ad Name']
-      templateRow['Ad Title'] = row['Ad Title']
-      templateRow['Ad Body'] = row['Ad Body']
-      templateRow['Ad Link'] = row['Ad Link']
-      templateRow['Ad Image Hash'] = row['Ad Image Hash']
-      templateRow['Ad Video ID'] = row['Ad Video ID']
-      
-      templateRow['Countries'] = row['Countries']
-      templateRow['Age Min'] = row['Age Min']
-      templateRow['Age Max'] = row['Age Max']
-      templateRow['Placements'] = row['Placements']
-      
-      return templateRow
+      return processedRow
     })
   }
 
@@ -289,104 +371,15 @@ export default function CSVUploadModal({ isOpen, onClose, accounts }: CSVUploadM
           </div>
         )}
 
-        {/* Step 2: Configuration */}
-        {step === 'config' && (
+
+
+        {/* Step 2: Clonagem */}
+        {step === 'cloning' && (
           <div className="space-y-6">
             <div className="flex items-center mb-4">
-              <Settings className="w-5 h-5 mr-2" />
+              <Play className="w-5 h-5 mr-2" />
               <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                Configuração por Conta
-              </h3>
-            </div>
-
-            <div className="space-y-4">
-              {accountConfigs.map((config, index) => (
-                <div key={config.accountId} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-medium text-gray-900 dark:text-white">
-                      {config.accountName}
-                    </h4>
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={config.enabled}
-                        onChange={(e) => handleConfigChange(config.accountId, 'enabled', e.target.checked)}
-                        className="mr-2"
-                      />
-                      Ativar
-                    </label>
-                  </div>
-
-                  {config.enabled && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Página do Facebook
-                        </label>
-                        <input
-                          type="text"
-                          value={config.pageId}
-                          onChange={(e) => handleConfigChange(config.accountId, 'pageId', e.target.value)}
-                          placeholder="ID da página"
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Pixel
-                        </label>
-                        <input
-                          type="text"
-                          value={config.pixelId}
-                          onChange={(e) => handleConfigChange(config.accountId, 'pixelId', e.target.value)}
-                          placeholder="ID do pixel"
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          URL Personalizada
-                        </label>
-                        <input
-                          type="text"
-                          value={config.customUrl}
-                          onChange={(e) => handleConfigChange(config.accountId, 'customUrl', e.target.value)}
-                          placeholder="https://example.com"
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div className="flex justify-end space-x-4">
-              <button
-                onClick={() => setStep('upload')}
-                className="btn-secondary"
-              >
-                Voltar
-              </button>
-              <button
-                onClick={() => setStep('review')}
-                className="btn-primary"
-              >
-                Revisar e Clonar
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 3: Review */}
-        {step === 'review' && (
-          <div className="space-y-6">
-            <div className="flex items-center mb-4">
-              <FileText className="w-5 h-5 mr-2" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                Revisão da Clonagem
+                Clonagem de Campanhas
               </h3>
             </div>
 
@@ -395,46 +388,36 @@ export default function CSVUploadModal({ isOpen, onClose, accounts }: CSVUploadM
                 <h4 className="font-medium text-gray-900 dark:text-white mb-2">Resumo:</h4>
                 <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                   <li>• Arquivo CSV processado: {csvData.length} linhas</li>
-                  <li>• Contas selecionadas: {accountConfigs.filter(c => c.enabled).length}</li>
                   <li>• IDs removidos automaticamente</li>
-                  <li>• Template limpo criado</li>
+                  <li>• Pronto para clonagem</li>
                 </ul>
-                
-                <div className="mt-4">
-                  <button
-                    onClick={downloadProcessedTemplate}
-                    className="btn-secondary flex items-center"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Baixar Template Processado
-                  </button>
-                </div>
               </div>
 
-              <div className="space-y-2">
-                <h4 className="font-medium text-gray-900 dark:text-white">Contas de Destino:</h4>
-                {accountConfigs.filter(c => c.enabled).map(config => (
-                  <div key={config.accountId} className="text-sm text-gray-600 dark:text-gray-400">
-                    • {config.accountName} - Página: {config.pageId || 'Não definida'}
-                  </div>
-                ))}
+              <div className="flex justify-end space-x-4">
+                <button
+                  onClick={() => setStep('upload')}
+                  className="btn-secondary"
+                >
+                  Voltar
+                </button>
+                <button
+                  onClick={handleStartCloning}
+                  disabled={isCloning}
+                  className="btn-primary flex items-center"
+                >
+                  {isCloning ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Clonando...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4 mr-2" />
+                      Iniciar Clonagem
+                    </>
+                  )}
+                </button>
               </div>
-            </div>
-
-            <div className="flex justify-end space-x-4">
-              <button
-                onClick={() => setStep('config')}
-                className="btn-secondary"
-              >
-                Voltar
-              </button>
-              <button
-                onClick={handleStartCloning}
-                className="btn-primary flex items-center"
-              >
-                <Play className="w-4 h-4 mr-2" />
-                Iniciar Clonagem
-              </button>
             </div>
           </div>
         )}

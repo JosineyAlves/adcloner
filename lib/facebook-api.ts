@@ -199,11 +199,11 @@ export class FacebookAPI {
       for (const account of adAccounts) {
         try {
           // Nova estrutura: buscar data_sets (que incluem pixels)
-          const response = await fetch(
+      const response = await fetch(
             `${this.baseUrl}/${account.id}/data_sets?fields=id,name,type,data_sources&access_token=${userAccessToken}`
-          )
-          const data = await response.json()
-          
+      )
+      const data = await response.json()
+      
           if (data.data) {
             data.data.forEach((dataSet: any) => {
               // Filtrar apenas pixels (type = 'PIXEL')
@@ -213,7 +213,7 @@ export class FacebookAPI {
                   name: dataSet.name,
                   code: dataSet.id // Usar ID como código temporário
                 })
-              }
+      }
             })
           }
         } catch (error) {
@@ -229,12 +229,12 @@ export class FacebookAPI {
             if (fallbackData.data) {
               fallbackData.data.forEach((pixel: any) => {
                 allPixels.push({
-                  id: pixel.id,
-                  name: pixel.name,
-                  code: pixel.code
-                })
-              })
-            }
+              id: pixel.id,
+              name: pixel.name,
+              code: pixel.code
+            })
+          })
+        }
           } catch (fallbackError) {
             console.error(`Error getting pixels (fallback) for account ${account.id}:`, fallbackError)
           }
@@ -576,13 +576,13 @@ export class FacebookAPI {
         for (const adSet of campaignData.adSets) {
           try {
             console.log(`Clonando Ad Set: ${adSet.name}`, {
-              name: adSet.name,
-              campaignId: newCampaignId,
-              targeting: adSet.targeting,
+            name: adSet.name,
+            campaignId: newCampaignId,
+            targeting: adSet.targeting,
               dailyBudget: adSet.daily_budget,
               optimizationGoal: adSet.optimization_goal
-            })
-            
+          })
+          
             const newAdSetId = await this.createAdSet(targetAccountId, accessToken, {
               name: adSet.name,
               campaignId: newCampaignId,
@@ -592,15 +592,15 @@ export class FacebookAPI {
             })
             
             adSetClones.push({
-              originalId: adSet.id,
-              newId: newAdSetId
+            originalId: adSet.id,
+            newId: newAdSetId
             })
             
             console.log(`✅ Ad Set clonado com sucesso: ${newAdSetId}`)
           } catch (error) {
             console.error(`Error cloning ad set ${adSet.id}:`, error)
           }
-        }
+          }
       } else {
         console.log('⚠️ Nenhum Ad Set encontrado para clonar')
       }
@@ -640,18 +640,18 @@ export class FacebookAPI {
                 }
               }
               
-              await this.createAd(targetAccountId, accessToken, {
-                name: ad.name,
-                adSetId: newAdSetId,
+            await this.createAd(targetAccountId, accessToken, {
+              name: ad.name,
+              adSetId: newAdSetId,
                 creativeId: creativeId
-              })
+            })
               
               console.log(`✅ Ad clonado com sucesso: ${ad.name}`)
             } catch (error) {
               console.error(`Error cloning ad ${ad.id}:`, error)
             }
           }
-        }
+          }
       } else {
         console.log('⚠️ Nenhum Ad encontrado para clonar')
       }

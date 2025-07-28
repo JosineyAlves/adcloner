@@ -136,9 +136,9 @@ export default function CampaignsPage() {
                 onClick={handleCreateCampaign}
                 className="btn-primary flex items-center space-x-2"
               >
-                <Plus className="w-4 h-4" />
-                <span>Nova Campanha</span>
-              </button>
+              <Plus className="w-4 h-4" />
+              <span>Nova Campanha</span>
+            </button>
             </div>
           </div>
         </header>
