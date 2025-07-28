@@ -436,20 +436,87 @@ export class FacebookAPI {
   }
 
   /**
+   * Obtém criativos de uma conta de anúncios
+   */
+  async getCreatives(adAccountId: string, accessToken: string): Promise<any[]> {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/${adAccountId}/adcreatives?fields=id,name,object_story_spec&access_token=${accessToken}`
+      )
+      const data = await response.json()
+      
+      if (data.error) {
+        console.error('Error getting creatives:', data.error)
+        return []
+      }
+      
+      return data.data || []
+    } catch (error) {
+      console.error('Error getting creatives:', error)
+      return []
+    }
+  }
+
+  /**
+   * Cria um criativo
+   */
+  async createCreative(adAccountId: string, creativeData: any, accessToken: string): Promise<string> {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/${adAccountId}/adcreatives`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            name: creativeData.name,
+            object_story_spec: JSON.stringify(creativeData.object_story_spec),
+            access_token: accessToken
+          })
+        }
+      )
+      
+      const data = await response.json()
+      
+      if (data.error) {
+        console.error('Facebook API error:', data.error)
+        throw new Error(data.error.message)
+      }
+      
+      return data.id
+    } catch (error) {
+      console.error('Error creating creative:', error)
+      throw error
+    }
+  }
+
+  /**
    * Cria um anúncio
    */
   async createAd(adAccountId: string, accessToken: string, adData: any): Promise<string> {
     try {
-      // Criar creative básico se não fornecido
-      const creative = adData.creative || {
-        name: adData.name,
-        object_story_spec: {
-          page_id: '123456789', // ID da página (será substituído)
-          link_data: {
-            image_hash: 'abc123', // Hash da imagem (será substituído)
-            link: 'https://example.com',
-            message: 'Confira nosso produto!'
-          }
+      // Se não temos creative, criar um básico
+      let creativeId = adData.creativeId
+      
+      if (!creativeId) {
+        // Buscar páginas da conta para usar como fallback
+        const pages = await this.getPages(accessToken)
+        const pageId = pages.length > 0 ? pages[0].id : null
+        
+        if (pageId) {
+          const creative = await this.createCreative(adAccountId, {
+            name: `${adData.name} Creative`,
+            object_story_spec: {
+              page_id: pageId,
+              link_data: {
+                link: 'https://example.com',
+                message: 'Confira nosso produto!'
+              }
+            }
+          }, accessToken)
+          
+          creativeId = creative
         }
       }
 
@@ -463,7 +530,7 @@ export class FacebookAPI {
           body: new URLSearchParams({
             name: adData.name,
             adset_id: adData.adSetId,
-            creative: JSON.stringify(creative),
+            creative: `{"creative_id":"${creativeId}"}`,
             status: 'PAUSED',
             access_token: accessToken
           })
@@ -546,16 +613,47 @@ export class FacebookAPI {
           
           if (newAdSetId) {
             try {
+              console.log(`Clonando Ad: ${ad.name}`)
+              
+              // Se o ad tem creative, tentar clonar o creative
+              let creativeId = null
+              if (ad.creative && ad.creative.id) {
+                try {
+                  // Buscar detalhes do creative original
+                  const creativeResponse = await fetch(
+                    `${this.baseUrl}/${ad.creative.id}?fields=name,object_story_spec&access_token=${accessToken}`
+                  )
+                  const creativeData = await creativeResponse.json()
+                  
+                  if (!creativeData.error) {
+                    // Criar novo creative na conta de destino
+                    const newCreativeId = await this.createCreative(targetAccountId, {
+                      name: `${creativeData.name} (Clone)`,
+                      object_story_spec: creativeData.object_story_spec
+                    }, accessToken)
+                    
+                    creativeId = newCreativeId
+                    console.log(`✅ Creative clonado: ${newCreativeId}`)
+                  }
+                } catch (creativeError) {
+                  console.error(`Error cloning creative for ad ${ad.id}:`, creativeError)
+                }
+              }
+              
               await this.createAd(targetAccountId, accessToken, {
                 name: ad.name,
                 adSetId: newAdSetId,
-                creative: ad.creative || {}
+                creativeId: creativeId
               })
+              
+              console.log(`✅ Ad clonado com sucesso: ${ad.name}`)
             } catch (error) {
               console.error(`Error cloning ad ${ad.id}:`, error)
             }
           }
         }
+      } else {
+        console.log('⚠️ Nenhum Ad encontrado para clonar')
       }
       
       return {
