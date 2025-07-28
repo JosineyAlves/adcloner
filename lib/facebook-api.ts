@@ -255,7 +255,7 @@ export class FacebookAPI {
   async getCampaigns(adAccountId: string, accessToken: string): Promise<Campaign[]> {
     try {
       const response = await fetch(
-        `${this.baseUrl}/${adAccountId}/campaigns?fields=id,name,objective,status,created_time,updated_time,insights{impressions,clicks,spend}&access_token=${accessToken}`
+        `${this.baseUrl}/${adAccountId}/campaigns?fields=id,name,objective,status,created_time,updated_time,insights{impressions,clicks,spend}&include_drafts=true&access_token=${accessToken}`
       )
       const data = await response.json()
       
@@ -959,12 +959,14 @@ export class FacebookAPI {
       // Se ainda não encontrou anúncios, tentar buscar pelos IDs conhecidos da planilha
       if (!adsData.data || adsData.data.length === 0) {
         console.log(`🔍 Tentando buscar anúncios específicos da planilha...`)
+        // Usar IDs baseados no padrão da campanha para evitar confusão
+        const campaignIdBase = campaignId.replace('cg:', '').replace('act_', '')
         const adIds = [
-          '120227772217290699', // AD06
-          '120227772217280699', // AD07
-          '120227772217270699', // AD08
-          '120227772217260699', // AD09
-          '120227772217300699'  // AD10
+          `${campaignIdBase}90699`, // AD01
+          `${campaignIdBase}80799`, // AD02
+          `${campaignIdBase}70899`, // AD03
+          `${campaignIdBase}60999`, // AD04
+          `${campaignIdBase}51099`  // AD05
         ]
         
         let foundAds: any[] = []

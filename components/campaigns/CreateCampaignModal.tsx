@@ -13,17 +13,27 @@ export default function CreateCampaignModal({ isOpen, onClose, accounts }: Creat
     objective: 'OUTCOME_SALES',
     dailyBudget: 1000,
     targetAccountId: '',
+    bidStrategy: 'LOWEST_COST_WITHOUT_CAP',
+    billingEvent: 'IMPRESSIONS',
     targeting: {
       ageMin: 18,
       ageMax: 65,
       countries: ['BR'],
-      interests: []
+      interests: [],
+      gender: 'all',
+      languages: []
     },
     creative: {
       title: '',
       message: '',
       imageUrl: '',
-      link: ''
+      link: '',
+      callToAction: 'LEARN_MORE'
+    },
+    scheduling: {
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: '',
+      timezone: 'America/Sao_Paulo'
     }
   })
 
@@ -33,8 +43,27 @@ export default function CreateCampaignModal({ isOpen, onClose, accounts }: Creat
     { value: 'OUTCOME_SALES', label: 'Conversões' },
     { value: 'LINK_CLICKS', label: 'Tráfego' },
     { value: 'REACH', label: 'Alcance' },
-    { value: 'BRAND_AWARARENESS', label: 'Reconhecimento da Marca' },
-    { value: 'LEAD_GENERATION', label: 'Geração de Leads' }
+    { value: 'BRAND_AWARENESS', label: 'Reconhecimento da Marca' },
+    { value: 'LEAD_GENERATION', label: 'Geração de Leads' },
+    { value: 'VIDEO_VIEWS', label: 'Visualizações de Vídeo' },
+    { value: 'APP_INSTALLS', label: 'Instalações de App' },
+    { value: 'MESSAGES', label: 'Mensagens' },
+    { value: 'ENGAGEMENT', label: 'Engajamento' },
+    { value: 'CATALOG_SALES', label: 'Vendas do Catálogo' }
+  ]
+
+  const bidStrategies = [
+    { value: 'LOWEST_COST_WITHOUT_CAP', label: 'Menor Custo' },
+    { value: 'LOWEST_COST_WITH_BID_CAP', label: 'Menor Custo com Limite' },
+    { value: 'COST_CAP', label: 'Limite de Custo' },
+    { value: 'BID_CAP', label: 'Limite de Lance' }
+  ]
+
+  const billingEvents = [
+    { value: 'IMPRESSIONS', label: 'Impressões' },
+    { value: 'LINK_CLICKS', label: 'Cliques em Links' },
+    { value: 'PURCHASE', label: 'Compras' },
+    { value: 'LEAD', label: 'Leads' }
   ]
 
   const handleSubmit = async (e: React.FormEvent) => {
