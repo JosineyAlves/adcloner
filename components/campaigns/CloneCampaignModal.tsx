@@ -55,27 +55,27 @@ export default function CloneCampaignModal({
       for (const accountId of selectedAccounts) {
         try {
           const response = await fetch('/api/campaigns/clones', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
               sourceCampaignId: campaign.id,
               targetAccountId: accountId,
               campaignName: `${campaign.name} - Clone`
-        })
-      })
+            })
+          })
 
-      const data = await response.json()
+          const data = await response.json()
 
-      if (data.success) {
+          if (data.success) {
             results.push({
               targetAdAccountId: accountId,
               success: true,
               campaign: data.clone
             })
-      } else {
+          } else {
             results.push({
               targetAdAccountId: accountId,
               success: false,

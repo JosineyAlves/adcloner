@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Search, Filter, BarChart3, Calendar, DollarSign, Upload } from 'lucide-react'
+import { Plus, Search, Filter, BarChart3, Calendar, DollarSign } from 'lucide-react'
 import Sidebar from '@/components/layout/Sidebar'
 import CloneCampaignModal from '@/components/campaigns/CloneCampaignModal'
 import CreateCampaignModal from '@/components/campaigns/CreateCampaignModal'
-import CloneFromTemplateModal from '@/components/campaigns/CloneFromTemplateModal'
 import { Campaign, CampaignClone, FacebookAccount } from '@/lib/types'
 import { formatDate, getStatusColor, getStatusIcon } from '@/lib/utils'
 import toast from 'react-hot-toast'
@@ -21,7 +20,6 @@ export default function CampaignsPage() {
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null)
   const [isCloneModalOpen, setIsCloneModalOpen] = useState<boolean>(false)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false)
-  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState<boolean>(false)
 
   useEffect(() => {
     fetchCampaigns()
@@ -124,22 +122,13 @@ export default function CampaignsPage() {
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               Campanhas
             </h1>
-            <div className="flex items-center space-x-2">
-              <button 
-                onClick={() => setIsTemplateModalOpen(true)}
-                className="btn-secondary flex items-center space-x-2"
-              >
-                <Upload className="w-4 h-4" />
-                <span>Clonar de Template</span>
-              </button>
-              <button 
-                onClick={handleCreateCampaign}
-                className="btn-primary flex items-center space-x-2"
-              >
+            <button 
+              onClick={handleCreateCampaign}
+              className="btn-primary flex items-center space-x-2"
+            >
               <Plus className="w-4 h-4" />
               <span>Nova Campanha</span>
             </button>
-            </div>
           </div>
         </header>
 
@@ -319,13 +308,6 @@ export default function CampaignsPage() {
       <CreateCampaignModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        accounts={accounts}
-      />
-
-      {/* Clone From Template Modal */}
-      <CloneFromTemplateModal
-        isOpen={isTemplateModalOpen}
-        onClose={() => setIsTemplateModalOpen(false)}
         accounts={accounts}
       />
     </div>

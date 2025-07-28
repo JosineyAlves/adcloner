@@ -54,12 +54,12 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
   // Fazer login com Facebook usando Login para Empresas
   const handleConnectFacebook = async () => {
     try {
-    setIsConnecting(true)
-    setConnectionStatus('connecting')
-    setErrorMessage('')
+      setIsConnecting(true)
+      setConnectionStatus('connecting')
+      setErrorMessage('')
 
       console.log('🔗 Iniciando login com Facebook SDK (Login para Empresas)...')
-      
+
       // Verificar se SDK está pronto
       if (!isSDKReady()) {
         console.log('⚠️ SDK não está pronto, tentando carregar...')
@@ -88,7 +88,7 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
             handleLoginSuccess(response.authResponse)
           } else {
             console.log('❌ Login cancelado ou falhou')
-          setIsConnecting(false)
+            setIsConnecting(false)
             setConnectionStatus('error')
             setErrorMessage('Login cancelado ou falhou. Tente novamente.')
           }

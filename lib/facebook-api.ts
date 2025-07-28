@@ -199,11 +199,11 @@ export class FacebookAPI {
       for (const account of adAccounts) {
         try {
           // Nova estrutura: buscar data_sets (que incluem pixels)
-      const response = await fetch(
+          const response = await fetch(
             `${this.baseUrl}/${account.id}/data_sets?fields=id,name,type,data_sources&access_token=${userAccessToken}`
-      )
-      const data = await response.json()
-      
+          )
+          const data = await response.json()
+          
           if (data.data) {
             data.data.forEach((dataSet: any) => {
               // Filtrar apenas pixels (type = 'PIXEL')
@@ -213,7 +213,7 @@ export class FacebookAPI {
                   name: dataSet.name,
                   code: dataSet.id // Usar ID como código temporário
                 })
-      }
+              }
             })
           }
         } catch (error) {
@@ -229,12 +229,12 @@ export class FacebookAPI {
             if (fallbackData.data) {
               fallbackData.data.forEach((pixel: any) => {
                 allPixels.push({
-              id: pixel.id,
-              name: pixel.name,
-              code: pixel.code
-            })
-          })
-        }
+                  id: pixel.id,
+                  name: pixel.name,
+                  code: pixel.code
+                })
+              })
+            }
           } catch (fallbackError) {
             console.error(`Error getting pixels (fallback) for account ${account.id}:`, fallbackError)
           }
@@ -529,7 +529,7 @@ export class FacebookAPI {
           },
           body: new URLSearchParams({
             name: adData.name,
-            adset_id: adData.adset_id.toString(),
+            adset_id: adData.adSetId,
             creative: `{"creative_id":"${creativeId}"}`,
             status: 'PAUSED',
             access_token: accessToken
@@ -576,13 +576,13 @@ export class FacebookAPI {
         for (const adSet of campaignData.adSets) {
           try {
             console.log(`Clonando Ad Set: ${adSet.name}`, {
-            name: adSet.name,
-            campaignId: newCampaignId,
-            targeting: adSet.targeting,
+              name: adSet.name,
+              campaignId: newCampaignId,
+              targeting: adSet.targeting,
               dailyBudget: adSet.daily_budget,
               optimizationGoal: adSet.optimization_goal
-          })
-          
+            })
+            
             const newAdSetId = await this.createAdSet(targetAccountId, accessToken, {
               name: adSet.name,
               campaignId: newCampaignId,
@@ -592,15 +592,15 @@ export class FacebookAPI {
             })
             
             adSetClones.push({
-            originalId: adSet.id,
-            newId: newAdSetId
+              originalId: adSet.id,
+              newId: newAdSetId
             })
             
             console.log(`✅ Ad Set clonado com sucesso: ${newAdSetId}`)
           } catch (error) {
             console.error(`Error cloning ad set ${adSet.id}:`, error)
           }
-          }
+        }
       } else {
         console.log('⚠️ Nenhum Ad Set encontrado para clonar')
       }
@@ -640,18 +640,18 @@ export class FacebookAPI {
                 }
               }
               
-            await this.createAd(targetAccountId, accessToken, {
-              name: ad.name,
-              adSetId: newAdSetId,
+              await this.createAd(targetAccountId, accessToken, {
+                name: ad.name,
+                adSetId: newAdSetId,
                 creativeId: creativeId
-            })
+              })
               
               console.log(`✅ Ad clonado com sucesso: ${ad.name}`)
             } catch (error) {
               console.error(`Error cloning ad ${ad.id}:`, error)
             }
           }
-          }
+        }
       } else {
         console.log('⚠️ Nenhum Ad encontrado para clonar')
       }
@@ -1203,211 +1203,5 @@ export class FacebookAPI {
       console.error('Error importing campaign CSV:', error)
       throw error
     }
-  }
-
-  /**
-   * Clona campanhas a partir de dados de template
-   */
-  async cloneCampaignFromTemplate(accountId: string, accessToken: string, templateData: any[]) {
-    try {
-      const results = []
-      
-      // Buscar páginas disponíveis na conta
-      const pages = await this.getPages(accessToken)
-      const pageId = pages.length > 0 ? pages[0].id : null
-      
-      if (!pageId) {
-        throw new Error('Nenhuma página encontrada para criar anúncios')
-      }
-      
-      // Agrupar dados por campanha
-      const campaigns = this.groupTemplateDataByCampaign(templateData)
-      
-      console.log(`📊 Processando ${campaigns.length} campanhas do template`)
-      
-      for (const campaign of campaigns) {
-        try {
-          console.log(`🚀 Criando campanha: ${campaign.name}`)
-          
-          // Mapear objetivo da campanha para valores válidos
-          const objective = this.mapTemplateObjective(campaign.objective)
-          
-          // Criar campanha
-          const campaignId = await this.createCampaign(accountId, accessToken, {
-            name: campaign.name,
-            objective: objective,
-            status: 'PAUSED',
-            special_ad_categories: '[]'
-          })
-          
-          console.log(`✅ Campanha criada: ${campaignId}`)
-          
-          // Processar ad sets da campanha
-          for (const adSet of campaign.adSets) {
-            console.log(`📋 Criando ad set: ${adSet.name}`)
-            
-            // Validar e processar código de país
-            const countries = this.validateCountries(adSet.countries)
-            
-            // Criar ad set
-            const adSetId = await this.createAdSet(accountId, accessToken, {
-              name: adSet.name,
-              campaignId: campaignId,
-              targeting: {
-                geo_locations: {
-                  countries: countries
-                }
-              },
-              dailyBudget: adSet.dailyBudget,
-              optimizationGoal: 'LINK_CLICKS'
-            })
-            
-            console.log(`✅ Ad set criado: ${adSetId}`)
-            
-            // Processar anúncios do ad set
-            for (const ad of adSet.ads) {
-              console.log(`📋 Criando anúncio: ${ad.name}`)
-              
-              // Criar anúncio
-              const adId = await this.createAd(accountId, accessToken, {
-                name: ad.name,
-                adSetId: adSetId, // Usar o ID do ad set criado
-                creative: {
-                  name: `Criativo para ${ad.name}`,
-                  object_story_spec: {
-                    page_id: pageId,
-                    link_data: {
-                      link: ad.link,
-                      message: ad.body,
-                      image_hash: ad.imageHash || ''
-                    }
-                  }
-                },
-                status: 'PAUSED'
-              })
-              
-              console.log(`✅ Anúncio criado: ${adId}`)
-              
-              results.push({
-                campaignId: campaignId,
-                adSetId: adSetId,
-                adId: adId,
-                name: campaign.name
-              })
-            }
-          }
-        } catch (error) {
-          console.error(`❌ Erro ao criar campanha do template:`, error)
-          // Continuar com próxima campanha mesmo se uma falhar
-        }
-      }
-      
-      console.log(`✅ Clonagem concluída: ${results.length} anúncios criados`)
-      return {
-        success: true,
-        results,
-        message: `${results.length} anúncios criados em ${campaigns.length} campanhas`
-      }
-    } catch (error) {
-      console.error('Erro na clonagem por template:', error)
-      throw error
-    }
-  }
-
-  /**
-   * Agrupa dados do template por campanha
-   */
-  private groupTemplateDataByCampaign(templateData: any[]) {
-    const campaigns: { [key: string]: any } = {}
-    
-    for (const row of templateData) {
-      const campaignName = row['Campaign Name'] || 'Campanha Padrão'
-      const adSetName = row['Ad Set Name'] || 'Conjunto Padrão'
-      const adName = row['Ad Name'] || 'Anúncio Padrão'
-      
-      // Criar campanha se não existir
-      if (!campaigns[campaignName]) {
-        campaigns[campaignName] = {
-          name: campaignName,
-          objective: row['Campaign Objective'] || 'OUTCOME_TRAFFIC',
-          adSets: {}
-        }
-      }
-      
-      // Criar ad set se não existir
-      if (!campaigns[campaignName].adSets[adSetName]) {
-        campaigns[campaignName].adSets[adSetName] = {
-          name: adSetName,
-          dailyBudget: parseInt(row['Ad Set Daily Budget']) || 1000,
-          countries: row['Countries'] || 'BR',
-          ads: []
-        }
-      }
-      
-      // Adicionar anúncio ao ad set
-      campaigns[campaignName].adSets[adSetName].ads.push({
-        name: adName,
-        link: row['Link'] || 'https://example.com',
-        body: row['Body'] || 'Confira nosso produto!',
-        imageHash: row['Image Hash'] || ''
-      })
-    }
-    
-    // Converter para array
-    return Object.values(campaigns).map(campaign => ({
-      ...campaign,
-      adSets: Object.values(campaign.adSets)
-    }))
-  }
-
-  /**
-   * Mapeia objetivos de template para objetivos válidos da API
-   */
-  private mapTemplateObjective(objective: string): string {
-    const objectiveMap: { [key: string]: string } = {
-      'LINK_CLICKS': 'OUTCOME_TRAFFIC',
-      'CONVERSIONS': 'OUTCOME_SALES',
-      'REACH': 'OUTCOME_AWARENESS',
-      'BRAND_AWARENESS': 'OUTCOME_AWARENESS',
-      'VIDEO_VIEWS': 'OUTCOME_ENGAGEMENT',
-      'LEAD_GENERATION': 'OUTCOME_LEADS',
-      'APP_INSTALLS': 'OUTCOME_APP_PROMOTION',
-      'OUTCOME_TRAFFIC': 'OUTCOME_TRAFFIC',
-      'OUTCOME_SALES': 'OUTCOME_SALES',
-      'OUTCOME_AWARENESS': 'OUTCOME_AWARENESS',
-      'OUTCOME_ENGAGEMENT': 'OUTCOME_ENGAGEMENT',
-      'OUTCOME_LEADS': 'OUTCOME_LEADS',
-      'OUTCOME_APP_PROMOTION': 'OUTCOME_APP_PROMOTION'
-    }
-    
-    return objectiveMap[objective] || 'OUTCOME_TRAFFIC'
-  }
-
-  /**
-   * Valida e processa códigos de países
-   */
-  private validateCountries(countriesInput: string): string[] {
-    if (!countriesInput) {
-      return ['BR'] // Padrão Brasil
-    }
-
-    // Limpar e dividir países
-    const countries = countriesInput
-      .split(',')
-      .map(country => country.trim().toUpperCase())
-      .filter(country => country.length > 0)
-
-    // Validar códigos de país (ISO 3166-1 alpha-2)
-    const validCountries = countries.filter(country => {
-      // Lista de códigos válidos comuns
-      const validCodes = [
-        'BR', 'US', 'CA', 'MX', 'AR', 'CL', 'CO', 'PE', 'VE', 'EC', 'BO', 'PY', 'UY', 'GY', 'SR', 'GF',
-        'GB', 'DE', 'FR', 'IT', 'ES', 'PT', 'NL', 'BE', 'CH', 'AT', 'SE', 'NO', 'DK', 'FI', 'PL', 'CZ',
-        'AU', 'NZ', 'JP', 'KR', 'CN', 'IN', 'SG', 'MY', 'TH', 'VN', 'PH', 'ID', 'HK', 'TW'
-      ]
-      return validCodes.includes(country)
-    })
-
-    return validCountries.length > 0 ? validCountries : ['BR']
   }
 } 

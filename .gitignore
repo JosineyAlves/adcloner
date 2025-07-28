@@ -42,6 +42,3 @@ next-env.d.ts
 
 # OS
 Thumbs.db 
-
-# Data storage
-/data/ 
