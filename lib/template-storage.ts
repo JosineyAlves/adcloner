@@ -123,7 +123,7 @@ class TemplateStorage {
         processedData: [
           {
             'Campaign Name': 'Campanha Teste 1',
-            'Campaign Objective': 'LINK_CLICKS',
+            'Campaign Objective': 'OUTCOME_TRAFFIC',
             'Campaign Status': 'PAUSED',
             'Ad Set Name': 'Conjunto Teste 1',
             'Ad Set Daily Budget': '1000',
@@ -138,7 +138,7 @@ class TemplateStorage {
           },
           {
             'Campaign Name': 'Campanha Teste 2',
-            'Campaign Objective': 'CONVERSIONS',
+            'Campaign Objective': 'OUTCOME_SALES',
             'Campaign Status': 'PAUSED',
             'Ad Set Name': 'Conjunto Teste 2',
             'Ad Set Daily Budget': '2000',

@@ -1222,10 +1222,13 @@ export class FacebookAPI {
       
       for (const row of templateData) {
         try {
+          // Mapear objetivo da campanha para valores válidos
+          const objective = this.mapTemplateObjective(row['Campaign Objective'])
+          
           // Criar campanha baseada nos dados do template
           const campaignId = await this.createCampaign(accountId, accessToken, {
             name: row['Campaign Name'] || 'Campanha do Template',
-            objective: row['Campaign Objective'] || 'LINK_CLICKS',
+            objective: objective,
             status: 'PAUSED',
             special_ad_categories: '[]'
           })
@@ -1281,5 +1284,28 @@ export class FacebookAPI {
       console.error('Erro na clonagem por template:', error)
       throw error
     }
+  }
+
+  /**
+   * Mapeia objetivos de template para objetivos válidos da API
+   */
+  private mapTemplateObjective(objective: string): string {
+    const objectiveMap: { [key: string]: string } = {
+      'LINK_CLICKS': 'OUTCOME_TRAFFIC',
+      'CONVERSIONS': 'OUTCOME_SALES',
+      'REACH': 'OUTCOME_AWARENESS',
+      'BRAND_AWARENESS': 'OUTCOME_AWARENESS',
+      'VIDEO_VIEWS': 'OUTCOME_ENGAGEMENT',
+      'LEAD_GENERATION': 'OUTCOME_LEADS',
+      'APP_INSTALLS': 'OUTCOME_APP_PROMOTION',
+      'OUTCOME_TRAFFIC': 'OUTCOME_TRAFFIC',
+      'OUTCOME_SALES': 'OUTCOME_SALES',
+      'OUTCOME_AWARENESS': 'OUTCOME_AWARENESS',
+      'OUTCOME_ENGAGEMENT': 'OUTCOME_ENGAGEMENT',
+      'OUTCOME_LEADS': 'OUTCOME_LEADS',
+      'OUTCOME_APP_PROMOTION': 'OUTCOME_APP_PROMOTION'
+    }
+    
+    return objectiveMap[objective] || 'OUTCOME_TRAFFIC'
   }
 } 
