@@ -42,6 +42,27 @@ export async function GET(request: NextRequest) {
       console.log('🔍 API Insights: Buscando insights de conta de anúncios')
       // Insights de conta de anúncios
       insights = await facebookAPI.getAccountInsights(accountId, accessToken, datePreset)
+      
+      // Se não há insights, tentar outros períodos
+      if (!insights || insights.length === 0) {
+        console.log('⚠️ API Insights: Nenhum insight encontrado, tentando outros períodos...')
+        
+        const alternativePeriods = ['last_30d', 'last_90d', 'last_14d', 'last_3d']
+        
+        for (const period of alternativePeriods) {
+          console.log(`🔍 API Insights: Tentando período: ${period}`)
+          try {
+            const alternativeInsights = await facebookAPI.getAccountInsights(accountId, accessToken, period)
+            if (alternativeInsights && alternativeInsights.length > 0) {
+              console.log(`✅ API Insights: Encontrados insights no período ${period}:`, alternativeInsights.length)
+              insights = alternativeInsights
+              break
+            }
+          } catch (error) {
+            console.log(`❌ API Insights: Erro ao tentar período ${period}:`, error instanceof Error ? error.message : String(error))
+          }
+        }
+      }
     } else {
       console.log('❌ API Insights: accountId ou campaignId é obrigatório')
       return NextResponse.json({ error: 'accountId ou campaignId é obrigatório' }, { status: 400 })

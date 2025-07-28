@@ -1288,6 +1288,7 @@ export class FacebookAPI {
         'conversion_values'
       ].join(',')
 
+      // Primeira tentativa: com level=campaign
       const url = `${this.baseUrl}/${accountId}/insights?fields=${fields}&date_preset=${datePreset}&level=campaign&access_token=${accessToken}`
       console.log('🔍 FacebookAPI: URL da requisição:', url.replace(accessToken, '***'))
 
@@ -1315,11 +1316,62 @@ export class FacebookAPI {
           const value = data.data[0][field]
           console.log(`📊 FacebookAPI: Campo ${field}:`, value, 'Tipo:', typeof value)
         })
+        
+        return data.data
       } else {
-        console.log('⚠️ FacebookAPI: Nenhum insight encontrado')
+        console.log('⚠️ FacebookAPI: Nenhum insight encontrado com level=campaign')
+        
+        // Segunda tentativa: sem level
+        console.log('🔍 FacebookAPI: Tentando buscar insights sem level...')
+        const urlWithoutLevel = `${this.baseUrl}/${accountId}/insights?fields=${fields}&date_preset=${datePreset}&access_token=${accessToken}`
+        console.log('🔍 FacebookAPI: URL sem level:', urlWithoutLevel.replace(accessToken, '***'))
+        
+        const responseWithoutLevel = await fetch(urlWithoutLevel)
+        const dataWithoutLevel = await responseWithoutLevel.json()
+        console.log('🔍 FacebookAPI: Dados sem level:', JSON.stringify(dataWithoutLevel, null, 2))
+        
+        if (dataWithoutLevel.error) {
+          console.error('❌ FacebookAPI: Erro da API sem level:', dataWithoutLevel.error)
+        } else if (dataWithoutLevel.data && dataWithoutLevel.data.length > 0) {
+          console.log('✅ FacebookAPI: Encontrados insights sem level:', dataWithoutLevel.data.length)
+          return dataWithoutLevel.data
+        }
+        
+        // Terceira tentativa: apenas campos básicos
+        console.log('🔍 FacebookAPI: Tentando com campos básicos...')
+        const basicFields = 'campaign_id,campaign_name,impressions,clicks,spend'
+        const urlBasic = `${this.baseUrl}/${accountId}/insights?fields=${basicFields}&date_preset=${datePreset}&access_token=${accessToken}`
+        console.log('🔍 FacebookAPI: URL com campos básicos:', urlBasic.replace(accessToken, '***'))
+        
+        const responseBasic = await fetch(urlBasic)
+        const dataBasic = await responseBasic.json()
+        console.log('🔍 FacebookAPI: Dados com campos básicos:', JSON.stringify(dataBasic, null, 2))
+        
+        if (dataBasic.error) {
+          console.error('❌ FacebookAPI: Erro da API com campos básicos:', dataBasic.error)
+        } else if (dataBasic.data && dataBasic.data.length > 0) {
+          console.log('✅ FacebookAPI: Encontrados insights com campos básicos:', dataBasic.data.length)
+          return dataBasic.data
+        }
+        
+        // Quarta tentativa: sem date_preset
+        console.log('🔍 FacebookAPI: Tentando sem date_preset...')
+        const urlNoDate = `${this.baseUrl}/${accountId}/insights?fields=${basicFields}&access_token=${accessToken}`
+        console.log('🔍 FacebookAPI: URL sem date_preset:', urlNoDate.replace(accessToken, '***'))
+        
+        const responseNoDate = await fetch(urlNoDate)
+        const dataNoDate = await responseNoDate.json()
+        console.log('🔍 FacebookAPI: Dados sem date_preset:', JSON.stringify(dataNoDate, null, 2))
+        
+        if (dataNoDate.error) {
+          console.error('❌ FacebookAPI: Erro da API sem date_preset:', dataNoDate.error)
+        } else if (dataNoDate.data && dataNoDate.data.length > 0) {
+          console.log('✅ FacebookAPI: Encontrados insights sem date_preset:', dataNoDate.data.length)
+          return dataNoDate.data
+        }
       }
       
-      return data.data || []
+      return []
     } catch (error) {
       console.error('❌ FacebookAPI: Error getting account insights:', error)
       throw error
