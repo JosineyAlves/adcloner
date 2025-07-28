@@ -43,8 +43,8 @@ export async function POST(request: NextRequest) {
         results.push({
           accountId,
           success: true,
-          campaignId: cloneResult.campaignId,
-          message: 'Campanha clonada com sucesso'
+          campaignIds: cloneResult.results.map(r => r.campaignId),
+          message: cloneResult.message
         })
       } catch (error) {
         results.push({
