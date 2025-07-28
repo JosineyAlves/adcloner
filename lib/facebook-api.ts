@@ -689,7 +689,7 @@ export class FacebookAPI {
       const campaignData = await this.getCampaignDetails(campaignId, accessToken)
       
       // 2. Preparar dados para importação em massa
-      const bulkData = this.prepareBulkImportData(campaignData, targetAccountId)
+      const bulkData = await this.prepareBulkImportData(campaignData, targetAccountId, accessToken)
       
       // 3. Criar campanha via importação em massa
       const newCampaignId = await this.createCampaignFromBulkData(targetAccountId, accessToken, bulkData)
@@ -710,7 +710,18 @@ export class FacebookAPI {
   /**
    * Prepara dados para importação em massa (remove IDs específicos)
    */
-  private prepareBulkImportData(campaignData: any, targetAccountId: string): any {
+  private async prepareBulkImportData(campaignData: any, targetAccountId: string, accessToken: string): Promise<any> {
+    // Buscar páginas disponíveis na conta de destino
+    const pages = await this.getPages(accessToken)
+    const pageId = pages.length > 0 ? pages[0].id : null
+    
+    console.log(`📄 Páginas encontradas: ${pages.length}`)
+    if (pageId) {
+      console.log(`✅ Usando página: ${pageId}`)
+    } else {
+      console.log(`⚠️ Nenhuma página encontrada`)
+    }
+    
     const bulkData = {
       // Dados da campanha (sem IDs)
       campaign: {
@@ -744,11 +755,12 @@ export class FacebookAPI {
         creative: {
           name: `${ad.name} Creative`,
           object_story_spec: {
-            page_id: ad.creative?.object_story_spec?.page_id || null,
+            page_id: pageId, // Usar página da conta de destino
             link_data: {
               link: ad.creative?.object_story_spec?.link_data?.link || 'https://example.com',
               message: ad.creative?.object_story_spec?.link_data?.message || 'Confira nosso produto!',
-              image_hash: ad.creative?.object_story_spec?.link_data?.image_hash || null
+              image_hash: ad.creative?.object_story_spec?.link_data?.image_hash || null,
+              video_id: ad.creative?.object_story_spec?.link_data?.video_id || null
             }
           }
         }
@@ -790,10 +802,33 @@ export class FacebookAPI {
           let creativeId = null
           if (adData.creative) {
             try {
-              creativeId = await this.createCreative(adAccountId, adData.creative, accessToken)
-              console.log(`✅ Creative criado: ${creativeId}`)
+              // Verificar se temos image_hash ou video_id válidos
+              const hasImage = adData.creative.object_story_spec?.link_data?.image_hash
+              const hasVideo = adData.creative.object_story_spec?.link_data?.video_id
+              
+              if (hasImage || hasVideo) {
+                console.log(`🎨 Criando creative com ${hasImage ? 'imagem' : ''}${hasImage && hasVideo ? ' e ' : ''}${hasVideo ? 'vídeo' : ''}`)
+                creativeId = await this.createCreative(adAccountId, adData.creative, accessToken)
+                console.log(`✅ Creative criado: ${creativeId}`)
+              } else {
+                console.log(`⚠️ Creative sem imagem/vídeo válidos, criando básico`)
+                // Criar creative básico sem imagem/vídeo
+                const basicCreative = {
+                  name: `${adData.name} Creative`,
+                  object_story_spec: {
+                    page_id: adData.creative.object_story_spec.page_id,
+                    link_data: {
+                      link: adData.creative.object_story_spec.link_data.link,
+                      message: adData.creative.object_story_spec.link_data.message
+                    }
+                  }
+                }
+                creativeId = await this.createCreative(adAccountId, basicCreative, accessToken)
+                console.log(`✅ Creative básico criado: ${creativeId}`)
+              }
             } catch (creativeError) {
               console.error('Error creating creative:', creativeError)
+              console.log(`⚠️ Tentando criar ad sem creative`)
             }
           }
           
@@ -836,11 +871,16 @@ export class FacebookAPI {
       )
       const adSetsData = await adSetsResponse.json()
       
-      // Buscar anúncios da campanha
+      // Buscar anúncios da campanha com detalhes completos
       const adsResponse = await fetch(
-        `${this.baseUrl}/${campaignId}/ads?fields=id,name,creative&access_token=${accessToken}`
+        `${this.baseUrl}/${campaignId}/ads?fields=id,name,creative{id,name,object_story_spec}&access_token=${accessToken}`
       )
       const adsData = await adsResponse.json()
+      
+      console.log(`📊 Anúncios encontrados: ${adsData.data?.length || 0}`)
+      adsData.data?.forEach((ad: any) => {
+        console.log(`📋 Ad: ${ad.name} - Creative: ${ad.creative?.id || 'Nenhum'}`)
+      })
       
       const result = {
         ...campaignData,
