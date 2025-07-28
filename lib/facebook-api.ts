@@ -199,11 +199,11 @@ export class FacebookAPI {
       for (const account of adAccounts) {
         try {
           // Nova estrutura: buscar data_sets (que incluem pixels)
-          const response = await fetch(
+      const response = await fetch(
             `${this.baseUrl}/${account.id}/data_sets?fields=id,name,type,data_sources&access_token=${userAccessToken}`
-          )
-          const data = await response.json()
-          
+      )
+      const data = await response.json()
+      
           if (data.data) {
             data.data.forEach((dataSet: any) => {
               // Filtrar apenas pixels (type = 'PIXEL')
@@ -229,12 +229,12 @@ export class FacebookAPI {
             if (fallbackData.data) {
               fallbackData.data.forEach((pixel: any) => {
                 allPixels.push({
-                  id: pixel.id,
-                  name: pixel.name,
-                  code: pixel.code
-                })
-              })
-            }
+              id: pixel.id,
+              name: pixel.name,
+              code: pixel.code
+            })
+          })
+        }
           } catch (fallbackError) {
             console.error(`Error getting pixels (fallback) for account ${account.id}:`, fallbackError)
           }
@@ -590,9 +590,9 @@ export class FacebookAPI {
         for (const adSet of campaignData.adSets) {
           try {
             console.log(`Clonando Ad Set: ${adSet.name}`, {
-              name: adSet.name,
-              campaignId: newCampaignId,
-              targeting: adSet.targeting,
+            name: adSet.name,
+            campaignId: newCampaignId,
+            targeting: adSet.targeting,
               dailyBudget: adSet.daily_budget,
               optimizationGoal: adSet.optimization_goal
             })
@@ -606,8 +606,8 @@ export class FacebookAPI {
             })
             
             adSetClones.push({
-              originalId: adSet.id,
-              newId: newAdSetId
+            originalId: adSet.id,
+            newId: newAdSetId
             })
             
             console.log(`✅ Ad Set clonado com sucesso: ${newAdSetId}`)
@@ -654,9 +654,9 @@ export class FacebookAPI {
                 }
               }
               
-              await this.createAd(targetAccountId, accessToken, {
-                name: ad.name,
-                adSetId: newAdSetId,
+            await this.createAd(targetAccountId, accessToken, {
+              name: ad.name,
+              adSetId: newAdSetId,
                 creativeId: creativeId
               })
               
@@ -1144,7 +1144,7 @@ export class FacebookAPI {
     level: string = 'campaign'
   ) {
     try {
-      // Todas as métricas disponíveis da API de Insights do Facebook
+      // Campos básicos e seguros da API de Insights do Facebook
       const fields = [
         // Identificação
         'campaign_id',
@@ -1154,73 +1154,31 @@ export class FacebookAPI {
         'ad_id',
         'ad_name',
         
-        // Métricas básicas
+        // Métricas básicas (garantidas)
         'impressions',
         'clicks',
         'spend',
         'reach',
         'frequency',
         
-        // Métricas de custo
+        // Métricas de custo (garantidas)
         'cpm',
         'cpc',
         'ctr',
         
-        // Métricas de engajamento
+        // Métricas de engajamento (garantidas)
         'inline_link_clicks',
         'inline_post_engagement',
         
-        // Métricas de qualidade
+        // Métricas de qualidade (garantidas)
         'quality_ranking',
         'engagement_rate_ranking',
         'conversion_rate_ranking',
         
-        // Métricas de conversão
+        // Métricas de conversão (garantidas)
         'conversions',
         'cost_per_conversion',
-        'conversion_values',
-        
-        // Métricas de vídeo
-        'video_p25_watched_actions',
-        'video_p50_watched_actions',
-        'video_p75_watched_actions',
-        'video_p95_watched_actions',
-        'video_p100_watched_actions',
-        'video_play_actions',
-        'video_play_curve_actions',
-        
-        // Métricas de aplicativo
-        'mobile_app_installs',
-        'mobile_app_install_rate',
-        
-        // Métricas de lead
-        'leads',
-        'cost_per_lead',
-        
-        // Métricas de página
-        'page_likes',
-        'page_engagement',
-        'page_impressions',
-        'page_posts_impressions',
-        
-        // Métricas de evento
-        'onsite_conversion',
-        'purchase',
-        'add_to_cart',
-        'initiated_checkout',
-        'complete_registration',
-        'view_content',
-        'search',
-        'add_to_wishlist',
-        'start_order',
-        'add_payment_info',
-        'contact',
-        'custom',
-        'donate',
-        'find_location',
-        'schedule',
-        'subscribe',
-        'tutorial_completion'
+        'conversion_values'
       ].join(',')
 
       const response = await fetch(
@@ -1247,9 +1205,6 @@ export class FacebookAPI {
     accessToken: string, 
     datePreset: string = 'last_7d'
   ) {
-    console.log('🔍 FacebookAPI: Iniciando getAccountInsights para conta:', accountId)
-    console.log('🔍 FacebookAPI: datePreset:', datePreset)
-    
     try {
       // Campos básicos e seguros da API de Insights do Facebook para contas
       const fields = [
@@ -1288,92 +1243,18 @@ export class FacebookAPI {
         'conversion_values'
       ].join(',')
 
-      // Primeira tentativa: com level=campaign
-      const url = `${this.baseUrl}/${accountId}/insights?fields=${fields}&date_preset=${datePreset}&level=campaign&access_token=${accessToken}`
-      console.log('🔍 FacebookAPI: URL da requisição:', url.replace(accessToken, '***'))
-
-      const response = await fetch(url)
-      console.log('🔍 FacebookAPI: Status da resposta:', response.status)
-      console.log('🔍 FacebookAPI: Headers da resposta:', Object.fromEntries(response.headers.entries()))
-      
+      const response = await fetch(
+        `${this.baseUrl}/${accountId}/insights?fields=${fields}&date_preset=${datePreset}&level=campaign&access_token=${accessToken}`
+      )
       const data = await response.json()
-      console.log('🔍 FacebookAPI: Dados recebidos:', JSON.stringify(data, null, 2))
       
       if (data.error) {
-        console.error('❌ FacebookAPI: Erro da API:', data.error)
         throw new Error(data.error.message)
       }
       
-      console.log('✅ FacebookAPI: Insights obtidos com sucesso:', data.data?.length || 0)
-      
-      if (data.data && data.data.length > 0) {
-        console.log('📊 FacebookAPI: Primeiro insight:', data.data[0])
-        console.log('📊 FacebookAPI: Campos disponíveis no primeiro insight:', Object.keys(data.data[0]))
-        
-        // Verificar se os campos esperados estão presentes
-        const expectedFields = ['campaign_id', 'campaign_name', 'impressions', 'clicks', 'spend']
-        expectedFields.forEach(field => {
-          const value = data.data[0][field]
-          console.log(`📊 FacebookAPI: Campo ${field}:`, value, 'Tipo:', typeof value)
-        })
-        
-        return data.data
-      } else {
-        console.log('⚠️ FacebookAPI: Nenhum insight encontrado com level=campaign')
-        
-        // Segunda tentativa: sem level
-        console.log('🔍 FacebookAPI: Tentando buscar insights sem level...')
-        const urlWithoutLevel = `${this.baseUrl}/${accountId}/insights?fields=${fields}&date_preset=${datePreset}&access_token=${accessToken}`
-        console.log('🔍 FacebookAPI: URL sem level:', urlWithoutLevel.replace(accessToken, '***'))
-        
-        const responseWithoutLevel = await fetch(urlWithoutLevel)
-        const dataWithoutLevel = await responseWithoutLevel.json()
-        console.log('🔍 FacebookAPI: Dados sem level:', JSON.stringify(dataWithoutLevel, null, 2))
-        
-        if (dataWithoutLevel.error) {
-          console.error('❌ FacebookAPI: Erro da API sem level:', dataWithoutLevel.error)
-        } else if (dataWithoutLevel.data && dataWithoutLevel.data.length > 0) {
-          console.log('✅ FacebookAPI: Encontrados insights sem level:', dataWithoutLevel.data.length)
-          return dataWithoutLevel.data
-        }
-        
-        // Terceira tentativa: apenas campos básicos
-        console.log('🔍 FacebookAPI: Tentando com campos básicos...')
-        const basicFields = 'campaign_id,campaign_name,impressions,clicks,spend'
-        const urlBasic = `${this.baseUrl}/${accountId}/insights?fields=${basicFields}&date_preset=${datePreset}&access_token=${accessToken}`
-        console.log('🔍 FacebookAPI: URL com campos básicos:', urlBasic.replace(accessToken, '***'))
-        
-        const responseBasic = await fetch(urlBasic)
-        const dataBasic = await responseBasic.json()
-        console.log('🔍 FacebookAPI: Dados com campos básicos:', JSON.stringify(dataBasic, null, 2))
-        
-        if (dataBasic.error) {
-          console.error('❌ FacebookAPI: Erro da API com campos básicos:', dataBasic.error)
-        } else if (dataBasic.data && dataBasic.data.length > 0) {
-          console.log('✅ FacebookAPI: Encontrados insights com campos básicos:', dataBasic.data.length)
-          return dataBasic.data
-        }
-        
-        // Quarta tentativa: sem date_preset
-        console.log('🔍 FacebookAPI: Tentando sem date_preset...')
-        const urlNoDate = `${this.baseUrl}/${accountId}/insights?fields=${basicFields}&access_token=${accessToken}`
-        console.log('🔍 FacebookAPI: URL sem date_preset:', urlNoDate.replace(accessToken, '***'))
-        
-        const responseNoDate = await fetch(urlNoDate)
-        const dataNoDate = await responseNoDate.json()
-        console.log('🔍 FacebookAPI: Dados sem date_preset:', JSON.stringify(dataNoDate, null, 2))
-        
-        if (dataNoDate.error) {
-          console.error('❌ FacebookAPI: Erro da API sem date_preset:', dataNoDate.error)
-        } else if (dataNoDate.data && dataNoDate.data.length > 0) {
-          console.log('✅ FacebookAPI: Encontrados insights sem date_preset:', dataNoDate.data.length)
-          return dataNoDate.data
-        }
-      }
-      
-      return []
+      return data.data || []
     } catch (error) {
-      console.error('❌ FacebookAPI: Error getting account insights:', error)
+      console.error('Error getting account insights:', error)
       throw error
     }
   }

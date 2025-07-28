@@ -3,8 +3,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Settings, Eye, EyeOff, GripVertical, Check } from 'lucide-react'
-import { ColumnConfig, getCategories } from '@/lib/column-config'
-import { ALL_METRICS_CONFIG, getMetricCategories, getMetricsByCategory } from '@/lib/all-metrics-config'
+import { ColumnConfig, DEFAULT_COLUMNS, getCategories } from '@/lib/column-config'
 
 interface ColumnConfigModalProps {
   isOpen: boolean
@@ -74,7 +73,7 @@ export default function ColumnConfigModal({
   }
 
   const handleReset = () => {
-    setLocalColumns(ALL_METRICS_CONFIG)
+    setLocalColumns(DEFAULT_COLUMNS)
   }
 
   return (
