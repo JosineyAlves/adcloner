@@ -4,21 +4,46 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Plus, Search, Filter, BarChart3, Calendar, DollarSign } from 'lucide-react'
 import Sidebar from '@/components/layout/Sidebar'
-import { Campaign, CampaignClone } from '@/lib/types'
+import CloneCampaignModal from '@/components/campaigns/CloneCampaignModal'
+import { Campaign, CampaignClone, FacebookAccount } from '@/lib/types'
 import { formatDate, getStatusColor, getStatusIcon } from '@/lib/utils'
 import toast from 'react-hot-toast'
 
 export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [clones, setClones] = useState<CampaignClone[]>([])
+  const [accounts, setAccounts] = useState<FacebookAccount[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null)
+  const [isCloneModalOpen, setIsCloneModalOpen] = useState<boolean>(false)
 
   useEffect(() => {
     fetchCampaigns()
     fetchClones()
+    fetchAccounts()
   }, [])
+
+  const fetchAccounts = async () => {
+    try {
+      const response = await fetch('/api/facebook/accounts', {
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setAccounts(data.accounts || [])
+      }
+    } catch (error) {
+      console.error('Error fetching accounts:', error)
+    }
+  }
+
+  const handleCloneCampaign = (campaign: Campaign) => {
+    setSelectedCampaign(campaign)
+    setIsCloneModalOpen(true)
+  }
 
   const fetchCampaigns = async () => {
     try {
@@ -173,7 +198,10 @@ export default function CampaignsPage() {
                       <button className="btn-secondary text-sm py-2 px-4">
                         Ver Detalhes
                       </button>
-                      <button className="btn-primary text-sm py-2 px-4">
+                      <button 
+                        onClick={() => handleCloneCampaign(campaign)}
+                        className="btn-primary text-sm py-2 px-4"
+                      >
                         Clonar
                       </button>
                     </div>
@@ -255,6 +283,14 @@ export default function CampaignsPage() {
           </motion.div>
         </main>
       </div>
+
+      {/* Clone Campaign Modal */}
+      <CloneCampaignModal
+        isOpen={isCloneModalOpen}
+        onClose={() => setIsCloneModalOpen(false)}
+        campaign={selectedCampaign}
+        accounts={accounts}
+      />
     </div>
   )
 } 
