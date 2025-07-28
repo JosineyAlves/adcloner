@@ -54,17 +54,25 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
   // Fazer login com Facebook usando Login para Empresas
   const handleConnectFacebook = async () => {
     try {
-      if (!isSDKReady()) {
-        setErrorMessage('SDK do Facebook não está carregado. Recarregue a página.')
-        setConnectionStatus('error')
-        return
-      }
-
       setIsConnecting(true)
       setConnectionStatus('connecting')
       setErrorMessage('')
 
       console.log('🔗 Iniciando login com Facebook SDK (Login para Empresas)...')
+
+      // Verificar se SDK está pronto
+      if (!isSDKReady()) {
+        console.log('⚠️ SDK não está pronto, tentando carregar...')
+        // Aguardar um pouco e tentar novamente
+        await new Promise(resolve => setTimeout(resolve, 2000))
+        
+        if (!isSDKReady()) {
+          setErrorMessage('SDK do Facebook não está carregado. Recarregue a página.')
+          setConnectionStatus('error')
+          setIsConnecting(false)
+          return
+        }
+      }
 
       // Usar config_id para Login para Empresas (Nova configuração)
       const configId = '757815830318736' // Nova configuração correta
@@ -325,7 +333,6 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
                 <>
                   <button
                     onClick={handleConnectFacebook}
-                    disabled={!isSDKReady()}
                     className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
                   >
                     <Facebook className="w-4 h-4" />
