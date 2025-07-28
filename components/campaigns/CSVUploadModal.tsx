@@ -34,19 +34,13 @@ export default function CSVUploadModal({ isOpen, onClose, accounts }: CSVUploadM
 
     try {
       const text = await file.text()
-      const lines = text.split('\n')
-      const headers = lines[0].split('\t')
-      const data = lines.slice(1).map(line => {
-        const values = line.split('\t')
-        const row: any = {}
-        headers.forEach((header, index) => {
-          row[header.trim()] = values[index]?.trim() || ''
-        })
-        return row
-      })
-
-      setCsvData(data)
-      setProcessedData(processCSVData(data))
+      const lines = text.split('\n').filter(line => line.trim())
+      
+      // Processar formato tab-separado do Facebook
+      const processedData = processFacebookExport(lines)
+      
+      setCsvData(processedData)
+      setProcessedData(processedData)
       setStep('config')
     } catch (error) {
       console.error('Error processing CSV:', error)
@@ -54,6 +48,46 @@ export default function CSVUploadModal({ isOpen, onClose, accounts }: CSVUploadM
     } finally {
       setIsProcessing(false)
     }
+  }
+
+  const processFacebookExport = (lines: string[]) => {
+    const processedData: any[] = []
+    
+    for (const line of lines) {
+      const values = line.split('\t')
+      
+      // Mapear campos específicos do Facebook
+      const row = {
+        'Campaign ID': values[0] || '',
+        'Campaign Name': values[2] || '',
+        'Campaign Status': values[3] || '',
+        'Campaign Objective': values[4] || '',
+        'Campaign Daily Budget': values[8] || '',
+        'Ad Set ID': values[22] || '',
+        'Ad Set Name': values[25] || '',
+        'Ad Set Daily Budget': values[29] || '',
+        'Ad ID': values[45] || '',
+        'Ad Name': values[48] || '',
+        'Title': values[49] || '',
+        'Body': values[50] || '',
+        'Link': values[51] || '',
+        'Image Hash': values[52] || '',
+        'Video ID': values[53] || '',
+        'Countries': values[54] || '',
+        'Age Min': values[55] || '',
+        'Age Max': values[56] || '',
+        'Placements': values[57] || '',
+        'Optimization Goal': values[58] || '',
+        'Billing Event': values[59] || '',
+        'Bid Amount': values[60] || '',
+        'Page ID': values[23] || '',
+        'Pixel ID': values[24] || ''
+      }
+      
+      processedData.push(row)
+    }
+    
+    return processedData
   }
 
   const processCSVData = (data: any[]) => {

@@ -57,9 +57,10 @@ async function processCSVAndCreateCampaigns(
       const campaignData = {
         name: campaign.name,
         objective: campaign.objective || 'OUTCOME_SALES',
-        status: 'PAUSED',
+        status: campaign.status || 'PAUSED',
         special_ad_categories: '[]',
-        daily_budget: campaign.dailyBudget || 1000
+        daily_budget: campaign.dailyBudget || 1000,
+        bid_strategy: campaign.bidStrategy || 'LOWEST_COST_WITHOUT_CAP'
       }
       
       const campaignId = await facebookAPI.createCampaign(
@@ -79,14 +80,14 @@ async function processCSVAndCreateCampaigns(
           campaign_id: campaignId,
           status: 'PAUSED',
           daily_budget: adSet.dailyBudget || 1000,
-          billing_event: 'IMPRESSIONS',
+          billing_event: adSet.billingEvent || 'IMPRESSIONS',
           optimization_goal: adSet.optimizationGoal || 'REACH',
-          targeting: {
+          targeting: adSet.targeting || {
             geo_locations: { countries: ['BR'] },
             age_min: 18,
             age_max: 65
           },
-          bid_amount: '1000'
+          bid_amount: adSet.bidAmount || '1000'
         }
         
         const adSetId = await facebookAPI.createAdSet(
@@ -102,16 +103,26 @@ async function processCSVAndCreateCampaigns(
           console.log(`📋 Processando anúncio: ${ad.name}`)
           
           // Criar creative
-          const creativeData = {
+          let creativeData: any = {
             name: `Creative for ${ad.name}`,
             object_story_spec: {
-              page_id: accountConfig.pageId || '656352377561426', // Página padrão
+              page_id: accountConfig.pageId || ad.pageId || '656352377561426',
               link_data: {
                 title: ad.title || 'Título do Anúncio',
                 message: ad.body || 'Descrição do anúncio',
-                link: accountConfig.customUrl || ad.link || 'https://example.com',
-                image_hash: ad.imageHash || null
+                link: accountConfig.customUrl || ad.link || 'https://example.com'
               }
+            }
+          }
+          
+          // Adicionar imagem ou vídeo se disponível
+          if (ad.imageHash) {
+            creativeData.object_story_spec.link_data.image_hash = ad.imageHash
+          }
+          
+          if (ad.videoId) {
+            creativeData.object_story_spec.video_data = {
+              video_id: ad.videoId
             }
           }
           
@@ -174,15 +185,32 @@ function groupByCampaign(csvData: any[]) {
         name: campaignName,
         objective: row['Campaign Objective'] || 'OUTCOME_SALES',
         dailyBudget: parseInt(row['Campaign Daily Budget']) || 1000,
+        status: row['Campaign Status'] || 'PAUSED',
+        bidStrategy: 'LOWEST_COST_WITHOUT_CAP',
         adSets: {}
       }
     }
     
     if (!campaigns[campaignName].adSets[adSetName]) {
+      // Processar targeting
+      const countries = row['Countries'] ? row['Countries'].split(', ') : ['BR']
+      const ageMin = parseInt(row['Age Min']) || 18
+      const ageMax = parseInt(row['Age Max']) || 65
+      const placements = row['Placements'] ? row['Placements'].split(', ') : ['home', 'recent']
+      
       campaigns[campaignName].adSets[adSetName] = {
         name: adSetName,
         dailyBudget: parseInt(row['Ad Set Daily Budget']) || 1000,
         optimizationGoal: row['Optimization Goal'] || 'REACH',
+        billingEvent: row['Billing Event'] || 'IMPRESSIONS',
+        bidAmount: row['Bid Amount'] || '1000',
+        targeting: {
+          geo_locations: { countries },
+          age_min: ageMin,
+          age_max: ageMax,
+          publisher_platforms: placements.includes('home') ? ['facebook'] : [],
+          facebook_positions: placements.includes('recent') ? ['feed'] : []
+        },
         ads: []
       }
     }
@@ -192,7 +220,10 @@ function groupByCampaign(csvData: any[]) {
       title: row['Title'] || 'Título do Anúncio',
       body: row['Body'] || 'Descrição do anúncio',
       link: row['Link'] || 'https://example.com',
-      imageHash: row['Image Hash'] || null
+      imageHash: row['Image Hash'] || null,
+      videoId: row['Video ID'] || null,
+      pageId: row['Page ID'] || null,
+      pixelId: row['Pixel ID'] || null
     })
   }
   
