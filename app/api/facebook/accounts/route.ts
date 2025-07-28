@@ -30,8 +30,21 @@ export async function GET(request: NextRequest) {
 
     // Buscar dados reais do Facebook
     try {
-      // Buscar informações do perfil
-      const userInfo = await facebookAPI.getUserInfo(accessToken)
+      // Buscar informações do Business Manager
+      const businessId = request.cookies.get('fb_business_id')?.value
+      let businessInfo = null
+      
+      if (businessId) {
+        try {
+          const businessResponse = await fetch(
+            `https://graph.facebook.com/v23.0/${businessId}?fields=name,verification_status&access_token=${accessToken}`
+          )
+          businessInfo = await businessResponse.json()
+        } catch (error) {
+          console.error('Error getting business info:', error)
+        }
+      }
+      
       const accounts = await facebookAPI.getAdAccounts(accessToken)
       
       // Para cada conta, buscar páginas e pixels
@@ -45,18 +58,18 @@ export async function GET(request: NextRequest) {
               ...account,
               pages,
               pixels,
-              // Adicionar informações do perfil
-              profileName: userInfo.name,
-              profileEmail: userInfo.email,
-              profileId: userInfo.id
+              // Adicionar informações do Business Manager
+              profileName: businessInfo?.name || 'Business Manager',
+              profileEmail: null,
+              profileId: businessId || 'unknown'
             }
           } catch (error) {
             console.error(`Error getting details for account ${account.id}:`, error)
             return {
               ...account,
-              profileName: userInfo.name,
-              profileEmail: userInfo.email,
-              profileId: userInfo.id
+              profileName: businessInfo?.name || 'Business Manager',
+              profileEmail: null,
+              profileId: businessId || 'unknown'
             }
           }
         })
@@ -64,11 +77,7 @@ export async function GET(request: NextRequest) {
       
       return NextResponse.json({ 
         accounts: accountsWithDetails,
-        profile: {
-          name: userInfo.name,
-          email: userInfo.email,
-          id: userInfo.id
-        },
+        business: businessInfo,
         success: true 
       })
       
