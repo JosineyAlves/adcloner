@@ -391,6 +391,15 @@ export class FacebookAPI {
    */
   async createAdSet(adAccountId: string, accessToken: string, adSetData: any): Promise<string> {
     try {
+      // Criar targeting básico se não fornecido
+      const targeting = adSetData.targeting || {
+        geo_locations: {
+          countries: ['BR']
+        },
+        age_min: 18,
+        age_max: 65
+      }
+
       const response = await fetch(
         `${this.baseUrl}/${adAccountId}/adsets`,
         {
@@ -401,10 +410,10 @@ export class FacebookAPI {
           body: new URLSearchParams({
             name: adSetData.name,
             campaign_id: adSetData.campaignId,
-            targeting: JSON.stringify(adSetData.targeting),
-            daily_budget: adSetData.dailyBudget.toString(),
+            targeting: JSON.stringify(targeting),
+            daily_budget: (adSetData.dailyBudget || 1000).toString(),
             billing_event: 'IMPRESSIONS',
-            optimization_goal: adSetData.optimizationGoal,
+            optimization_goal: adSetData.optimizationGoal || 'REACH',
             status: 'PAUSED',
             access_token: accessToken
           })
@@ -414,6 +423,7 @@ export class FacebookAPI {
       const data = await response.json()
       
       if (data.error) {
+        console.error('Facebook API error:', data.error)
         throw new Error(data.error.message)
       }
       
@@ -429,6 +439,19 @@ export class FacebookAPI {
    */
   async createAd(adAccountId: string, accessToken: string, adData: any): Promise<string> {
     try {
+      // Criar creative básico se não fornecido
+      const creative = adData.creative || {
+        name: adData.name,
+        object_story_spec: {
+          page_id: '123456789', // ID da página (será substituído)
+          link_data: {
+            image_hash: 'abc123', // Hash da imagem (será substituído)
+            link: 'https://example.com',
+            message: 'Confira nosso produto!'
+          }
+        }
+      }
+
       const response = await fetch(
         `${this.baseUrl}/${adAccountId}/ads`,
         {
@@ -439,7 +462,7 @@ export class FacebookAPI {
           body: new URLSearchParams({
             name: adData.name,
             adset_id: adData.adSetId,
-            creative: JSON.stringify(adData.creative),
+            creative: JSON.stringify(creative),
             status: 'PAUSED',
             access_token: accessToken
           })
@@ -449,6 +472,7 @@ export class FacebookAPI {
       const data = await response.json()
       
       if (data.error) {
+        console.error('Facebook API error:', data.error)
         throw new Error(data.error.message)
       }
       
