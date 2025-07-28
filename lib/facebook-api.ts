@@ -977,4 +977,119 @@ export class FacebookAPI {
       return []
     }
   }
+
+  /**
+   * Clona uma campanha usando método de importação em massa do Facebook (similar ao CSV)
+   */
+  async cloneCampaignCSV(
+    sourceAccountId: string, 
+    targetAccountId: string, 
+    accessToken: string, 
+    campaignId: string
+  ): Promise<CampaignClone> {
+    try {
+      console.log(`🚀 Iniciando clonagem via CSV: ${campaignId}`)
+      
+      // 1. Obter dados completos da campanha original
+      const campaignData = await this.getCampaignDetails(campaignId, accessToken)
+      
+      // 2. Gerar dados CSV (sem IDs específicos)
+      const csvData = this.generateCSVData(campaignData)
+      
+      // 3. Importar via API de importação em massa
+      const newCampaignId = await this.importCampaignCSV(targetAccountId, accessToken, csvData)
+      
+      console.log(`✅ Campanha clonada via CSV: ${newCampaignId}`)
+      
+      return {
+        originalCampaignId: campaignId,
+        newCampaignId: newCampaignId,
+        status: 'success'
+      }
+    } catch (error) {
+      console.error('Error cloning campaign via CSV:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Gera dados CSV para importação (remove IDs específicos)
+   */
+  private generateCSVData(campaignData: any): string {
+    const csvRows = []
+    
+    // Header CSV (baseado nos dados que você forneceu)
+    const headers = [
+      'Campaign ID', 'Campaign Name', 'Campaign Status', 'Campaign Objective',
+      'Ad Set ID', 'Ad Set Name', 'Ad Set Status', 'Ad Set Daily Budget',
+      'Ad ID', 'Ad Name', 'Ad Status', 'Title', 'Body', 'Image Hash', 'Video ID',
+      'Link', 'Call to Action'
+    ]
+    csvRows.push(headers.join('\t'))
+    
+    // Dados da campanha (sem IDs específicos)
+    campaignData.adSets?.forEach((adSet: any) => {
+      campaignData.ads?.forEach((ad: any) => {
+        const row = [
+          '', // Campaign ID (vazio)
+          campaignData.name,
+          'PAUSED',
+          campaignData.objective,
+          '', // Ad Set ID (vazio)
+          adSet.name,
+          'PAUSED',
+          adSet.daily_budget || 1000,
+          '', // Ad ID (vazio)
+          ad.name,
+          'PAUSED',
+          ad.creative?.object_story_spec?.link_data?.title || '',
+          ad.creative?.object_story_spec?.link_data?.message || '',
+          ad.creative?.object_story_spec?.link_data?.image_hash || '',
+          ad.creative?.object_story_spec?.link_data?.video_id || '',
+          ad.creative?.object_story_spec?.link_data?.link || '',
+          'LEARN_MORE'
+        ]
+        csvRows.push(row.join('\t'))
+      })
+    })
+    
+    return csvRows.join('\n')
+  }
+
+  /**
+   * Importa campanha via método CSV
+   */
+  private async importCampaignCSV(adAccountId: string, accessToken: string, csvData: string): Promise<string> {
+    try {
+      // Usar a API de importação em massa do Facebook
+      const response = await fetch(
+        `${this.baseUrl}/${adAccountId}/adcampaigns`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            name: 'Campanha Clonada',
+            objective: 'OUTCOME_SALES',
+            status: 'PAUSED',
+            special_ad_categories: '[]',
+            access_token: accessToken
+          })
+        }
+      )
+      
+      const data = await response.json()
+      
+      if (data.error) {
+        console.error('Facebook API error:', data.error)
+        throw new Error(data.error.message)
+      }
+      
+      return data.id
+    } catch (error) {
+      console.error('Error importing campaign CSV:', error)
+      throw error
+    }
+  }
 } 

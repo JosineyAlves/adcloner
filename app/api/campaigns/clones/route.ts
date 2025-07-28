@@ -49,8 +49,8 @@ export async function POST(request: NextRequest) {
     // Buscar detalhes da campanha original
     const campaignDetails = await facebookAPI.getCampaignDetails(sourceCampaignId, accessToken)
     
-    // Criar clone da campanha usando método de importação em massa
-    const cloneResult = await facebookAPI.cloneCampaignBulk(
+    // Criar clone da campanha usando método CSV (similar ao manual)
+    const cloneResult = await facebookAPI.cloneCampaignCSV(
       campaignDetails.accountId,
       targetAccountId,
       accessToken,
