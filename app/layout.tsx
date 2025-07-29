@@ -3,7 +3,6 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
 import FacebookSDK from '@/components/providers/FacebookSDK'
-import SessionProvider from '@/components/providers/SessionProvider'
 // import FacebookSDK from '@/components/providers/FacebookSDK'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -21,20 +20,18 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className={`${inter.className} h-full`}>
-        <SessionProvider>
-          <FacebookSDK />
-          {children}
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: '#363636',
-                color: '#fff',
-              },
-            }}
-          />
-        </SessionProvider>
+        <FacebookSDK />
+        {children}
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#363636',
+              color: '#fff',
+            },
+          }}
+        />
       </body>
     </html>
   )

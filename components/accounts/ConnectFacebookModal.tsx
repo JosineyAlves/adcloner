@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Facebook, AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
@@ -28,31 +28,28 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
     }
   }
 
-  const checkLoginStatus = useCallback(() => {
-    if (!isSDKReady()) {
-      console.log('Facebook SDK não está pronto')
-      return
-    }
-
-    window.FB.getLoginStatus((response: any) => {
-      console.log('Status de login do Facebook:', response)
-      if (response.status === 'connected') {
-        setConnectionStatus('success')
-        setErrorMessage('')
-        if (onSuccess) {
-          onSuccess(response.authResponse)
-        }
-      } else {
-        setConnectionStatus('idle')
+  // Verificar status de login
+  const checkLoginStatus = () => {
+    try {
+      if (!isSDKReady()) {
+        console.log('SDK não está pronto')
+        return
       }
-    })
-  }, [onSuccess])
 
-  useEffect(() => {
-    if (isOpen) {
-      checkLoginStatus()
+      window.FB.getLoginStatus((response: any) => {
+        console.log('Status de login:', response)
+        
+        // Para Login para Empresas, não processar automaticamente
+        // O usuário deve clicar no botão para iniciar o fluxo
+        if (response.status === 'connected') {
+          console.log('Usuário já está conectado, mas não processando automaticamente')
+          // Não chamar handleLoginSuccess aqui
+        }
+      })
+    } catch (error) {
+      console.error('Erro ao verificar status de login:', error)
     }
-  }, [isOpen, checkLoginStatus])
+  }
 
   // Fazer login com Facebook usando Login para Empresas
   const handleConnectFacebook = async () => {
@@ -173,6 +170,17 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
       setErrorMessage(error instanceof Error ? error.message : 'Erro ao processar login')
     }
   }
+
+  // Verificar status quando modal abrir
+  useEffect(() => {
+    try {
+      if (isOpen && isSDKReady()) {
+        checkLoginStatus()
+      }
+    } catch (error) {
+      console.error('Erro ao verificar status de login:', error)
+    }
+  }, [isOpen])
 
   const getStatusIcon = () => {
     switch (connectionStatus) {

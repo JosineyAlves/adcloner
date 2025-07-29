@@ -4,16 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "db:setup": "node scripts/setup-database.js",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:studio": "prisma studio",
-    "create-test-user": "node scripts/create-test-user.js",
-    "check-db": "node scripts/check-database.js",
-    "setup-sqlite": "node scripts/setup-sqlite.js"
+    "lint": "next lint"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.2",
