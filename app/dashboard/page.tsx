@@ -7,7 +7,9 @@ import Sidebar from '@/components/layout/Sidebar'
 import StatsCard from '@/components/dashboard/StatsCard'
 import ColumnConfigModal from '@/components/dashboard/ColumnConfigModal'
 import DateSelector, { DateRange } from '@/components/dashboard/DateSelector'
-import MetricsSelector, { MetricConfig } from '@/components/dashboard/MetricsSelector'
+import MainMetricsSelector from '@/components/dashboard/MainMetricsSelector'
+import MainMetricsOrderSelector from '@/components/dashboard/MainMetricsOrderSelector'
+import { MetricConfig } from '@/components/dashboard/MetricsSelector'
 import { FacebookAccount } from '@/lib/types'
 import { ColumnConfig, DEFAULT_COLUMNS, getVisibleColumns, formatColumnValue } from '@/lib/column-config'
 import toast from 'react-hot-toast'
@@ -313,7 +315,11 @@ export default function DashboardPage() {
                 onDatePresetChange={handleDatePresetChange}
                 onCustomRangeChange={handleCustomRangeChange}
               />
-              <MetricsSelector
+              <MainMetricsSelector
+                metrics={mainMetrics}
+                onMetricsChange={handleMainMetricsChange}
+              />
+              <MainMetricsOrderSelector
                 metrics={mainMetrics}
                 onMetricsChange={handleMainMetricsChange}
               />
