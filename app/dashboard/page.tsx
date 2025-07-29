@@ -15,6 +15,7 @@ import { ColumnConfig, DEFAULT_COLUMNS, getVisibleColumns, formatColumnValue } f
 import toast from 'react-hot-toast'
 
 export default function DashboardPage() {
+  // Forçar rebuild do Vercel - timestamp: 2024-07-28T22:50:00Z
   const [accounts, setAccounts] = useState<FacebookAccount[]>([])
   const [insights, setInsights] = useState<any[]>([])
   const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_COLUMNS)
@@ -149,6 +150,7 @@ export default function DashboardPage() {
   ])
 
   useEffect(() => {
+    console.log('🔄 Dashboard carregando - Vercel Debug:', new Date().toISOString())
     fetchAccounts()
   }, [])
 
