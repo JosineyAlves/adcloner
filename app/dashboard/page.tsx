@@ -9,13 +9,12 @@ import ColumnConfigModal from '@/components/dashboard/ColumnConfigModal'
 import DateSelector, { DateRange } from '@/components/dashboard/DateSelector'
 import MainMetricsSelector from '@/components/dashboard/MainMetricsSelector'
 import MainMetricsOrderSelector from '@/components/dashboard/MainMetricsOrderSelector'
-import { MetricConfig } from '@/lib/metrics-types'
+import { MetricConfig } from '@/components/dashboard/MetricsSelector'
 import { FacebookAccount } from '@/lib/types'
 import { ColumnConfig, DEFAULT_COLUMNS, getVisibleColumns, formatColumnValue } from '@/lib/column-config'
 import toast from 'react-hot-toast'
 
 export default function DashboardPage() {
-  // Forçar rebuild do Vercel - timestamp: 2024-07-28T22:50:00Z
   const [accounts, setAccounts] = useState<FacebookAccount[]>([])
   const [insights, setInsights] = useState<any[]>([])
   const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_COLUMNS)
@@ -150,7 +149,6 @@ export default function DashboardPage() {
   ])
 
   useEffect(() => {
-    console.log('🔄 Dashboard carregando - Vercel Debug:', new Date().toISOString())
     fetchAccounts()
   }, [])
 

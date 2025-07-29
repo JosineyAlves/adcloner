@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { BarChart3, ChevronDown, X, Eye, EyeOff, MousePointer, DollarSign, Target, Repeat, TrendingUp, Percent, Link, Heart } from 'lucide-react'
-import { MetricConfig } from '@/lib/metrics-types'
+import { MetricConfig } from './MetricsSelector'
 
 interface MainMetricsSelectorProps {
   metrics: MetricConfig[]
@@ -153,13 +153,13 @@ export default function MainMetricsSelector({
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="btn-secondary flex items-center space-x-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+        className="btn-secondary flex items-center space-x-2"
       >
         <BarChart3 className="w-4 h-4" />
         <span>Métricas</span>
         <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         {visibleCount > 0 && (
-          <span className="bg-white text-blue-800 text-xs font-medium px-2 py-1 rounded-full">
+          <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full">
             {visibleCount}
           </span>
         )}
