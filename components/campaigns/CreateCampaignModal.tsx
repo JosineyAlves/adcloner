@@ -233,7 +233,7 @@ export default function CreateCampaignModal({ isOpen, onClose, accounts }: Creat
           {/* Criativos */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white flex items-center">
-              <Image className="w-5 h-5 mr-2" alt="Criativos" />
+              <Image className="w-5 h-5 mr-2" />
               Criativos
             </h3>
             
