@@ -10,7 +10,9 @@
     "db:setup": "node scripts/setup-database.js",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "create-test-user": "node scripts/create-test-user.js",
+    "check-db": "node scripts/check-database.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.2",
