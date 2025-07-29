@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Eye, DollarSign, MousePointer, Target, TrendingUp, BarChart3, RefreshCw, Settings } from 'lucide-react'
+import { Eye, DollarSign, MousePointer, Target, TrendingUp, BarChart3, RefreshCw, Settings, Repeat, Percent, Link, Heart } from 'lucide-react'
 import Sidebar from '@/components/layout/Sidebar'
 import StatsCard from '@/components/dashboard/StatsCard'
 import ColumnConfigModal from '@/components/dashboard/ColumnConfigModal'
 import DateSelector, { DateRange } from '@/components/dashboard/DateSelector'
+import MetricsSelector, { MetricConfig } from '@/components/dashboard/MetricsSelector'
 import { FacebookAccount } from '@/lib/types'
 import { ColumnConfig, DEFAULT_COLUMNS, getVisibleColumns, formatColumnValue } from '@/lib/column-config'
 import toast from 'react-hot-toast'
@@ -17,9 +18,133 @@ export default function DashboardPage() {
   const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_COLUMNS)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
-  const [datePreset, setDatePreset] = useState<string>('last_7d')
+  const [datePreset, setDatePreset] = useState<string>('today')
   const [customRange, setCustomRange] = useState<DateRange | undefined>()
   const [isConfigModalOpen, setIsConfigModalOpen] = useState<boolean>(false)
+  
+  // Configuração das métricas principais
+  const [mainMetrics, setMainMetrics] = useState<MetricConfig[]>([
+    {
+      id: 'impressions',
+      label: 'Impressões',
+      description: 'Número de vezes que seus anúncios foram exibidos',
+      icon: Eye,
+      iconColor: 'text-blue-600',
+      type: 'number',
+      visible: true,
+      order: 1
+    },
+    {
+      id: 'clicks',
+      label: 'Cliques',
+      description: 'Número de cliques em seus anúncios',
+      icon: MousePointer,
+      iconColor: 'text-green-600',
+      type: 'number',
+      visible: true,
+      order: 2
+    },
+    {
+      id: 'spend',
+      label: 'Gasto',
+      description: 'Valor total gasto em anúncios',
+      icon: DollarSign,
+      iconColor: 'text-red-600',
+      type: 'currency',
+      visible: true,
+      order: 3
+    },
+    {
+      id: 'reach',
+      label: 'Alcance',
+      description: 'Número de pessoas únicas que viram seus anúncios',
+      icon: Target,
+      iconColor: 'text-purple-600',
+      type: 'number',
+      visible: true,
+      order: 4
+    },
+    {
+      id: 'frequency',
+      label: 'Frequência',
+      description: 'Média de vezes que cada pessoa viu seu anúncio',
+      icon: Repeat,
+      iconColor: 'text-orange-600',
+      type: 'number',
+      visible: false,
+      order: 5
+    },
+    {
+      id: 'cpm',
+      label: 'CPM',
+      description: 'Custo por mil impressões',
+      icon: TrendingUp,
+      iconColor: 'text-indigo-600',
+      type: 'currency',
+      visible: false,
+      order: 6
+    },
+    {
+      id: 'cpc',
+      label: 'CPC',
+      description: 'Custo por clique',
+      icon: MousePointer,
+      iconColor: 'text-teal-600',
+      type: 'currency',
+      visible: false,
+      order: 7
+    },
+    {
+      id: 'ctr',
+      label: 'CTR',
+      description: 'Taxa de clique (cliques / impressões)',
+      icon: Percent,
+      iconColor: 'text-pink-600',
+      type: 'percentage',
+      visible: false,
+      order: 8
+    },
+    {
+      id: 'conversions',
+      label: 'Conversões',
+      description: 'Número de conversões realizadas',
+      icon: Target,
+      iconColor: 'text-emerald-600',
+      type: 'number',
+      visible: false,
+      order: 9
+    },
+    {
+      id: 'cost_per_conversion',
+      label: 'Custo por Conversão',
+      description: 'Custo médio por conversão',
+      icon: DollarSign,
+      iconColor: 'text-amber-600',
+      type: 'currency',
+      visible: false,
+      order: 10
+    },
+    {
+      id: 'inline_link_clicks',
+      label: 'Cliques em Links',
+      description: 'Número de cliques em links específicos',
+      icon: Link,
+      iconColor: 'text-cyan-600',
+      type: 'number',
+      visible: false,
+      order: 11
+    },
+    {
+      id: 'inline_post_engagement',
+      label: 'Engajamento',
+      description: 'Interações com o post (likes, comentários, shares)',
+      icon: Heart,
+      iconColor: 'text-rose-600',
+      type: 'number',
+      visible: false,
+      order: 12
+    }
+  ])
 
   useEffect(() => {
     fetchAccounts()
@@ -120,6 +245,11 @@ export default function DashboardPage() {
     setCustomRange(range)
   }
 
+  const handleMainMetricsChange = (newMetrics: MetricConfig[]) => {
+    setMainMetrics(newMetrics)
+    toast.success('Configuração de métricas salva!')
+  }
+
   const visibleColumns = getVisibleColumns(columns)
 
   // Calcular métricas agregadas dos insights
@@ -175,6 +305,10 @@ export default function DashboardPage() {
                 onDatePresetChange={handleDatePresetChange}
                 onCustomRangeChange={handleCustomRangeChange}
               />
+              <MetricsSelector
+                metrics={mainMetrics}
+                onMetricsChange={handleMainMetricsChange}
+              />
               <button
                 onClick={() => setIsConfigModalOpen(true)}
                 className="btn-secondary flex items-center space-x-2"
@@ -216,95 +350,51 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Métricas Principais */}
+                        {/* Métricas Principais */}
             {insights.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-              >
-                <StatsCard
-                      title="Impressões"
-                      value={aggregatedMetrics.impressions?.toLocaleString() || '0'}
-                      icon={Eye}
-                  iconColor="text-blue-600"
-                />
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <StatsCard
-                      title="Cliques"
-                      value={aggregatedMetrics.clicks?.toLocaleString() || '0'}
-                      icon={MousePointer}
-                  iconColor="text-green-600"
-                />
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-              >
-                <StatsCard
-                      title="Gasto"
-                      value={`R$ ${aggregatedMetrics.spend?.toFixed(2) || '0.00'}`}
-                      icon={DollarSign}
-                      iconColor="text-red-600"
-                />
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-              >
-                <StatsCard
-                      title="Alcance"
-                      value={aggregatedMetrics.reach?.toLocaleString() || '0'}
-                      icon={Target}
-                      iconColor="text-purple-600"
-                />
-              </motion.div>
-            </div>
-
-                {/* Métricas Derivadas */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">CPM</span>
-                      <span className="text-lg font-semibold text-gray-900 dark:text-white">
-                        R$ {derivedMetrics.cpm?.toFixed(2) || '0.00'}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">Custo por mil impressões</p>
-                  </div>
-
-                  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">CPC</span>
-                      <span className="text-lg font-semibold text-gray-900 dark:text-white">
-                        R$ {derivedMetrics.cpc?.toFixed(2) || '0.00'}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">Custo por clique</p>
-              </div>
-
-                  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">CTR</span>
-                      <span className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {derivedMetrics.ctr?.toFixed(2) || '0.00'}%
-                      </span>
+                  {mainMetrics
+                    .filter(metric => metric.visible)
+                    .sort((a, b) => a.order - b.order)
+                    .map((metric, index) => {
+                      const value = aggregatedMetrics[metric.id as keyof typeof aggregatedMetrics]
+                      let displayValue = '0'
+                      
+                      if (value !== undefined) {
+                        switch (metric.type) {
+                          case 'currency':
+                            displayValue = `R$ ${parseFloat(value.toString() || '0').toFixed(2)}`
+                            break
+                          case 'percentage':
+                            displayValue = `${parseFloat(value.toString() || '0').toFixed(2)}%`
+                            break
+                          case 'number':
+                          default:
+                            displayValue = parseInt(value.toString() || '0').toLocaleString()
+                            break
+                        }
+                      }
+                      
+                      return (
+                        <motion.div
+                          key={metric.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.5, delay: 0.1 * (index + 1) }}
+                        >
+                          <StatsCard
+                            title={metric.label}
+                            value={displayValue}
+                            icon={metric.icon}
+                            iconColor={metric.iconColor}
+                          />
+                        </motion.div>
+                      )
+                    })}
                 </div>
-                    <p className="text-xs text-gray-500 mt-1">Taxa de clique</p>
-                  </div>
-            </div>
+
+
 
                 {/* Detalhes das Campanhas */}
                 <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">

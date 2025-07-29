@@ -1214,7 +1214,7 @@ export class FacebookAPI {
     timeRange?: { since: string; until: string }
   ) {
     try {
-      // Campos básicos e seguros da API de Insights do Facebook para contas
+      // Campos completos da API de Insights do Facebook para contas
       const fields = [
         // Identificação
         'campaign_id',
@@ -1224,31 +1224,88 @@ export class FacebookAPI {
         'ad_id',
         'ad_name',
         
-        // Métricas básicas (garantidas)
+        // Métricas básicas
         'impressions',
         'clicks',
         'spend',
         'reach',
         'frequency',
         
-        // Métricas de custo (garantidas)
+        // Métricas de custo
         'cpm',
         'cpc',
         'ctr',
         
-        // Métricas de engajamento (garantidas)
+        // Métricas de engajamento
         'inline_link_clicks',
         'inline_post_engagement',
         
-        // Métricas de qualidade (garantidas)
+        // Métricas de qualidade
         'quality_ranking',
         'engagement_rate_ranking',
         'conversion_rate_ranking',
         
-        // Métricas de conversão (garantidas)
+        // Métricas de conversão
         'conversions',
         'cost_per_conversion',
-        'conversion_values'
+        'conversion_values',
+        
+        // Métricas adicionais do Facebook
+        'link_clicks',
+        'unique_clicks',
+        'unique_link_clicks',
+        'unique_inline_link_clicks',
+        'unique_actions',
+        'actions',
+        'action_values',
+        'cost_per_action_type',
+        'cost_per_unique_action_type',
+        
+        // Métricas de vídeo
+        'video_views',
+        'video_view_rate',
+        'video_views_at_25_percent',
+        'video_views_at_50_percent',
+        'video_views_at_75_percent',
+        'video_views_at_100_percent',
+        'video_p25_watched_actions',
+        'video_p50_watched_actions',
+        'video_p75_watched_actions',
+        'video_p100_watched_actions',
+        
+        // Métricas de instalação de app
+        'mobile_app_installs',
+        'mobile_app_install_rate',
+        
+        // Métricas de leads
+        'leads',
+        'cost_per_lead',
+        'lead_gen_rate',
+        
+        // Métricas de página
+        'page_likes',
+        'page_engagement',
+        'page_impressions',
+        'page_posts_impressions',
+        
+        // Métricas de conversão específicas
+        'onsite_conversion',
+        'purchase',
+        'add_to_cart',
+        'initiated_checkout',
+        'complete_registration',
+        'view_content',
+        'search',
+        'add_to_wishlist',
+        'start_order',
+        'add_payment_info',
+        'contact',
+        'custom',
+        'donate',
+        'find_location',
+        'schedule',
+        'subscribe',
+        'tutorial_completion'
       ].join(',')
 
       let url = `${this.baseUrl}/${accountId}/insights?fields=${fields}&level=campaign&access_token=${accessToken}`
