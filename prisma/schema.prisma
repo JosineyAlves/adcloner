@@ -20,6 +20,7 @@ model User {
   facebookAccounts FacebookAccount[]
   sessions      Session[]
   accounts      Account[]
+  userSettings  UserSettings?
 }
 
 model Account {
