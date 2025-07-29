@@ -1,38 +1,66 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react'
 import Link from 'next/link'
 
-export default function LoginPage() {
+export default function RegisterPage() {
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
+    setSuccess('')
+
+    // Validações
+    if (password !== confirmPassword) {
+      setError('As senhas não coincidem')
+      setIsLoading(false)
+      return
+    }
+
+    if (password.length < 6) {
+      setError('A senha deve ter pelo menos 6 caracteres')
+      setIsLoading(false)
+      return
+    }
 
     try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+        }),
       })
 
-      if (result?.error) {
-        setError('Email ou senha incorretos')
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || 'Erro ao criar conta')
       } else {
-        router.push('/dashboard')
+        setSuccess('Conta criada com sucesso! Redirecionando para login...')
+        setTimeout(() => {
+          router.push('/login')
+        }, 2000)
       }
     } catch (error) {
-      setError('Erro ao fazer login')
+      setError('Erro ao criar conta')
     } finally {
       setIsLoading(false)
     }
@@ -46,7 +74,7 @@ export default function LoginPage() {
             AdCloner Pro
           </h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Faça login para acessar sua conta
+            Crie sua conta para começar
           </p>
         </div>
 
@@ -57,6 +85,29 @@ export default function LoginPage() {
                 <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
               </div>
             )}
+
+            {success && (
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                <p className="text-green-600 dark:text-green-400 text-sm">{success}</p>
+              </div>
+            )}
+
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Nome
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="Seu nome"
+                />
+              </div>
+            </div>
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -101,6 +152,31 @@ export default function LoginPage() {
               </div>
             </div>
 
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Confirmar Senha
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="••••••••"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
             <button
               type="submit"
               disabled={isLoading}
@@ -109,16 +185,16 @@ export default function LoginPage() {
               {isLoading ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
               ) : (
-                'Entrar'
+                'Criar Conta'
               )}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Não tem uma conta?{' '}
-              <Link href="/register" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium">
-                Criar conta
+              Já tem uma conta?{' '}
+              <Link href="/login" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium">
+                Fazer login
               </Link>
             </p>
           </div>
