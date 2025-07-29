@@ -1141,7 +1141,8 @@ export class FacebookAPI {
     campaignId: string, 
     accessToken: string, 
     datePreset: string = 'last_7d',
-    level: string = 'campaign'
+    level: string = 'campaign',
+    timeRange?: { since: string; until: string }
   ) {
     try {
       // Campos básicos e seguros da API de Insights do Facebook
@@ -1181,9 +1182,15 @@ export class FacebookAPI {
         'conversion_values'
       ].join(',')
 
-      const response = await fetch(
-        `${this.baseUrl}/${campaignId}/insights?fields=${fields}&date_preset=${datePreset}&level=${level}&access_token=${accessToken}`
-      )
+      let url = `${this.baseUrl}/${campaignId}/insights?fields=${fields}&level=${level}&access_token=${accessToken}`
+      
+      if (timeRange) {
+        url += `&time_range=${JSON.stringify(timeRange)}`
+      } else {
+        url += `&date_preset=${datePreset}`
+      }
+
+      const response = await fetch(url)
       const data = await response.json()
       
       if (data.error) {
@@ -1203,7 +1210,8 @@ export class FacebookAPI {
   async getAccountInsights(
     accountId: string, 
     accessToken: string, 
-    datePreset: string = 'last_7d'
+    datePreset: string = 'last_7d',
+    timeRange?: { since: string; until: string }
   ) {
     try {
       // Campos básicos e seguros da API de Insights do Facebook para contas
@@ -1243,9 +1251,15 @@ export class FacebookAPI {
         'conversion_values'
       ].join(',')
 
-      const response = await fetch(
-        `${this.baseUrl}/${accountId}/insights?fields=${fields}&date_preset=${datePreset}&level=campaign&access_token=${accessToken}`
-      )
+      let url = `${this.baseUrl}/${accountId}/insights?fields=${fields}&level=campaign&access_token=${accessToken}`
+      
+      if (timeRange) {
+        url += `&time_range=${JSON.stringify(timeRange)}`
+      } else {
+        url += `&date_preset=${datePreset}`
+      }
+
+      const response = await fetch(url)
       const data = await response.json()
       
       if (data.error) {

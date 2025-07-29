@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Eye, DollarSign, MousePointer, Target, TrendingUp, BarChart3, RefreshCw, Calendar, Settings } from 'lucide-react'
+import { Eye, DollarSign, MousePointer, Target, TrendingUp, BarChart3, RefreshCw, Settings } from 'lucide-react'
 import Sidebar from '@/components/layout/Sidebar'
 import StatsCard from '@/components/dashboard/StatsCard'
 import ColumnConfigModal from '@/components/dashboard/ColumnConfigModal'
+import DateSelector, { DateRange } from '@/components/dashboard/DateSelector'
 import { FacebookAccount } from '@/lib/types'
 import { ColumnConfig, DEFAULT_COLUMNS, getVisibleColumns, formatColumnValue } from '@/lib/column-config'
 import toast from 'react-hot-toast'
@@ -17,6 +18,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
   const [datePreset, setDatePreset] = useState<string>('last_7d')
+  const [customRange, setCustomRange] = useState<DateRange | undefined>()
   const [isConfigModalOpen, setIsConfigModalOpen] = useState<boolean>(false)
 
   useEffect(() => {
@@ -27,7 +29,7 @@ export default function DashboardPage() {
     if (accounts.length > 0) {
       fetchInsights()
     }
-  }, [accounts, datePreset])
+  }, [accounts, datePreset, customRange])
 
   const fetchAccounts = async () => {
     try {
@@ -62,7 +64,15 @@ export default function DashboardPage() {
       for (const account of activeAccounts) {
         try {
           console.log(`🔍 Buscando insights para conta: ${account.id}`)
-          const response = await fetch(`/api/insights?accountId=${account.id}&datePreset=${datePreset}`, {
+          
+          let url = `/api/insights?accountId=${account.id}`
+          if (customRange) {
+            url += `&since=${customRange.since}&until=${customRange.until}`
+          } else {
+            url += `&datePreset=${datePreset}`
+          }
+          
+          const response = await fetch(url, {
             credentials: 'include'
           })
           
@@ -97,6 +107,17 @@ export default function DashboardPage() {
   const handleSaveColumns = (newColumns: ColumnConfig[]) => {
     setColumns(newColumns)
     toast.success('Configuração de colunas salva!')
+  }
+
+  const handleDatePresetChange = (preset: string) => {
+    setDatePreset(preset)
+    if (preset !== 'custom') {
+      setCustomRange(undefined)
+    }
+  }
+
+  const handleCustomRangeChange = (range: DateRange) => {
+    setCustomRange(range)
   }
 
   const visibleColumns = getVisibleColumns(columns)
@@ -148,20 +169,12 @@ export default function DashboardPage() {
               </p>
             </div>
             <div className="flex items-center space-x-3">
-              <select
-                value={datePreset}
-                onChange={(e) => setDatePreset(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-              >
-                <option value="today">Hoje</option>
-                <option value="yesterday">Ontem</option>
-                <option value="last_3d">Últimos 3 dias</option>
-                <option value="last_7d">Últimos 7 dias</option>
-                <option value="last_14d">Últimos 14 dias</option>
-                <option value="last_28d">Últimos 28 dias</option>
-                <option value="last_30d">Últimos 30 dias</option>
-                <option value="last_90d">Últimos 90 dias</option>
-              </select>
+              <DateSelector
+                datePreset={datePreset}
+                customRange={customRange}
+                onDatePresetChange={handleDatePresetChange}
+                onCustomRangeChange={handleCustomRangeChange}
+              />
               <button
                 onClick={() => setIsConfigModalOpen(true)}
                 className="btn-secondary flex items-center space-x-2"
@@ -199,7 +212,7 @@ export default function DashboardPage() {
                     {accounts.length} conta(s) conectada(s) • {accounts.filter(a => a.status === 'active').length} ativa(s)
                   </p>
                 </div>
-                <Calendar className="w-5 h-5 text-gray-400" />
+                <div className="w-5 h-5 text-gray-400" />
               </div>
             </div>
 

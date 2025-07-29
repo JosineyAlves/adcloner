@@ -11,6 +11,11 @@ export async function GET(request: NextRequest) {
     const datePreset = searchParams.get('datePreset') || 'last_7d'
     const level = searchParams.get('level') || 'campaign'
     const breakdowns = searchParams.get('breakdowns')?.split(',') || []
+    
+    // Suporte para range personalizado
+    const since = searchParams.get('since')
+    const until = searchParams.get('until')
+    const timeRange = since && until ? { since, until } : undefined
 
     // Obter token do cookie
     const accessToken = request.cookies.get('fb_access_token')?.value
@@ -23,10 +28,10 @@ export async function GET(request: NextRequest) {
 
     if (campaignId) {
       // Insights de campanha específica
-      insights = await facebookAPI.getCampaignInsights(campaignId, accessToken, datePreset, level)
+      insights = await facebookAPI.getCampaignInsights(campaignId, accessToken, datePreset, level, timeRange)
     } else if (accountId) {
       // Insights de conta de anúncios
-      insights = await facebookAPI.getAccountInsights(accountId, accessToken, datePreset)
+      insights = await facebookAPI.getAccountInsights(accountId, accessToken, datePreset, timeRange)
     } else {
       return NextResponse.json({ error: 'accountId ou campaignId é obrigatório' }, { status: 400 })
     }
