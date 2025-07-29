@@ -258,7 +258,15 @@ export default function DashboardPage() {
       impressions: (acc.impressions || 0) + (parseInt(insight.impressions || '0') || 0),
       clicks: (acc.clicks || 0) + (parseInt(insight.clicks || '0') || 0),
       spend: (acc.spend || 0) + (parseFloat(insight.spend || '0') || 0),
-      reach: (acc.reach || 0) + (parseInt(insight.reach || '0') || 0)
+      reach: (acc.reach || 0) + (parseInt(insight.reach || '0') || 0),
+      frequency: (acc.frequency || 0) + (parseFloat(insight.frequency || '0') || 0),
+      cpm: (acc.cpm || 0) + (parseFloat(insight.cpm || '0') || 0),
+      cpc: (acc.cpc || 0) + (parseFloat(insight.cpc || '0') || 0),
+      ctr: (acc.ctr || 0) + (parseFloat(insight.ctr || '0') || 0),
+      conversions: (acc.conversions || 0) + (parseInt(insight.conversions || '0') || 0),
+      cost_per_conversion: (acc.cost_per_conversion || 0) + (parseFloat(insight.cost_per_conversion || '0') || 0),
+      inline_link_clicks: (acc.inline_link_clicks || 0) + (parseInt(insight.inline_link_clicks || '0') || 0),
+      inline_post_engagement: (acc.inline_post_engagement || 0) + (parseInt(insight.inline_post_engagement || '0') || 0)
     }
   }, {})
 
