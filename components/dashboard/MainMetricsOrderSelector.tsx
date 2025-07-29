@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { BarChart3, ChevronDown, X, GripVertical } from 'lucide-react'
-import { MetricConfig } from './MetricsSelector'
+import { MetricConfig } from '@/lib/metrics-types'
 
 interface MainMetricsOrderSelectorProps {
   metrics: MetricConfig[]
@@ -64,7 +64,7 @@ export default function MainMetricsOrderSelector({
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="btn-secondary flex items-center space-x-2"
+        className="btn-secondary flex items-center space-x-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"
       >
         <BarChart3 className="w-4 h-4" />
         <span>Ordenar Métricas</span>
