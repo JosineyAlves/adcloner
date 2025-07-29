@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { Eye, DollarSign, MousePointer, Target, TrendingUp, BarChart3, RefreshCw, Settings, Repeat, Percent, Link, Heart } from 'lucide-react'
 import Sidebar from '@/components/layout/Sidebar'
@@ -152,37 +152,7 @@ export default function DashboardPage() {
     fetchAccounts()
   }, [])
 
-  useEffect(() => {
-    if (accounts.length > 0) {
-      fetchInsights()
-    }
-  }, [accounts, datePreset, customRange])
-
-  const fetchAccounts = async () => {
-    try {
-      const response = await fetch('/api/facebook/accounts', {
-        credentials: 'include'
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setAccounts(data.accounts || [])
-      } else if (response.status === 401) {
-        window.location.href = '/login'
-        return
-      } else {
-        console.error('Failed to fetch accounts')
-        toast.error('Erro ao carregar contas do Facebook')
-      }
-    } catch (error) {
-      console.error('Error fetching accounts:', error)
-      toast.error('Erro ao carregar contas do Facebook')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const fetchInsights = async () => {
+  const fetchInsights = useCallback(async () => {
     try {
       const activeAccounts = accounts.filter(a => a.status === 'active')
       console.log(`📊 Buscando insights de ${activeAccounts.length} contas ativas`)
@@ -221,6 +191,36 @@ export default function DashboardPage() {
       setInsights(allInsights)
     } catch (error) {
       console.error('Error fetching insights:', error)
+    }
+  }, [accounts, datePreset, customRange])
+
+  useEffect(() => {
+    if (accounts.length > 0) {
+      fetchInsights()
+    }
+  }, [accounts, datePreset, customRange, fetchInsights])
+
+  const fetchAccounts = async () => {
+    try {
+      const response = await fetch('/api/facebook/accounts', {
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setAccounts(data.accounts || [])
+      } else if (response.status === 401) {
+        window.location.href = '/login'
+        return
+      } else {
+        console.error('Failed to fetch accounts')
+        toast.error('Erro ao carregar contas do Facebook')
+      }
+    } catch (error) {
+      console.error('Error fetching accounts:', error)
+      toast.error('Erro ao carregar contas do Facebook')
+    } finally {
+      setIsLoading(false)
     }
   }
 
