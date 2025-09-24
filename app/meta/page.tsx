@@ -6,6 +6,10 @@ import { Eye, DollarSign, MousePointer, Target, TrendingUp, BarChart3, RefreshCw
 import Sidebar from '@/components/layout/Sidebar'
 import StatsCard from '@/components/dashboard/StatsCard'
 import DateSelector, { DateRange } from '@/components/dashboard/DateSelector'
+import UnifiedMetricsModal, { MetricOption } from '@/components/meta/UnifiedMetricsModal'
+import InlineBudgetEditor from '@/components/meta/InlineBudgetEditor'
+import StatusToggle from '@/components/meta/StatusToggle'
+import TableCheckbox from '@/components/meta/TableCheckbox'
 import { FacebookAccount } from '@/lib/types'
 import toast from 'react-hot-toast'
 
@@ -55,6 +59,61 @@ export default function MetaPage() {
   const [datePreset, setDatePreset] = useState<string>('today')
   const [customRange, setCustomRange] = useState<DateRange | undefined>()
   const [selectedAccount, setSelectedAccount] = useState<string>('')
+  const [isMetricsModalOpen, setIsMetricsModalOpen] = useState<boolean>(false)
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
+  const [selectAll, setSelectAll] = useState<boolean>(false)
+  const [selectedMetrics, setSelectedMetrics] = useState<MetricOption[]>([
+    {
+      id: 'campaign_name',
+      label: 'Campanha',
+      description: 'Nome da campanha',
+      iconColor: 'text-gray-600',
+      type: 'text',
+      category: 'Identificação',
+      visible: true,
+      order: 1
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      description: 'Status da campanha',
+      iconColor: 'text-gray-600',
+      type: 'text',
+      category: 'Status',
+      visible: true,
+      order: 2
+    },
+    {
+      id: 'objective',
+      label: 'Objetivo',
+      description: 'Objetivo da campanha',
+      iconColor: 'text-gray-600',
+      type: 'text',
+      category: 'Status',
+      visible: true,
+      order: 3
+    },
+    {
+      id: 'daily_budget',
+      label: 'Orçamento Diário',
+      description: 'Orçamento diário da campanha',
+      iconColor: 'text-green-600',
+      type: 'currency',
+      category: 'Status',
+      visible: true,
+      order: 4
+    },
+    {
+      id: 'created_time',
+      label: 'Criada em',
+      description: 'Data de criação da campanha',
+      iconColor: 'text-gray-600',
+      type: 'text',
+      category: 'Status',
+      visible: true,
+      order: 5
+    }
+  ])
 
   const tabs = [
     { id: 'contas', label: 'Contas', icon: BarChart3 },
@@ -208,6 +267,97 @@ export default function MetaPage() {
     setCustomRange(range)
   }
 
+  const handleMetricsChange = (newMetrics: MetricOption[]) => {
+    setSelectedMetrics(newMetrics)
+    toast.success('Configuração de métricas salva!')
+  }
+
+  const handleSelectItem = (itemId: string) => {
+    const newSelected = new Set(selectedItems)
+    if (newSelected.has(itemId)) {
+      newSelected.delete(itemId)
+    } else {
+      newSelected.add(itemId)
+    }
+    setSelectedItems(newSelected)
+  }
+
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedItems(new Set())
+    } else {
+      const currentItems = getCurrentItems()
+      setSelectedItems(new Set(currentItems.map(item => item.id)))
+    }
+    setSelectAll(!selectAll)
+  }
+
+  const getCurrentItems = () => {
+    switch (activeTab) {
+      case 'campanhas': return campaigns
+      case 'conjuntos': return adsets
+      case 'anuncios': return ads
+      default: return []
+    }
+  }
+
+  const handleInlineBudgetSave = async (type: 'campaign' | 'adset', id: string, newBudget: number, budgetType: 'daily_budget' | 'lifetime_budget') => {
+    const endpoint = type === 'campaign' ? 'campaigns' : 'adsets'
+    
+    try {
+      const response = await fetch(`/api/${endpoint}/${id}/budget`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ 
+          budget: newBudget,
+          budgetType: budgetType
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success('Orçamento atualizado com sucesso!')
+        await fetchData() // Recarregar dados
+      } else {
+        toast.error(data.message || 'Erro ao atualizar orçamento')
+      }
+    } catch (error) {
+      console.error('Error updating budget:', error)
+      toast.error('Erro ao atualizar orçamento')
+    }
+  }
+
+  const handleToggleStatus = async (type: 'campaign' | 'adset' | 'ad', id: string, newStatus: 'ACTIVE' | 'PAUSED') => {
+    const endpoint = type === 'campaign' ? 'campaigns' : type === 'adset' ? 'adsets' : 'ads'
+    
+    try {
+      const response = await fetch(`/api/${endpoint}/${id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ status: newStatus })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success(`${newStatus === 'ACTIVE' ? 'Ativado' : 'Pausado'} com sucesso!`)
+        await fetchData() // Recarregar dados
+      } else {
+        toast.error(data.message || 'Erro ao atualizar status')
+      }
+    } catch (error) {
+      console.error('Error updating status:', error)
+      toast.error('Erro ao atualizar status')
+    }
+  }
+
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab)
   }
@@ -286,6 +436,50 @@ export default function MetaPage() {
     return new Date(dateString).toLocaleDateString('pt-BR')
   }
 
+  const formatMetricValue = (item: any, metric: MetricOption) => {
+    const value = item[metric.id]
+    
+    if (value === undefined || value === null) {
+      return '-'
+    }
+
+    switch (metric.type) {
+      case 'currency':
+        if (metric.id === 'daily_budget' || metric.id === 'lifetime_budget') {
+          const budgetValue = typeof value === 'number' ? value / 100 : parseFloat(value) / 100 || 0
+          const budgetType = metric.id === 'daily_budget' ? 'daily_budget' : 'lifetime_budget'
+          const itemType = activeTab === 'campanhas' ? 'campaign' : 'adset'
+          
+          return (
+            <InlineBudgetEditor
+              value={budgetValue}
+              onSave={(newValue) => handleInlineBudgetSave(itemType, item.id, newValue, budgetType)}
+            />
+          )
+        }
+        return formatCurrency(typeof value === 'number' ? value : parseFloat(value) || 0)
+      case 'percentage':
+        return `${parseFloat(value).toFixed(2)}%`
+      case 'number':
+        return parseInt(value).toLocaleString()
+      case 'text':
+      default:
+        if (metric.id === 'status') {
+          return (
+            <StatusToggle
+              status={value}
+              onToggle={(newStatus) => {
+                const itemType = activeTab === 'campanhas' ? 'campaign' : 
+                                activeTab === 'conjuntos' ? 'adset' : 'ad'
+                handleToggleStatus(itemType, item.id, newStatus)
+              }}
+            />
+          )
+        }
+        return value.toString()
+    }
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'ACTIVE':
@@ -340,6 +534,19 @@ export default function MetaPage() {
                   </option>
                 ))}
               </select>
+              <DateSelector
+                datePreset={datePreset}
+                customRange={customRange}
+                onDatePresetChange={handleDatePresetChange}
+                onCustomRangeChange={handleCustomRangeChange}
+              />
+              <button
+                onClick={() => setIsMetricsModalOpen(true)}
+                className="btn-secondary flex items-center space-x-2"
+              >
+                <Settings className="w-4 h-4" />
+                <span>Configurar Métricas</span>
+              </button>
               <button
                 onClick={handleRefresh}
                 disabled={isRefreshing}
@@ -418,65 +625,56 @@ export default function MetaPage() {
                   <table className="w-full">
                     <thead className="bg-gray-50 dark:bg-gray-700">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nome</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Objetivo</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Orçamento Diário</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Criada</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ações</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          <TableCheckbox
+                            checked={selectAll}
+                            onChange={handleSelectAll}
+                            indeterminate={selectedItems.size > 0 && selectedItems.size < campaigns.length}
+                          />
+                        </th>
+                        {selectedMetrics
+                          .filter(metric => metric.visible)
+                          .sort((a, b) => a.order - b.order)
+                          .map((metric) => (
+                            <th 
+                              key={metric.id}
+                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                            >
+                              <div className="flex items-center space-x-1">
+                                <span>{metric.label}</span>
+                                <div className="flex flex-col">
+                                  <svg className="w-2 h-2 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+                                  </svg>
+                                  <svg className="w-2 h-2 text-gray-400 -mt-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                              </div>
+                            </th>
+                          ))}
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                       {campaigns.map((campaign) => (
-                        <tr key={campaign.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                            {campaign.name}
-                          </td>
+                        <tr key={campaign.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${selectedItems.has(campaign.id) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(campaign.status)}`}>
-                              {campaign.status}
-                            </span>
+                            <TableCheckbox
+                              checked={selectedItems.has(campaign.id)}
+                              onChange={() => handleSelectItem(campaign.id)}
+                            />
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                            {campaign.objective}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                            {campaign.daily_budget ? formatCurrency(campaign.daily_budget) : '-'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                            {formatDate(campaign.created_time)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                            <button
-                              onClick={() => handleStatusChange('campaign', campaign.id, campaign.status)}
-                              className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                                campaign.status === 'ACTIVE'
-                                  ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                                  : 'bg-green-100 text-green-800 hover:bg-green-200'
-                              }`}
-                            >
-                              {campaign.status === 'ACTIVE' ? (
-                                <>
-                                  <Pause className="w-3 h-3 mr-1" />
-                                  Pausar
-                                </>
-                              ) : (
-                                <>
-                                  <Play className="w-3 h-3 mr-1" />
-                                  Ativar
-                                </>
-                              )}
-                            </button>
-                            {campaign.daily_budget && (
-                              <button
-                                onClick={() => handleBudgetChange('campaign', campaign.id, campaign.daily_budget! / 100, 'daily_budget')}
-                                className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200"
+                          {selectedMetrics
+                            .filter(metric => metric.visible)
+                            .sort((a, b) => a.order - b.order)
+                            .map((metric) => (
+                              <td 
+                                key={metric.id}
+                                className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white"
                               >
-                                <DollarIcon className="w-3 h-3 mr-1" />
-                                Orçamento
-                              </button>
-                            )}
-                          </td>
+                                {formatMetricValue(campaign, metric)}
+                              </td>
+                            ))}
                         </tr>
                       ))}
                     </tbody>
@@ -496,65 +694,56 @@ export default function MetaPage() {
                   <table className="w-full">
                     <thead className="bg-gray-50 dark:bg-gray-700">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nome</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Otimização</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Orçamento Diário</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Criado</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ações</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          <TableCheckbox
+                            checked={selectAll}
+                            onChange={handleSelectAll}
+                            indeterminate={selectedItems.size > 0 && selectedItems.size < adsets.length}
+                          />
+                        </th>
+                        {selectedMetrics
+                          .filter(metric => metric.visible)
+                          .sort((a, b) => a.order - b.order)
+                          .map((metric) => (
+                            <th 
+                              key={metric.id}
+                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                            >
+                              <div className="flex items-center space-x-1">
+                                <span>{metric.label}</span>
+                                <div className="flex flex-col">
+                                  <svg className="w-2 h-2 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+                                  </svg>
+                                  <svg className="w-2 h-2 text-gray-400 -mt-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                              </div>
+                            </th>
+                          ))}
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                       {adsets.map((adset) => (
-                        <tr key={adset.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                            {adset.name}
-                          </td>
+                        <tr key={adset.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${selectedItems.has(adset.id) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(adset.status)}`}>
-                              {adset.status}
-                            </span>
+                            <TableCheckbox
+                              checked={selectedItems.has(adset.id)}
+                              onChange={() => handleSelectItem(adset.id)}
+                            />
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                            {adset.optimization_goal}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                            {adset.daily_budget ? formatCurrency(adset.daily_budget) : '-'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                            {formatDate(adset.created_time)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                            <button
-                              onClick={() => handleStatusChange('adset', adset.id, adset.status)}
-                              className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                                adset.status === 'ACTIVE'
-                                  ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                                  : 'bg-green-100 text-green-800 hover:bg-green-200'
-                              }`}
-                            >
-                              {adset.status === 'ACTIVE' ? (
-                                <>
-                                  <Pause className="w-3 h-3 mr-1" />
-                                  Pausar
-                                </>
-                              ) : (
-                                <>
-                                  <Play className="w-3 h-3 mr-1" />
-                                  Ativar
-                                </>
-                              )}
-                            </button>
-                            {adset.daily_budget && (
-                              <button
-                                onClick={() => handleBudgetChange('adset', adset.id, adset.daily_budget! / 100, 'daily_budget')}
-                                className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200"
+                          {selectedMetrics
+                            .filter(metric => metric.visible)
+                            .sort((a, b) => a.order - b.order)
+                            .map((metric) => (
+                              <td 
+                                key={metric.id}
+                                className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white"
                               >
-                                <DollarIcon className="w-3 h-3 mr-1" />
-                                Orçamento
-                              </button>
-                            )}
-                          </td>
+                                {formatMetricValue(adset, metric)}
+                              </td>
+                            ))}
                         </tr>
                       ))}
                     </tbody>
@@ -574,56 +763,56 @@ export default function MetaPage() {
                   <table className="w-full">
                     <thead className="bg-gray-50 dark:bg-gray-700">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nome</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Conjunto</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Campanha</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Criado</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ações</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          <TableCheckbox
+                            checked={selectAll}
+                            onChange={handleSelectAll}
+                            indeterminate={selectedItems.size > 0 && selectedItems.size < ads.length}
+                          />
+                        </th>
+                        {selectedMetrics
+                          .filter(metric => metric.visible)
+                          .sort((a, b) => a.order - b.order)
+                          .map((metric) => (
+                            <th 
+                              key={metric.id}
+                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                            >
+                              <div className="flex items-center space-x-1">
+                                <span>{metric.label}</span>
+                                <div className="flex flex-col">
+                                  <svg className="w-2 h-2 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+                                  </svg>
+                                  <svg className="w-2 h-2 text-gray-400 -mt-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                              </div>
+                            </th>
+                          ))}
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                       {ads.map((ad) => (
-                        <tr key={ad.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                            {ad.name}
-                          </td>
+                        <tr key={ad.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${selectedItems.has(ad.id) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ad.status)}`}>
-                              {ad.status}
-                            </span>
+                            <TableCheckbox
+                              checked={selectedItems.has(ad.id)}
+                              onChange={() => handleSelectItem(ad.id)}
+                            />
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                            {ad.adset_id}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                            {ad.campaign_id}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                            {formatDate(ad.created_time)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button
-                              onClick={() => handleStatusChange('ad', ad.id, ad.status)}
-                              className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                                ad.status === 'ACTIVE'
-                                  ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                                  : 'bg-green-100 text-green-800 hover:bg-green-200'
-                              }`}
-                            >
-                              {ad.status === 'ACTIVE' ? (
-                                <>
-                                  <Pause className="w-3 h-3 mr-1" />
-                                  Pausar
-                                </>
-                              ) : (
-                                <>
-                                  <Play className="w-3 h-3 mr-1" />
-                                  Ativar
-                                </>
-                              )}
-                            </button>
-                          </td>
+                          {selectedMetrics
+                            .filter(metric => metric.visible)
+                            .sort((a, b) => a.order - b.order)
+                            .map((metric) => (
+                              <td 
+                                key={metric.id}
+                                className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white"
+                              >
+                                {formatMetricValue(ad, metric)}
+                              </td>
+                            ))}
                         </tr>
                       ))}
                     </tbody>
@@ -634,6 +823,16 @@ export default function MetaPage() {
           </motion.div>
         </main>
       </div>
+
+      {/* Modal Unificado de Métricas */}
+      <UnifiedMetricsModal
+        isOpen={isMetricsModalOpen}
+        onClose={() => setIsMetricsModalOpen(false)}
+        metrics={selectedMetrics}
+        onSave={handleMetricsChange}
+        title="Personalize as colunas"
+        description="Escolha como você quer visualizar as colunas na tabela."
+      />
     </div>
   )
 }
