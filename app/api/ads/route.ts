@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const accountId = searchParams.get('accountId')
+    const adsetId = searchParams.get('adsetId')
     
     if (!accountId) {
       return NextResponse.json({
@@ -21,32 +22,35 @@ export async function GET(request: NextRequest) {
       }, { status: 400 })
     }
 
-    console.log(`📋 Buscando campanhas da conta ${accountId}`)
+    let url = `https://graph.facebook.com/v23.0/act_${accountId}/ads?fields=id,name,status,adset_id,campaign_id,creative,created_time,updated_time&access_token=${accessToken}`
+    
+    if (adsetId) {
+      url = `https://graph.facebook.com/v23.0/${adsetId}/ads?fields=id,name,status,adset_id,campaign_id,creative,created_time,updated_time&access_token=${accessToken}`
+    }
 
-    // Buscar campanhas da conta
-    const response = await fetch(
-      `https://graph.facebook.com/v23.0/act_${accountId}/campaigns?fields=id,name,status,objective,daily_budget,lifetime_budget,created_time,updated_time&access_token=${accessToken}`
-    )
+    console.log(`📋 Buscando anúncios ${adsetId ? `do conjunto ${adsetId}` : `da conta ${accountId}`}`)
 
+    // Buscar anúncios
+    const response = await fetch(url)
     const data = await response.json()
 
     if (data.error) {
-      console.error('Erro ao buscar campanhas:', data.error)
+      console.error('Erro ao buscar anúncios:', data.error)
       return NextResponse.json({
         success: false,
-        message: data.error.message || 'Erro ao buscar campanhas'
+        message: data.error.message || 'Erro ao buscar anúncios'
       }, { status: 400 })
     }
 
-    console.log(`✅ Encontradas ${data.data?.length || 0} campanhas`)
+    console.log(`✅ Encontrados ${data.data?.length || 0} anúncios`)
 
     return NextResponse.json({
       success: true,
-      campaigns: data.data || []
+      ads: data.data || []
     })
 
   } catch (error) {
-    console.error('Error fetching campaigns:', error)
+    console.error('Error fetching ads:', error)
     return NextResponse.json({
       success: false,
       message: 'Erro interno do servidor'
