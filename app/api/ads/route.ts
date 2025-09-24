@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { FacebookAPI } from '@/lib/facebook-api'
+
+const facebookAPI = new FacebookAPI()
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,38 +25,23 @@ export async function GET(request: NextRequest) {
       }, { status: 400 })
     }
 
-    let url = `https://graph.facebook.com/v23.0/act_${accountId}/ads?fields=id,name,status,adset_id,campaign_id,creative,created_time,updated_time&access_token=${accessToken}`
-    
-    if (adsetId) {
-      url = `https://graph.facebook.com/v23.0/${adsetId}/ads?fields=id,name,status,adset_id,campaign_id,creative,created_time,updated_time&access_token=${accessToken}`
-    }
-
     console.log(`📋 Buscando anúncios ${adsetId ? `do conjunto ${adsetId}` : `da conta ${accountId}`}`)
 
-    // Buscar anúncios
-    const response = await fetch(url)
-    const data = await response.json()
+    // Usar o FacebookAPI para buscar anúncios simples
+    const ads = await facebookAPI.getSimpleAds(accountId, accessToken, adsetId || undefined)
 
-    if (data.error) {
-      console.error('Erro ao buscar anúncios:', data.error)
-      return NextResponse.json({
-        success: false,
-        message: data.error.message || 'Erro ao buscar anúncios'
-      }, { status: 400 })
-    }
-
-    console.log(`✅ Encontrados ${data.data?.length || 0} anúncios`)
+    console.log(`✅ Encontrados ${ads?.length || 0} anúncios`)
 
     return NextResponse.json({
       success: true,
-      ads: data.data || []
+      ads: ads || []
     })
 
   } catch (error) {
     console.error('Error fetching ads:', error)
     return NextResponse.json({
       success: false,
-      message: 'Erro interno do servidor'
+      message: error instanceof Error ? error.message : 'Erro interno do servidor'
     }, { status: 500 })
   }
 }

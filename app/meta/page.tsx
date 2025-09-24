@@ -130,12 +130,14 @@ export default function MetaPage() {
         credentials: 'include'
       })
 
-      if (response.ok) {
-        const data = await response.json()
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        console.log('✅ Campanhas carregadas:', data.campaigns?.length || 0)
         setCampaigns(data.campaigns || [])
       } else {
-        console.error('Failed to fetch campaigns')
-        toast.error('Erro ao carregar campanhas')
+        console.error('❌ Failed to fetch campaigns:', data.message || 'Erro desconhecido')
+        toast.error(data.message || 'Erro ao carregar campanhas')
       }
     } catch (error) {
       console.error('Error fetching campaigns:', error)
@@ -149,12 +151,14 @@ export default function MetaPage() {
         credentials: 'include'
       })
 
-      if (response.ok) {
-        const data = await response.json()
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        console.log('✅ Conjuntos de anúncios carregados:', data.adsets?.length || 0)
         setAdsets(data.adsets || [])
       } else {
-        console.error('Failed to fetch adsets')
-        toast.error('Erro ao carregar conjuntos de anúncios')
+        console.error('❌ Failed to fetch adsets:', data.message || 'Erro desconhecido')
+        toast.error(data.message || 'Erro ao carregar conjuntos de anúncios')
       }
     } catch (error) {
       console.error('Error fetching adsets:', error)
@@ -168,12 +172,14 @@ export default function MetaPage() {
         credentials: 'include'
       })
 
-      if (response.ok) {
-        const data = await response.json()
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        console.log('✅ Anúncios carregados:', data.ads?.length || 0)
         setAds(data.ads || [])
       } else {
-        console.error('Failed to fetch ads')
-        toast.error('Erro ao carregar anúncios')
+        console.error('❌ Failed to fetch ads:', data.message || 'Erro desconhecido')
+        toast.error(data.message || 'Erro ao carregar anúncios')
       }
     } catch (error) {
       console.error('Error fetching ads:', error)

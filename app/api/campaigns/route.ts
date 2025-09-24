@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { FacebookAPI } from '@/lib/facebook-api'
+
+const facebookAPI = new FacebookAPI()
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,33 +26,21 @@ export async function GET(request: NextRequest) {
 
     console.log(`📋 Buscando campanhas da conta ${accountId}`)
 
-    // Buscar campanhas da conta
-    const response = await fetch(
-      `https://graph.facebook.com/v23.0/act_${accountId}/campaigns?fields=id,name,status,objective,daily_budget,lifetime_budget,created_time,updated_time&access_token=${accessToken}`
-    )
+    // Usar o FacebookAPI para buscar campanhas simples
+    const campaigns = await facebookAPI.getSimpleCampaigns(accountId, accessToken)
 
-    const data = await response.json()
-
-    if (data.error) {
-      console.error('Erro ao buscar campanhas:', data.error)
-      return NextResponse.json({
-        success: false,
-        message: data.error.message || 'Erro ao buscar campanhas'
-      }, { status: 400 })
-    }
-
-    console.log(`✅ Encontradas ${data.data?.length || 0} campanhas`)
+    console.log(`✅ Encontradas ${campaigns?.length || 0} campanhas`)
 
     return NextResponse.json({
       success: true,
-      campaigns: data.data || []
+      campaigns: campaigns || []
     })
 
   } catch (error) {
     console.error('Error fetching campaigns:', error)
     return NextResponse.json({
       success: false,
-      message: 'Erro interno do servidor'
+      message: error instanceof Error ? error.message : 'Erro interno do servidor'
     }, { status: 500 })
   }
 }

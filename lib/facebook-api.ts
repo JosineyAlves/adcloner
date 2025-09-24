@@ -352,6 +352,80 @@ export class FacebookAPI {
   // ===== CAMPANHAS E ANÚNCIOS =====
 
   /**
+   * Obtém campanhas simples para o Meta Manager
+   */
+  async getSimpleCampaigns(adAccountId: string, accessToken: string): Promise<any[]> {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/${adAccountId}/campaigns?fields=id,name,status,objective,daily_budget,lifetime_budget,created_time,updated_time&access_token=${accessToken}`
+      )
+      const data = await response.json()
+      
+      if (data.error) {
+        console.error('Error getting simple campaigns:', data.error)
+        throw new Error(data.error.message)
+      }
+      
+      return data.data || []
+    } catch (error) {
+      console.error('Error getting simple campaigns:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Obtém conjuntos de anúncios simples para o Meta Manager
+   */
+  async getSimpleAdSets(adAccountId: string, accessToken: string, campaignId?: string): Promise<any[]> {
+    try {
+      let url = `${this.baseUrl}/${adAccountId}/adsets?fields=id,name,status,campaign_id,daily_budget,lifetime_budget,optimization_goal,created_time,updated_time&access_token=${accessToken}`
+      
+      if (campaignId) {
+        url = `${this.baseUrl}/${campaignId}/adsets?fields=id,name,status,campaign_id,daily_budget,lifetime_budget,optimization_goal,created_time,updated_time&access_token=${accessToken}`
+      }
+      
+      const response = await fetch(url)
+      const data = await response.json()
+      
+      if (data.error) {
+        console.error('Error getting simple adsets:', data.error)
+        throw new Error(data.error.message)
+      }
+      
+      return data.data || []
+    } catch (error) {
+      console.error('Error getting simple adsets:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Obtém anúncios simples para o Meta Manager
+   */
+  async getSimpleAds(adAccountId: string, accessToken: string, adsetId?: string): Promise<any[]> {
+    try {
+      let url = `${this.baseUrl}/${adAccountId}/ads?fields=id,name,status,adset_id,campaign_id,created_time,updated_time&access_token=${accessToken}`
+      
+      if (adsetId) {
+        url = `${this.baseUrl}/${adsetId}/ads?fields=id,name,status,adset_id,campaign_id,created_time,updated_time&access_token=${accessToken}`
+      }
+      
+      const response = await fetch(url)
+      const data = await response.json()
+      
+      if (data.error) {
+        console.error('Error getting simple ads:', data.error)
+        throw new Error(data.error.message)
+      }
+      
+      return data.data || []
+    } catch (error) {
+      console.error('Error getting simple ads:', error)
+      throw error
+    }
+  }
+
+  /**
    * Cria uma nova campanha
    */
   async createCampaign(adAccountId: string, accessToken: string, campaignData: any): Promise<string> {

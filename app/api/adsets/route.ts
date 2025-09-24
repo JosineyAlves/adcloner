@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { FacebookAPI } from '@/lib/facebook-api'
+
+const facebookAPI = new FacebookAPI()
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,38 +25,23 @@ export async function GET(request: NextRequest) {
       }, { status: 400 })
     }
 
-    let url = `https://graph.facebook.com/v23.0/act_${accountId}/adsets?fields=id,name,status,campaign_id,daily_budget,lifetime_budget,optimization_goal,targeting,created_time,updated_time&access_token=${accessToken}`
-    
-    if (campaignId) {
-      url = `https://graph.facebook.com/v23.0/${campaignId}/adsets?fields=id,name,status,campaign_id,daily_budget,lifetime_budget,optimization_goal,targeting,created_time,updated_time&access_token=${accessToken}`
-    }
-
     console.log(`📋 Buscando conjuntos de anúncios ${campaignId ? `da campanha ${campaignId}` : `da conta ${accountId}`}`)
 
-    // Buscar conjuntos de anúncios
-    const response = await fetch(url)
-    const data = await response.json()
+    // Usar o FacebookAPI para buscar conjuntos de anúncios simples
+    const adsets = await facebookAPI.getSimpleAdSets(accountId, accessToken, campaignId || undefined)
 
-    if (data.error) {
-      console.error('Erro ao buscar conjuntos de anúncios:', data.error)
-      return NextResponse.json({
-        success: false,
-        message: data.error.message || 'Erro ao buscar conjuntos de anúncios'
-      }, { status: 400 })
-    }
-
-    console.log(`✅ Encontrados ${data.data?.length || 0} conjuntos de anúncios`)
+    console.log(`✅ Encontrados ${adsets?.length || 0} conjuntos de anúncios`)
 
     return NextResponse.json({
       success: true,
-      adsets: data.data || []
+      adsets: adsets || []
     })
 
   } catch (error) {
     console.error('Error fetching adsets:', error)
     return NextResponse.json({
       success: false,
-      message: 'Erro interno do servidor'
+      message: error instanceof Error ? error.message : 'Erro interno do servidor'
     }, { status: 500 })
   }
 }
