@@ -6,20 +6,20 @@ import toast from 'react-hot-toast'
 
 interface BudgetEditorProps {
   id: string
-  currentBudget: number
+  currentBudget: number // Já vem em reais da API
   budgetType: 'daily' | 'lifetime'
   onUpdate: (id: string, budget: number, budgetType: 'daily' | 'lifetime') => Promise<void>
   disabled?: boolean
   currency?: string
   minValue?: number
   maxValue?: number
-  isCBO?: boolean // Campaign Budget Optimization
-  level?: 'campaign' | 'adset' // Nível do orçamento
+  isCBO?: boolean
+  level?: 'campaign' | 'adset'
 }
 
 export default function BudgetEditor({
   id,
-  currentBudget,
+  currentBudget, // Já em reais
   budgetType,
   onUpdate,
   disabled = false,
@@ -34,25 +34,25 @@ export default function BudgetEditor({
   const [isUpdating, setIsUpdating] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Formatar valor para exibição
+  // Formatar valor para exibição (já está em reais)
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: currency,
       minimumFractionDigits: 2
-    }).format(value / 100) // Converter de centavos para reais
+    }).format(value) // Sem conversão, já está em reais
   }
 
-  // Converter valor de entrada para centavos
-  const parseToCents = (value: string) => {
+  // Converter valor de entrada para reais (sem conversão)
+  const parseToReais = (value: string) => {
     const cleanValue = value.replace(/[^\d,.-]/g, '')
     const numericValue = parseFloat(cleanValue.replace(',', '.'))
-    return Math.round(numericValue * 100) // Converter para centavos
+    return Math.round(numericValue * 100) / 100 // Manter em reais
   }
 
-  // Converter centavos para valor de entrada
-  const parseFromCents = (cents: number) => {
-    return (cents / 100).toFixed(2).replace('.', ',')
+  // Converter reais para valor de entrada
+  const parseFromReais = (reais: number) => {
+    return reais.toFixed(2).replace('.', ',')
   }
 
   useEffect(() => {
@@ -63,13 +63,12 @@ export default function BudgetEditor({
   }, [isEditing])
 
   useEffect(() => {
-    setBudget(parseFromCents(currentBudget))
+    setBudget(parseFromReais(currentBudget))
   }, [currentBudget])
 
   const handleStartEdit = () => {
     if (disabled) return
     
-    // Verificar se pode editar baseado no tipo de orçamento
     if (level === 'campaign' && !isCBO) {
       toast.error('Esta campanha não usa CBO. Edite o orçamento no nível do Conjunto de Anúncios.')
       return
@@ -81,20 +80,19 @@ export default function BudgetEditor({
     }
     
     setIsEditing(true)
-    setBudget(parseFromCents(currentBudget))
+    setBudget(parseFromReais(currentBudget))
   }
 
   const handleCancel = () => {
     setIsEditing(false)
-    setBudget(parseFromCents(currentBudget))
+    setBudget(parseFromReais(currentBudget))
   }
 
   const handleSave = async () => {
     if (disabled || isUpdating) return
 
-    const numericBudget = parseToCents(budget)
+    const numericBudget = parseToReais(budget)
     
-    // Validações
     if (isNaN(numericBudget) || numericBudget < minValue) {
       toast.error(`Valor mínimo: ${formatCurrency(minValue)}`)
       return
@@ -118,11 +116,10 @@ export default function BudgetEditor({
     } catch (error: any) {
       console.error('Erro ao atualizar orçamento:', error)
       
-      // Mostrar mensagem de erro específica se disponível
       const errorMessage = error?.message || error?.error || 'Erro ao atualizar orçamento'
       toast.error(errorMessage)
       
-      setBudget(parseFromCents(currentBudget))
+      setBudget(parseFromReais(currentBudget))
     } finally {
       setIsUpdating(false)
     }
@@ -139,10 +136,8 @@ export default function BudgetEditor({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value
     
-    // Permitir apenas números, vírgula e ponto
     value = value.replace(/[^\d,.-]/g, '')
     
-    // Garantir apenas uma vírgula ou ponto
     const hasComma = value.includes(',')
     const hasDot = value.includes('.')
     
@@ -204,13 +199,11 @@ export default function BudgetEditor({
     )
   }
 
-  // Determinar se pode editar baseado na lógica CBO/ABO
   const canEdit = !disabled && (
     (level === 'campaign' && isCBO) || 
     (level === 'adset' && !isCBO)
   )
 
-  // Determinar mensagem de tooltip
   const getTooltipMessage = () => {
     if (disabled) return 'Orçamento não pode ser editado'
     return `Clique para editar orçamento ${budgetType === 'daily' ? 'diário' : 'total'}`
