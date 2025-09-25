@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { facebookStrictRateLimiter } from '@/lib/rate-limiter'
 import { FacebookAPI } from '@/lib/facebook-api'
 import { MetaCampaign } from '@/lib/types'
 
@@ -30,19 +29,19 @@ export async function GET(request: NextRequest) {
     
     try {
       // Buscar campanhas da conta
-      const campaignsData = await facebookStrictRateLimiter.executeWithRetry(async () => {
-        const campaignsResponse = await fetch(
-          `https://graph.facebook.com/v23.0/${accountId}/campaigns?fields=id,name,objective,status,effective_status,daily_budget,lifetime_budget,created_time,updated_time&access_token=${accessToken}`
+      const campaignsResponse = await fetch(
+        `https://graph.facebook.com/v23.0/${accountId}/campaigns?fields=id,name,objective,status,effective_status,daily_budget,lifetime_budget,created_time,updated_time&access_token=${accessToken}`
+      )
+      
+      const campaignsData = await campaignsResponse.json()
+      
+      if (campaignsData.error) {
+        console.error('Facebook API error:', campaignsData.error)
+        return NextResponse.json(
+          { error: campaignsData.error.message },
+          { status: 400 }
         )
-        
-        const data = await campaignsResponse.json()
-        
-        if (data.error) {
-          throw new Error(data.error.message || 'Facebook API error')
-        }
-        
-        return data
-      })
+      }
 
       const campaigns: MetaCampaign[] = []
       

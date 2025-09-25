@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { FacebookAPI } from '@/lib/facebook-api'
 import { FacebookAccount } from '@/lib/types'
-import { facebookRateLimiter } from '@/lib/rate-limiter'
 
 const facebookAPI = new FacebookAPI()
 
@@ -46,20 +45,14 @@ export async function GET(request: NextRequest) {
         }
       }
       
-      const accounts = await facebookRateLimiter.executeWithRetry(
-        () => facebookAPI.getAdAccounts(accessToken)
-      )
+      const accounts = await facebookAPI.getAdAccounts(accessToken)
       
       // Para cada conta, buscar páginas e pixels
       const accountsWithDetails = await Promise.all(
         accounts.map(async (account) => {
           try {
-            const pages = await facebookRateLimiter.executeWithRetry(
-              () => facebookAPI.getPages(accessToken)
-            )
-            const pixels = await facebookRateLimiter.executeWithRetry(
-              () => facebookAPI.getPixels(accessToken)
-            )
+            const pages = await facebookAPI.getPages(accessToken)
+            const pixels = await facebookAPI.getPixels(accessToken)
             
             return {
               ...account,

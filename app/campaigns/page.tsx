@@ -14,7 +14,7 @@ export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [clones, setClones] = useState<CampaignClone[]>([])
   const [accounts, setAccounts] = useState<FacebookAccount[]>([])
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null)
@@ -22,9 +22,25 @@ export default function CampaignsPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false)
 
   useEffect(() => {
-    // Chamadas de API removidas para evitar rate limit
-    setIsLoading(false)
+    fetchCampaigns()
+    fetchClones()
+    fetchAccounts()
   }, [])
+
+  const fetchAccounts = async () => {
+    try {
+      const response = await fetch('/api/facebook/accounts', {
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setAccounts(data.accounts || [])
+      }
+    } catch (error) {
+      console.error('Error fetching accounts:', error)
+    }
+  }
 
   const handleCloneCampaign = (campaign: Campaign) => {
     setSelectedCampaign(campaign)
@@ -33,6 +49,47 @@ export default function CampaignsPage() {
 
   const handleCreateCampaign = () => {
     setIsCreateModalOpen(true)
+  }
+
+  const fetchCampaigns = async () => {
+    try {
+      const response = await fetch('/api/campaigns', {
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setCampaigns(data.campaigns || [])
+      } else if (response.status === 401) {
+        window.location.href = '/login'
+        return
+      } else {
+        console.error('Failed to fetch campaigns')
+        toast.error('Erro ao carregar campanhas')
+      }
+    } catch (error) {
+      console.error('Error fetching campaigns:', error)
+      toast.error('Erro ao carregar campanhas')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const fetchClones = async () => {
+    try {
+      const response = await fetch('/api/campaigns/clones', {
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setClones(data.clones || [])
+      } else {
+        console.error('Failed to fetch clones')
+      }
+    } catch (error) {
+      console.error('Error fetching clones:', error)
+    }
   }
 
   const filteredCampaigns = campaigns.filter(campaign => {
@@ -168,11 +225,16 @@ export default function CampaignsPage() {
               >
                 <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  Chamadas de API Temporariamente Desabilitadas
+                  {searchTerm || filterStatus !== 'all' 
+                    ? 'Nenhuma campanha encontrada' 
+                    : 'Nenhuma campanha criada'
+                  }
                 </h3>
                 <p className="text-gray-500 dark:text-gray-400 mb-6">
-                  As chamadas para a API do Facebook foram temporariamente desabilitadas para evitar rate limiting. 
-                  Use a tela Meta Business para gerenciar suas campanhas.
+                  {searchTerm || filterStatus !== 'all' 
+                    ? 'Tente ajustar sua busca ou filtros.' 
+                    : 'Crie sua primeira campanha para começar.'
+                  }
                 </p>
                 {!searchTerm && filterStatus === 'all' && (
                   <button 
