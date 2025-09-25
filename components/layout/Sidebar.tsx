@@ -8,14 +8,14 @@ import {
   Copy, 
   Settings, 
   Users,
-  LogOut,
-  Building2
+  LogOut
 } from 'lucide-react'
+import MetaIcon from '@/components/meta-business/icons/MetaIcon'
 import toast from 'react-hot-toast'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Meta Business', href: '/meta-business', icon: Building2 },
+  { name: 'Meta Business', href: '/meta-business', icon: MetaIcon },
   { name: 'Campanhas', href: '/campaigns', icon: BarChart3 },
   { name: 'Templates', href: '/templates', icon: Copy },
   { name: 'Contas', href: '/accounts', icon: Users },

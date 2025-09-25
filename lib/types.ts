@@ -230,7 +230,6 @@ export interface MetaBusinessFilters {
     until: string
   }
   status: string[]
-  objective: string[]
   search: string
   accountIds: string[]
 }

@@ -298,46 +298,50 @@ export default function DashboardPage() {
       <Sidebar />
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-          <div className="flex items-center justify-between">
+        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-4">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                 Relatório de Performance
               </h1>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
                 Métricas de campanhas do Facebook Ads
               </p>
             </div>
-            <div className="flex items-center space-x-3">
-              <DateSelector
-                datePreset={datePreset}
-                customRange={customRange}
-                onDatePresetChange={handleDatePresetChange}
-                onCustomRangeChange={handleCustomRangeChange}
-              />
-              <MainMetricsSelector
-                metrics={mainMetrics}
-                onMetricsChange={handleMainMetricsChange}
-              />
-              <MainMetricsOrderSelector
-                metrics={mainMetrics}
-                onMetricsChange={handleMainMetricsChange}
-              />
-              <button
-                onClick={() => setIsConfigModalOpen(true)}
-                className="btn-secondary flex items-center space-x-2"
-              >
-                <Settings className="w-4 h-4" />
-                <span>Configurar Colunas</span>
-              </button>
-              <button
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-                className="btn-secondary flex items-center space-x-2"
-              >
-                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                <span>Atualizar</span>
-              </button>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <DateSelector
+                  datePreset={datePreset}
+                  customRange={customRange}
+                  onDatePresetChange={handleDatePresetChange}
+                  onCustomRangeChange={handleCustomRangeChange}
+                />
+                <MainMetricsSelector
+                  metrics={mainMetrics}
+                  onMetricsChange={handleMainMetricsChange}
+                />
+                <MainMetricsOrderSelector
+                  metrics={mainMetrics}
+                  onMetricsChange={handleMainMetricsChange}
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setIsConfigModalOpen(true)}
+                  className="btn-secondary flex items-center space-x-2 text-sm"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span className="hidden sm:inline">Configurar Colunas</span>
+                </button>
+                <button
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  className="btn-secondary flex items-center space-x-2 text-sm"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <span className="hidden sm:inline">Atualizar</span>
+                </button>
+              </div>
             </div>
           </div>
         </header>

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { MetaCampaign } from '@/lib/types'
 import StatusToggle from './StatusToggle'
+import BudgetEditor from './BudgetEditor'
 import toast from 'react-hot-toast'
 
 interface CampaignsTableProps {
@@ -35,9 +36,6 @@ export default function CampaignsTable({
   onBudgetUpdate,
   onBulkStatusUpdate
 }: CampaignsTableProps) {
-  const [editingBudget, setEditingBudget] = useState<string | null>(null)
-  const [budgetValue, setBudgetValue] = useState<string>('')
-  const [budgetType, setBudgetType] = useState<'daily' | 'lifetime'>('daily')
 
   const handleSelectAll = () => {
     if (selectedCampaigns.size === campaigns.length) {
@@ -61,35 +59,6 @@ export default function CampaignsTable({
     await onStatusToggle('campaigns', campaignId, currentStatus)
   }
 
-  const handleBudgetEdit = (campaign: MetaCampaign) => {
-    if (!campaign.advantage_campaign_budget) {
-      toast.error('Esta campanha não possui Advantage Campaign Budget ativo. Edite o orçamento no nível do Conjunto de Anúncios.')
-      return
-    }
-    
-    setEditingBudget(campaign.id)
-    setBudgetValue(campaign.daily_budget ? campaign.daily_budget.toString() : campaign.lifetime_budget?.toString() || '')
-    setBudgetType(campaign.budget_type)
-  }
-
-  const handleBudgetSave = () => {
-    if (!editingBudget) return
-    
-    const budget = parseFloat(budgetValue)
-    if (isNaN(budget) || budget < 0.01) {
-      toast.error('Orçamento deve ser pelo menos R$ 0,01')
-      return
-    }
-
-    onBudgetUpdate('campaigns', editingBudget, budget, budgetType)
-    setEditingBudget(null)
-    setBudgetValue('')
-  }
-
-  const handleBudgetCancel = () => {
-    setEditingBudget(null)
-    setBudgetValue('')
-  }
 
 
   const formatCurrency = (value: number) => {
@@ -234,37 +203,38 @@ export default function CampaignsTable({
                   {campaign.objective}
                 </td>
                 <td className="px-6 py-4">
-                  {editingBudget === campaign.id ? (
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="number"
-                        value={budgetValue}
-                        onChange={(e) => setBudgetValue(e.target.value)}
-                        className="w-20 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                        step="0.01"
-                        min="0.01"
-                      />
-                      <select
-                        value={budgetType}
-                        onChange={(e) => setBudgetType(e.target.value as 'daily' | 'lifetime')}
-                        className="text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                      >
-                        <option value="daily">Diário</option>
-                        <option value="lifetime">Vida útil</option>
-                      </select>
-                      <button
-                        onClick={handleBudgetSave}
-                        className="text-green-600 hover:text-green-800"
-                      >
-                        <Check className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={handleBudgetCancel}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
+                  {campaign.advantage_campaign_budget ? (
+                    <BudgetEditor
+                      id={campaign.id}
+                      currentBudget={campaign.daily_budget || campaign.lifetime_budget || 0}
+                      budgetType={campaign.budget_type}
+                      onUpdate={async (id, budget, budgetType) => {
+                        try {
+                          const response = await fetch(`/api/meta-business/campaigns/${id}/budget`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              budget: budget / 100, // Converter de centavos para reais
+                              budgetType
+                            })
+                          })
+
+                          const result = await response.json()
+
+                          if (result.success) {
+                            onBudgetUpdate('campaigns', id, budget, budgetType)
+                          } else {
+                            throw new Error(result.error || 'Erro ao atualizar orçamento')
+                          }
+                        } catch (error) {
+                          console.error('Erro ao atualizar orçamento:', error)
+                          throw error
+                        }
+                      }}
+                      disabled={false}
+                      minValue={100} // R$ 1,00 em centavos
+                      maxValue={10000000} // R$ 100.000,00 em centavos
+                    />
                   ) : (
                     <div className="flex items-center space-x-2">
                       <span className="text-sm text-gray-900 dark:text-white">
@@ -273,19 +243,9 @@ export default function CampaignsTable({
                           ({campaign.budget_type === 'daily' ? 'diário' : 'vida útil'})
                         </span>
                       </span>
-                      {campaign.advantage_campaign_budget ? (
-                        <button
-                          onClick={() => handleBudgetEdit(campaign)}
-                          className="text-blue-600 hover:text-blue-800"
-                          title="Editar orçamento"
-                        >
-                          <DollarSign className="w-4 h-4" />
-                        </button>
-                      ) : (
-                        <span className="text-xs text-gray-400" title="Advantage Campaign Budget não ativo">
-                          <Info className="w-4 h-4" />
-                        </span>
-                      )}
+                      <span className="text-xs text-gray-400" title="Advantage Campaign Budget não ativo - edite no nível do Conjunto de Anúncios">
+                        <Info className="w-4 h-4" />
+                      </span>
                     </div>
                   )}
                 </td>

@@ -6,7 +6,7 @@ import {
   Eye, 
   DollarSign, 
   MousePointer, 
-  Target, 
+  Target,
   TrendingUp, 
   BarChart3, 
   RefreshCw, 
@@ -67,7 +67,6 @@ export default function MetaBusinessPage() {
     datePreset: 'today',
     customRange: undefined,
     status: [],
-    objective: [],
     search: '',
     accountIds: []
   })
@@ -235,12 +234,6 @@ export default function MetaBusinessPage() {
     }))
   }
 
-  const handleObjectiveFilter = (objective: string[]) => {
-    setFilters(prev => ({
-      ...prev,
-      objective
-    }))
-  }
 
   const handleAccountFilter = (accountIds: string[]) => {
     setFilters(prev => ({
@@ -365,7 +358,6 @@ export default function MetaBusinessPage() {
   const filteredCampaigns = campaigns.filter(campaign => {
     if (filters.search && !campaign.name.toLowerCase().includes(filters.search.toLowerCase())) return false
     if (filters.status.length > 0 && !filters.status.includes(campaign.status)) return false
-    if (filters.objective.length > 0 && !filters.objective.includes(campaign.objective)) return false
     if (filters.accountIds.length > 0 && !filters.accountIds.includes(campaign.account_id)) return false
     return true
   })
@@ -468,25 +460,25 @@ export default function MetaBusinessPage() {
             </div>
 
             {/* Filtros */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center space-x-2">
-                  <Search className="w-4 h-4 text-gray-400" />
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
+              <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 sm:gap-4">
+                <div className="flex items-center space-x-2 w-full sm:w-auto sm:min-w-0">
+                  <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   <input
                     type="text"
                     placeholder="Buscar..."
                     value={filters.search}
                     onChange={(e) => handleSearchChange(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white w-full sm:w-64 min-w-0"
                   />
                 </div>
                 
-                <div className="flex items-center space-x-2">
-                  <Filter className="w-4 h-4 text-gray-400" />
+                <div className="flex items-center space-x-2 w-full sm:w-auto sm:min-w-0">
+                  <Filter className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   <select
                     value={filters.status.join(',')}
                     onChange={(e) => handleStatusFilter(e.target.value ? e.target.value.split(',') : [])}
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white w-full sm:w-auto min-w-0"
                   >
                     <option value="">Todos os Status</option>
                     <option value="ACTIVE">Ativo</option>
@@ -495,22 +487,6 @@ export default function MetaBusinessPage() {
                   </select>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <Target className="w-4 h-4 text-gray-400" />
-                  <select
-                    value={filters.objective.join(',')}
-                    onChange={(e) => handleObjectiveFilter(e.target.value ? e.target.value.split(',') : [])}
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                  >
-                    <option value="">Todos os Objetivos</option>
-                    <option value="CONVERSIONS">Conversões</option>
-                    <option value="TRAFFIC">Tráfego</option>
-                    <option value="REACH">Alcance</option>
-                    <option value="BRAND_AWARENESS">Conscientização da Marca</option>
-                    <option value="VIDEO_VIEWS">Visualizações de Vídeo</option>
-                    <option value="LEAD_GENERATION">Geração de Leads</option>
-                  </select>
-                </div>
               </div>
             </div>
 

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { MetaAdSet } from '@/lib/types'
 import StatusToggle from './StatusToggle'
+import BudgetEditor from './BudgetEditor'
 import toast from 'react-hot-toast'
 
 interface AdSetsTableProps {
@@ -34,9 +35,6 @@ export default function AdSetsTable({
   onBudgetUpdate,
   onBulkStatusUpdate
 }: AdSetsTableProps) {
-  const [editingBudget, setEditingBudget] = useState<string | null>(null)
-  const [budgetValue, setBudgetValue] = useState<string>('')
-  const [budgetType, setBudgetType] = useState<'daily' | 'lifetime'>('daily')
 
   const handleSelectAll = () => {
     if (selectedAdSets.size === adSets.length) {
@@ -60,30 +58,6 @@ export default function AdSetsTable({
     await onStatusToggle('adsets', adSetId, currentStatus)
   }
 
-  const handleBudgetEdit = (adSet: MetaAdSet) => {
-    setEditingBudget(adSet.id)
-    setBudgetValue(adSet.daily_budget ? adSet.daily_budget.toString() : adSet.lifetime_budget?.toString() || '')
-    setBudgetType(adSet.budget_type)
-  }
-
-  const handleBudgetSave = () => {
-    if (!editingBudget) return
-    
-    const budget = parseFloat(budgetValue)
-    if (isNaN(budget) || budget < 0.01) {
-      toast.error('Orçamento deve ser pelo menos R$ 0,01')
-      return
-    }
-
-    onBudgetUpdate('adsets', editingBudget, budget, budgetType)
-    setEditingBudget(null)
-    setBudgetValue('')
-  }
-
-  const handleBudgetCancel = () => {
-    setEditingBudget(null)
-    setBudgetValue('')
-  }
 
 
   const formatCurrency = (value: number) => {
@@ -242,54 +216,37 @@ export default function AdSetsTable({
                   {adSet.campaign_name}
                 </td>
                 <td className="px-6 py-4">
-                  {editingBudget === adSet.id ? (
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="number"
-                        value={budgetValue}
-                        onChange={(e) => setBudgetValue(e.target.value)}
-                        className="w-20 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                        step="0.01"
-                        min="0.01"
-                      />
-                      <select
-                        value={budgetType}
-                        onChange={(e) => setBudgetType(e.target.value as 'daily' | 'lifetime')}
-                        className="text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                      >
-                        <option value="daily">Diário</option>
-                        <option value="lifetime">Vida útil</option>
-                      </select>
-                      <button
-                        onClick={handleBudgetSave}
-                        className="text-green-600 hover:text-green-800"
-                      >
-                        <Check className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={handleBudgetCancel}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-900 dark:text-white">
-                        {adSet.daily_budget ? formatCurrency(adSet.daily_budget) : formatCurrency(adSet.lifetime_budget || 0)}
-                        <span className="text-xs text-gray-500 ml-1">
-                          ({adSet.budget_type === 'daily' ? 'diário' : 'vida útil'})
-                        </span>
-                      </span>
-                      <button
-                        onClick={() => handleBudgetEdit(adSet)}
-                        className="text-blue-600 hover:text-blue-800"
-                        title="Editar orçamento"
-                      >
-                        <DollarSign className="w-4 h-4" />
-                      </button>
-                    </div>
-                  )}
+                  <BudgetEditor
+                    id={adSet.id}
+                    currentBudget={adSet.daily_budget || adSet.lifetime_budget || 0}
+                    budgetType={adSet.budget_type}
+                    onUpdate={async (id, budget, budgetType) => {
+                      try {
+                        const response = await fetch(`/api/meta-business/adsets/${id}/budget`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            budget: budget / 100, // Converter de centavos para reais
+                            budgetType
+                          })
+                        })
+
+                        const result = await response.json()
+
+                        if (result.success) {
+                          onBudgetUpdate('adsets', id, budget, budgetType)
+                        } else {
+                          throw new Error(result.error || 'Erro ao atualizar orçamento')
+                        }
+                      } catch (error) {
+                        console.error('Erro ao atualizar orçamento:', error)
+                        throw error
+                      }
+                    }}
+                    disabled={false}
+                    minValue={100} // R$ 1,00 em centavos
+                    maxValue={10000000} // R$ 100.000,00 em centavos
+                  />
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                   {adSet.bid_amount ? formatCurrency(adSet.bid_amount) : '-'}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Calendar, ChevronDown, X } from 'lucide-react'
 
 export interface DatePreset {
@@ -92,12 +92,92 @@ export default function DateSelector({
 }: DateSelectorProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [showCustomRange, setShowCustomRange] = useState(false)
+  const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom')
+  const [dropdownAlignment, setDropdownAlignment] = useState<'left' | 'right'>('left')
+  const [isMobile, setIsMobile] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const [tempCustomRange, setTempCustomRange] = useState<DateRange>({
     since: customRange?.since || '',
     until: customRange?.until || ''
   })
 
   const selectedPreset = FACEBOOK_DATE_PRESETS.find(p => p.value === datePreset)
+
+  // Detectar se é mobile e recalcular posição
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640)
+    }
+    
+    const recalculatePosition = () => {
+      if (isOpen) {
+        // Recalcular posição quando a janela for redimensionada
+        const containerRect = containerRef.current?.getBoundingClientRect()
+        if (containerRect) {
+          const dropdownHeight = 400
+          const dropdownWidth = 320
+          const viewportHeight = window.innerHeight
+          const viewportWidth = window.innerWidth
+          
+          const spaceBelow = viewportHeight - containerRect.bottom
+          const spaceAbove = containerRect.top
+          const spaceRight = viewportWidth - containerRect.left
+          const spaceLeft = containerRect.left
+          
+          if (!isMobile) {
+            if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+              setDropdownPosition('top')
+            } else {
+              setDropdownPosition('bottom')
+            }
+            
+            if (spaceRight < dropdownWidth && spaceLeft > spaceRight) {
+              setDropdownAlignment('right')
+            } else {
+              setDropdownAlignment('left')
+            }
+          }
+        }
+      }
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    window.addEventListener('resize', recalculatePosition)
+    return () => {
+      window.removeEventListener('resize', checkMobile)
+      window.removeEventListener('resize', recalculatePosition)
+    }
+  }, [isOpen, isMobile])
+
+  // Calcular posição inicial quando abrir
+  useEffect(() => {
+    if (isOpen && containerRef.current && !isMobile) {
+      const containerRect = containerRef.current.getBoundingClientRect()
+      const dropdownHeight = 400
+      const dropdownWidth = 320
+      const viewportHeight = window.innerHeight
+      const viewportWidth = window.innerWidth
+      
+      const spaceBelow = viewportHeight - containerRect.bottom
+      const spaceAbove = containerRect.top
+      const spaceRight = viewportWidth - containerRect.left
+      const spaceLeft = containerRect.left
+      
+      if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+        setDropdownPosition('top')
+      } else {
+        setDropdownPosition('bottom')
+      }
+      
+      if (spaceRight < dropdownWidth && spaceLeft > spaceRight) {
+        setDropdownAlignment('right')
+      } else {
+        setDropdownAlignment('left')
+      }
+    }
+  }, [isOpen, isMobile])
 
   const handlePresetSelect = (preset: string) => {
     onDatePresetChange(preset)
@@ -126,21 +206,47 @@ export default function DateSelector({
   }
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        className="flex items-center space-x-2 px-3 py-2 sm:px-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors w-full sm:w-auto min-w-0"
       >
-        <Calendar className="w-4 h-4 text-gray-500" />
-        <span className="text-sm font-medium text-gray-900 dark:text-white">
+        <Calendar className="w-4 h-4 text-gray-500 flex-shrink-0" />
+        <span className="text-sm font-medium text-gray-900 dark:text-white truncate min-w-0">
           {selectedPreset?.label || 'Selecionar período'}
         </span>
-        <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-80 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
-          <div className="p-4">
+        <>
+          {/* Overlay para mobile */}
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-25 z-40 sm:hidden"
+            onClick={() => setIsOpen(false)}
+          />
+          
+          <div 
+            ref={dropdownRef}
+            className={`${
+              isMobile 
+                ? 'fixed left-2 right-2 bottom-2 top-auto' 
+                : 'absolute'
+            } w-80 max-w-[calc(100vw-1rem)] sm:max-w-none bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 ${
+              !isMobile && dropdownPosition === 'top' 
+                ? 'bottom-full mb-1' 
+                : !isMobile 
+                ? 'top-full mt-1' 
+                : ''
+            } ${
+              !isMobile && dropdownAlignment === 'right' 
+                ? 'right-0' 
+                : !isMobile 
+                ? 'left-0' 
+                : ''
+            }`}
+          >
+            <div className="p-3 sm:p-4 max-h-[70vh] sm:max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
                 Período de Tempo
@@ -217,6 +323,7 @@ export default function DateSelector({
             )}
           </div>
         </div>
+        </>
       )}
     </div>
   )
