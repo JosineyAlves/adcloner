@@ -33,10 +33,10 @@ export async function PATCH(
       }
 
       if (budgetType === 'daily' || daily_budget) {
-        updateParams.daily_budget = Math.round((budgetValue || daily_budget) * 100) // Converter reais para centavos
+        updateParams.daily_budget = Math.round(budgetValue || daily_budget) // Valor já em centavos
         updateParams.lifetime_budget = '' // Limpar lifetime budget
       } else if (budgetType === 'lifetime' || lifetime_budget) {
-        updateParams.lifetime_budget = Math.round((budgetValue || lifetime_budget) * 100) // Converter reais para centavos
+        updateParams.lifetime_budget = Math.round(budgetValue || lifetime_budget) // Valor já em centavos
         updateParams.daily_budget = '' // Limpar daily budget
       }
 

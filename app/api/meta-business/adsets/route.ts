@@ -96,8 +96,8 @@ export async function GET(request: NextRequest) {
                     campaign_advantage_budget: campaignAdvantageBudget,
                     status: adSet.status,
                     effective_status: adSet.effective_status || adSet.status,
-                    daily_budget: adSet.daily_budget ? parseInt(adSet.daily_budget) : undefined,
-                    lifetime_budget: adSet.lifetime_budget ? parseInt(adSet.lifetime_budget) : undefined,
+                    daily_budget: adSet.daily_budget ? Math.round(parseInt(adSet.daily_budget) / 100) : undefined,
+                    lifetime_budget: adSet.lifetime_budget ? Math.round(parseInt(adSet.lifetime_budget) / 100) : undefined,
                     budget_type: adSet.daily_budget ? 'daily' : 'lifetime',
                     bid_amount: adSet.bid_amount ? parseFloat(adSet.bid_amount) : undefined,
                     targeting: {
