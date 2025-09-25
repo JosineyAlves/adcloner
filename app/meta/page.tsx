@@ -62,6 +62,7 @@ export default function MetaPage() {
   const [isMetricsModalOpen, setIsMetricsModalOpen] = useState<boolean>(false)
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
   const [selectAll, setSelectAll] = useState<boolean>(false)
+  const [insights, setInsights] = useState<any[]>([])
   const [selectedMetrics, setSelectedMetrics] = useState<MetricOption[]>([
     {
       id: 'campaign_name',
@@ -127,10 +128,13 @@ export default function MetaPage() {
   }, [])
 
   useEffect(() => {
-    if (accounts.length > 0 && !selectedAccount) {
-      setSelectedAccount(accounts[0].id)
+    if (accounts.length > 0) {
+      fetchInsights()
+      if (!selectedAccount) {
+        setSelectedAccount(accounts[0].id)
+      }
     }
-  }, [accounts])
+  }, [accounts, datePreset, customRange])
 
   useEffect(() => {
     if (selectedAccount) {
@@ -159,6 +163,48 @@ export default function MetaPage() {
       toast.error('Erro ao carregar contas do Facebook')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const fetchInsights = async () => {
+    try {
+      const activeAccounts = accounts.filter(a => a.status === 'active')
+      console.log(`📊 Buscando insights de ${activeAccounts.length} contas ativas`)
+      
+      const allInsights = []
+      for (const account of activeAccounts) {
+        try {
+          console.log(`🔍 Buscando insights para conta: ${account.id}`)
+          
+          let url = `/api/insights?accountId=${account.id}`
+          if (customRange) {
+            url += `&since=${customRange.since}&until=${customRange.until}`
+          } else {
+            url += `&datePreset=${datePreset}`
+          }
+          
+          const response = await fetch(url, {
+            credentials: 'include'
+          })
+          
+          if (response.ok) {
+            const data = await response.json()
+            console.log(`✅ Insights recebidos para ${account.id}:`, data.insights?.length || 0)
+            if (data.insights && data.insights.length > 0) {
+              allInsights.push(...data.insights)
+            }
+          } else {
+            console.error(`❌ Erro ao buscar insights para ${account.id}:`, response.status)
+          }
+        } catch (error) {
+          console.error(`Error fetching insights for account ${account.id}:`, error)
+        }
+      }
+      
+      console.log(`📈 Total de insights encontrados: ${allInsights.length}`)
+      setInsights(allInsights)
+    } catch (error) {
+      console.error('Error fetching insights:', error)
     }
   }
 
@@ -249,6 +295,7 @@ export default function MetaPage() {
   const handleRefresh = async () => {
     setIsRefreshing(true)
     await fetchAccounts()
+    await fetchInsights()
     if (selectedAccount) {
       await fetchData()
     }
@@ -437,7 +484,29 @@ export default function MetaPage() {
   }
 
   const formatMetricValue = (item: any, metric: MetricOption) => {
-    const value = item[metric.id]
+    // Buscar dados dos insights se a métrica for de performance
+    const performanceMetrics = ['impressions', 'clicks', 'spend', 'reach', 'frequency', 'cpm', 'cpc', 'ctr', 'conversions', 'cost_per_conversion', 'inline_link_clicks', 'inline_post_engagement', 'conversion_rate', 'roas', 'roi']
+    
+    let value = item[metric.id]
+    
+    // Se for uma métrica de performance, buscar nos insights
+    if (performanceMetrics.includes(metric.id)) {
+      const insightData = insights.find(insight => {
+        // Mapear o tipo de item para o campo correto nos insights
+        if (activeTab === 'campanhas') {
+          return insight.campaign_id === item.id
+        } else if (activeTab === 'conjuntos') {
+          return insight.adset_id === item.id
+        } else if (activeTab === 'anuncios') {
+          return insight.ad_id === item.id
+        }
+        return false
+      })
+      
+      if (insightData) {
+        value = insightData[metric.id]
+      }
+    }
     
     if (value === undefined || value === null) {
       return '-'
@@ -512,48 +581,93 @@ export default function MetaPage() {
       <Sidebar />
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Meta Manager
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                Gerenciamento avançado de campanhas do Facebook
-              </p>
+        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          <div className="px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Meta Manager
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Gerenciamento avançado de campanhas do Facebook
+                </p>
+              </div>
+              <div className="flex items-center space-x-3">
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  Atualizado há 1 minuto
+                </span>
+                <button
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  className="btn-primary flex items-center space-x-2"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <span>Atualizar</span>
+                </button>
+              </div>
             </div>
-            <div className="flex items-center space-x-3">
-              <select
-                value={selectedAccount}
-                onChange={(e) => setSelectedAccount(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {accounts.map((account) => (
-                  <option key={account.id} value={account.id}>
-                    {account.name}
-                  </option>
-                ))}
-              </select>
-              <DateSelector
-                datePreset={datePreset}
-                customRange={customRange}
-                onDatePresetChange={handleDatePresetChange}
-                onCustomRangeChange={handleCustomRangeChange}
-              />
+          </div>
+          
+          {/* Filtros */}
+          <div className="px-6 py-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Nome da Campanha:
+                </label>
+                <input
+                  type="text"
+                  placeholder="Filtrar por nome"
+                  className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Status da Campanha:
+                </label>
+                <select className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option>Qualquer</option>
+                  <option>Ativa</option>
+                  <option>Pausada</option>
+                </select>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Período de Visualização:
+                </label>
+                <DateSelector
+                  datePreset={datePreset}
+                  customRange={customRange}
+                  onDatePresetChange={handleDatePresetChange}
+                  onCustomRangeChange={handleCustomRangeChange}
+                />
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Conta de Anúncio:
+                </label>
+                <select
+                  value={selectedAccount}
+                  onChange={(e) => setSelectedAccount(e.target.value)}
+                  className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {accounts.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
               <button
                 onClick={() => setIsMetricsModalOpen(true)}
                 className="btn-secondary flex items-center space-x-2"
               >
                 <Settings className="w-4 h-4" />
                 <span>Configurar Métricas</span>
-              </button>
-              <button
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-                className="btn-secondary flex items-center space-x-2"
-              >
-                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                <span>Atualizar</span>
               </button>
             </div>
           </div>

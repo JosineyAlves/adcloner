@@ -74,42 +74,23 @@ export default function StatusToggle({
   }
 
   return (
-    <div className="flex items-center space-x-2">
-      <button
-        type="button"
-        className={getToggleClasses()}
-        onClick={handleToggle}
-        disabled={disabled || isLoading}
-        aria-pressed={status === 'ACTIVE'}
-        role="switch"
-      >
-        <span className="sr-only">
-          {status === 'ACTIVE' ? 'Ativar' : 'Pausar'}
-        </span>
-        <span className={getThumbClasses()}>
-          {isLoading ? (
-            <div className={`${getIconSize()} animate-spin rounded-full border-2 border-gray-300 border-t-gray-600 mx-auto mt-0.5`} />
-          ) : (
-            <>
-              {status === 'ACTIVE' ? (
-                <Play className={`${getIconSize()} text-green-600 ml-0.5 mt-0.5`} />
-              ) : (
-                <Pause className={`${getIconSize()} text-gray-400 ml-1 mt-0.5`} />
-              )}
-            </>
-          )}
-        </span>
-      </button>
-      
-      <span className={`text-xs font-medium ${
-        status === 'ACTIVE' 
-          ? 'text-green-600' 
-          : status === 'PAUSED'
-          ? 'text-gray-500'
-          : 'text-red-600'
-      }`}>
-        {isLoading ? '...' : status === 'ACTIVE' ? 'Ativo' : status === 'PAUSED' ? 'Pausado' : 'Deletado'}
+    <button
+      type="button"
+      className={getToggleClasses()}
+      onClick={handleToggle}
+      disabled={disabled || isLoading}
+      aria-pressed={status === 'ACTIVE'}
+      role="switch"
+      title={status === 'ACTIVE' ? 'Clique para pausar' : 'Clique para ativar'}
+    >
+      <span className="sr-only">
+        {status === 'ACTIVE' ? 'Ativar' : 'Pausar'}
       </span>
-    </div>
+      <span className={getThumbClasses()}>
+        {isLoading ? (
+          <div className={`${getIconSize()} animate-spin rounded-full border-2 border-gray-300 border-t-gray-600 mx-auto mt-0.5`} />
+        ) : null}
+      </span>
+    </button>
   )
 }
