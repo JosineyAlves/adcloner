@@ -63,198 +63,165 @@ export default function MetaPage() {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
   const [selectAll, setSelectAll] = useState<boolean>(false)
   const [insights, setInsights] = useState<any[]>([])
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null)
-  const [selectedMetrics, setSelectedMetrics] = useState<MetricOption[]>([
-    // Identificação
-    {
-      id: 'campaign_name',
-      label: 'Campanha',
-      description: 'Nome da campanha',
-      iconColor: 'text-gray-600',
-      type: 'text',
-      category: 'Identificação',
-      visible: true,
-      order: 1
-    },
-    {
-      id: 'status',
-      label: 'Status',
-      description: 'Status da campanha',
-      iconColor: 'text-gray-600',
-      type: 'text',
-      category: 'Identificação',
-      visible: true,
-      order: 2
-    },
-    
-    // Orçamento e Gastos
-    {
-      id: 'daily_budget',
-      label: 'Orçamento',
-      description: 'Orçamento diário da campanha',
-      iconColor: 'text-green-600',
-      type: 'currency',
-      category: 'Orçamento e Gastos',
-      visible: true,
-      order: 3
-    },
-    {
-      id: 'spend',
-      label: 'Valor Gasto',
-      description: 'Valor total gasto na campanha',
-      iconColor: 'text-red-600',
-      type: 'currency',
-      category: 'Orçamento e Gastos',
-      visible: true,
-      order: 4
-    },
-    
-    // Resultados e Conversões
-    {
-      id: 'conversions',
-      label: 'Resultados',
-      description: 'Número total de conversões',
-      iconColor: 'text-blue-600',
-      type: 'number',
-      category: 'Resultados e Conversões',
-      visible: true,
-      order: 5
-    },
-    {
-      id: 'cost_per_conversion',
-      label: 'Custo por Resultado (CPA)',
-      description: 'Custo por conversão',
-      iconColor: 'text-orange-600',
-      type: 'currency',
-      category: 'Resultados e Conversões',
-      visible: true,
-      order: 6
-    },
-    {
-      id: 'actions_purchase',
-      label: 'Finalização de Compras',
-      description: 'Número de compras finalizadas',
-      iconColor: 'text-purple-600',
-      type: 'number',
-      category: 'Resultados e Conversões',
-      visible: true,
-      order: 7
-    },
-    {
-      id: 'cost_per_action_type_purchase',
-      label: 'Custo por Compra',
-      description: 'Custo por finalização de compra',
-      iconColor: 'text-indigo-600',
-      type: 'currency',
-      category: 'Resultados e Conversões',
-      visible: true,
-      order: 8
-    },
-    
-    // Performance e Engajamento
-    {
-      id: 'ctr',
-      label: 'CTR',
-      description: 'Taxa de cliques no link',
-      iconColor: 'text-cyan-600',
-      type: 'percentage',
-      category: 'Performance e Engajamento',
-      visible: true,
-      order: 9
-    },
-    {
-      id: 'cpm',
-      label: 'CPM',
-      description: 'Custo por 1.000 impressões',
-      iconColor: 'text-teal-600',
-      type: 'currency',
-      category: 'Performance e Engajamento',
-      visible: true,
-      order: 10
-    },
-    {
-      id: 'cpc',
-      label: 'CPC',
-      description: 'Custo por clique no link',
-      iconColor: 'text-emerald-600',
-      type: 'currency',
-      category: 'Performance e Engajamento',
-      visible: true,
-      order: 11
-    },
-    {
-      id: 'reach',
-      label: 'Alcance',
-      description: 'Número de pessoas únicas alcançadas',
-      iconColor: 'text-lime-600',
-      type: 'number',
-      category: 'Performance e Engajamento',
-      visible: true,
-      order: 12
-    },
-    {
-      id: 'frequency',
-      label: 'Frequência',
-      description: 'Média de vezes que cada pessoa viu o anúncio',
-      iconColor: 'text-yellow-600',
-      type: 'number',
-      category: 'Performance e Engajamento',
-      visible: true,
-      order: 13
-    },
-    {
-      id: 'impressions',
-      label: 'Impressões',
-      description: 'Número total de impressões',
-      iconColor: 'text-amber-600',
-      type: 'number',
-      category: 'Performance e Engajamento',
-      visible: true,
-      order: 14
-    },
-    {
-      id: 'link_clicks',
-      label: 'Cliques no Link',
-      description: 'Número de cliques em links',
-      iconColor: 'text-orange-600',
-      type: 'number',
-      category: 'Performance e Engajamento',
-      visible: true,
-      order: 15
-    },
-    {
-      id: 'landing_page_views',
-      label: 'Visualizações da Página',
-      description: 'Visualizações da página de destino',
-      iconColor: 'text-pink-600',
-      type: 'number',
-      category: 'Performance e Engajamento',
-      visible: true,
-      order: 16
-    },
-    
-    // ROI e Valor
-    {
-      id: 'conversion_values_purchase',
-      label: 'Valor de Conversão',
-      description: 'Valor total das conversões de compra',
-      iconColor: 'text-green-600',
-      type: 'currency',
-      category: 'ROI e Valor',
-      visible: true,
-      order: 17
-    },
-    {
-      id: 'roas',
-      label: 'ROAS',
-      description: 'Retorno sobre o investimento em publicidade',
-      iconColor: 'text-violet-600',
-      type: 'currency',
-      category: 'ROI e Valor',
-      visible: true,
-      order: 18
-    }
-  ])
+   const [selectedMetrics, setSelectedMetrics] = useState<MetricOption[]>([
+     // Identificação
+     {
+       id: 'name',
+       label: 'Nome',
+       description: 'Nome da campanha/conjunto/anúncio',
+       iconColor: 'text-gray-600',
+       type: 'text',
+       category: 'Identificação',
+       visible: true,
+       order: 1
+     },
+     {
+       id: 'status',
+       label: 'Status',
+       description: 'Status da campanha/conjunto/anúncio',
+       iconColor: 'text-gray-600',
+       type: 'text',
+       category: 'Identificação',
+       visible: true,
+       order: 2
+     },
+     {
+       id: 'objective',
+       label: 'Objetivo',
+       description: 'Objetivo da campanha',
+       iconColor: 'text-gray-600',
+       type: 'text',
+       category: 'Identificação',
+       visible: true,
+       order: 3
+     },
+     {
+       id: 'created_time',
+       label: 'Criado em',
+       description: 'Data de criação',
+       iconColor: 'text-gray-600',
+       type: 'text',
+       category: 'Identificação',
+       visible: true,
+       order: 4
+     },
+     
+     // Orçamento e Gastos
+     {
+       id: 'daily_budget',
+       label: 'Orçamento Diário',
+       description: 'Orçamento diário da campanha',
+       iconColor: 'text-green-600',
+       type: 'currency',
+       category: 'Orçamento e Gastos',
+       visible: true,
+       order: 5
+     },
+     {
+       id: 'spend',
+       label: 'Valor Gasto',
+       description: 'Valor total gasto na campanha',
+       iconColor: 'text-red-600',
+       type: 'currency',
+       category: 'Orçamento e Gastos',
+       visible: true,
+       order: 6
+     },
+     
+     // Performance e Engajamento
+     {
+       id: 'impressions',
+       label: 'Impressões',
+       description: 'Número total de impressões',
+       iconColor: 'text-amber-600',
+       type: 'number',
+       category: 'Performance e Engajamento',
+       visible: true,
+       order: 7
+     },
+     {
+       id: 'clicks',
+       label: 'Cliques',
+       description: 'Número de cliques em seus anúncios',
+       iconColor: 'text-blue-600',
+       type: 'number',
+       category: 'Performance e Engajamento',
+       visible: true,
+       order: 8
+     },
+     {
+       id: 'reach',
+       label: 'Alcance',
+       description: 'Número de pessoas únicas alcançadas',
+       iconColor: 'text-lime-600',
+       type: 'number',
+       category: 'Performance e Engajamento',
+       visible: true,
+       order: 9
+     },
+     {
+       id: 'frequency',
+       label: 'Frequência',
+       description: 'Média de vezes que cada pessoa viu o anúncio',
+       iconColor: 'text-yellow-600',
+       type: 'number',
+       category: 'Performance e Engajamento',
+       visible: true,
+       order: 10
+     },
+     {
+       id: 'ctr',
+       label: 'CTR',
+       description: 'Taxa de cliques no link',
+       iconColor: 'text-cyan-600',
+       type: 'percentage',
+       category: 'Performance e Engajamento',
+       visible: true,
+       order: 11
+     },
+     {
+       id: 'cpm',
+       label: 'CPM',
+       description: 'Custo por 1.000 impressões',
+       iconColor: 'text-teal-600',
+       type: 'currency',
+       category: 'Performance e Engajamento',
+       visible: true,
+       order: 12
+     },
+     {
+       id: 'cpc',
+       label: 'CPC',
+       description: 'Custo por clique no link',
+       iconColor: 'text-emerald-600',
+       type: 'currency',
+       category: 'Performance e Engajamento',
+       visible: true,
+       order: 13
+     },
+     
+     // Resultados e Conversões
+     {
+       id: 'conversions',
+       label: 'Resultados',
+       description: 'Número total de conversões',
+       iconColor: 'text-blue-600',
+       type: 'number',
+       category: 'Resultados e Conversões',
+       visible: true,
+       order: 14
+     },
+     {
+       id: 'cost_per_conversion',
+       label: 'Custo por Resultado (CPA)',
+       description: 'Custo por conversão',
+       iconColor: 'text-orange-600',
+       type: 'currency',
+       category: 'Resultados e Conversões',
+       visible: true,
+       order: 15
+     }
+   ])
 
   const tabs = [
     { id: 'contas', label: 'Contas', icon: BarChart3 },
@@ -480,63 +447,12 @@ export default function MetaPage() {
   }
 
   const getCurrentItems = () => {
-    let items: any[] = []
     switch (activeTab) {
-      case 'campanhas': items = campaigns; break
-      case 'conjuntos': items = adsets; break
-      case 'anuncios': items = ads; break
-      default: items = []
+      case 'campanhas': return campaigns
+      case 'conjuntos': return adsets
+      case 'anuncios': return ads
+      default: return []
     }
-    
-    // Aplicar ordenação se configurada
-    if (sortConfig) {
-      return [...items].sort((a, b) => {
-        let aValue = a[sortConfig.key]
-        let bValue = b[sortConfig.key]
-        
-        // Se for uma métrica de performance, buscar nos insights
-        const performanceMetrics = [
-          'impressions', 'clicks', 'spend', 'reach', 'frequency', 'cpm', 'cpc', 'ctr', 
-          'conversions', 'cost_per_conversion', 'inline_link_clicks', 'inline_post_engagement', 
-          'conversion_rate', 'roas', 'roi', 'link_clicks', 'landing_page_views',
-          'actions_purchase', 'cost_per_action_type_purchase', 'conversion_values_purchase'
-        ]
-        
-        if (performanceMetrics.includes(sortConfig.key)) {
-          const aInsight = insights.find(insight => {
-            if (activeTab === 'campanhas') return insight.campaign_id === a.id
-            else if (activeTab === 'conjuntos') return insight.adset_id === a.id
-            else if (activeTab === 'anuncios') return insight.ad_id === a.id
-            return false
-          })
-          const bInsight = insights.find(insight => {
-            if (activeTab === 'campanhas') return insight.campaign_id === b.id
-            else if (activeTab === 'conjuntos') return insight.adset_id === b.id
-            else if (activeTab === 'anuncios') return insight.ad_id === b.id
-            return false
-          })
-          
-          aValue = aInsight?.[sortConfig.key] || 0
-          bValue = bInsight?.[sortConfig.key] || 0
-        }
-        
-        // Converter para números se possível
-        if (!isNaN(Number(aValue)) && !isNaN(Number(bValue))) {
-          aValue = Number(aValue)
-          bValue = Number(bValue)
-        }
-        
-        if (aValue < bValue) {
-          return sortConfig.direction === 'asc' ? -1 : 1
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === 'asc' ? 1 : -1
-        }
-        return 0
-      })
-    }
-    
-    return items
   }
 
   const handleInlineBudgetSave = async (type: 'campaign' | 'adset', id: string, newBudget: number, budgetType: 'daily_budget' | 'lifetime_budget') => {
@@ -593,45 +509,6 @@ export default function MetaPage() {
     } catch (error) {
       console.error('Error updating status:', error)
       toast.error('Erro ao atualizar status')
-    }
-  }
-
-  const handleSort = (key: string) => {
-    let direction: 'asc' | 'desc' = 'asc'
-    
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc'
-    }
-    
-    setSortConfig({ key, direction })
-  }
-
-  const getSortIcon = (key: string) => {
-    if (!sortConfig || sortConfig.key !== key) {
-      return (
-        <div className="flex flex-col">
-          <svg className="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
-          </svg>
-          <svg className="w-3 h-3 text-gray-400 -mt-1" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-          </svg>
-        </div>
-      )
-    }
-    
-    if (sortConfig.direction === 'asc') {
-      return (
-        <svg className="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
-        </svg>
-      )
-    } else {
-      return (
-        <svg className="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-        </svg>
-      )
     }
   }
 
@@ -713,106 +590,109 @@ export default function MetaPage() {
     return new Date(dateString).toLocaleDateString('pt-BR')
   }
 
-  const formatMetricValue = (item: any, metric: MetricOption) => {
-    // Buscar dados dos insights se a métrica for de performance
-    const performanceMetrics = [
-      'impressions', 'clicks', 'spend', 'reach', 'frequency', 'cpm', 'cpc', 'ctr', 
-      'conversions', 'cost_per_conversion', 'inline_link_clicks', 'inline_post_engagement', 
-      'conversion_rate', 'roas', 'roi', 'link_clicks', 'landing_page_views',
-      'actions_purchase', 'cost_per_action_type_purchase', 'conversion_values_purchase'
-    ]
-    
-    let value = item[metric.id]
-    
-    // Se for uma métrica de performance, buscar nos insights
-    if (performanceMetrics.includes(metric.id)) {
-      const insightData = insights.find(insight => {
-        // Mapear o tipo de item para o campo correto nos insights
-        if (activeTab === 'campanhas') {
-          return insight.campaign_id === item.id
-        } else if (activeTab === 'conjuntos') {
-          return insight.adset_id === item.id
-        } else if (activeTab === 'anuncios') {
-          return insight.ad_id === item.id
-        }
-        return false
-      })
-      
-      if (insightData) {
-        // Lidar com métricas aninhadas
-        if (metric.id === 'actions_purchase') {
-          // Buscar ações de compra específicas
-          if (insightData.actions) {
-            const purchaseAction = insightData.actions.find((action: any) => 
-              action.action_type === 'purchase' || action.action_type === 'offsite_conversion'
-            )
-            value = purchaseAction ? purchaseAction.value : 0
-          }
-        } else if (metric.id === 'cost_per_action_type_purchase') {
-          // Buscar custo por ação de compra
-          if (insightData.cost_per_action_type) {
-            const purchaseCost = insightData.cost_per_action_type.find((cost: any) => 
-              cost.action_type === 'purchase' || cost.action_type === 'offsite_conversion'
-            )
-            value = purchaseCost ? purchaseCost.value : 0
-          }
-        } else if (metric.id === 'conversion_values_purchase') {
-          // Buscar valor de conversão de compra
-          if (insightData.conversion_values) {
-            const purchaseValue = insightData.conversion_values.find((conv: any) => 
-              conv.action_type === 'purchase' || conv.action_type === 'offsite_conversion'
-            )
-            value = purchaseValue ? purchaseValue.value : 0
-          }
-        } else {
-          // Métricas simples
-          value = insightData[metric.id]
-        }
-      }
-    }
-    
-    if (value === undefined || value === null) {
-      return '-'
-    }
+   const formatMetricValue = (item: any, metric: MetricOption) => {
+     // Métricas que vêm dos insights (performance)
+     const performanceMetrics = [
+       'impressions', 'clicks', 'spend', 'reach', 'frequency', 'cpm', 'cpc', 'ctr', 
+       'conversions', 'cost_per_conversion', 'inline_link_clicks', 'inline_post_engagement', 
+       'conversion_rate', 'roas', 'roi', 'link_clicks', 'landing_page_views',
+       'actions_purchase', 'cost_per_action_type_purchase', 'conversion_values_purchase'
+     ]
+     
+     let value = item[metric.id]
+     
+     // Se for uma métrica de performance, buscar nos insights
+     if (performanceMetrics.includes(metric.id)) {
+       const insightData = insights.find(insight => {
+         // Mapear o tipo de item para o campo correto nos insights
+         if (activeTab === 'campanhas') {
+           return insight.campaign_id === item.id
+         } else if (activeTab === 'conjuntos') {
+           return insight.adset_id === item.id
+         } else if (activeTab === 'anuncios') {
+           return insight.ad_id === item.id
+         }
+         return false
+       })
+       
+       if (insightData) {
+         // Lidar com métricas aninhadas
+         if (metric.id === 'actions_purchase') {
+           // Buscar ações de compra específicas
+           if (insightData.actions) {
+             const purchaseAction = insightData.actions.find((action: any) => 
+               action.action_type === 'purchase' || action.action_type === 'offsite_conversion'
+             )
+             value = purchaseAction ? purchaseAction.value : 0
+           }
+         } else if (metric.id === 'cost_per_action_type_purchase') {
+           // Buscar custo por ação de compra
+           if (insightData.cost_per_action_type) {
+             const purchaseCost = insightData.cost_per_action_type.find((cost: any) => 
+               cost.action_type === 'purchase' || cost.action_type === 'offsite_conversion'
+             )
+             value = purchaseCost ? purchaseCost.value : 0
+           }
+         } else if (metric.id === 'conversion_values_purchase') {
+           // Buscar valor de conversão de compra
+           if (insightData.conversion_values) {
+             const purchaseValue = insightData.conversion_values.find((conv: any) => 
+               conv.action_type === 'purchase' || conv.action_type === 'offsite_conversion'
+             )
+             value = purchaseValue ? purchaseValue.value : 0
+           }
+         } else {
+           // Métricas simples
+           value = insightData[metric.id]
+         }
+       }
+     }
+     
+     if (value === undefined || value === null || value === '') {
+       return '-'
+     }
 
-    switch (metric.type) {
-      case 'currency':
-        if (metric.id === 'daily_budget' || metric.id === 'lifetime_budget') {
-          const budgetValue = typeof value === 'number' ? value / 100 : parseFloat(value) / 100 || 0
-          const budgetType = metric.id === 'daily_budget' ? 'daily_budget' : 'lifetime_budget'
-          const itemType = activeTab === 'campanhas' ? 'campaign' : 'adset'
-          
-          return (
-            <InlineBudgetEditor
-              value={budgetValue}
-              onSave={(newValue) => handleInlineBudgetSave(itemType, item.id, newValue, budgetType)}
-            />
-          )
-        }
-        // Para métricas de moeda, dividir por 100 se necessário (API retorna em centavos)
-        const currencyValue = typeof value === 'number' ? value : parseFloat(value) || 0
-        return formatCurrency(currencyValue)
-      case 'percentage':
-        return `${parseFloat(value).toFixed(2)}%`
-      case 'number':
-        return parseInt(value).toLocaleString()
-      case 'text':
-      default:
-        if (metric.id === 'status') {
-          return (
-            <StatusToggle
-              status={value}
-              onToggle={(newStatus) => {
-                const itemType = activeTab === 'campanhas' ? 'campaign' : 
-                                activeTab === 'conjuntos' ? 'adset' : 'ad'
-                handleToggleStatus(itemType, item.id, newStatus)
-              }}
-            />
-          )
-        }
-        return value.toString()
-    }
-  }
+     switch (metric.type) {
+       case 'currency':
+         if (metric.id === 'daily_budget' || metric.id === 'lifetime_budget') {
+           const budgetValue = typeof value === 'number' ? value / 100 : parseFloat(value) / 100 || 0
+           const budgetType = metric.id === 'daily_budget' ? 'daily_budget' : 'lifetime_budget'
+           const itemType = activeTab === 'campanhas' ? 'campaign' : 'adset'
+           
+           return (
+             <InlineBudgetEditor
+               value={budgetValue}
+               onSave={(newValue) => handleInlineBudgetSave(itemType, item.id, newValue, budgetType)}
+             />
+           )
+         }
+         // Para métricas de moeda, dividir por 100 se necessário (API retorna em centavos)
+         const currencyValue = typeof value === 'number' ? value : parseFloat(value) || 0
+         return formatCurrency(currencyValue)
+       case 'percentage':
+         return `${parseFloat(value).toFixed(2)}%`
+       case 'number':
+         return parseInt(value).toLocaleString()
+       case 'text':
+       default:
+         if (metric.id === 'status') {
+           return (
+             <StatusToggle
+               status={value}
+               onToggle={(newStatus) => {
+                 const itemType = activeTab === 'campanhas' ? 'campaign' : 
+                                 activeTab === 'conjuntos' ? 'adset' : 'ad'
+                 handleToggleStatus(itemType, item.id, newStatus)
+               }}
+             />
+           )
+         }
+         if (metric.id === 'created_time') {
+           return formatDate(value)
+         }
+         return value.toString()
+     }
+   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -1017,12 +897,18 @@ export default function MetaPage() {
                           .map((metric) => (
                             <th 
                               key={metric.id}
-                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
-                              onClick={() => handleSort(metric.id)}
+                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
                             >
                               <div className="flex items-center space-x-1">
                                 <span>{metric.label}</span>
-                                {getSortIcon(metric.id)}
+                                <div className="flex flex-col">
+                                  <svg className="w-2 h-2 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+                                  </svg>
+                                  <svg className="w-2 h-2 text-gray-400 -mt-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
                               </div>
                             </th>
                           ))}
@@ -1080,12 +966,18 @@ export default function MetaPage() {
                           .map((metric) => (
                             <th 
                               key={metric.id}
-                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
-                              onClick={() => handleSort(metric.id)}
+                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
                             >
                               <div className="flex items-center space-x-1">
                                 <span>{metric.label}</span>
-                                {getSortIcon(metric.id)}
+                                <div className="flex flex-col">
+                                  <svg className="w-2 h-2 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+                                  </svg>
+                                  <svg className="w-2 h-2 text-gray-400 -mt-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
                               </div>
                             </th>
                           ))}
@@ -1143,12 +1035,18 @@ export default function MetaPage() {
                           .map((metric) => (
                             <th 
                               key={metric.id}
-                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
-                              onClick={() => handleSort(metric.id)}
+                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
                             >
                               <div className="flex items-center space-x-1">
                                 <span>{metric.label}</span>
-                                {getSortIcon(metric.id)}
+                                <div className="flex flex-col">
+                                  <svg className="w-2 h-2 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+                                  </svg>
+                                  <svg className="w-2 h-2 text-gray-400 -mt-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
                               </div>
                             </th>
                           ))}

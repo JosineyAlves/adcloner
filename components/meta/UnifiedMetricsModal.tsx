@@ -186,66 +186,6 @@ const AVAILABLE_METRICS: Omit<MetricOption, 'visible' | 'order'>[] = [
     type: 'currency',
     category: 'Status'
   },
-  
-  // Métricas de Compra Específicas
-  {
-    id: 'actions_purchase',
-    label: 'Finalização de Compras',
-    description: 'Número de compras finalizadas',
-    iconColor: 'text-purple-600',
-    type: 'number',
-    category: 'Conversão'
-  },
-  {
-    id: 'cost_per_action_type_purchase',
-    label: 'Custo por Compra',
-    description: 'Custo por finalização de compra',
-    iconColor: 'text-indigo-600',
-    type: 'currency',
-    category: 'Conversão'
-  },
-  {
-    id: 'conversion_values_purchase',
-    label: 'Valor de Conversão',
-    description: 'Valor total das conversões de compra',
-    iconColor: 'text-green-600',
-    type: 'currency',
-    category: 'Conversão'
-  },
-  
-  // Métricas de Engajamento Adicionais
-  {
-    id: 'link_clicks',
-    label: 'Cliques no Link',
-    description: 'Número de cliques em links',
-    iconColor: 'text-orange-600',
-    type: 'number',
-    category: 'Engajamento'
-  },
-  {
-    id: 'landing_page_views',
-    label: 'Visualizações da Página',
-    description: 'Visualizações da página de destino',
-    iconColor: 'text-pink-600',
-    type: 'number',
-    category: 'Engajamento'
-  },
-  {
-    id: 'post_engagement',
-    label: 'Engajamento do Post',
-    description: 'Engajamento total do post',
-    iconColor: 'text-violet-600',
-    type: 'number',
-    category: 'Engajamento'
-  },
-  {
-    id: 'page_engagement',
-    label: 'Engajamento da Página',
-    description: 'Engajamento da página',
-    iconColor: 'text-fuchsia-600',
-    type: 'number',
-    category: 'Engajamento'
-  },
   {
     id: 'created_time',
     label: 'Criada em',
