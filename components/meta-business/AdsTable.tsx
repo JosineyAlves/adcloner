@@ -179,7 +179,7 @@ export default function AdsTable({
                 Status
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Nome
+                Anúncio
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Conjunto
@@ -228,9 +228,6 @@ export default function AdsTable({
                 <td className="px-6 py-4">
                   <div className="text-sm font-medium text-gray-900 dark:text-white">
                     {ad.name}
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {ad.account_name}
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">

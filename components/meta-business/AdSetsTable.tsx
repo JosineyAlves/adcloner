@@ -158,7 +158,7 @@ export default function AdSetsTable({
                 Status
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Nome
+                Conjunto
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Campanha
@@ -208,9 +208,6 @@ export default function AdSetsTable({
                   <div className="text-sm font-medium text-gray-900 dark:text-white">
                     {adSet.name}
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {adSet.account_name}
-                  </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                   {adSet.campaign_name}
@@ -246,6 +243,8 @@ export default function AdSetsTable({
                     disabled={false}
                     minValue={100} // R$ 1,00 em centavos
                     maxValue={10000000} // R$ 100.000,00 em centavos
+                    isCBO={adSet.campaign_advantage_budget}
+                    level="adset"
                   />
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">

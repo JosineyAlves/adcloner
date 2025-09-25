@@ -13,6 +13,8 @@ interface BudgetEditorProps {
   currency?: string
   minValue?: number
   maxValue?: number
+  isCBO?: boolean // Campaign Budget Optimization
+  level?: 'campaign' | 'adset' // Nível do orçamento
 }
 
 export default function BudgetEditor({
@@ -23,7 +25,9 @@ export default function BudgetEditor({
   disabled = false,
   currency = 'BRL',
   minValue = 1,
-  maxValue = 1000000
+  maxValue = 1000000,
+  isCBO = false,
+  level = 'adset'
 }: BudgetEditorProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [budget, setBudget] = useState(currentBudget.toString())
@@ -64,6 +68,18 @@ export default function BudgetEditor({
 
   const handleStartEdit = () => {
     if (disabled) return
+    
+    // Verificar se pode editar baseado no tipo de orçamento
+    if (level === 'campaign' && !isCBO) {
+      toast.error('Esta campanha não usa CBO. Edite o orçamento no nível do Conjunto de Anúncios.')
+      return
+    }
+    
+    if (level === 'adset' && isCBO) {
+      toast.error('Esta campanha usa CBO. Edite o orçamento no nível da Campanha.')
+      return
+    }
+    
     setIsEditing(true)
     setBudget(parseFromCents(currentBudget))
   }
@@ -179,11 +195,29 @@ export default function BudgetEditor({
     )
   }
 
+  // Determinar se pode editar
+  const canEdit = !disabled && (
+    (level === 'campaign' && isCBO) || 
+    (level === 'adset' && !isCBO)
+  )
+
+  // Determinar mensagem de tooltip
+  const getTooltipMessage = () => {
+    if (disabled) return 'Orçamento não pode ser editado'
+    if (level === 'campaign' && !isCBO) return 'Esta campanha não usa CBO. Edite o orçamento no nível do Conjunto de Anúncios.'
+    if (level === 'adset' && isCBO) return 'Esta campanha usa CBO. Edite o orçamento no nível da Campanha.'
+    return `Clique para editar orçamento ${budgetType === 'daily' ? 'diário' : 'total'}`
+  }
+
   return (
     <div 
-      className="flex items-center space-x-2 min-w-[120px] cursor-pointer group hover:bg-gray-50 rounded px-2 py-1 transition-colors"
+      className={`flex items-center space-x-2 min-w-[120px] rounded px-2 py-1 transition-colors ${
+        canEdit 
+          ? 'cursor-pointer group hover:bg-gray-50' 
+          : 'cursor-not-allowed opacity-60'
+      }`}
       onClick={handleStartEdit}
-      title={`Clique para editar orçamento ${budgetType === 'daily' ? 'diário' : 'total'}`}
+      title={getTooltipMessage()}
     >
       <DollarSign className="text-gray-400 w-4 h-4" />
       <span className="text-sm font-medium text-gray-900 dark:text-white">
@@ -193,9 +227,15 @@ export default function BudgetEditor({
         {budgetType === 'daily' ? '/dia' : '/total'}
       </span>
       
-      {!disabled && (
+      {canEdit && (
         <div className="opacity-0 group-hover:opacity-100 transition-opacity">
           <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+        </div>
+      )}
+      
+      {!canEdit && (
+        <div className="text-xs text-gray-400">
+          {level === 'campaign' && !isCBO ? 'ABO' : level === 'adset' && isCBO ? 'CBO' : ''}
         </div>
       )}
     </div>

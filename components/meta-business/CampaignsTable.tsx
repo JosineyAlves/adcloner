@@ -145,10 +145,7 @@ export default function CampaignsTable({
                 Status
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Nome
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Objetivo
+                Campanha
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Orçamento
@@ -195,59 +192,41 @@ export default function CampaignsTable({
                   <div className="text-sm font-medium text-gray-900 dark:text-white">
                     {campaign.name}
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {campaign.account_name}
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                  {campaign.objective}
                 </td>
                 <td className="px-6 py-4">
-                  {campaign.advantage_campaign_budget ? (
-                    <BudgetEditor
-                      id={campaign.id}
-                      currentBudget={campaign.daily_budget || campaign.lifetime_budget || 0}
-                      budgetType={campaign.budget_type}
-                      onUpdate={async (id, budget, budgetType) => {
-                        try {
-                          const response = await fetch(`/api/meta-business/campaigns/${id}/budget`, {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              budget: budget / 100, // Converter de centavos para reais
-                              budgetType
-                            })
+                  <BudgetEditor
+                    id={campaign.id}
+                    currentBudget={campaign.daily_budget || campaign.lifetime_budget || 0}
+                    budgetType={campaign.budget_type}
+                    onUpdate={async (id, budget, budgetType) => {
+                      try {
+                        const response = await fetch(`/api/meta-business/campaigns/${id}/budget`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            budget: budget / 100, // Converter de centavos para reais
+                            budgetType
                           })
+                        })
 
-                          const result = await response.json()
+                        const result = await response.json()
 
-                          if (result.success) {
-                            onBudgetUpdate('campaigns', id, budget, budgetType)
-                          } else {
-                            throw new Error(result.error || 'Erro ao atualizar orçamento')
-                          }
-                        } catch (error) {
-                          console.error('Erro ao atualizar orçamento:', error)
-                          throw error
+                        if (result.success) {
+                          onBudgetUpdate('campaigns', id, budget, budgetType)
+                        } else {
+                          throw new Error(result.error || 'Erro ao atualizar orçamento')
                         }
-                      }}
-                      disabled={false}
-                      minValue={100} // R$ 1,00 em centavos
-                      maxValue={10000000} // R$ 100.000,00 em centavos
-                    />
-                  ) : (
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-900 dark:text-white">
-                        {campaign.daily_budget ? formatCurrency(campaign.daily_budget) : formatCurrency(campaign.lifetime_budget || 0)}
-                        <span className="text-xs text-gray-500 ml-1">
-                          ({campaign.budget_type === 'daily' ? 'diário' : 'vida útil'})
-                        </span>
-                      </span>
-                      <span className="text-xs text-gray-400" title="Advantage Campaign Budget não ativo - edite no nível do Conjunto de Anúncios">
-                        <Info className="w-4 h-4" />
-                      </span>
-                    </div>
-                  )}
+                      } catch (error) {
+                        console.error('Erro ao atualizar orçamento:', error)
+                        throw error
+                      }
+                    }}
+                    disabled={false}
+                    minValue={100} // R$ 1,00 em centavos
+                    maxValue={10000000} // R$ 100.000,00 em centavos
+                    isCBO={campaign.advantage_campaign_budget}
+                    level="campaign"
+                  />
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                   {formatCurrency(campaign.spend)}

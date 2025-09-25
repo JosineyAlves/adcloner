@@ -151,6 +151,7 @@ export interface MetaAdSet {
   name: string
   campaign_id: string
   campaign_name: string
+  campaign_advantage_budget: boolean // Se a campanha pai usa CBO
   status: 'ACTIVE' | 'PAUSED' | 'ARCHIVED'
   effective_status: 'ACTIVE' | 'PAUSED' | 'ARCHIVED' | 'CAMPAIGN_PAUSED' | 'CAMPAIGN_ARCHIVED'
   daily_budget?: number
