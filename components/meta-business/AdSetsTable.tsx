@@ -20,9 +20,9 @@ interface AdSetsTableProps {
   adSets: MetaAdSet[]
   selectedAdSets: Set<string>
   onSelectionChange: (selected: Set<string>) => void
-  onStatusToggle: (id: string, currentStatus: string) => void
-  onBudgetUpdate: (id: string, budget: number, budgetType: 'daily' | 'lifetime') => void
-  onBulkStatusUpdate: (status: string) => void
+  onStatusToggle: (type: 'campaigns' | 'adsets' | 'ads', id: string, currentStatus: string) => void
+  onBudgetUpdate: (type: 'campaigns' | 'adsets', id: string, budget: number, budgetType: 'daily' | 'lifetime') => void
+  onBulkStatusUpdate: (type: 'campaigns' | 'adsets' | 'ads', status: string) => void
 }
 
 export default function AdSetsTable({
@@ -56,7 +56,7 @@ export default function AdSetsTable({
   }
 
   const handleStatusToggle = (adSetId: string, currentStatus: string) => {
-    onStatusToggle(adSetId, currentStatus)
+    onStatusToggle('adsets', adSetId, currentStatus)
   }
 
   const handleBudgetEdit = (adSet: MetaAdSet) => {
@@ -74,7 +74,7 @@ export default function AdSetsTable({
       return
     }
 
-    onBudgetUpdate(editingBudget, budget, budgetType)
+    onBudgetUpdate('adsets', editingBudget, budget, budgetType)
     setEditingBudget(null)
     setBudgetValue('')
   }
@@ -183,21 +183,21 @@ export default function AdSetsTable({
             </div>
             <div className="flex items-center space-x-2">
               <button
-                onClick={() => onBulkStatusUpdate('ACTIVE')}
+                onClick={() => onBulkStatusUpdate('adsets', 'ACTIVE')}
                 className="btn-secondary text-sm flex items-center space-x-1"
               >
                 <Play className="w-4 h-4" />
                 <span>Ativar</span>
               </button>
               <button
-                onClick={() => onBulkStatusUpdate('PAUSED')}
+                onClick={() => onBulkStatusUpdate('adsets', 'PAUSED')}
                 className="btn-secondary text-sm flex items-center space-x-1"
               >
                 <Pause className="w-4 h-4" />
                 <span>Pausar</span>
               </button>
               <button
-                onClick={() => onBulkStatusUpdate('ARCHIVED')}
+                onClick={() => onBulkStatusUpdate('adsets', 'ARCHIVED')}
                 className="btn-secondary text-sm flex items-center space-x-1"
               >
                 <Archive className="w-4 h-4" />

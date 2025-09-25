@@ -21,8 +21,8 @@ interface AdsTableProps {
   ads: MetaAd[]
   selectedAds: Set<string>
   onSelectionChange: (selected: Set<string>) => void
-  onStatusToggle: (id: string, currentStatus: string) => void
-  onBulkStatusUpdate: (status: string) => void
+  onStatusToggle: (type: 'campaigns' | 'adsets' | 'ads', id: string, currentStatus: string) => void
+  onBulkStatusUpdate: (type: 'campaigns' | 'adsets' | 'ads', status: string) => void
 }
 
 export default function AdsTable({
@@ -51,7 +51,7 @@ export default function AdsTable({
   }
 
   const handleStatusToggle = (adId: string, currentStatus: string) => {
-    onStatusToggle(adId, currentStatus)
+    onStatusToggle('ads', adId, currentStatus)
   }
 
   const getStatusIcon = (status: string) => {
@@ -178,21 +178,21 @@ export default function AdsTable({
             </div>
             <div className="flex items-center space-x-2">
               <button
-                onClick={() => onBulkStatusUpdate('ACTIVE')}
+                onClick={() => onBulkStatusUpdate('ads', 'ACTIVE')}
                 className="btn-secondary text-sm flex items-center space-x-1"
               >
                 <Play className="w-4 h-4" />
                 <span>Ativar</span>
               </button>
               <button
-                onClick={() => onBulkStatusUpdate('PAUSED')}
+                onClick={() => onBulkStatusUpdate('ads', 'PAUSED')}
                 className="btn-secondary text-sm flex items-center space-x-1"
               >
                 <Pause className="w-4 h-4" />
                 <span>Pausar</span>
               </button>
               <button
-                onClick={() => onBulkStatusUpdate('ARCHIVED')}
+                onClick={() => onBulkStatusUpdate('ads', 'ARCHIVED')}
                 className="btn-secondary text-sm flex items-center space-x-1"
               >
                 <Archive className="w-4 h-4" />
