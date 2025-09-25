@@ -76,12 +76,39 @@ export async function GET(request: NextRequest) {
             }
 
             // Verificar se tem Advantage Campaign Budget
-            const campaignDetailsResponse = await fetch(
-              `https://graph.facebook.com/v23.0/${campaign.id}?fields=budget_remaining,is_advantage_campaign_budget&access_token=${accessToken}`
-            )
+            let advantageCampaignBudget = false
             
-            const campaignDetails = await campaignDetailsResponse.json()
-            const advantageCampaignBudget = campaignDetails.is_advantage_campaign_budget || false
+            try {
+              // Primeiro, tentar buscar o campo is_advantage_campaign_budget
+              const campaignDetailsResponse = await fetch(
+                `https://graph.facebook.com/v23.0/${campaign.id}?fields=budget_remaining,is_advantage_campaign_budget&access_token=${accessToken}`
+              )
+              
+              const campaignDetails = await campaignDetailsResponse.json()
+              
+              if (campaignDetails.error) {
+                console.warn(`Error fetching campaign details for ${campaign.id}:`, campaignDetails.error)
+                
+                // Se o campo não estiver disponível, verificar se a campanha tem orçamento definido
+                // Campanhas com orçamento definido geralmente são CBO
+                if (campaign.daily_budget || campaign.lifetime_budget) {
+                  advantageCampaignBudget = true
+                } else {
+                  advantageCampaignBudget = false
+                }
+              } else {
+                // Verificar se o campo existe e é true
+                advantageCampaignBudget = campaignDetails.is_advantage_campaign_budget === true
+              }
+            } catch (error) {
+              console.warn(`Error fetching campaign details for ${campaign.id}:`, error)
+              // Em caso de erro, verificar se tem orçamento para determinar CBO
+              if (campaign.daily_budget || campaign.lifetime_budget) {
+                advantageCampaignBudget = true
+              } else {
+                advantageCampaignBudget = false
+              }
+            }
 
             const metaCampaign: MetaCampaign = {
               id: campaign.id,

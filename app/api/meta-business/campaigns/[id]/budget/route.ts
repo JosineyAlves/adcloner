@@ -28,24 +28,43 @@ export async function PATCH(
 
     try {
       // Verificar se a campanha tem Advantage Campaign Budget
-      const campaignResponse = await fetch(
-        `https://graph.facebook.com/v23.0/${campaignId}?fields=is_advantage_campaign_budget&access_token=${accessToken}`
-      )
+      let hasAdvantageCampaignBudget = false
       
-      const campaignData = await campaignResponse.json()
-      
-      if (campaignData.error) {
-        console.error('Facebook API error:', campaignData.error)
-        return NextResponse.json(
-          { 
-            error: `Erro ao verificar campanha: ${campaignData.error.message}`,
-            code: 'CAMPAIGN_CHECK_ERROR'
-          },
-          { status: 400 }
+      try {
+        // Primeiro, tentar buscar o campo is_advantage_campaign_budget
+        const campaignResponse = await fetch(
+          `https://graph.facebook.com/v23.0/${campaignId}?fields=is_advantage_campaign_budget&access_token=${accessToken}`
         )
+        
+        const campaignData = await campaignResponse.json()
+        
+        if (campaignData.error) {
+          console.warn('Facebook API error fetching campaign details:', campaignData.error)
+          
+          // Se o campo não estiver disponível, tentar verificar se a campanha tem orçamento definido
+          // Campanhas com orçamento definido geralmente são CBO
+          const budgetResponse = await fetch(
+            `https://graph.facebook.com/v23.0/${campaignId}?fields=daily_budget,lifetime_budget&access_token=${accessToken}`
+          )
+          
+          const budgetData = await budgetResponse.json()
+          
+          if (!budgetData.error && (budgetData.daily_budget || budgetData.lifetime_budget)) {
+            // Se a campanha tem orçamento definido, assumir CBO
+            hasAdvantageCampaignBudget = true
+          } else {
+            // Se não tem orçamento, assumir ABO
+            hasAdvantageCampaignBudget = false
+          }
+        } else {
+          // Verificar se o campo existe e é true
+          hasAdvantageCampaignBudget = campaignData.is_advantage_campaign_budget === true
+        }
+      } catch (error) {
+        console.warn('Error fetching campaign details:', error)
+        // Em caso de erro, assumir CBO para campanhas modernas
+        hasAdvantageCampaignBudget = true
       }
-
-      const hasAdvantageCampaignBudget = campaignData.is_advantage_campaign_budget
 
       if (!hasAdvantageCampaignBudget) {
         return NextResponse.json(
