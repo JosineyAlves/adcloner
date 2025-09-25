@@ -4,11 +4,6 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Eye, DollarSign, MousePointer, Target, TrendingUp, BarChart3, RefreshCw, Settings, Repeat, Percent, Link, Heart } from 'lucide-react'
 import Sidebar from '@/components/layout/Sidebar'
-import DashboardTabs, { TabType } from '@/components/dashboard/DashboardTabs'
-import AccountsTab from '@/components/dashboard/tabs/AccountsTab'
-import CampaignsTab from '@/components/dashboard/tabs/CampaignsTab'
-import AdSetsTab from '@/components/dashboard/tabs/AdSetsTab'
-import AdsTab from '@/components/dashboard/tabs/AdsTab'
 import StatsCard from '@/components/dashboard/StatsCard'
 import ColumnConfigModal from '@/components/dashboard/ColumnConfigModal'
 import DateSelector, { DateRange } from '@/components/dashboard/DateSelector'
@@ -28,7 +23,6 @@ export default function DashboardPage() {
   const [datePreset, setDatePreset] = useState<string>('today')
   const [customRange, setCustomRange] = useState<DateRange | undefined>()
   const [isConfigModalOpen, setIsConfigModalOpen] = useState<boolean>(false)
-  const [activeTab, setActiveTab] = useState<TabType>('campaigns')
   
   // Configuração das métricas principais
   const [mainMetrics, setMainMetrics] = useState<MetricConfig[]>([
@@ -348,63 +342,142 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        <main className="flex-1 flex flex-col overflow-hidden">
-          {/* Sistema de Abas */}
-          <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
-          
-          {/* Conteúdo das Abas */}
-          <div className="flex-1 overflow-y-auto">
-            {activeTab === 'accounts' && (
-              <AccountsTab 
-                accounts={accounts}
-                onRefresh={fetchAccounts}
-                isLoading={isLoading}
-              />
+        <main className="flex-1 overflow-y-auto p-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="space-y-6"
+          >
+            {/* Status das Contas */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Contas Integradas
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {accounts.length} conta(s) conectada(s) • {accounts.filter(a => a.status === 'active').length} ativa(s)
+                  </p>
+                </div>
+                <div className="w-5 h-5 text-gray-400" />
+              </div>
+            </div>
+
+                        {/* Métricas Principais */}
+            {insights.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {mainMetrics
+                    .filter(metric => metric.visible)
+                    .sort((a, b) => a.order - b.order)
+                    .map((metric, index) => {
+                      const value = aggregatedMetrics[metric.id as keyof typeof aggregatedMetrics]
+                      let displayValue = '0'
+                      
+                      if (value !== undefined) {
+                        switch (metric.type) {
+                          case 'currency':
+                            displayValue = `R$ ${parseFloat(value.toString() || '0').toFixed(2)}`
+                            break
+                          case 'percentage':
+                            displayValue = `${parseFloat(value.toString() || '0').toFixed(2)}%`
+                            break
+                          case 'number':
+                          default:
+                            displayValue = parseInt(value.toString() || '0').toLocaleString()
+                            break
+                        }
+                      }
+                      
+                      return (
+                        <motion.div
+                          key={metric.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.5, delay: 0.1 * (index + 1) }}
+                        >
+                          <StatsCard
+                            title={metric.label}
+                            value={displayValue}
+                            icon={metric.icon}
+                            iconColor={metric.iconColor}
+                          />
+                        </motion.div>
+                      )
+                    })}
+                </div>
+
+
+
+                {/* Detalhes das Campanhas */}
+                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-between">
+              <div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                          Detalhes das Campanhas
+                        </h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {insights.length} campanha(s) encontrada(s) • {visibleColumns.length} coluna(s) visível(is)
+                          </p>
+                      </div>
+                      <button
+                        onClick={() => setIsConfigModalOpen(true)}
+                        className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                      >
+                        <Settings className="w-4 h-4 inline mr-1" />
+                        Configurar
+                      </button>
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                          {visibleColumns.map((column) => (
+                            <th 
+                              key={column.id}
+                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                            >
+                              {column.label}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        {insights.slice(0, 10).map((insight, index) => (
+                          <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                            {visibleColumns.map((column) => (
+                              <td 
+                                key={column.id}
+                                className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white"
+                              >
+                                {formatColumnValue(insight[column.id], column)}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-8 border border-gray-200 dark:border-gray-700 text-center">
+                <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  Nenhum dado encontrado
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  {accounts.length === 0 
+                    ? 'Conecte suas contas do Facebook para ver os dados de performance.'
+                    : 'Não há dados de insights disponíveis para o período selecionado.'
+                  }
+                </p>
+              </div>
             )}
-            
-            {activeTab === 'campaigns' && (
-              <CampaignsTab 
-                campaigns={insights.map(insight => ({
-                  id: insight.campaign_id || insight.id,
-                  name: insight.campaign_name || insight.name || 'Campanha sem nome',
-                  status: insight.status || 'PAUSED',
-                  objective: insight.objective || 'N/A',
-                  budget: parseFloat(insight.budget || '0'),
-                  spend: parseFloat(insight.spend || '0'),
-                  impressions: parseInt(insight.impressions || '0'),
-                  clicks: parseInt(insight.clicks || '0'),
-                  reach: parseInt(insight.reach || '0'),
-                  frequency: parseFloat(insight.frequency || '0'),
-                  ctr: parseFloat(insight.ctr || '0'),
-                  cpm: parseFloat(insight.cpm || '0'),
-                  cpc: parseFloat(insight.cpc || '0'),
-                  conversions: parseInt(insight.conversions || '0'),
-                  cost_per_conversion: parseFloat(insight.cost_per_conversion || '0'),
-                  account_name: insight.account_name || 'Conta sem nome',
-                  created_time: insight.created_time || '',
-                  updated_time: insight.updated_time || ''
-                }))}
-                onRefresh={fetchInsights}
-                isLoading={isLoading}
-              />
-            )}
-            
-            {activeTab === 'adsets' && (
-              <AdSetsTab 
-                adSets={[]} // Mock data - será implementado posteriormente
-                onRefresh={fetchInsights}
-                isLoading={isLoading}
-              />
-            )}
-            
-            {activeTab === 'ads' && (
-              <AdsTab 
-                ads={[]} // Mock data - será implementado posteriormente
-                onRefresh={fetchInsights}
-                isLoading={isLoading}
-              />
-            )}
-          </div>
+          </motion.div>
         </main>
       </div>
 
