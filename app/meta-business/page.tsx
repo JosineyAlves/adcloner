@@ -32,6 +32,7 @@ import CampaignsTable from '@/components/meta-business/CampaignsTable'
 import AdSetsTable from '@/components/meta-business/AdSetsTable'
 import AdsTable from '@/components/meta-business/AdsTable'
 import SelectionIndicator from '@/components/meta-business/SelectionIndicator'
+import BulkActionsButton from '@/components/meta-business/BulkActionsButton'
 import { 
   MetaCampaign, 
   MetaAdSet, 
@@ -257,12 +258,10 @@ export default function MetaBusinessPage() {
     return ads.filter(ad => selectedCampaigns.has(ad.campaign_id))
   }
 
-  // Limpar seleção de campanhas quando mudar de aba
+  // Mudar de aba sem limpar seleção de campanhas
   const handleTabChange = (tab: 'campaigns' | 'adsets' | 'ads') => {
     setActiveTab(tab)
-    if (tab !== 'campaigns') {
-      setSelectedCampaigns(new Set())
-    }
+    // Não limpar seleção de campanhas para manter o filtro
   }
 
   // Funções de seleção em massa
@@ -516,6 +515,17 @@ export default function MetaBusinessPage() {
                   </select>
                 </div>
 
+                {/* Botão de Ações em Massa */}
+                <div className="w-full sm:w-auto">
+                  <BulkActionsButton
+                    type="campaigns"
+                    selectedCount={selectedCampaigns.size}
+                    onActivate={() => handleBulkStatusUpdate('campaigns', 'ACTIVE')}
+                    onPause={() => handleBulkStatusUpdate('campaigns', 'PAUSED')}
+                    onArchive={() => handleBulkStatusUpdate('campaigns', 'ARCHIVED')}
+                  />
+                </div>
+
               </div>
             </div>
 
@@ -552,41 +562,143 @@ export default function MetaBusinessPage() {
 
               {/* Indicador de Seleção em Massa */}
               {selectedCampaigns.size > 0 && (
-                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
-                  <SelectionIndicator
-                    type="campaigns"
-                    count={selectedCampaigns.size}
-                    onActivate={() => handleBulkStatusUpdate('campaigns', 'ACTIVE')}
-                    onPause={() => handleBulkStatusUpdate('campaigns', 'PAUSED')}
-                    onArchive={() => handleBulkStatusUpdate('campaigns', 'ARCHIVED')}
-                    onClear={() => setSelectedCampaigns(new Set())}
-                  />
+                <div className="px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-2 text-blue-700 dark:text-blue-300">
+                        <div className="w-4 h-4 border-2 border-blue-500 rounded-sm flex items-center justify-center">
+                          <div className="w-2 h-2 bg-blue-500 rounded-sm"></div>
+                        </div>
+                        <span className="font-medium">Campanhas</span>
+                        <span className="bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                          {selectedCampaigns.size} item{selectedCampaigns.size > 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setSelectedCampaigns(new Set())}
+                        className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleBulkStatusUpdate('campaigns', 'ACTIVE')}
+                        className="flex items-center space-x-1 px-3 py-1 rounded-md bg-green-500 text-white text-xs font-medium hover:bg-green-600 transition-colors duration-200"
+                      >
+                        <Play className="w-3 h-3" />
+                        <span>Ativar</span>
+                      </button>
+                      <button
+                        onClick={() => handleBulkStatusUpdate('campaigns', 'PAUSED')}
+                        className="flex items-center space-x-1 px-3 py-1 rounded-md bg-yellow-500 text-white text-xs font-medium hover:bg-yellow-600 transition-colors duration-200"
+                      >
+                        <Pause className="w-3 h-3" />
+                        <span>Pausar</span>
+                      </button>
+                      <button
+                        onClick={() => handleBulkStatusUpdate('campaigns', 'ARCHIVED')}
+                        className="flex items-center space-x-1 px-3 py-1 rounded-md bg-gray-500 text-white text-xs font-medium hover:bg-gray-600 transition-colors duration-200"
+                      >
+                        <Archive className="w-3 h-3" />
+                        <span>Arquivar</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
               
               {selectedAdSets.size > 0 && (
-                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
-                  <SelectionIndicator
-                    type="adsets"
-                    count={selectedAdSets.size}
-                    onActivate={() => handleBulkStatusUpdate('adsets', 'ACTIVE')}
-                    onPause={() => handleBulkStatusUpdate('adsets', 'PAUSED')}
-                    onArchive={() => handleBulkStatusUpdate('adsets', 'ARCHIVED')}
-                    onClear={() => setSelectedAdSets(new Set())}
-                  />
+                <div className="px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-2 text-blue-700 dark:text-blue-300">
+                        <div className="w-4 h-4 border-2 border-blue-500 rounded-sm flex items-center justify-center">
+                          <div className="w-2 h-2 bg-blue-500 rounded-sm"></div>
+                        </div>
+                        <span className="font-medium">Conjuntos</span>
+                        <span className="bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                          {selectedAdSets.size} item{selectedAdSets.size > 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setSelectedAdSets(new Set())}
+                        className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleBulkStatusUpdate('adsets', 'ACTIVE')}
+                        className="flex items-center space-x-1 px-3 py-1 rounded-md bg-green-500 text-white text-xs font-medium hover:bg-green-600 transition-colors duration-200"
+                      >
+                        <Play className="w-3 h-3" />
+                        <span>Ativar</span>
+                      </button>
+                      <button
+                        onClick={() => handleBulkStatusUpdate('adsets', 'PAUSED')}
+                        className="flex items-center space-x-1 px-3 py-1 rounded-md bg-yellow-500 text-white text-xs font-medium hover:bg-yellow-600 transition-colors duration-200"
+                      >
+                        <Pause className="w-3 h-3" />
+                        <span>Pausar</span>
+                      </button>
+                      <button
+                        onClick={() => handleBulkStatusUpdate('adsets', 'ARCHIVED')}
+                        className="flex items-center space-x-1 px-3 py-1 rounded-md bg-gray-500 text-white text-xs font-medium hover:bg-gray-600 transition-colors duration-200"
+                      >
+                        <Archive className="w-3 h-3" />
+                        <span>Arquivar</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
               
               {selectedAds.size > 0 && (
-                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
-                  <SelectionIndicator
-                    type="ads"
-                    count={selectedAds.size}
-                    onActivate={() => handleBulkStatusUpdate('ads', 'ACTIVE')}
-                    onPause={() => handleBulkStatusUpdate('ads', 'PAUSED')}
-                    onArchive={() => handleBulkStatusUpdate('ads', 'ARCHIVED')}
-                    onClear={() => setSelectedAds(new Set())}
-                  />
+                <div className="px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-2 text-blue-700 dark:text-blue-300">
+                        <div className="w-4 h-4 border-2 border-blue-500 rounded-sm flex items-center justify-center">
+                          <div className="w-2 h-2 bg-blue-500 rounded-sm"></div>
+                        </div>
+                        <span className="font-medium">Anúncios</span>
+                        <span className="bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                          {selectedAds.size} item{selectedAds.size > 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setSelectedAds(new Set())}
+                        className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleBulkStatusUpdate('ads', 'ACTIVE')}
+                        className="flex items-center space-x-1 px-3 py-1 rounded-md bg-green-500 text-white text-xs font-medium hover:bg-green-600 transition-colors duration-200"
+                      >
+                        <Play className="w-3 h-3" />
+                        <span>Ativar</span>
+                      </button>
+                      <button
+                        onClick={() => handleBulkStatusUpdate('ads', 'PAUSED')}
+                        className="flex items-center space-x-1 px-3 py-1 rounded-md bg-yellow-500 text-white text-xs font-medium hover:bg-yellow-600 transition-colors duration-200"
+                      >
+                        <Pause className="w-3 h-3" />
+                        <span>Pausar</span>
+                      </button>
+                      <button
+                        onClick={() => handleBulkStatusUpdate('ads', 'ARCHIVED')}
+                        className="flex items-center space-x-1 px-3 py-1 rounded-md bg-gray-500 text-white text-xs font-medium hover:bg-gray-600 transition-colors duration-200"
+                      >
+                        <Archive className="w-3 h-3" />
+                        <span>Arquivar</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
 
