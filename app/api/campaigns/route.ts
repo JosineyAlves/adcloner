@@ -1,46 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { Campaign } from '@/lib/types'
 import { FacebookAPI } from '@/lib/facebook-api'
 
 const facebookAPI = new FacebookAPI()
 
 export async function GET(request: NextRequest) {
   try {
+    // Verificar se temos um token de acesso
     const accessToken = request.cookies.get('fb_access_token')?.value
     
     if (!accessToken) {
       return NextResponse.json({ 
+        campaigns: [],
         success: false,
         message: 'Nenhuma conta conectada. Conecte sua conta do Facebook primeiro.'
-      }, { status: 401 })
+      })
     }
 
-    const { searchParams } = new URL(request.url)
-    const accountId = searchParams.get('accountId')
-    
-    if (!accountId) {
-      return NextResponse.json({
+    // Validar token
+    const isValid = await facebookAPI.validateToken(accessToken)
+    if (!isValid) {
+      return NextResponse.json({ 
+        campaigns: [],
         success: false,
-        message: 'ID da conta é obrigatório'
-      }, { status: 400 })
+        message: 'Token inválido ou expirado. Reconecte sua conta do Facebook.'
+      })
     }
 
-    console.log(`📋 Buscando campanhas da conta ${accountId}`)
+    // Buscar contas de anúncios
+    const adAccounts = await facebookAPI.getAdAccounts(accessToken)
+    const allCampaigns: Campaign[] = []
 
-    // Usar o FacebookAPI para buscar campanhas simples
-    const campaigns = await facebookAPI.getSimpleCampaigns(accountId, accessToken)
-
-    console.log(`✅ Encontradas ${campaigns?.length || 0} campanhas`)
-
-    return NextResponse.json({
-      success: true,
-      campaigns: campaigns || []
+    // Para cada conta, buscar campanhas
+    for (const account of adAccounts) {
+      try {
+        const campaigns = await facebookAPI.getCampaigns(account.id, accessToken)
+        allCampaigns.push(...campaigns)
+      } catch (error) {
+        console.error(`Error getting campaigns for account ${account.id}:`, error)
+      }
+    }
+    
+    return NextResponse.json({ 
+      campaigns: allCampaigns,
+      success: true 
     })
-
   } catch (error) {
     console.error('Error fetching campaigns:', error)
-    return NextResponse.json({
-      success: false,
-      message: error instanceof Error ? error.message : 'Erro interno do servidor'
-    }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to fetch campaigns' },
+      { status: 500 }
+    )
   }
-}
+} 

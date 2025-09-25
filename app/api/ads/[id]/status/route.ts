@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { FacebookAPI } from '@/lib/facebook-api'
+
+const facebookAPI = new FacebookAPI()
 
 export async function PATCH(
   request: NextRequest,
@@ -16,54 +19,27 @@ export async function PATCH(
       }, { status: 401 })
     }
 
-    if (!['PAUSED', 'ACTIVE', 'DELETED'].includes(status)) {
+    if (!status || !['ACTIVE', 'PAUSED'].includes(status)) {
       return NextResponse.json({
         success: false,
-        message: 'Status inválido. Use PAUSED, ACTIVE ou DELETED.'
+        message: 'Status inválido. Use ACTIVE ou PAUSED.'
       }, { status: 400 })
     }
 
     console.log(`🔄 Atualizando status do anúncio ${adId} para ${status}`)
 
-    // Atualizar status do anúncio
-    const response = await fetch(
-      `https://graph.facebook.com/v23.0/${adId}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          status: status,
-          access_token: accessToken,
-        })
-      }
-    )
-
-    const data = await response.json()
-
-    if (data.error) {
-      console.error('Erro ao atualizar status do anúncio:', data.error)
-      return NextResponse.json({
-        success: false,
-        message: data.error.message || 'Erro ao atualizar status do anúncio'
-      }, { status: 400 })
-    }
-
-    console.log(`✅ Status do anúncio ${adId} atualizado para ${status}`)
+    await facebookAPI.updateAdStatus(adId, accessToken, status as 'ACTIVE' | 'PAUSED')
 
     return NextResponse.json({
       success: true,
-      message: `Status do anúncio atualizado para ${status}`,
-      adId,
-      status
+      message: `Anúncio ${status === 'ACTIVE' ? 'ativado' : 'pausado'} com sucesso!`
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating ad status:', error)
     return NextResponse.json({
       success: false,
-      message: 'Erro interno do servidor'
+      message: error.message || 'Erro ao atualizar status do anúncio'
     }, { status: 500 })
   }
 }

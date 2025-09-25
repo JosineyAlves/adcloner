@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { FacebookAPI } from '@/lib/facebook-api'
+
+const facebookAPI = new FacebookAPI()
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { budget, budgetType } = await request.json()
-    const adsetId = params.id
+    const { dailyBudget } = await request.json()
+    const adSetId = params.id
     const accessToken = request.cookies.get('fb_access_token')?.value
     
     if (!accessToken) {
@@ -16,65 +19,27 @@ export async function PATCH(
       }, { status: 401 })
     }
 
-    if (!budget || budget <= 0) {
+    if (!dailyBudget || typeof dailyBudget !== 'number' || dailyBudget <= 0) {
       return NextResponse.json({
         success: false,
-        message: 'Orçamento deve ser maior que zero.'
+        message: 'Orçamento diário inválido. Deve ser um número positivo.'
       }, { status: 400 })
     }
 
-    if (!['daily_budget', 'lifetime_budget'].includes(budgetType)) {
-      return NextResponse.json({
-        success: false,
-        message: 'Tipo de orçamento inválido. Use daily_budget ou lifetime_budget.'
-      }, { status: 400 })
-    }
+    console.log(`💰 Atualizando orçamento do conjunto ${adSetId} para R$ ${dailyBudget}`)
 
-    console.log(`💰 Atualizando ${budgetType} do conjunto de anúncios ${adsetId} para ${budget}`)
-
-    // Converter para centavos (Facebook usa centavos)
-    const budgetInCents = Math.round(budget * 100)
-
-    // Atualizar orçamento do conjunto de anúncios
-    const response = await fetch(
-      `https://graph.facebook.com/v23.0/${adsetId}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          [budgetType]: budgetInCents.toString(),
-          access_token: accessToken,
-        })
-      }
-    )
-
-    const data = await response.json()
-
-    if (data.error) {
-      console.error('Erro ao atualizar orçamento do conjunto:', data.error)
-      return NextResponse.json({
-        success: false,
-        message: data.error.message || 'Erro ao atualizar orçamento do conjunto de anúncios'
-      }, { status: 400 })
-    }
-
-    console.log(`✅ Orçamento do conjunto de anúncios ${adsetId} atualizado`)
+    await facebookAPI.updateAdSetBudget(adSetId, accessToken, dailyBudget)
 
     return NextResponse.json({
       success: true,
-      message: `${budgetType === 'daily_budget' ? 'Orçamento diário' : 'Orçamento total'} atualizado com sucesso`,
-      adsetId,
-      budget: budget,
-      budgetType
+      message: `Orçamento atualizado para R$ ${dailyBudget.toFixed(2)} com sucesso!`
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating adset budget:', error)
     return NextResponse.json({
       success: false,
-      message: 'Erro interno do servidor'
+      message: error.message || 'Erro ao atualizar orçamento do conjunto de anúncios'
     }, { status: 500 })
   }
 }

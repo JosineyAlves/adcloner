@@ -20,24 +20,6 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     order: 1,
     fixed: true // Sempre visível
   },
-  {
-    id: 'status',
-    label: 'Status',
-    category: 'Identificação',
-    type: 'text',
-    visible: true,
-    order: 2,
-    fixed: true // Sempre visível
-  },
-  {
-    id: 'daily_budget',
-    label: 'Orçamento Diário',
-    category: 'Identificação',
-    type: 'currency',
-    visible: true,
-    order: 3,
-    fixed: true // Sempre visível
-  },
 
   // Métricas básicas (FIXAS - sempre visíveis)
   {
@@ -47,7 +29,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: true,
-    order: 4,
+    order: 2,
     fixed: true // Sempre visível
   },
   {
@@ -57,7 +39,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: true,
-    order: 5,
+    order: 3,
     fixed: true // Sempre visível
   },
   {
@@ -67,7 +49,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'currency',
     format: (value) => `R$ ${parseFloat(value || '0').toFixed(2)}`,
     visible: true,
-    order: 6,
+    order: 4,
     fixed: true // Sempre visível
   },
   {
@@ -77,7 +59,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: true,
-    order: 7,
+    order: 5,
     fixed: true // Sempre visível
   },
   {
@@ -87,7 +69,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'number',
     format: (value) => parseFloat(value || '0').toFixed(2),
     visible: true,
-    order: 8,
+    order: 6,
     fixed: true // Sempre visível
   },
 
@@ -99,7 +81,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'currency',
     format: (value) => `R$ ${parseFloat(value || '0').toFixed(2)}`,
     visible: true,
-    order: 9,
+    order: 7,
     fixed: true // Sempre visível
   },
   {
@@ -109,7 +91,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'currency',
     format: (value) => `R$ ${parseFloat(value || '0').toFixed(2)}`,
     visible: true,
-    order: 10,
+    order: 8,
     fixed: true // Sempre visível
   },
   {
@@ -119,7 +101,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'percentage',
     format: (value) => `${parseFloat(value || '0').toFixed(2)}%`,
     visible: true,
-    order: 11,
+    order: 9,
     fixed: true // Sempre visível
   },
 
@@ -203,22 +185,13 @@ export function getFixedColumns(columns: ColumnConfig[]): ColumnConfig[] {
     .sort((a, b) => a.order - b.order)
 }
 
-export function formatColumnValue(value: any, column: ColumnConfig, campaignData?: any): string | JSX.Element {
+export function formatColumnValue(value: any, column: ColumnConfig): string {
   if (value === null || value === undefined || value === '') {
     return '-'
   }
 
   if (column.format) {
     return column.format(value)
-  }
-
-  // Casos especiais para componentes React
-  if (column.id === 'status' && campaignData) {
-    return 'STATUS_TOGGLE_PLACEHOLDER' // Será substituído no componente
-  }
-  
-  if (column.id === 'daily_budget' && campaignData) {
-    return 'BUDGET_EDITOR_PLACEHOLDER' // Será substituído no componente
   }
 
   switch (column.type) {

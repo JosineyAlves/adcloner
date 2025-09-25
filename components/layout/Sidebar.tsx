@@ -8,14 +8,12 @@ import {
   Copy, 
   Settings, 
   Users,
-  LogOut,
-  Zap
+  LogOut
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Meta Manager', href: '/meta', icon: Zap },
   { name: 'Campanhas', href: '/campaigns', icon: BarChart3 },
   { name: 'Templates', href: '/templates', icon: Copy },
   { name: 'Contas', href: '/accounts', icon: Users },
