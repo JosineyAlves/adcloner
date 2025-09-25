@@ -1,4 +1,4 @@
-'use client'
+git add .'use client'
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
@@ -56,6 +56,7 @@ export default function MetaPage() {
   const [activeTab, setActiveTab] = useState<TabType>('contas')
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
+  const [insightsLoaded, setInsightsLoaded] = useState<boolean>(false)
   const [datePreset, setDatePreset] = useState<string>('today')
   const [customRange, setCustomRange] = useState<DateRange | undefined>()
   const [selectedAccount, setSelectedAccount] = useState<string>('')
@@ -249,13 +250,6 @@ export default function MetaPage() {
     }
   }, [selectedAccount, activeTab])
 
-  // Carregar insights novamente após carregar dados das campanhas
-  useEffect(() => {
-    if (campaigns.length > 0 || adsets.length > 0 || ads.length > 0) {
-      console.log(`🔄 Dados carregados - Campanhas: ${campaigns.length}, AdSets: ${adsets.length}, Ads: ${ads.length}`)
-      console.log(`📊 Insights atuais: ${insights.length}`)
-    }
-  }, [campaigns, adsets, ads, insights])
 
   const fetchAccounts = async () => {
     try {
@@ -317,10 +311,11 @@ export default function MetaPage() {
       }
       
       console.log(`📈 Total de insights encontrados: ${allInsights.length}`)
-      console.log(`📊 Insights carregados:`, allInsights)
       setInsights(allInsights)
+      setInsightsLoaded(true)
     } catch (error) {
       console.error('Error fetching insights:', error)
+      setInsightsLoaded(true) // Marcar como carregado mesmo em caso de erro
     }
   }
 
@@ -410,12 +405,11 @@ export default function MetaPage() {
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
+    setInsightsLoaded(false) // Reset insights loaded state
     await fetchAccounts()
     await fetchInsights()
     if (selectedAccount) {
       await fetchData()
-      // Recarregar insights após carregar dados para garantir sincronização
-      await fetchInsights()
     }
     setIsRefreshing(false)
     toast.success('Dados atualizados!')
@@ -423,6 +417,7 @@ export default function MetaPage() {
 
   const handleDatePresetChange = (preset: string) => {
     setDatePreset(preset)
+    setInsightsLoaded(false) // Reset insights loaded state when date changes
     if (preset !== 'custom') {
       setCustomRange(undefined)
     }
@@ -430,6 +425,7 @@ export default function MetaPage() {
 
   const handleCustomRangeChange = (range: DateRange) => {
     setCustomRange(range)
+    setInsightsLoaded(false) // Reset insights loaded state when date changes
   }
 
   const handleMetricsChange = (newMetrics: MetricOption[]) => {
@@ -614,17 +610,10 @@ export default function MetaPage() {
      
      // Se for uma métrica de performance, buscar nos insights
      if (performanceMetrics.includes(metric.id)) {
-       console.log(`🔍 Buscando métrica ${metric.id} para item ${item.id} (${item.name})`)
-       console.log(`📊 Total de insights disponíveis: ${insights.length}`)
-       
        const insightData = insights.find(insight => {
          // Mapear o tipo de item para o campo correto nos insights
          if (activeTab === 'campanhas') {
-           const match = insight.campaign_id === item.id
-           if (match) {
-             console.log(`✅ Insight encontrado para campanha ${item.id}:`, insight)
-           }
-           return match
+           return insight.campaign_id === item.id
          } else if (activeTab === 'conjuntos') {
            return insight.adset_id === item.id
          } else if (activeTab === 'anuncios') {
@@ -634,7 +623,6 @@ export default function MetaPage() {
        })
        
        if (insightData) {
-         console.log(`📈 Usando insight data para ${metric.id}:`, insightData[metric.id])
          // Lidar com métricas aninhadas
          if (metric.id === 'actions_purchase') {
            // Buscar ações de compra específicas
@@ -664,8 +652,6 @@ export default function MetaPage() {
            // Métricas simples
            value = insightData[metric.id]
          }
-       } else {
-         console.log(`❌ Nenhum insight encontrado para ${metric.id} do item ${item.id}`)
        }
      }
      
@@ -728,14 +714,16 @@ export default function MetaPage() {
     }
   }
 
-  if (isLoading) {
+  if (isLoading || !insightsLoaded) {
     return (
       <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
         <Sidebar />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <RefreshCw className="w-8 h-8 animate-spin text-primary-600 mx-auto mb-4" />
-            <p className="text-gray-600 dark:text-gray-400">Carregando Meta Manager...</p>
+            <p className="text-gray-600 dark:text-gray-400">
+              {isLoading ? 'Carregando Meta Manager...' : 'Carregando dados de performance...'}
+            </p>
           </div>
         </div>
       </div>
