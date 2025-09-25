@@ -220,10 +220,10 @@ export default function AdSetsTable({
                     onUpdate={async (id, budget, budgetType) => {
                       try {
                         const response = await fetch(`/api/meta-business/adsets/${id}/budget`, {
-                          method: 'PATCH',
+                          method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({
-                            budget: budget / 100, // Converter de centavos para reais
+                            budget: budget, // Já está em reais
                             budgetType
                           })
                         })

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-export async function PATCH(
+export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -27,22 +27,27 @@ export async function PATCH(
     }
 
     try {
-      // Preparar parâmetros para atualização
-      const updateParams: any = {
-        access_token: accessToken
-      }
+      // Preparar parâmetros para atualização (form-data conforme documentação)
+      const formData = new URLSearchParams()
+      formData.append('access_token', accessToken)
 
       if (budgetType === 'daily' || daily_budget) {
-        updateParams.daily_budget = Math.round(budgetValue * 100) // Converter reais para centavos
-        updateParams.lifetime_budget = '' // Limpar lifetime budget
+        formData.append('daily_budget', Math.round(budgetValue * 100).toString()) // Converter reais para centavos
+        formData.append('lifetime_budget', '') // Limpar lifetime budget
       } else if (budgetType === 'lifetime' || lifetime_budget) {
-        updateParams.lifetime_budget = Math.round(budgetValue * 100) // Converter reais para centavos
-        updateParams.daily_budget = '' // Limpar daily budget
+        formData.append('lifetime_budget', Math.round(budgetValue * 100).toString()) // Converter reais para centavos
+        formData.append('daily_budget', '') // Limpar daily budget
       }
 
-      console.log('📤 Enviando para Facebook API (AdSet):', updateParams)
+      console.log('📤 Enviando para Facebook API (AdSet):', {
+        adSetId,
+        budget: budgetValue,
+        budgetType: budgetType || (daily_budget ? 'daily' : 'lifetime'),
+        daily_budget: (budgetType === 'daily' || daily_budget) ? Math.round(budgetValue * 100) : '',
+        lifetime_budget: (budgetType === 'lifetime' || lifetime_budget) ? Math.round(budgetValue * 100) : ''
+      })
 
-      // Atualizar orçamento do Ad Set
+      // Atualizar orçamento do Ad Set usando POST conforme documentação
       const response = await fetch(
         `https://graph.facebook.com/v23.0/${adSetId}`,
         {
@@ -50,7 +55,7 @@ export async function PATCH(
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
-          body: new URLSearchParams(updateParams)
+          body: formData
         }
       )
       
@@ -65,6 +70,8 @@ export async function PATCH(
 
       // Verificar se há conteúdo para fazer parse
       const responseText = await response.text()
+      console.log('📥 Resposta da Facebook API (AdSet):', responseText)
+      
       if (!responseText) {
         console.error('Facebook API returned empty response')
         return NextResponse.json({ 

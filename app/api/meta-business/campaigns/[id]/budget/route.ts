@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-export async function PUT(
+export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -36,29 +36,22 @@ export async function PUT(
       const campaignResponse = await fetch(
         `https://graph.facebook.com/v23.0/${campaignId}?fields=is_advantage_campaign_budget,daily_budget,lifetime_budget&access_token=${accessToken}`
       )
-      const campaignData = await campaignResponse.json()
       
-      if (campaignData.error) {
-        console.warn('Facebook API error fetching campaign details:', campaignData.error)
-        // Fallback: verificar se tem orçamento definido
-        const budgetResponse = await fetch(
-          `https://graph.facebook.com/v23.0/${campaignId}?fields=daily_budget,lifetime_budget&access_token=${accessToken}`
-        )
-        const budgetData = await budgetResponse.json()
-        if (!budgetData.error && (budgetData.daily_budget || budgetData.lifetime_budget)) {
-          hasAdvantageCampaignBudget = true
-        } else {
-          hasAdvantageCampaignBudget = false
-        }
+      if (!campaignResponse.ok) {
+        console.warn('Error fetching campaign details:', campaignResponse.status)
+        hasAdvantageCampaignBudget = true // Assume CBO on error
       } else {
-        if (campaignData.is_advantage_campaign_budget !== undefined) {
-          hasAdvantageCampaignBudget = campaignData.is_advantage_campaign_budget === true
+        const campaignData = await campaignResponse.json()
+        
+        if (campaignData.error) {
+          console.warn('Facebook API error fetching campaign details:', campaignData.error)
+          hasAdvantageCampaignBudget = true // Assume CBO on error
         } else {
-          // Se o campo não estiver disponível, verificar se tem orçamento
-          if (campaignData.daily_budget || campaignData.lifetime_budget) {
-            hasAdvantageCampaignBudget = true
+          if (campaignData.is_advantage_campaign_budget !== undefined) {
+            hasAdvantageCampaignBudget = campaignData.is_advantage_campaign_budget === true
           } else {
-            hasAdvantageCampaignBudget = false
+            // Se o campo não estiver disponível, verificar se tem orçamento
+            hasAdvantageCampaignBudget = !!(campaignData.daily_budget || campaignData.lifetime_budget)
           }
         }
       }
@@ -75,40 +68,27 @@ export async function PUT(
       }, { status: 400 })
     }
 
-    // Obter orçamento atual para validação
-    let currentDailyBudget = 0
-    let currentLifetimeBudget = 0
+    // Preparar parâmetros para atualização (form-data conforme documentação)
+    const formData = new URLSearchParams()
+    formData.append('access_token', accessToken)
     
-    try {
-      const currentResponse = await fetch(
-        `https://graph.facebook.com/v23.0/${campaignId}?fields=daily_budget,lifetime_budget&access_token=${accessToken}`
-      )
-      const currentData = await currentResponse.json()
-      
-      if (!currentData.error) {
-        currentDailyBudget = currentData.daily_budget ? parseInt(currentData.daily_budget) : 0
-        currentLifetimeBudget = currentData.lifetime_budget ? parseInt(currentData.lifetime_budget) : 0
-      }
-    } catch (error) {
-      console.warn('Error fetching current budget:', error)
+    if (budgetType === 'daily') {
+      formData.append('daily_budget', Math.round(budget * 100).toString()) // Converter reais para centavos
+      formData.append('lifetime_budget', '') // Limpar lifetime budget
+    } else if (budgetType === 'lifetime') {
+      formData.append('lifetime_budget', Math.round(budget * 100).toString()) // Converter reais para centavos
+      formData.append('daily_budget', '') // Limpar daily budget
     }
 
-    // Preparar parâmetros para atualização
-    const updateParams: any = {
-      access_token: accessToken
-    }
+    console.log('📤 Enviando para Facebook API:', {
+      campaignId,
+      budget: budget,
+      budgetType: budgetType,
+      daily_budget: budgetType === 'daily' ? Math.round(budget * 100) : '',
+      lifetime_budget: budgetType === 'lifetime' ? Math.round(budget * 100) : ''
+    })
 
-    if (budgetType === 'daily' || currentDailyBudget > 0) {
-      updateParams.daily_budget = Math.round(budget * 100) // Converter reais para centavos
-      updateParams.lifetime_budget = '' // Limpar lifetime budget
-    } else if (budgetType === 'lifetime' || currentLifetimeBudget > 0) {
-      updateParams.lifetime_budget = Math.round(budget * 100) // Converter reais para centavos
-      updateParams.daily_budget = '' // Limpar daily budget
-    }
-
-    console.log('📤 Enviando para Facebook API:', updateParams)
-
-    // Atualizar orçamento da campanha
+    // Atualizar orçamento da campanha usando POST conforme documentação
     const response = await fetch(
       `https://graph.facebook.com/v23.0/${campaignId}`,
       {
@@ -116,7 +96,7 @@ export async function PUT(
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams(updateParams)
+        body: formData
       }
     )
 
@@ -131,6 +111,8 @@ export async function PUT(
 
     // Verificar se há conteúdo para fazer parse
     const responseText = await response.text()
+    console.log('📥 Resposta da Facebook API:', responseText)
+    
     if (!responseText) {
       console.error('Facebook API returned empty response')
       return NextResponse.json({ 
@@ -162,7 +144,7 @@ export async function PUT(
         }, { status: 429 })
       }
       
-      if (data.error.message?.includes('INVALID_BUDGET')) {
+      if (data.error.message?.includes('INVALID_BUDGET') || data.error.code === 100) {
         return NextResponse.json({ 
           error: 'Orçamento inválido. Verifique o valor e tente novamente.',
           code: 'INVALID_BUDGET'
