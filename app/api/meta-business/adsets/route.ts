@@ -24,35 +24,26 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-      // Buscar campanhas primeiro para obter Ad Sets
-      const campaignsResponse = await fetch(
-        `https://graph.facebook.com/v23.0/${accountId}/campaigns?fields=id,name&access_token=${accessToken}`
+      // Buscar Ad Sets diretamente da conta
+      const adSetsResponse = await fetch(
+        `https://graph.facebook.com/v23.0/${accountId}/adsets?fields=id,name,status,effective_status,daily_budget,lifetime_budget,bid_amount,targeting,created_time,updated_time,campaign{id,name}&access_token=${accessToken}`
       )
       
-      const campaignsData = await campaignsResponse.json()
+      const adSetsData = await adSetsResponse.json()
       
-      if (campaignsData.error) {
-        console.error('Facebook API error:', campaignsData.error)
+      if (adSetsData.error) {
+        console.error('Facebook API error:', adSetsData.error)
         return NextResponse.json(
-          { error: campaignsData.error.message },
+          { error: adSetsData.error.message },
           { status: 400 }
         )
       }
 
       const adSets: any[] = []
       
-      if (campaignsData.data) {
-        // Buscar Ad Sets de cada campanha
-        for (const campaign of campaignsData.data) {
-          try {
-            const adSetsResponse = await fetch(
-              `https://graph.facebook.com/v23.0/${campaign.id}/adsets?fields=id,name,status,effective_status,daily_budget,lifetime_budget,bid_amount,targeting,created_time,updated_time&access_token=${accessToken}`
-            )
-            
-            const adSetsData = await adSetsResponse.json()
-            
-            if (adSetsData.data) {
-              for (const adSet of adSetsData.data) {
+      if (adSetsData.data) {
+        // Processar cada Ad Set
+        for (const adSet of adSetsData.data) {
                 try {
                   let insights = {
                     impressions: 0,
@@ -84,25 +75,21 @@ export async function GET(request: NextRequest) {
                   let campaignAdvantageBudget = false
                   try {
                     const campaignDetailsResponse = await fetch(
-                      `https://graph.facebook.com/v23.0/${campaign.id}?fields=is_advantage_campaign_budget,daily_budget,lifetime_budget&access_token=${accessToken}`
+                      `https://graph.facebook.com/v23.0/${adSet.campaign.id}?fields=daily_budget,lifetime_budget&access_token=${accessToken}`
                     )
                     
                     const campaignDetails = await campaignDetailsResponse.json()
                     
                     if (campaignDetails.error) {
-                      console.warn(`Error fetching campaign details for ${campaign.id}:`, campaignDetails.error)
-                      // Se houver erro, verificar se tem orçamento definido na campanha
-                      campaignAdvantageBudget = !!(campaign.daily_budget || campaign.lifetime_budget)
+                      console.warn(`Error fetching campaign details for ${adSet.campaign.id}:`, campaignDetails.error)
+                      // Se houver erro, assumir ABO (mais seguro)
+                      campaignAdvantageBudget = false
                     } else {
-                      if (campaignDetails.is_advantage_campaign_budget !== undefined) {
-                        campaignAdvantageBudget = campaignDetails.is_advantage_campaign_budget === true
-                      } else {
-                        // Se o campo não estiver disponível, verificar se tem orçamento na campanha
-                        campaignAdvantageBudget = !!(campaignDetails.daily_budget || campaignDetails.lifetime_budget)
-                      }
+                      // Verificar se tem orçamento na campanha
+                      campaignAdvantageBudget = !!(campaignDetails.daily_budget || campaignDetails.lifetime_budget)
                     }
                   } catch (error) {
-                    console.warn(`Error fetching campaign details for ${campaign.id}:`, error)
+                    console.warn(`Error fetching campaign details for ${adSet.campaign.id}:`, error)
                     // Em caso de erro, assumir ABO (mais seguro)
                     campaignAdvantageBudget = false
                   }
@@ -110,8 +97,8 @@ export async function GET(request: NextRequest) {
                   const metaAdSet = {
                     id: adSet.id,
                     name: adSet.name,
-                    campaign_id: campaign.id,
-                    campaign_name: campaign.name,
+                    campaign_id: adSet.campaign.id,
+                    campaign_name: adSet.campaign.name,
                     campaign_advantage_budget: campaignAdvantageBudget,
                     status: adSet.status,
                     effective_status: adSet.effective_status || adSet.status,
@@ -143,13 +130,7 @@ export async function GET(request: NextRequest) {
                 } catch (error) {
                   console.error(`Error processing ad set ${adSet.id}:`, error)
                 }
-              }
-            }
-          } catch (error) {
-            console.error(`Error processing campaign ${campaign.id}:`, error)
-          }
         }
-      }
 
       return NextResponse.json({ adSets })
     } catch (error) {

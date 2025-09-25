@@ -34,36 +34,32 @@ export async function POST(
     // Baseado na documentação: "You can either set budget at the campaign level or at the adset level, not both"
     let hasAdvantageCampaignBudget = false
     try {
+      // Usar apenas campos básicos para evitar erro 400
       const campaignResponse = await fetch(
-        `https://graph.facebook.com/v23.0/${campaignId}?fields=is_advantage_campaign_budget,daily_budget,lifetime_budget&access_token=${accessToken}`
+        `https://graph.facebook.com/v23.0/${campaignId}?fields=daily_budget,lifetime_budget&access_token=${accessToken}`
       )
       
       if (!campaignResponse.ok) {
         console.warn('Error fetching campaign details:', campaignResponse.status)
-        hasAdvantageCampaignBudget = false // Assume ABO on error (mais seguro)
+        // Se não conseguir buscar, assumir CBO se tem orçamento na requisição
+        hasAdvantageCampaignBudget = true
       } else {
         const campaignData = await campaignResponse.json()
         
         if (campaignData.error) {
           console.warn('Facebook API error fetching campaign details:', campaignData.error)
-          hasAdvantageCampaignBudget = false // Assume ABO on error (mais seguro)
+          // Se houver erro, assumir CBO se tem orçamento na requisição
+          hasAdvantageCampaignBudget = true
         } else {
           // Verificar se tem orçamento definido no nível da campanha
           const hasCampaignBudget = !!(campaignData.daily_budget || campaignData.lifetime_budget)
-          
-          if (campaignData.is_advantage_campaign_budget !== undefined) {
-            // Usar o campo oficial se disponível
-            hasAdvantageCampaignBudget = campaignData.is_advantage_campaign_budget === true
-          } else {
-            // Se o campo não estiver disponível, verificar se tem orçamento na campanha
-            // Se tem orçamento na campanha = CBO, se não tem = ABO
-            hasAdvantageCampaignBudget = hasCampaignBudget
-          }
+          hasAdvantageCampaignBudget = hasCampaignBudget
         }
       }
     } catch (error) {
       console.warn('Error fetching campaign details:', error)
-      hasAdvantageCampaignBudget = false // Assume ABO on error (mais seguro)
+      // Em caso de erro, assumir CBO (mais permissivo)
+      hasAdvantageCampaignBudget = true
     }
 
     // Verificar se pode editar orçamento no nível da campanha
