@@ -1,22 +1,62 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { CampaignClone } from '@/lib/types'
+import { FacebookAPI } from '@/lib/facebook-api'
+
+const facebookAPI = new FacebookAPI()
+
+export async function GET(request: NextRequest) {
+  try {
+    // Verificar se temos um token de acesso
+    const accessToken = request.cookies.get('fb_access_token')?.value
+    
+    if (!accessToken) {
+      return NextResponse.json({ 
+        clones: [],
+        success: false,
+        message: 'Nenhuma conta conectada. Conecte sua conta do Facebook primeiro.'
+      })
+    }
+
+    // Por enquanto, retornamos um array vazio
+    // Em produção, você implementaria um banco de dados para rastrear clones
+    const clones: CampaignClone[] = []
+    
+    return NextResponse.json({ 
+      clones,
+      success: true 
+    })
+  } catch (error) {
+    console.error('Error fetching campaign clones:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch clones' },
+      { status: 500 }
+    )
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { campaignId, accountId } = await request.json()
-
-    if (!campaignId || !accountId) {
-      return NextResponse.json(
-        { error: 'Campaign ID and Account ID are required' },
-        { status: 400 }
-      )
+    const { sourceCampaignId, targetAccountId, campaignName } = await request.json()
+    const accessToken = request.cookies.get('fb_access_token')?.value
+    
+    if (!accessToken) {
+      return NextResponse.json({ 
+        success: false,
+        message: 'Nenhuma conta conectada. Conecte sua conta do Facebook primeiro.'
+      }, { status: 401 })
     }
 
-    // TODO: Implementar lógica de clonagem de campanhas
-    // Por enquanto, retornar sucesso simulado
-    return NextResponse.json({
+    // Clonar campanha usando método nativo (com fallback)
+    const cloneResult = await facebookAPI.cloneCampaignBulk(
+      sourceCampaignId,
+      targetAccountId,
+      accessToken,
+      sourceCampaignId
+    )
+    
+    return NextResponse.json({ 
       success: true,
-      message: 'Campanha clonada com sucesso',
-      clonedCampaignId: `cloned_${campaignId}_${Date.now()}`
+      clone: cloneResult
     })
   } catch (error) {
     console.error('Error cloning campaign:', error)
@@ -25,4 +65,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+} 
