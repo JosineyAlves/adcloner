@@ -19,7 +19,8 @@ import {
   Calendar,
   Users,
   Layers,
-  Megaphone
+  Megaphone,
+  X
 } from 'lucide-react'
 import CampaignsIcon from '@/components/meta-business/icons/CampaignsIcon'
 import AdSetsIcon from '@/components/meta-business/icons/AdSetsIcon'
@@ -583,9 +584,9 @@ export default function MetaBusinessPage() {
                     <SelectionIndicator
                       type="campaigns"
                       count={selectedCampaigns.size}
-                      onActivate={() => handleBulkStatusUpdate('campaigns', Array.from(selectedCampaigns), 'ACTIVE')}
-                      onPause={() => handleBulkStatusUpdate('campaigns', Array.from(selectedCampaigns), 'PAUSED')}
-                      onArchive={() => handleBulkStatusUpdate('campaigns', Array.from(selectedCampaigns), 'ARCHIVED')}
+                      onActivate={() => handleBulkStatusUpdate('campaigns', 'ACTIVE')}
+                      onPause={() => handleBulkStatusUpdate('campaigns', 'PAUSED')}
+                      onArchive={() => handleBulkStatusUpdate('campaigns', 'ARCHIVED')}
                       onClear={() => setSelectedCampaigns(new Set())}
                     />
                   )}
@@ -594,9 +595,9 @@ export default function MetaBusinessPage() {
                     <SelectionIndicator
                       type="adsets"
                       count={selectedAdSets.size}
-                      onActivate={() => handleBulkStatusUpdate('adsets', Array.from(selectedAdSets), 'ACTIVE')}
-                      onPause={() => handleBulkStatusUpdate('adsets', Array.from(selectedAdSets), 'PAUSED')}
-                      onArchive={() => handleBulkStatusUpdate('adsets', Array.from(selectedAdSets), 'ARCHIVED')}
+                      onActivate={() => handleBulkStatusUpdate('adsets', 'ACTIVE')}
+                      onPause={() => handleBulkStatusUpdate('adsets', 'PAUSED')}
+                      onArchive={() => handleBulkStatusUpdate('adsets', 'ARCHIVED')}
                       onClear={() => setSelectedAdSets(new Set())}
                     />
                   )}
@@ -605,9 +606,9 @@ export default function MetaBusinessPage() {
                     <SelectionIndicator
                       type="ads"
                       count={selectedAds.size}
-                      onActivate={() => handleBulkStatusUpdate('ads', Array.from(selectedAds), 'ACTIVE')}
-                      onPause={() => handleBulkStatusUpdate('ads', Array.from(selectedAds), 'PAUSED')}
-                      onArchive={() => handleBulkStatusUpdate('ads', Array.from(selectedAds), 'ARCHIVED')}
+                      onActivate={() => handleBulkStatusUpdate('ads', 'ACTIVE')}
+                      onPause={() => handleBulkStatusUpdate('ads', 'PAUSED')}
+                      onArchive={() => handleBulkStatusUpdate('ads', 'ARCHIVED')}
                       onClear={() => setSelectedAds(new Set())}
                     />
                   )}
