@@ -19,8 +19,7 @@ import {
   Calendar,
   Users,
   Layers,
-  Megaphone,
-  X
+  Megaphone
 } from 'lucide-react'
 import CampaignsIcon from '@/components/meta-business/icons/CampaignsIcon'
 import AdSetsIcon from '@/components/meta-business/icons/AdSetsIcon'
@@ -76,22 +75,10 @@ export default function MetaBusinessPage() {
   const [selectedCampaigns, setSelectedCampaigns] = useState<Set<string>>(new Set())
   const [selectedAdSets, setSelectedAdSets] = useState<Set<string>>(new Set())
   const [selectedAds, setSelectedAds] = useState<Set<string>>(new Set())
-  
-  // Estado para filtro automático baseado na seleção de campanhas
-  const [selectedCampaignForFilter, setSelectedCampaignForFilter] = useState<string | null>(null)
 
   useEffect(() => {
     fetchAccounts()
   }, [])
-
-  // Debug: Monitorar mudanças no estado de filtro
-  useEffect(() => {
-    console.log('🔍 Estado selectedCampaignForFilter mudou:', selectedCampaignForFilter)
-    console.log('🔍 Ad sets filtrados:', getFilteredAdSets().length)
-    console.log('🔍 Ads filtrados:', getFilteredAds().length)
-    console.log('🔍 Total ad sets:', adSets.length)
-    console.log('🔍 Total ads:', ads.length)
-  }, [selectedCampaignForFilter, adSets, ads])
 
   useEffect(() => {
     if (accounts.length > 0) {
@@ -253,37 +240,6 @@ export default function MetaBusinessPage() {
       ...prev,
       accountIds
     }))
-  }
-
-  // Função para definir campanha selecionada para filtro
-  const handleCampaignSelection = (campaignId: string) => {
-    console.log('🎯 Selecionando campanha para filtro:', campaignId)
-    console.log('🎯 Estado atual selectedCampaignForFilter:', selectedCampaignForFilter)
-    setSelectedCampaignForFilter(campaignId)
-    console.log('🎯 Novo estado será:', campaignId)
-  }
-
-  const clearCampaignSelection = () => {
-    setSelectedCampaignForFilter(null)
-  }
-
-  // Filtrar dados baseado na campanha selecionada
-  const getFilteredAdSets = () => {
-    if (!selectedCampaignForFilter) {
-      return adSets
-    }
-    const filtered = adSets.filter(adSet => adSet.campaign_id === selectedCampaignForFilter)
-    console.log('🔍 Filtro ativo - ad sets filtrados:', filtered.length, 'de', adSets.length, 'para campanha:', selectedCampaignForFilter)
-    return filtered
-  }
-
-  const getFilteredAds = () => {
-    if (!selectedCampaignForFilter) {
-      return ads
-    }
-    const filtered = ads.filter(ad => ad.campaign_id === selectedCampaignForFilter)
-    console.log('🔍 Filtro ativo - ads filtrados:', filtered.length, 'de', ads.length, 'para campanha:', selectedCampaignForFilter)
-    return filtered
   }
 
   // Funções de seleção em massa
@@ -540,34 +496,14 @@ export default function MetaBusinessPage() {
               </div>
             </div>
 
-            {/* Indicador de filtro ativo por campanha - estilo Meta */}
-            {selectedCampaignForFilter && (
-              <div className="px-6 py-2 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-700">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                      1 campanha selecionada
-                    </span>
-                  </div>
-                  <button
-                    onClick={clearCampaignSelection}
-                    className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm"
-                  >
-                    Limpar
-                  </button>
-                </div>
-              </div>
-            )}
-
             {/* Abas */}
             <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="border-b border-gray-200 dark:border-gray-700">
                 <nav className="flex space-x-8 px-6">
                   {[
                     { id: 'campaigns', label: 'Campanhas', icon: CampaignsIcon, count: filteredCampaigns.length },
-                    { id: 'adsets', label: 'Conjuntos', icon: AdSetsIcon, count: getFilteredAdSets().length },
-                    { id: 'ads', label: 'Anúncios', icon: AdsIcon, count: getFilteredAds().length }
+                    { id: 'adsets', label: 'Conjuntos', icon: AdSetsIcon, count: filteredAdSets.length },
+                    { id: 'ads', label: 'Anúncios', icon: AdsIcon, count: filteredAds.length }
                   ].map((tab) => {
                     const Icon = tab.icon
                     return (
@@ -591,24 +527,21 @@ export default function MetaBusinessPage() {
                 </nav>
               </div>
 
-
               <div className="p-6">
                 {activeTab === 'campaigns' && (
                   <CampaignsTable
-                    campaigns={campaigns}
+                    campaigns={filteredCampaigns}
                     selectedCampaigns={selectedCampaigns}
                     onSelectionChange={setSelectedCampaigns}
                     onStatusToggle={handleToggleStatus}
                     onBudgetUpdate={handleBudgetUpdate}
                     onBulkStatusUpdate={handleBulkStatusUpdate}
-                    onCampaignSelectForFilter={handleCampaignSelection}
-                    selectedCampaignForFilter={selectedCampaignForFilter}
                   />
                 )}
                 
                 {activeTab === 'adsets' && (
                   <AdSetsTable
-                    adSets={getFilteredAdSets()}
+                    adSets={filteredAdSets}
                     selectedAdSets={selectedAdSets}
                     onSelectionChange={setSelectedAdSets}
                     onStatusToggle={handleToggleStatus}
@@ -619,7 +552,7 @@ export default function MetaBusinessPage() {
                 
                 {activeTab === 'ads' && (
                   <AdsTable
-                    ads={getFilteredAds()}
+                    ads={filteredAds}
                     selectedAds={selectedAds}
                     onSelectionChange={setSelectedAds}
                     onStatusToggle={handleToggleStatus}
