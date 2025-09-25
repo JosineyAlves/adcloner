@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { ChevronDown, Play, Pause, Archive, Copy, Trash2, Edit3 } from 'lucide-react'
+import { ChevronDown, Play, Pause, Archive } from 'lucide-react'
 
 interface BulkActionsButtonProps {
   type: 'campaigns' | 'adsets' | 'ads'
@@ -9,9 +9,6 @@ interface BulkActionsButtonProps {
   onActivate: () => void
   onPause: () => void
   onArchive: () => void
-  onEditBudget?: () => void
-  onCopy?: () => void
-  onDelete?: () => void
 }
 
 export default function BulkActionsButton({
@@ -19,10 +16,7 @@ export default function BulkActionsButton({
   selectedCount,
   onActivate,
   onPause,
-  onArchive,
-  onEditBudget,
-  onCopy,
-  onDelete
+  onArchive
 }: BulkActionsButtonProps) {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -70,28 +64,7 @@ export default function BulkActionsButton({
       icon: Archive,
       onClick: onArchive,
       className: 'text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-900/20'
-    },
-    ...(onEditBudget ? [{
-      id: 'edit-budget',
-      label: 'Alterar orçamento',
-      icon: Edit3,
-      onClick: onEditBudget,
-      className: 'text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'
-    }] : []),
-    ...(onCopy ? [{
-      id: 'copy',
-      label: 'Copiar ID',
-      icon: Copy,
-      onClick: onCopy,
-      className: 'text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20'
-    }] : []),
-    ...(onDelete ? [{
-      id: 'delete',
-      label: 'Excluir',
-      icon: Trash2,
-      onClick: onDelete,
-      className: 'text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20'
-    }] : [])
+    }
   ]
 
   if (selectedCount === 0) return null
