@@ -31,7 +31,6 @@ import DateSelector, { DateRange } from '@/components/dashboard/DateSelector'
 import CampaignsTable from '@/components/meta-business/CampaignsTable'
 import AdSetsTable from '@/components/meta-business/AdSetsTable'
 import AdsTable from '@/components/meta-business/AdsTable'
-import SelectionIndicator from '@/components/meta-business/SelectionIndicator'
 import { 
   MetaCampaign, 
   MetaAdSet, 
@@ -249,6 +248,7 @@ export default function MetaBusinessPage() {
 
   // Função para definir campanha selecionada para filtro
   const handleCampaignSelection = (campaignId: string) => {
+    console.log('🎯 Selecionando campanha para filtro:', campaignId)
     setSelectedCampaignForFilter(campaignId)
   }
 
@@ -572,45 +572,6 @@ export default function MetaBusinessPage() {
                 </nav>
               </div>
 
-              {/* Indicador de Seleção em Massa */}
-              {activeTab === 'campaigns' && selectedCampaigns.size > 0 && (
-                <div className="px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
-                  <SelectionIndicator
-                    type="campaigns"
-                    count={selectedCampaigns.size}
-                    onActivate={() => handleBulkStatusUpdate('campaigns', 'ACTIVE')}
-                    onPause={() => handleBulkStatusUpdate('campaigns', 'PAUSED')}
-                    onArchive={() => handleBulkStatusUpdate('campaigns', 'ARCHIVED')}
-                    onClear={() => setSelectedCampaigns(new Set())}
-                  />
-                </div>
-              )}
-              
-              {activeTab === 'adsets' && selectedAdSets.size > 0 && (
-                <div className="px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
-                  <SelectionIndicator
-                    type="adsets"
-                    count={selectedAdSets.size}
-                    onActivate={() => handleBulkStatusUpdate('adsets', 'ACTIVE')}
-                    onPause={() => handleBulkStatusUpdate('adsets', 'PAUSED')}
-                    onArchive={() => handleBulkStatusUpdate('adsets', 'ARCHIVED')}
-                    onClear={() => setSelectedAdSets(new Set())}
-                  />
-                </div>
-              )}
-              
-              {activeTab === 'ads' && selectedAds.size > 0 && (
-                <div className="px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
-                  <SelectionIndicator
-                    type="ads"
-                    count={selectedAds.size}
-                    onActivate={() => handleBulkStatusUpdate('ads', 'ACTIVE')}
-                    onPause={() => handleBulkStatusUpdate('ads', 'PAUSED')}
-                    onArchive={() => handleBulkStatusUpdate('ads', 'ARCHIVED')}
-                    onClear={() => setSelectedAds(new Set())}
-                  />
-                </div>
-              )}
 
               <div className="p-6">
                 {activeTab === 'campaigns' && (
