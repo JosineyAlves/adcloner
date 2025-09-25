@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { facebookStrictRateLimiter } from '@/lib/rate-limiter'
 
 export async function GET(request: NextRequest) {
   try {

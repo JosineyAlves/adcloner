@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { facebookStrictRateLimiter } from '@/lib/rate-limiter'
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,19 +26,19 @@ export async function GET(request: NextRequest) {
 
     try {
       // Buscar Ad Sets diretamente da conta
-      const adSetsResponse = await fetch(
-        `https://graph.facebook.com/v23.0/${accountId}/adsets?fields=id,name,status,effective_status,daily_budget,lifetime_budget,bid_amount,targeting,created_time,updated_time,campaign{id,name}&access_token=${accessToken}`
-      )
-      
-      const adSetsData = await adSetsResponse.json()
-      
-      if (adSetsData.error) {
-        console.error('Facebook API error:', adSetsData.error)
-        return NextResponse.json(
-          { error: adSetsData.error.message },
-          { status: 400 }
+      const adSetsData = await facebookStrictRateLimiter.executeWithRetry(async () => {
+        const adSetsResponse = await fetch(
+          `https://graph.facebook.com/v23.0/${accountId}/adsets?fields=id,name,status,effective_status,daily_budget,lifetime_budget,bid_amount,targeting,created_time,updated_time,campaign{id,name}&access_token=${accessToken}`
         )
-      }
+        
+        const data = await adSetsResponse.json()
+        
+        if (data.error) {
+          throw new Error(data.error.message || 'Facebook API error')
+        }
+        
+        return data
+      })
 
       const adSets: any[] = []
       
