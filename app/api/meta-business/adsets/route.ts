@@ -44,93 +44,94 @@ export async function GET(request: NextRequest) {
       if (adSetsData.data) {
         // Processar cada Ad Set
         for (const adSet of adSetsData.data) {
-                try {
-                  let insights = {
-                    impressions: 0,
-                    clicks: 0,
-                    spend: 0,
-                    cpc: 0,
-                    ctr: 0
-                  }
+          try {
+            let insights = {
+              impressions: 0,
+              clicks: 0,
+              spend: 0,
+              cpc: 0,
+              ctr: 0
+            }
 
-                  // Buscar insights do Ad Set
-                  const insightsResponse = await fetch(
-                    `https://graph.facebook.com/v23.0/${adSet.id}/insights?fields=impressions,clicks,spend,cpc,ctr&level=adset&date_preset=${datePreset}${since && until ? `&time_range=${JSON.stringify({since, until})}` : ''}&access_token=${accessToken}`
-                  )
-                  
-                  const insightsData = await insightsResponse.json()
-                  
-                  if (insightsData.data && insightsData.data.length > 0) {
-                    const insight = insightsData.data[0]
-                    insights = {
-                      impressions: parseInt(insight.impressions || '0'),
-                      clicks: parseInt(insight.clicks || '0'),
-                      spend: parseFloat(insight.spend || '0'),
-                      cpc: parseFloat(insight.cpc || '0'),
-                      ctr: parseFloat(insight.ctr || '0')
-                    }
-                  }
+            // Buscar insights do Ad Set
+            const insightsResponse = await fetch(
+              `https://graph.facebook.com/v23.0/${adSet.id}/insights?fields=impressions,clicks,spend,cpc,ctr&level=adset&date_preset=${datePreset}${since && until ? `&time_range=${JSON.stringify({since, until})}` : ''}&access_token=${accessToken}`
+            )
+            
+            const insightsData = await insightsResponse.json()
+            
+            if (insightsData.data && insightsData.data.length > 0) {
+              const insight = insightsData.data[0]
+              insights = {
+                impressions: parseInt(insight.impressions || '0'),
+                clicks: parseInt(insight.clicks || '0'),
+                spend: parseFloat(insight.spend || '0'),
+                cpc: parseFloat(insight.cpc || '0'),
+                ctr: parseFloat(insight.ctr || '0')
+              }
+            }
 
-                  // Verificar se a campanha pai usa CBO
-                  let campaignAdvantageBudget = false
-                  try {
-                    const campaignDetailsResponse = await fetch(
-                      `https://graph.facebook.com/v23.0/${adSet.campaign.id}?fields=daily_budget,lifetime_budget&access_token=${accessToken}`
-                    )
-                    
-                    const campaignDetails = await campaignDetailsResponse.json()
-                    
-                    if (campaignDetails.error) {
-                      console.warn(`Error fetching campaign details for ${adSet.campaign.id}:`, campaignDetails.error)
-                      // Se houver erro, assumir ABO (mais seguro)
-                      campaignAdvantageBudget = false
-                    } else {
-                      // Verificar se tem orçamento na campanha
-                      campaignAdvantageBudget = !!(campaignDetails.daily_budget || campaignDetails.lifetime_budget)
-                    }
-                  } catch (error) {
-                    console.warn(`Error fetching campaign details for ${adSet.campaign.id}:`, error)
-                    // Em caso de erro, assumir ABO (mais seguro)
-                    campaignAdvantageBudget = false
-                  }
+            // Verificar se a campanha pai usa CBO
+            let campaignAdvantageBudget = false
+            try {
+              const campaignDetailsResponse = await fetch(
+                `https://graph.facebook.com/v23.0/${adSet.campaign.id}?fields=daily_budget,lifetime_budget&access_token=${accessToken}`
+              )
+              
+              const campaignDetails = await campaignDetailsResponse.json()
+              
+              if (campaignDetails.error) {
+                console.warn(`Error fetching campaign details for ${adSet.campaign.id}:`, campaignDetails.error)
+                // Se houver erro, assumir ABO (mais seguro)
+                campaignAdvantageBudget = false
+              } else {
+                // Verificar se tem orçamento na campanha
+                campaignAdvantageBudget = !!(campaignDetails.daily_budget || campaignDetails.lifetime_budget)
+              }
+            } catch (error) {
+              console.warn(`Error fetching campaign details for ${adSet.campaign.id}:`, error)
+              // Em caso de erro, assumir ABO (mais seguro)
+              campaignAdvantageBudget = false
+            }
 
-                  const metaAdSet = {
-                    id: adSet.id,
-                    name: adSet.name,
-                    campaign_id: adSet.campaign.id,
-                    campaign_name: adSet.campaign.name,
-                    campaign_advantage_budget: campaignAdvantageBudget,
-                    status: adSet.status,
-                    effective_status: adSet.effective_status || adSet.status,
-                    daily_budget: adSet.daily_budget ? Math.round(parseInt(adSet.daily_budget) / 100) : undefined,
-                    lifetime_budget: adSet.lifetime_budget ? Math.round(parseInt(adSet.lifetime_budget) / 100) : undefined,
-                    budget_type: adSet.daily_budget ? 'daily' : 'lifetime',
-                    bid_amount: adSet.bid_amount ? parseFloat(adSet.bid_amount) : undefined,
-                    targeting: {
-                      age_min: adSet.targeting?.age_min || 18,
-                      age_max: adSet.targeting?.age_max || 65,
-                      geo_locations: {
-                        countries: adSet.targeting?.geo_locations?.countries || ['BR']
-                      },
-                      interests: adSet.targeting?.interests || [],
-                      genders: adSet.targeting?.genders || []
-                    },
-                    spend: insights.spend,
-                    impressions: insights.impressions,
-                    clicks: insights.clicks,
-                    cpc: insights.cpc,
-                    ctr: insights.ctr,
-                    created_time: adSet.created_time,
-                    updated_time: adSet.updated_time,
-                    account_id: accountId,
-                    account_name: 'Facebook Account'
-                  }
+            const metaAdSet = {
+              id: adSet.id,
+              name: adSet.name,
+              campaign_id: adSet.campaign.id,
+              campaign_name: adSet.campaign.name,
+              campaign_advantage_budget: campaignAdvantageBudget,
+              status: adSet.status,
+              effective_status: adSet.effective_status || adSet.status,
+              daily_budget: adSet.daily_budget ? Math.round(parseInt(adSet.daily_budget) / 100) : undefined,
+              lifetime_budget: adSet.lifetime_budget ? Math.round(parseInt(adSet.lifetime_budget) / 100) : undefined,
+              budget_type: adSet.daily_budget ? 'daily' : 'lifetime',
+              bid_amount: adSet.bid_amount ? parseFloat(adSet.bid_amount) : undefined,
+              targeting: {
+                age_min: adSet.targeting?.age_min || 18,
+                age_max: adSet.targeting?.age_max || 65,
+                geo_locations: {
+                  countries: adSet.targeting?.geo_locations?.countries || ['BR']
+                },
+                interests: adSet.targeting?.interests || [],
+                genders: adSet.targeting?.genders || []
+              },
+              spend: insights.spend,
+              impressions: insights.impressions,
+              clicks: insights.clicks,
+              cpc: insights.cpc,
+              ctr: insights.ctr,
+              created_time: adSet.created_time,
+              updated_time: adSet.updated_time,
+              account_id: accountId,
+              account_name: 'Facebook Account'
+            }
 
-                  adSets.push(metaAdSet)
-                } catch (error) {
-                  console.error(`Error processing ad set ${adSet.id}:`, error)
-                }
+            adSets.push(metaAdSet)
+          } catch (error) {
+            console.error(`Error processing ad set ${adSet.id}:`, error)
+          }
         }
+      }
 
       return NextResponse.json({ adSets })
     } catch (error) {
