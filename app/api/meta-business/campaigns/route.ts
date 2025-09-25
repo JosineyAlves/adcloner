@@ -79,35 +79,29 @@ export async function GET(request: NextRequest) {
             let advantageCampaignBudget = false
             
             try {
-              // Primeiro, tentar buscar o campo is_advantage_campaign_budget
               const campaignDetailsResponse = await fetch(
-                `https://graph.facebook.com/v23.0/${campaign.id}?fields=budget_remaining,is_advantage_campaign_budget&access_token=${accessToken}`
+                `https://graph.facebook.com/v23.0/${campaign.id}?fields=is_advantage_campaign_budget,daily_budget,lifetime_budget&access_token=${accessToken}`
               )
               
               const campaignDetails = await campaignDetailsResponse.json()
               
               if (campaignDetails.error) {
                 console.warn(`Error fetching campaign details for ${campaign.id}:`, campaignDetails.error)
-                
-                // Se o campo não estiver disponível, verificar se a campanha tem orçamento definido
-                // Campanhas com orçamento definido geralmente são CBO
-                if (campaign.daily_budget || campaign.lifetime_budget) {
-                  advantageCampaignBudget = true
-                } else {
-                  advantageCampaignBudget = false
-                }
+                // Se houver erro, verificar se tem orçamento definido
+                advantageCampaignBudget = !!(campaign.daily_budget || campaign.lifetime_budget)
               } else {
                 // Verificar se o campo existe e é true
-                advantageCampaignBudget = campaignDetails.is_advantage_campaign_budget === true
+                if (campaignDetails.is_advantage_campaign_budget !== undefined) {
+                  advantageCampaignBudget = campaignDetails.is_advantage_campaign_budget === true
+                } else {
+                  // Se o campo não estiver disponível, verificar se tem orçamento
+                  advantageCampaignBudget = !!(campaignDetails.daily_budget || campaignDetails.lifetime_budget || campaign.daily_budget || campaign.lifetime_budget)
+                }
               }
             } catch (error) {
               console.warn(`Error fetching campaign details for ${campaign.id}:`, error)
-              // Em caso de erro, verificar se tem orçamento para determinar CBO
-              if (campaign.daily_budget || campaign.lifetime_budget) {
-                advantageCampaignBudget = true
-              } else {
-                advantageCampaignBudget = false
-              }
+              // Em caso de erro, assumir CBO se tem orçamento
+              advantageCampaignBudget = !!(campaign.daily_budget || campaign.lifetime_budget)
             }
 
             const metaCampaign: MetaCampaign = {
@@ -135,6 +129,9 @@ export async function GET(request: NextRequest) {
           } catch (error) {
             console.error(`Error processing campaign ${campaign.id}:`, error)
             // Adicionar campanha sem insights em caso de erro
+            // Em caso de erro, assumir CBO se tem orçamento
+            const fallbackAdvantageBudget = !!(campaign.daily_budget || campaign.lifetime_budget)
+            
             campaigns.push({
               id: campaign.id,
               name: campaign.name,
@@ -144,7 +141,7 @@ export async function GET(request: NextRequest) {
               daily_budget: campaign.daily_budget ? parseInt(campaign.daily_budget) : undefined,
               lifetime_budget: campaign.lifetime_budget ? parseInt(campaign.lifetime_budget) : undefined,
               budget_type: campaign.daily_budget ? 'daily' : 'lifetime',
-              advantage_campaign_budget: true, // Assumir CBO por padrão para campanhas modernas
+              advantage_campaign_budget: fallbackAdvantageBudget,
               spend: 0,
               impressions: 0,
               clicks: 0,

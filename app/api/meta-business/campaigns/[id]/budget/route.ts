@@ -28,12 +28,12 @@ export async function PATCH(
 
     try {
       // Verificar se a campanha tem Advantage Campaign Budget
+      // Primeiro, tentar buscar o campo is_advantage_campaign_budget
       let hasAdvantageCampaignBudget = false
       
       try {
-        // Primeiro, tentar buscar o campo is_advantage_campaign_budget
         const campaignResponse = await fetch(
-          `https://graph.facebook.com/v23.0/${campaignId}?fields=is_advantage_campaign_budget&access_token=${accessToken}`
+          `https://graph.facebook.com/v23.0/${campaignId}?fields=is_advantage_campaign_budget,daily_budget,lifetime_budget&access_token=${accessToken}`
         )
         
         const campaignData = await campaignResponse.json()
@@ -41,8 +41,8 @@ export async function PATCH(
         if (campaignData.error) {
           console.warn('Facebook API error fetching campaign details:', campaignData.error)
           
-          // Se o campo não estiver disponível, tentar verificar se a campanha tem orçamento definido
-          // Campanhas com orçamento definido geralmente são CBO
+          // Se houver erro, tentar uma abordagem alternativa
+          // Verificar se a campanha tem orçamento definido no nível da campanha
           const budgetResponse = await fetch(
             `https://graph.facebook.com/v23.0/${campaignId}?fields=daily_budget,lifetime_budget&access_token=${accessToken}`
           )
@@ -58,7 +58,16 @@ export async function PATCH(
           }
         } else {
           // Verificar se o campo existe e é true
-          hasAdvantageCampaignBudget = campaignData.is_advantage_campaign_budget === true
+          if (campaignData.is_advantage_campaign_budget !== undefined) {
+            hasAdvantageCampaignBudget = campaignData.is_advantage_campaign_budget === true
+          } else {
+            // Se o campo não estiver disponível, verificar se tem orçamento
+            if (campaignData.daily_budget || campaignData.lifetime_budget) {
+              hasAdvantageCampaignBudget = true
+            } else {
+              hasAdvantageCampaignBudget = false
+            }
+          }
         }
       } catch (error) {
         console.warn('Error fetching campaign details:', error)
