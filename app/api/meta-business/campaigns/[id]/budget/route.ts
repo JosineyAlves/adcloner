@@ -31,7 +31,7 @@ export async function POST(
     console.log(`🔄 Atualizando orçamento da campanha ${campaignId}:`, { budget, budgetType })
 
     // Verificar se a campanha usa CBO (Campaign Budget Optimization)
-    // Baseado na documentação: "You can either set budget at the campaign level or at the adset level, not both"
+    // Simplificado para evitar rate limit - usar apenas campos básicos
     let hasAdvantageCampaignBudget = false
     try {
       // Usar apenas campos básicos para evitar erro 400

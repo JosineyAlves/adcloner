@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { FacebookAPI } from '@/lib/facebook-api'
 import { MetaCampaign } from '@/lib/types'
+import { facebookRateLimiter } from '@/lib/rate-limiter'
+import { cache } from '@/lib/cache'
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,11 +29,22 @@ export async function GET(request: NextRequest) {
 
     const facebookAPI = new FacebookAPI()
     
+    // Verificar cache primeiro
+    const cacheKey = cache.generateKey('campaigns', { accountId, datePreset, since, until })
+    const cachedData = cache.get(cacheKey)
+    
+    if (cachedData) {
+      console.log('📦 Retornando campanhas do cache')
+      return NextResponse.json(cachedData)
+    }
+    
     try {
-      // Buscar campanhas da conta
-      const campaignsResponse = await fetch(
-        `https://graph.facebook.com/v23.0/${accountId}/campaigns?fields=id,name,objective,status,effective_status,daily_budget,lifetime_budget,created_time,updated_time&access_token=${accessToken}`
-      )
+      // Buscar campanhas da conta com rate limiting
+      const campaignsResponse = await facebookRateLimiter.executeWithRetry(async () => {
+        return fetch(
+          `https://graph.facebook.com/v23.0/${accountId}/campaigns?fields=id,name,objective,status,effective_status,daily_budget,lifetime_budget,created_time,updated_time&access_token=${accessToken}`
+        )
+      })
       
       const campaignsData = await campaignsResponse.json()
       
@@ -156,7 +169,12 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      return NextResponse.json({ campaigns })
+      const result = { campaigns }
+      
+      // Salvar no cache por 2 minutos
+      cache.set(cacheKey, result, 2 * 60 * 1000)
+      
+      return NextResponse.json(result)
     } catch (error) {
       console.error('Error fetching campaigns:', error)
       return NextResponse.json(
