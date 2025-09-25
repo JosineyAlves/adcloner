@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
               daily_budget: campaign.daily_budget ? parseInt(campaign.daily_budget) : undefined,
               lifetime_budget: campaign.lifetime_budget ? parseInt(campaign.lifetime_budget) : undefined,
               budget_type: campaign.daily_budget ? 'daily' : 'lifetime',
-              advantage_campaign_budget: false,
+              advantage_campaign_budget: true, // Assumir CBO por padrão para campanhas modernas
               spend: 0,
               impressions: 0,
               clicks: 0,

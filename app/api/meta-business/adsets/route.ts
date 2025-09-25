@@ -80,11 +80,20 @@ export async function GET(request: NextRequest) {
                     }
                   }
 
+                  // Verificar se a campanha pai usa CBO
+                  const campaignDetailsResponse = await fetch(
+                    `https://graph.facebook.com/v23.0/${campaign.id}?fields=is_advantage_campaign_budget&access_token=${accessToken}`
+                  )
+                  
+                  const campaignDetails = await campaignDetailsResponse.json()
+                  const campaignAdvantageBudget = campaignDetails.is_advantage_campaign_budget || true // Assumir CBO por padrão
+
                   const metaAdSet = {
                     id: adSet.id,
                     name: adSet.name,
                     campaign_id: campaign.id,
                     campaign_name: campaign.name,
+                    campaign_advantage_budget: campaignAdvantageBudget,
                     status: adSet.status,
                     effective_status: adSet.effective_status || adSet.status,
                     daily_budget: adSet.daily_budget ? parseInt(adSet.daily_budget) : undefined,

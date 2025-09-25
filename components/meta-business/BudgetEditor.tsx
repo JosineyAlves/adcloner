@@ -13,8 +13,6 @@ interface BudgetEditorProps {
   currency?: string
   minValue?: number
   maxValue?: number
-  isCBO?: boolean // Campaign Budget Optimization
-  level?: 'campaign' | 'adset' // Nível do orçamento
 }
 
 export default function BudgetEditor({
@@ -25,9 +23,7 @@ export default function BudgetEditor({
   disabled = false,
   currency = 'BRL',
   minValue = 1,
-  maxValue = 1000000,
-  isCBO = false,
-  level = 'adset'
+  maxValue = 1000000
 }: BudgetEditorProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [budget, setBudget] = useState(currentBudget.toString())
@@ -68,18 +64,6 @@ export default function BudgetEditor({
 
   const handleStartEdit = () => {
     if (disabled) return
-    
-    // Verificar se pode editar baseado no tipo de orçamento
-    if (level === 'campaign' && !isCBO) {
-      toast.error('Esta campanha não usa CBO. Edite o orçamento no nível do Conjunto de Anúncios.')
-      return
-    }
-    
-    if (level === 'adset' && isCBO) {
-      toast.error('Esta campanha usa CBO. Edite o orçamento no nível da Campanha.')
-      return
-    }
-    
     setIsEditing(true)
     setBudget(parseFromCents(currentBudget))
   }
@@ -153,91 +137,94 @@ export default function BudgetEditor({
 
   if (isEditing) {
     return (
-      <div className="flex items-center space-x-2 min-w-[120px]">
+      <div className="flex items-center space-x-2 min-w-[160px] bg-white border border-blue-300 rounded-lg shadow-sm">
         <div className="relative flex-1">
-          <DollarSign className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
             ref={inputRef}
             type="text"
             value={budget}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            className="w-full pl-8 pr-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 text-sm border-0 rounded-lg focus:outline-none focus:ring-0"
             placeholder="0,00"
             disabled={isUpdating}
           />
         </div>
         
-        <div className="flex items-center space-x-1">
-          <button
-            onClick={handleSave}
-            disabled={isUpdating}
-            className="p-1 text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Salvar"
-          >
-            {isUpdating ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Check className="w-4 h-4" />
-            )}
-          </button>
+        <div className="flex items-center space-x-1 pr-2">
+          <span className="text-xs text-gray-500 font-medium">
+            {budgetType === 'daily' ? 'Diário' : 'Total'}
+          </span>
           
-          <button
-            onClick={handleCancel}
-            disabled={isUpdating}
-            className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Cancelar"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center space-x-1">
+            <button
+              onClick={handleSave}
+              disabled={isUpdating}
+              className="p-1 text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Salvar"
+            >
+              {isUpdating ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Check className="w-4 h-4" />
+              )}
+            </button>
+            
+            <button
+              onClick={handleCancel}
+              disabled={isUpdating}
+              className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Cancelar"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
     )
   }
 
   // Determinar se pode editar
-  const canEdit = !disabled && (
-    (level === 'campaign' && isCBO) || 
-    (level === 'adset' && !isCBO)
-  )
+  const canEdit = !disabled
 
   // Determinar mensagem de tooltip
   const getTooltipMessage = () => {
     if (disabled) return 'Orçamento não pode ser editado'
-    if (level === 'campaign' && !isCBO) return 'Esta campanha não usa CBO. Edite o orçamento no nível do Conjunto de Anúncios.'
-    if (level === 'adset' && isCBO) return 'Esta campanha usa CBO. Edite o orçamento no nível da Campanha.'
     return `Clique para editar orçamento ${budgetType === 'daily' ? 'diário' : 'total'}`
   }
 
   return (
     <div 
-      className={`flex items-center space-x-2 min-w-[120px] rounded px-2 py-1 transition-colors ${
+      className={`flex items-center space-x-2 min-w-[140px] rounded px-3 py-2 transition-all duration-200 ${
         canEdit 
-          ? 'cursor-pointer group hover:bg-gray-50' 
+          ? 'cursor-pointer group hover:bg-blue-50 hover:border-blue-200 border border-transparent hover:shadow-sm' 
           : 'cursor-not-allowed opacity-60'
       }`}
       onClick={handleStartEdit}
       title={getTooltipMessage()}
     >
-      <DollarSign className="text-gray-400 w-4 h-4" />
-      <span className="text-sm font-medium text-gray-900 dark:text-white">
-        {formatCurrency(currentBudget)}
-      </span>
-      <span className="text-xs text-gray-500 dark:text-gray-400">
-        {budgetType === 'daily' ? '/dia' : '/total'}
-      </span>
+      <div className="flex items-center space-x-2 flex-1">
+        <span className="text-sm font-medium text-gray-900 dark:text-white">
+          {formatCurrency(currentBudget)}
+        </span>
+        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+          {budgetType === 'daily' ? 'Diário' : 'Total'}
+        </span>
+        {canEdit && (
+          <div className="w-1 h-1 bg-gray-300 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        )}
+      </div>
       
       {canEdit && (
         <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-          <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+          <div className="w-4 h-4 text-gray-400 hover:text-blue-600">
+            <svg viewBox="0 0 16 16" fill="currentColor">
+              <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708L5.707 13.5a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5v-3.207a.5.5 0 0 1 .146-.353L12.146.146zM1.5 10.5V13h2.5L12.5 4.5 10 2 1.5 10.5z"/>
+            </svg>
+          </div>
         </div>
       )}
       
-      {!canEdit && (
-        <div className="text-xs text-gray-400">
-          {level === 'campaign' && !isCBO ? 'ABO' : level === 'adset' && isCBO ? 'CBO' : ''}
-        </div>
-      )}
     </div>
   )
 }
