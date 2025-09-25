@@ -236,10 +236,10 @@ export default function MetaPage() {
 
   useEffect(() => {
     if (accounts.length > 0) {
-      fetchInsights()
       if (!selectedAccount) {
         setSelectedAccount(accounts[0].id)
       }
+      fetchInsights()
     }
   }, [accounts, datePreset, customRange])
 
@@ -248,6 +248,14 @@ export default function MetaPage() {
       fetchData()
     }
   }, [selectedAccount, activeTab])
+
+  // Carregar insights novamente após carregar dados das campanhas
+  useEffect(() => {
+    if (campaigns.length > 0 || adsets.length > 0 || ads.length > 0) {
+      console.log(`🔄 Dados carregados - Campanhas: ${campaigns.length}, AdSets: ${adsets.length}, Ads: ${ads.length}`)
+      console.log(`📊 Insights atuais: ${insights.length}`)
+    }
+  }, [campaigns, adsets, ads, insights])
 
   const fetchAccounts = async () => {
     try {
@@ -309,6 +317,7 @@ export default function MetaPage() {
       }
       
       console.log(`📈 Total de insights encontrados: ${allInsights.length}`)
+      console.log(`📊 Insights carregados:`, allInsights)
       setInsights(allInsights)
     } catch (error) {
       console.error('Error fetching insights:', error)
@@ -405,6 +414,8 @@ export default function MetaPage() {
     await fetchInsights()
     if (selectedAccount) {
       await fetchData()
+      // Recarregar insights após carregar dados para garantir sincronização
+      await fetchInsights()
     }
     setIsRefreshing(false)
     toast.success('Dados atualizados!')
@@ -603,10 +614,17 @@ export default function MetaPage() {
      
      // Se for uma métrica de performance, buscar nos insights
      if (performanceMetrics.includes(metric.id)) {
+       console.log(`🔍 Buscando métrica ${metric.id} para item ${item.id} (${item.name})`)
+       console.log(`📊 Total de insights disponíveis: ${insights.length}`)
+       
        const insightData = insights.find(insight => {
          // Mapear o tipo de item para o campo correto nos insights
          if (activeTab === 'campanhas') {
-           return insight.campaign_id === item.id
+           const match = insight.campaign_id === item.id
+           if (match) {
+             console.log(`✅ Insight encontrado para campanha ${item.id}:`, insight)
+           }
+           return match
          } else if (activeTab === 'conjuntos') {
            return insight.adset_id === item.id
          } else if (activeTab === 'anuncios') {
@@ -616,6 +634,7 @@ export default function MetaPage() {
        })
        
        if (insightData) {
+         console.log(`📈 Usando insight data para ${metric.id}:`, insightData[metric.id])
          // Lidar com métricas aninhadas
          if (metric.id === 'actions_purchase') {
            // Buscar ações de compra específicas
@@ -645,6 +664,8 @@ export default function MetaPage() {
            // Métricas simples
            value = insightData[metric.id]
          }
+       } else {
+         console.log(`❌ Nenhum insight encontrado para ${metric.id} do item ${item.id}`)
        }
      }
      
