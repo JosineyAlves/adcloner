@@ -255,7 +255,10 @@ export default function CampaignsTable({
                 <td className="px-6 py-4">
                   {onCampaignSelectForFilter && (
                     <button
-                      onClick={() => onCampaignSelectForFilter(campaign.id)}
+                      onClick={() => {
+                        console.log('🎯 Clicando no botão Filtrar para campanha:', campaign.id)
+                        onCampaignSelectForFilter(campaign.id)
+                      }}
                       className={`px-3 py-1 text-xs rounded-md transition-colors ${
                         selectedCampaignForFilter === campaign.id
                           ? 'bg-blue-500 text-white'

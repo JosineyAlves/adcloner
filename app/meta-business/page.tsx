@@ -258,13 +258,23 @@ export default function MetaBusinessPage() {
 
   // Filtrar dados baseado na campanha selecionada
   const getFilteredAdSets = () => {
-    if (!selectedCampaignForFilter) return adSets
-    return adSets.filter(adSet => adSet.campaign_id === selectedCampaignForFilter)
+    if (!selectedCampaignForFilter) {
+      console.log('🔍 Sem filtro de campanha - retornando todos os ad sets:', adSets.length)
+      return adSets
+    }
+    const filtered = adSets.filter(adSet => adSet.campaign_id === selectedCampaignForFilter)
+    console.log('🔍 Filtro ativo - ad sets filtrados:', filtered.length, 'de', adSets.length)
+    return filtered
   }
 
   const getFilteredAds = () => {
-    if (!selectedCampaignForFilter) return ads
-    return ads.filter(ad => ad.campaign_id === selectedCampaignForFilter)
+    if (!selectedCampaignForFilter) {
+      console.log('🔍 Sem filtro de campanha - retornando todos os ads:', ads.length)
+      return ads
+    }
+    const filtered = ads.filter(ad => ad.campaign_id === selectedCampaignForFilter)
+    console.log('🔍 Filtro ativo - ads filtrados:', filtered.length, 'de', ads.length)
+    return filtered
   }
 
   // Funções de seleção em massa
@@ -521,21 +531,21 @@ export default function MetaBusinessPage() {
               </div>
             </div>
 
-            {/* Indicador de filtro ativo por campanha */}
+            {/* Indicador de filtro ativo por campanha - estilo Meta */}
             {selectedCampaignForFilter && (
-              <div className="px-6 py-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg mx-6 mb-4">
+              <div className="px-6 py-2 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-700">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                     <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                      Filtrado por: <strong>{campaigns.find(c => c.id === selectedCampaignForFilter)?.name}</strong>
+                      1 campanha selecionada
                     </span>
                   </div>
                   <button
                     onClick={clearCampaignSelection}
-                    className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                    className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm"
                   >
-                    <X className="w-4 h-4" />
+                    Limpar
                   </button>
                 </div>
               </div>
