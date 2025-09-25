@@ -72,7 +72,7 @@ export default function StatusToggleDemo() {
           Características do StatusToggle
         </h3>
         <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-          <li>• <strong>Verde:</strong> Status ativo (ACTIVE)</li>
+          <li>• <strong>Azul (#035C8E):</strong> Status ativo (ACTIVE)</li>
           <li>• <strong>Cinza:</strong> Status pausado (PAUSED)</li>
           <li>• <strong>Laranja:</strong> Pausado por herança (CAMPAIGN_PAUSED)</li>
           <li>• <strong>Desabilitado:</strong> Itens arquivados (ARCHIVED)</li>

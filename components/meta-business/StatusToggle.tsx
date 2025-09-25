@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { Play, Pause } from 'lucide-react'
 
 interface StatusToggleProps {
   id: string
@@ -36,27 +35,22 @@ export default function StatusToggle({
     md: 'w-4 h-4',
     lg: 'w-5 h-5'
   }
-  
-  const iconSizeClasses = {
-    sm: 'w-2 h-2',
-    md: 'w-2.5 h-2.5',
-    lg: 'w-3 h-3'
-  }
 
-  const handleToggle = async () => {
+  const handleToggle = () => {
     if (isDisabled) return
     
     setIsLoading(true)
-    try {
-      await onToggle(id, status)
-    } finally {
+    
+    // Simular delay mínimo para feedback visual
+    setTimeout(() => {
+      onToggle(id, status)
       setIsLoading(false)
-    }
+    }, 100)
   }
 
   const getStatusColor = () => {
     if (isActive) {
-      return 'bg-green-500'
+      return 'bg-[#035C8E]'
     }
     if (effectiveStatus === 'CAMPAIGN_PAUSED' || effectiveStatus === 'CAMPAIGN_ARCHIVED') {
       return 'bg-orange-500'
@@ -113,30 +107,13 @@ export default function StatusToggle({
             flex items-center justify-center
           `}
         >
-          {isLoading ? (
-            <div className={`${iconSizeClasses[size]} animate-spin`}>
+          {isLoading && (
+            <div className="w-2 h-2 animate-spin">
               <div className="w-full h-full border-2 border-gray-400 border-t-transparent rounded-full" />
             </div>
-          ) : (
-            <>
-              {isActive ? (
-                <Play className={`${iconSizeClasses[size]} text-green-600`} />
-              ) : (
-                <Pause className={`${iconSizeClasses[size]} text-gray-600`} />
-              )}
-            </>
           )}
         </span>
       </button>
-      
-      {/* Indicador de status efetivo */}
-      {effectiveStatus && effectiveStatus !== status && (
-        <div className="flex items-center space-x-1">
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            ({effectiveStatus === 'CAMPAIGN_PAUSED' ? 'Pausado' : 'Arquivado'})
-          </span>
-        </div>
-      )}
     </div>
   )
 }
