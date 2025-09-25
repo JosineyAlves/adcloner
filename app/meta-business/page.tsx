@@ -84,6 +84,15 @@ export default function MetaBusinessPage() {
     fetchAccounts()
   }, [])
 
+  // Debug: Monitorar mudanças no estado de filtro
+  useEffect(() => {
+    console.log('🔍 Estado selectedCampaignForFilter mudou:', selectedCampaignForFilter)
+    console.log('🔍 Ad sets filtrados:', getFilteredAdSets().length)
+    console.log('🔍 Ads filtrados:', getFilteredAds().length)
+    console.log('🔍 Total ad sets:', adSets.length)
+    console.log('🔍 Total ads:', ads.length)
+  }, [selectedCampaignForFilter, adSets, ads])
+
   useEffect(() => {
     if (accounts.length > 0) {
       fetchData()
@@ -249,7 +258,9 @@ export default function MetaBusinessPage() {
   // Função para definir campanha selecionada para filtro
   const handleCampaignSelection = (campaignId: string) => {
     console.log('🎯 Selecionando campanha para filtro:', campaignId)
+    console.log('🎯 Estado atual selectedCampaignForFilter:', selectedCampaignForFilter)
     setSelectedCampaignForFilter(campaignId)
+    console.log('🎯 Novo estado será:', campaignId)
   }
 
   const clearCampaignSelection = () => {
@@ -259,21 +270,19 @@ export default function MetaBusinessPage() {
   // Filtrar dados baseado na campanha selecionada
   const getFilteredAdSets = () => {
     if (!selectedCampaignForFilter) {
-      console.log('🔍 Sem filtro de campanha - retornando todos os ad sets:', adSets.length)
       return adSets
     }
     const filtered = adSets.filter(adSet => adSet.campaign_id === selectedCampaignForFilter)
-    console.log('🔍 Filtro ativo - ad sets filtrados:', filtered.length, 'de', adSets.length)
+    console.log('🔍 Filtro ativo - ad sets filtrados:', filtered.length, 'de', adSets.length, 'para campanha:', selectedCampaignForFilter)
     return filtered
   }
 
   const getFilteredAds = () => {
     if (!selectedCampaignForFilter) {
-      console.log('🔍 Sem filtro de campanha - retornando todos os ads:', ads.length)
       return ads
     }
     const filtered = ads.filter(ad => ad.campaign_id === selectedCampaignForFilter)
-    console.log('🔍 Filtro ativo - ads filtrados:', filtered.length, 'de', ads.length)
+    console.log('🔍 Filtro ativo - ads filtrados:', filtered.length, 'de', ads.length, 'para campanha:', selectedCampaignForFilter)
     return filtered
   }
 
