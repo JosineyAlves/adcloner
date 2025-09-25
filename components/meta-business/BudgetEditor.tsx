@@ -24,7 +24,7 @@ export default function BudgetEditor({
   onUpdate,
   disabled = false,
   currency = 'BRL',
-  minValue = 1,
+  minValue = 0.01, // R$ 0,01 (1 centavo)
   maxValue = 1000000,
   isCBO = false,
   level = 'campaign'

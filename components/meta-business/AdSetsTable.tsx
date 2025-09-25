@@ -243,7 +243,7 @@ export default function AdSetsTable({
                       }
                     }}
                     disabled={false}
-                    minValue={100} // R$ 1,00 em centavos
+                    minValue={0.01} // R$ 0,01 (valor mínimo)
                     maxValue={10000000} // R$ 100.000,00 em centavos
                     isCBO={adSet.campaign_advantage_budget}
                     level="adset"

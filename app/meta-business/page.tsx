@@ -328,29 +328,35 @@ export default function MetaBusinessPage() {
 
   const handleBudgetUpdate = async (type: 'campaigns' | 'adsets', id: string, budget: number, budgetType: 'daily' | 'lifetime') => {
     try {
-      const response = await fetch(`/api/meta-business/${type}/${id}/budget`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          budget, 
-          budgetType,
-          [budgetType === 'daily' ? 'daily_budget' : 'lifetime_budget']: budget
-        }),
-        credentials: 'include'
-      })
-
-      if (response.ok) {
-        toast.success('Orçamento atualizado!')
-        await fetchData() // Recarregar dados
-      } else {
-        const error = await response.json()
-        toast.error(error.message || 'Erro ao atualizar orçamento')
+      // Atualizar o estado local imediatamente para feedback visual
+      if (type === 'campaigns') {
+        setCampaigns(prev => prev.map(campaign => 
+          campaign.id === id 
+            ? { 
+                ...campaign, 
+                [budgetType === 'daily' ? 'daily_budget' : 'lifetime_budget']: budget,
+                budget_type: budgetType
+              }
+            : campaign
+        ))
+      } else if (type === 'adsets') {
+        setAdSets(prev => prev.map(adSet => 
+          adSet.id === id 
+            ? { 
+                ...adSet, 
+                [budgetType === 'daily' ? 'daily_budget' : 'lifetime_budget']: budget,
+                budget_type: budgetType
+              }
+            : adSet
+        ))
       }
+
+      // Recarregar dados em background para sincronizar com o servidor
+      setTimeout(() => {
+        fetchData()
+      }, 1000)
     } catch (error) {
-      console.error('Error updating budget:', error)
-      toast.error('Erro ao atualizar orçamento')
+      console.error('Error updating budget state:', error)
     }
   }
 

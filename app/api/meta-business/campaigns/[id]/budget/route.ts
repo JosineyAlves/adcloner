@@ -31,6 +31,7 @@ export async function POST(
     console.log(`🔄 Atualizando orçamento da campanha ${campaignId}:`, { budget, budgetType })
 
     // Verificar se a campanha usa CBO (Campaign Budget Optimization)
+    // Baseado na documentação: "You can either set budget at the campaign level or at the adset level, not both"
     let hasAdvantageCampaignBudget = false
     try {
       const campaignResponse = await fetch(
@@ -47,11 +48,14 @@ export async function POST(
           console.warn('Facebook API error fetching campaign details:', campaignData.error)
           hasAdvantageCampaignBudget = true // Assume CBO on error
         } else {
+          // Verificar se tem orçamento definido no nível da campanha
+          const hasCampaignBudget = !!(campaignData.daily_budget || campaignData.lifetime_budget)
+          
           if (campaignData.is_advantage_campaign_budget !== undefined) {
             hasAdvantageCampaignBudget = campaignData.is_advantage_campaign_budget === true
           } else {
-            // Se o campo não estiver disponível, verificar se tem orçamento
-            hasAdvantageCampaignBudget = !!(campaignData.daily_budget || campaignData.lifetime_budget)
+            // Se o campo não estiver disponível, usar a presença de orçamento como indicador
+            hasAdvantageCampaignBudget = hasCampaignBudget
           }
         }
       }
