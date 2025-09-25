@@ -81,12 +81,31 @@ export async function GET(request: NextRequest) {
                   }
 
                   // Verificar se a campanha pai usa CBO
-                  const campaignDetailsResponse = await fetch(
-                    `https://graph.facebook.com/v23.0/${campaign.id}?fields=is_advantage_campaign_budget&access_token=${accessToken}`
-                  )
-                  
-                  const campaignDetails = await campaignDetailsResponse.json()
-                  const campaignAdvantageBudget = campaignDetails.is_advantage_campaign_budget || true // Assumir CBO por padrão
+                  let campaignAdvantageBudget = false
+                  try {
+                    const campaignDetailsResponse = await fetch(
+                      `https://graph.facebook.com/v23.0/${campaign.id}?fields=is_advantage_campaign_budget,daily_budget,lifetime_budget&access_token=${accessToken}`
+                    )
+                    
+                    const campaignDetails = await campaignDetailsResponse.json()
+                    
+                    if (campaignDetails.error) {
+                      console.warn(`Error fetching campaign details for ${campaign.id}:`, campaignDetails.error)
+                      // Se houver erro, verificar se tem orçamento definido na campanha
+                      campaignAdvantageBudget = !!(campaign.daily_budget || campaign.lifetime_budget)
+                    } else {
+                      if (campaignDetails.is_advantage_campaign_budget !== undefined) {
+                        campaignAdvantageBudget = campaignDetails.is_advantage_campaign_budget === true
+                      } else {
+                        // Se o campo não estiver disponível, verificar se tem orçamento na campanha
+                        campaignAdvantageBudget = !!(campaignDetails.daily_budget || campaignDetails.lifetime_budget)
+                      }
+                    }
+                  } catch (error) {
+                    console.warn(`Error fetching campaign details for ${campaign.id}:`, error)
+                    // Em caso de erro, assumir ABO (mais seguro)
+                    campaignAdvantageBudget = false
+                  }
 
                   const metaAdSet = {
                     id: adSet.id,

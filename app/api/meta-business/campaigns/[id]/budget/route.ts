@@ -40,28 +40,30 @@ export async function POST(
       
       if (!campaignResponse.ok) {
         console.warn('Error fetching campaign details:', campaignResponse.status)
-        hasAdvantageCampaignBudget = true // Assume CBO on error
+        hasAdvantageCampaignBudget = false // Assume ABO on error (mais seguro)
       } else {
         const campaignData = await campaignResponse.json()
         
         if (campaignData.error) {
           console.warn('Facebook API error fetching campaign details:', campaignData.error)
-          hasAdvantageCampaignBudget = true // Assume CBO on error
+          hasAdvantageCampaignBudget = false // Assume ABO on error (mais seguro)
         } else {
           // Verificar se tem orçamento definido no nível da campanha
           const hasCampaignBudget = !!(campaignData.daily_budget || campaignData.lifetime_budget)
           
           if (campaignData.is_advantage_campaign_budget !== undefined) {
+            // Usar o campo oficial se disponível
             hasAdvantageCampaignBudget = campaignData.is_advantage_campaign_budget === true
           } else {
-            // Se o campo não estiver disponível, usar a presença de orçamento como indicador
+            // Se o campo não estiver disponível, verificar se tem orçamento na campanha
+            // Se tem orçamento na campanha = CBO, se não tem = ABO
             hasAdvantageCampaignBudget = hasCampaignBudget
           }
         }
       }
     } catch (error) {
       console.warn('Error fetching campaign details:', error)
-      hasAdvantageCampaignBudget = true // Assume CBO for modern campaigns on error
+      hasAdvantageCampaignBudget = false // Assume ABO on error (mais seguro)
     }
 
     // Verificar se pode editar orçamento no nível da campanha
