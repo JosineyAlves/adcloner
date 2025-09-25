@@ -57,7 +57,7 @@ export async function PATCH(
       if (data.error) {
         console.error('Facebook API error:', data.error)
         
-        // Tratar erros específicos de rate limit
+        // Tratar erros específicos
         if (data.error.code === 4 || data.error.code === 17 || data.error.code === 341) {
           return NextResponse.json(
             { 
@@ -68,8 +68,21 @@ export async function PATCH(
           )
         }
         
+        if (data.error.code === 100) {
+          return NextResponse.json(
+            { 
+              error: 'Orçamento inválido. Verifique o valor e tente novamente.',
+              code: 'INVALID_BUDGET'
+            },
+            { status: 400 }
+          )
+        }
+        
         return NextResponse.json(
-          { error: data.error.message },
+          { 
+            error: `Erro ao atualizar orçamento: ${data.error.message}`,
+            code: 'UPDATE_ERROR'
+          },
           { status: 400 }
         )
       }

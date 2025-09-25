@@ -27,7 +27,7 @@ export async function PATCH(
     }
 
     try {
-      // Primeiro, verificar se a campanha tem Advantage Campaign Budget
+      // Verificar se a campanha tem Advantage Campaign Budget
       const campaignResponse = await fetch(
         `https://graph.facebook.com/v23.0/${campaignId}?fields=is_advantage_campaign_budget&access_token=${accessToken}`
       )
@@ -37,7 +37,10 @@ export async function PATCH(
       if (campaignData.error) {
         console.error('Facebook API error:', campaignData.error)
         return NextResponse.json(
-          { error: campaignData.error.message },
+          { 
+            error: `Erro ao verificar campanha: ${campaignData.error.message}`,
+            code: 'CAMPAIGN_CHECK_ERROR'
+          },
           { status: 400 }
         )
       }
@@ -47,7 +50,7 @@ export async function PATCH(
       if (!hasAdvantageCampaignBudget) {
         return NextResponse.json(
           { 
-            error: 'Esta campanha não possui Advantage Campaign Budget ativo. Edite o orçamento no nível do Conjunto de Anúncios.',
+            error: 'Esta campanha não usa CBO. Edite o orçamento no nível do Conjunto de Anúncios.',
             code: 'NO_ADVANTAGE_CAMPAIGN_BUDGET'
           },
           { status: 400 }
@@ -84,7 +87,7 @@ export async function PATCH(
       if (data.error) {
         console.error('Facebook API error:', data.error)
         
-        // Tratar erros específicos de rate limit
+        // Tratar erros específicos
         if (data.error.code === 4 || data.error.code === 17 || data.error.code === 341) {
           return NextResponse.json(
             { 
@@ -95,8 +98,21 @@ export async function PATCH(
           )
         }
         
+        if (data.error.code === 100) {
+          return NextResponse.json(
+            { 
+              error: 'Orçamento inválido. Verifique o valor e tente novamente.',
+              code: 'INVALID_BUDGET'
+            },
+            { status: 400 }
+          )
+        }
+        
         return NextResponse.json(
-          { error: data.error.message },
+          { 
+            error: `Erro ao atualizar orçamento: ${data.error.message}`,
+            code: 'UPDATE_ERROR'
+          },
           { status: 400 }
         )
       }

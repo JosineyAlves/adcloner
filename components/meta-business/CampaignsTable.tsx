@@ -214,7 +214,9 @@ export default function CampaignsTable({
                         if (result.success) {
                           onBudgetUpdate('campaigns', id, budget, budgetType)
                         } else {
-                          throw new Error(result.error || 'Erro ao atualizar orçamento')
+                          const error = new Error(result.error || 'Erro ao atualizar orçamento')
+                          ;(error as any).error = result.error
+                          throw error
                         }
                       } catch (error) {
                         console.error('Erro ao atualizar orçamento:', error)
@@ -224,6 +226,8 @@ export default function CampaignsTable({
                     disabled={false}
                     minValue={100} // R$ 1,00 em centavos
                     maxValue={10000000} // R$ 100.000,00 em centavos
+                    isCBO={campaign.advantage_campaign_budget}
+                    level="campaign"
                   />
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">

@@ -13,6 +13,8 @@ interface BudgetEditorProps {
   currency?: string
   minValue?: number
   maxValue?: number
+  isCBO?: boolean // Campaign Budget Optimization
+  level?: 'campaign' | 'adset' // Nível do orçamento
 }
 
 export default function BudgetEditor({
@@ -23,7 +25,9 @@ export default function BudgetEditor({
   disabled = false,
   currency = 'BRL',
   minValue = 1,
-  maxValue = 1000000
+  maxValue = 1000000,
+  isCBO = false,
+  level = 'campaign'
 }: BudgetEditorProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [budget, setBudget] = useState(currentBudget.toString())
@@ -64,6 +68,18 @@ export default function BudgetEditor({
 
   const handleStartEdit = () => {
     if (disabled) return
+    
+    // Verificar se pode editar baseado no tipo de orçamento
+    if (level === 'campaign' && !isCBO) {
+      toast.error('Esta campanha não usa CBO. Edite o orçamento no nível do Conjunto de Anúncios.')
+      return
+    }
+    
+    if (level === 'adset' && isCBO) {
+      toast.error('Esta campanha usa CBO. Edite o orçamento no nível da Campanha.')
+      return
+    }
+    
     setIsEditing(true)
     setBudget(parseFromCents(currentBudget))
   }
@@ -99,9 +115,13 @@ export default function BudgetEditor({
       await onUpdate(id, numericBudget, budgetType)
       toast.success(`Orçamento ${budgetType === 'daily' ? 'diário' : 'total'} atualizado para ${formatCurrency(numericBudget)}`)
       setIsEditing(false)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao atualizar orçamento:', error)
-      toast.error('Erro ao atualizar orçamento. Tente novamente.')
+      
+      // Mostrar mensagem de erro específica se disponível
+      const errorMessage = error?.message || error?.error || 'Erro ao atualizar orçamento'
+      toast.error(errorMessage)
+      
       setBudget(parseFromCents(currentBudget))
     } finally {
       setIsUpdating(false)
@@ -184,8 +204,11 @@ export default function BudgetEditor({
     )
   }
 
-  // Determinar se pode editar
-  const canEdit = !disabled
+  // Determinar se pode editar baseado na lógica CBO/ABO
+  const canEdit = !disabled && (
+    (level === 'campaign' && isCBO) || 
+    (level === 'adset' && !isCBO)
+  )
 
   // Determinar mensagem de tooltip
   const getTooltipMessage = () => {
