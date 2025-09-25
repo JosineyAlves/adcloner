@@ -15,6 +15,7 @@ import {
   Eye
 } from 'lucide-react'
 import { MetaAd } from '@/lib/types'
+import StatusToggle from './StatusToggle'
 import toast from 'react-hot-toast'
 
 interface AdsTableProps {
@@ -50,52 +51,10 @@ export default function AdsTable({
     onSelectionChange(newSelection)
   }
 
-  const handleStatusToggle = (adId: string, currentStatus: string) => {
-    onStatusToggle('ads', adId, currentStatus)
+  const handleStatusToggle = async (adId: string, currentStatus: string) => {
+    await onStatusToggle('ads', adId, currentStatus)
   }
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return <Play className="w-4 h-4 text-green-600" />
-      case 'PAUSED':
-        return <Pause className="w-4 h-4 text-yellow-600" />
-      case 'ARCHIVED':
-        return <Archive className="w-4 h-4 text-gray-600" />
-      default:
-        return <AlertCircle className="w-4 h-4 text-gray-400" />
-    }
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-      case 'PAUSED':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-      case 'ARCHIVED':
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
-    }
-  }
-
-  const getEffectiveStatusColor = (effectiveStatus: string) => {
-    switch (effectiveStatus) {
-      case 'ACTIVE':
-        return 'text-green-600'
-      case 'PAUSED':
-        return 'text-yellow-600'
-      case 'ARCHIVED':
-        return 'text-gray-600'
-      case 'CAMPAIGN_PAUSED':
-        return 'text-orange-600'
-      case 'CAMPAIGN_ARCHIVED':
-        return 'text-red-600'
-      default:
-        return 'text-gray-400'
-    }
-  }
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -243,9 +202,6 @@ export default function AdsTable({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 CTR
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Ações
-              </th>
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -260,17 +216,14 @@ export default function AdsTable({
                   />
                 </td>
                 <td className="px-6 py-4">
-                  <div className="flex items-center space-x-2">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(ad.status)}`}>
-                      {getStatusIcon(ad.status)}
-                      <span className="ml-1">{ad.status}</span>
-                    </span>
-                    {ad.status !== ad.effective_status && (
-                      <span className={`text-xs ${getEffectiveStatusColor(ad.effective_status)}`} title="Status efetivo">
-                        ({ad.effective_status})
-                      </span>
-                    )}
-                  </div>
+                  <StatusToggle
+                    id={ad.id}
+                    status={ad.status}
+                    effectiveStatus={ad.effective_status}
+                    onToggle={handleStatusToggle}
+                    disabled={ad.status === 'ARCHIVED'}
+                    size="md"
+                  />
                 </td>
                 <td className="px-6 py-4">
                   <div className="text-sm font-medium text-gray-900 dark:text-white">
@@ -321,21 +274,6 @@ export default function AdsTable({
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                   {formatPercentage(ad.ctr)}
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => handleStatusToggle(ad.id, ad.status)}
-                      className={`p-1 rounded ${
-                        ad.status === 'ACTIVE' 
-                          ? 'text-yellow-600 hover:bg-yellow-100 dark:hover:bg-yellow-900' 
-                          : 'text-green-600 hover:bg-green-100 dark:hover:bg-green-900'
-                      }`}
-                      title={ad.status === 'ACTIVE' ? 'Pausar' : 'Ativar'}
-                    >
-                      {ad.status === 'ACTIVE' ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                    </button>
-                  </div>
                 </td>
               </tr>
             ))}

@@ -21,6 +21,9 @@ import {
   Layers,
   Megaphone
 } from 'lucide-react'
+import CampaignsIcon from '@/components/meta-business/icons/CampaignsIcon'
+import AdSetsIcon from '@/components/meta-business/icons/AdSetsIcon'
+import AdsIcon from '@/components/meta-business/icons/AdsIcon'
 import Sidebar from '@/components/layout/Sidebar'
 import StatsCard from '@/components/dashboard/StatsCard'
 import DateSelector, { DateRange } from '@/components/dashboard/DateSelector'
@@ -516,9 +519,9 @@ export default function MetaBusinessPage() {
               <div className="border-b border-gray-200 dark:border-gray-700">
                 <nav className="flex space-x-8 px-6">
                   {[
-                    { id: 'campaigns', label: 'Campanhas', icon: Megaphone, count: filteredCampaigns.length },
-                    { id: 'adsets', label: 'Conjuntos', icon: Layers, count: filteredAdSets.length },
-                    { id: 'ads', label: 'Anúncios', icon: Target, count: filteredAds.length }
+                    { id: 'campaigns', label: 'Campanhas', icon: CampaignsIcon, count: filteredCampaigns.length },
+                    { id: 'adsets', label: 'Conjuntos', icon: AdSetsIcon, count: filteredAdSets.length },
+                    { id: 'ads', label: 'Anúncios', icon: AdsIcon, count: filteredAds.length }
                   ].map((tab) => {
                     const Icon = tab.icon
                     return (
