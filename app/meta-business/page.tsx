@@ -30,6 +30,8 @@ import DateSelector, { DateRange } from '@/components/dashboard/DateSelector'
 import CampaignsTable from '@/components/meta-business/CampaignsTable'
 import AdSetsTable from '@/components/meta-business/AdSetsTable'
 import AdsTable from '@/components/meta-business/AdsTable'
+import CampaignSelector from '@/components/meta-business/CampaignSelector'
+import SelectionIndicator from '@/components/meta-business/SelectionIndicator'
 import { 
   MetaCampaign, 
   MetaAdSet, 
@@ -75,6 +77,9 @@ export default function MetaBusinessPage() {
   const [selectedCampaigns, setSelectedCampaigns] = useState<Set<string>>(new Set())
   const [selectedAdSets, setSelectedAdSets] = useState<Set<string>>(new Set())
   const [selectedAds, setSelectedAds] = useState<Set<string>>(new Set())
+  
+  // Estado para filtro de campanhas
+  const [filteredCampaignIds, setFilteredCampaignIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     fetchAccounts()
@@ -240,6 +245,26 @@ export default function MetaBusinessPage() {
       ...prev,
       accountIds
     }))
+  }
+
+  // Funções de filtro de campanhas
+  const handleCampaignFilter = (campaignIds: string[]) => {
+    setFilteredCampaignIds(new Set(campaignIds))
+  }
+
+  const clearCampaignFilter = () => {
+    setFilteredCampaignIds(new Set())
+  }
+
+  // Filtrar dados baseado na seleção de campanhas
+  const getFilteredAdSets = () => {
+    if (filteredCampaignIds.size === 0) return adSets
+    return adSets.filter(adSet => filteredCampaignIds.has(adSet.campaign_id))
+  }
+
+  const getFilteredAds = () => {
+    if (filteredCampaignIds.size === 0) return ads
+    return ads.filter(ad => filteredCampaignIds.has(ad.campaign_id))
   }
 
   // Funções de seleção em massa
@@ -502,8 +527,8 @@ export default function MetaBusinessPage() {
                 <nav className="flex space-x-8 px-6">
                   {[
                     { id: 'campaigns', label: 'Campanhas', icon: CampaignsIcon, count: filteredCampaigns.length },
-                    { id: 'adsets', label: 'Conjuntos', icon: AdSetsIcon, count: filteredAdSets.length },
-                    { id: 'ads', label: 'Anúncios', icon: AdsIcon, count: filteredAds.length }
+                    { id: 'adsets', label: 'Conjuntos', icon: AdSetsIcon, count: getFilteredAdSets().length },
+                    { id: 'ads', label: 'Anúncios', icon: AdsIcon, count: getFilteredAds().length }
                   ].map((tab) => {
                     const Icon = tab.icon
                     return (
@@ -527,6 +552,68 @@ export default function MetaBusinessPage() {
                 </nav>
               </div>
 
+              {/* Seletor de Campanhas e Indicador de Seleção */}
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                <div className="flex items-center justify-between">
+                  {/* Seletor de Campanhas */}
+                  <div className="flex items-center space-x-4">
+                    <CampaignSelector
+                      campaigns={campaigns}
+                      selectedCampaignIds={Array.from(filteredCampaignIds)}
+                      onSelectionChange={handleCampaignFilter}
+                      onClear={clearCampaignFilter}
+                    />
+                    
+                    {/* Indicador de filtro ativo */}
+                    {filteredCampaignIds.size > 0 && (
+                      <div className="flex items-center space-x-2 text-sm text-blue-600">
+                        <span>Filtrado por {filteredCampaignIds.size} campanha{filteredCampaignIds.size > 1 ? 's' : ''}</span>
+                        <button
+                          onClick={clearCampaignFilter}
+                          className="text-blue-500 hover:text-blue-700"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Indicador de Seleção em Massa */}
+                  {activeTab === 'campaigns' && selectedCampaigns.size > 0 && (
+                    <SelectionIndicator
+                      type="campaigns"
+                      count={selectedCampaigns.size}
+                      onActivate={() => handleBulkStatusUpdate('campaigns', Array.from(selectedCampaigns), 'ACTIVE')}
+                      onPause={() => handleBulkStatusUpdate('campaigns', Array.from(selectedCampaigns), 'PAUSED')}
+                      onArchive={() => handleBulkStatusUpdate('campaigns', Array.from(selectedCampaigns), 'ARCHIVED')}
+                      onClear={() => setSelectedCampaigns(new Set())}
+                    />
+                  )}
+                  
+                  {activeTab === 'adsets' && selectedAdSets.size > 0 && (
+                    <SelectionIndicator
+                      type="adsets"
+                      count={selectedAdSets.size}
+                      onActivate={() => handleBulkStatusUpdate('adsets', Array.from(selectedAdSets), 'ACTIVE')}
+                      onPause={() => handleBulkStatusUpdate('adsets', Array.from(selectedAdSets), 'PAUSED')}
+                      onArchive={() => handleBulkStatusUpdate('adsets', Array.from(selectedAdSets), 'ARCHIVED')}
+                      onClear={() => setSelectedAdSets(new Set())}
+                    />
+                  )}
+                  
+                  {activeTab === 'ads' && selectedAds.size > 0 && (
+                    <SelectionIndicator
+                      type="ads"
+                      count={selectedAds.size}
+                      onActivate={() => handleBulkStatusUpdate('ads', Array.from(selectedAds), 'ACTIVE')}
+                      onPause={() => handleBulkStatusUpdate('ads', Array.from(selectedAds), 'PAUSED')}
+                      onArchive={() => handleBulkStatusUpdate('ads', Array.from(selectedAds), 'ARCHIVED')}
+                      onClear={() => setSelectedAds(new Set())}
+                    />
+                  )}
+                </div>
+              </div>
+
               <div className="p-6">
                 {activeTab === 'campaigns' && (
                   <CampaignsTable
@@ -541,7 +628,7 @@ export default function MetaBusinessPage() {
                 
                 {activeTab === 'adsets' && (
                   <AdSetsTable
-                    adSets={filteredAdSets}
+                    adSets={getFilteredAdSets()}
                     selectedAdSets={selectedAdSets}
                     onSelectionChange={setSelectedAdSets}
                     onStatusToggle={handleToggleStatus}
@@ -552,7 +639,7 @@ export default function MetaBusinessPage() {
                 
                 {activeTab === 'ads' && (
                   <AdsTable
-                    ads={filteredAds}
+                    ads={getFilteredAds()}
                     selectedAds={selectedAds}
                     onSelectionChange={setSelectedAds}
                     onStatusToggle={handleToggleStatus}
