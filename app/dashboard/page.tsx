@@ -10,6 +10,8 @@ import DateSelector, { DateRange } from '@/components/dashboard/DateSelector'
 import MainMetricsSelector from '@/components/dashboard/MainMetricsSelector'
 import MainMetricsOrderSelector from '@/components/dashboard/MainMetricsOrderSelector'
 import { MetricConfig } from '@/components/dashboard/MetricsSelector'
+import StatusToggle from '@/components/meta/StatusToggle'
+import InlineBudgetEditor from '@/components/meta/InlineBudgetEditor'
 import { FacebookAccount } from '@/lib/types'
 import { ColumnConfig, DEFAULT_COLUMNS, getVisibleColumns, formatColumnValue } from '@/lib/column-config'
 import toast from 'react-hot-toast'
@@ -17,6 +19,7 @@ import toast from 'react-hot-toast'
 export default function DashboardPage() {
   const [accounts, setAccounts] = useState<FacebookAccount[]>([])
   const [insights, setInsights] = useState<any[]>([])
+  const [campaigns, setCampaigns] = useState<any[]>([])
   const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_COLUMNS)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
@@ -155,6 +158,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (accounts.length > 0) {
       fetchInsights()
+      fetchCampaigns()
     }
   }, [accounts, datePreset, customRange])
 
@@ -224,6 +228,34 @@ export default function DashboardPage() {
     }
   }
 
+  const fetchCampaigns = async () => {
+    try {
+      const activeAccounts = accounts.filter(a => a.status === 'active')
+      const allCampaigns = []
+      
+      for (const account of activeAccounts) {
+        try {
+          const response = await fetch(`/api/campaigns?accountId=${account.id}`, {
+            credentials: 'include'
+          })
+          
+          if (response.ok) {
+            const data = await response.json()
+            if (data.success && data.campaigns) {
+              allCampaigns.push(...data.campaigns)
+            }
+          }
+        } catch (error) {
+          console.error(`Error fetching campaigns for account ${account.id}:`, error)
+        }
+      }
+      
+      setCampaigns(allCampaigns)
+    } catch (error) {
+      console.error('Error fetching campaigns:', error)
+    }
+  }
+
   const handleRefresh = async () => {
     setIsRefreshing(true)
     await fetchAccounts()
@@ -250,6 +282,58 @@ export default function DashboardPage() {
   const handleMainMetricsChange = (newMetrics: MetricConfig[]) => {
     setMainMetrics(newMetrics)
     toast.success('Configuração de métricas salva!')
+  }
+
+  const handleStatusToggle = async (campaignId: string, newStatus: 'ACTIVE' | 'PAUSED') => {
+    try {
+      const response = await fetch(`/api/campaigns/${campaignId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ status: newStatus })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success(`${newStatus === 'ACTIVE' ? 'Campanha ativada' : 'Campanha pausada'} com sucesso!`)
+        await fetchCampaigns() // Recarregar dados das campanhas
+      } else {
+        toast.error(data.message || 'Erro ao atualizar status da campanha')
+      }
+    } catch (error) {
+      console.error('Error updating campaign status:', error)
+      toast.error('Erro ao atualizar status da campanha')
+    }
+  }
+
+  const handleBudgetSave = async (campaignId: string, newBudget: number, budgetType: 'daily_budget' | 'lifetime_budget') => {
+    try {
+      const response = await fetch(`/api/campaigns/${campaignId}/budget`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ 
+          [budgetType]: Math.round(newBudget * 100) // Converter para centavos
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success('Orçamento atualizado com sucesso!')
+        await fetchCampaigns() // Recarregar dados das campanhas
+      } else {
+        toast.error(data.message || 'Erro ao atualizar orçamento')
+      }
+    } catch (error) {
+      console.error('Error updating campaign budget:', error)
+      toast.error('Erro ao atualizar orçamento')
+    }
   }
 
   const visibleColumns = getVisibleColumns(columns)
@@ -446,18 +530,35 @@ export default function DashboardPage() {
                         </tr>
                       </thead>
                       <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                        {insights.slice(0, 10).map((insight, index) => (
-                          <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                            {visibleColumns.map((column) => (
-                              <td 
-                                key={column.id}
-                                className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white"
-                              >
-                                {formatColumnValue(insight[column.id], column)}
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
+                        {insights.slice(0, 10).map((insight, index) => {
+                          // Encontrar dados da campanha correspondente
+                          const campaignData = campaigns.find(c => c.id === insight.campaign_id)
+                          
+                          return (
+                            <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                              {visibleColumns.map((column) => (
+                                <td 
+                                  key={column.id}
+                                  className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white"
+                                >
+                                  {column.id === 'status' && campaignData ? (
+                                    <StatusToggle
+                                      status={campaignData.status}
+                                      onToggle={(newStatus) => handleStatusToggle(campaignData.id, newStatus)}
+                                    />
+                                  ) : column.id === 'daily_budget' && campaignData ? (
+                                    <InlineBudgetEditor
+                                      value={parseFloat(campaignData.daily_budget || '0') / 100}
+                                      onSave={(newValue) => handleBudgetSave(campaignData.id, newValue, 'daily_budget')}
+                                    />
+                                  ) : (
+                                    formatColumnValue(insight[column.id], column, campaignData)
+                                  )}
+                                </td>
+                              ))}
+                            </tr>
+                          )
+                        })}
                       </tbody>
                     </table>
                   </div>
