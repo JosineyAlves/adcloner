@@ -96,11 +96,15 @@ export class FacebookRateLimiter {
   // Limpar entradas expiradas (chamado periodicamente)
   cleanup(): void {
     const now = Date.now()
-    for (const [userId, entry] of rateLimitMap.entries()) {
+    const keysToDelete: string[] = []
+    
+    rateLimitMap.forEach((entry, userId) => {
       if (now > entry.resetTime) {
-        rateLimitMap.delete(userId)
+        keysToDelete.push(userId)
       }
-    }
+    })
+    
+    keysToDelete.forEach(userId => rateLimitMap.delete(userId))
   }
 }
 
