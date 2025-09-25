@@ -35,18 +35,17 @@ import {
   MetaAdSet, 
   MetaAd, 
   MetaBusinessFilters, 
-  MetaBusinessStats,
-  FacebookAccount 
+  MetaBusinessStats
 } from '@/lib/types'
+import { useApp } from '@/contexts/AppContext'
 import toast from 'react-hot-toast'
 
 export default function MetaBusinessPage() {
+  const { accounts, isLoading: accountsLoading, refreshAccounts } = useApp()
   const [activeTab, setActiveTab] = useState<'campaigns' | 'adsets' | 'ads'>('campaigns')
   const [campaigns, setCampaigns] = useState<MetaCampaign[]>([])
   const [adSets, setAdSets] = useState<MetaAdSet[]>([])
   const [ads, setAds] = useState<MetaAd[]>([])
-  const [accounts, setAccounts] = useState<FacebookAccount[]>([])
-  const [isLoading, setIsLoading] = useState<boolean>(true)
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
   const [stats, setStats] = useState<MetaBusinessStats>({
     totalSpend: 0,
@@ -77,42 +76,14 @@ export default function MetaBusinessPage() {
   const [selectedAds, setSelectedAds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
-    fetchAccounts()
-  }, [])
-
-  useEffect(() => {
     if (accounts.length > 0) {
+      setFilters(prev => ({
+        ...prev,
+        accountIds: accounts.map(acc => acc.id)
+      }))
       fetchData()
     }
   }, [accounts, filters])
-
-  const fetchAccounts = async () => {
-    try {
-      const response = await fetch('/api/facebook/accounts', {
-        credentials: 'include'
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setAccounts(data.accounts || [])
-        setFilters(prev => ({
-          ...prev,
-          accountIds: data.accounts?.map((acc: FacebookAccount) => acc.id) || []
-        }))
-      } else if (response.status === 401) {
-        window.location.href = '/login'
-        return
-      } else {
-        console.error('Failed to fetch accounts')
-        toast.error('Erro ao carregar contas do Facebook')
-      }
-    } catch (error) {
-      console.error('Error fetching accounts:', error)
-      toast.error('Erro ao carregar contas do Facebook')
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   const fetchData = async () => {
     try {
@@ -201,7 +172,7 @@ export default function MetaBusinessPage() {
   }
 
   const handleRefresh = async () => {
-    await fetchData()
+    await refreshAccounts()
     toast.success('Dados atualizados!')
   }
 
@@ -382,7 +353,7 @@ export default function MetaBusinessPage() {
     return true
   })
 
-  if (isLoading) {
+  if (accountsLoading) {
     return (
       <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
         <Sidebar />

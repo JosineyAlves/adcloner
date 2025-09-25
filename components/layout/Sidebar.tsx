@@ -16,7 +16,6 @@ import toast from 'react-hot-toast'
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Meta Business', href: '/meta-business', icon: MetaIcon },
-  { name: 'Campanhas', href: '/campaigns', icon: BarChart3 },
   { name: 'Templates', href: '/templates', icon: Copy },
   { name: 'Contas', href: '/accounts', icon: Users },
   { name: 'Configurações', href: '/settings', icon: Settings },
