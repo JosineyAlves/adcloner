@@ -40,6 +40,8 @@ export async function PATCH(
         updateParams.daily_budget = '' // Limpar daily budget
       }
 
+      console.log('📤 Enviando para Facebook API (AdSet):', updateParams)
+
       // Atualizar orçamento do Ad Set
       const response = await fetch(
         `https://graph.facebook.com/v23.0/${adSetId}`,
@@ -52,7 +54,36 @@ export async function PATCH(
         }
       )
       
-      const data = await response.json()
+      // Verificar se a resposta é válida antes de fazer parse JSON
+      if (!response.ok) {
+        console.error('Facebook API response not ok:', response.status, response.statusText)
+        return NextResponse.json({ 
+          error: `Erro na API do Facebook: ${response.status} ${response.statusText}`,
+          code: 'FACEBOOK_API_ERROR'
+        }, { status: response.status })
+      }
+
+      // Verificar se há conteúdo para fazer parse
+      const responseText = await response.text()
+      if (!responseText) {
+        console.error('Facebook API returned empty response')
+        return NextResponse.json({ 
+          error: 'Resposta vazia da API do Facebook',
+          code: 'EMPTY_RESPONSE'
+        }, { status: 500 })
+      }
+
+      let data
+      try {
+        data = JSON.parse(responseText)
+      } catch (parseError) {
+        console.error('Failed to parse Facebook API response:', parseError)
+        console.error('Response text:', responseText)
+        return NextResponse.json({ 
+          error: 'Resposta inválida da API do Facebook',
+          code: 'INVALID_JSON_RESPONSE'
+        }, { status: 500 })
+      }
       
       if (data.error) {
         console.error('Facebook API error:', data.error)
