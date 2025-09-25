@@ -3,12 +3,19 @@
 import { useState } from 'react'
 import StatusToggle from './StatusToggle'
 
+interface DemoCampaign {
+  id: string
+  name: string
+  status: 'ACTIVE' | 'PAUSED' | 'ARCHIVED'
+  effectiveStatus: 'ACTIVE' | 'PAUSED' | 'ARCHIVED' | 'CAMPAIGN_PAUSED' | 'CAMPAIGN_ARCHIVED'
+}
+
 export default function StatusToggleDemo() {
-  const [campaigns, setCampaigns] = useState([
-    { id: '1', name: 'Campanha Ativa', status: 'ACTIVE' as const, effectiveStatus: 'ACTIVE' as const },
-    { id: '2', name: 'Campanha Pausada', status: 'PAUSED' as const, effectiveStatus: 'PAUSED' as const },
-    { id: '3', name: 'Campanha Pausada por Herança', status: 'ACTIVE' as const, effectiveStatus: 'CAMPAIGN_PAUSED' as const },
-    { id: '4', name: 'Campanha Arquivada', status: 'ARCHIVED' as const, effectiveStatus: 'ARCHIVED' as const },
+  const [campaigns, setCampaigns] = useState<DemoCampaign[]>([
+    { id: '1', name: 'Campanha Ativa', status: 'ACTIVE', effectiveStatus: 'ACTIVE' },
+    { id: '2', name: 'Campanha Pausada', status: 'PAUSED', effectiveStatus: 'PAUSED' },
+    { id: '3', name: 'Campanha Pausada por Herança', status: 'ACTIVE', effectiveStatus: 'CAMPAIGN_PAUSED' },
+    { id: '4', name: 'Campanha Arquivada', status: 'ARCHIVED', effectiveStatus: 'ARCHIVED' },
   ])
 
   const handleToggle = async (id: string, currentStatus: string) => {
