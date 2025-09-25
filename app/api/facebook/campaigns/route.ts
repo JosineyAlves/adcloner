@@ -19,24 +19,16 @@ export async function GET(request: NextRequest) {
     const campaigns = [
       {
         id: 'mock-campaign-1',
-        name: 'CA01-CAM01-SUGARMUTE - TC-23/09',
-        status: 'PAUSED',
+        name: 'Campanha Teste 1',
+        status: 'ACTIVE',
         objective: 'OUTCOME_TRAFFIC',
-        daily_budget: 500,
-        spend: 258.88,
-        results: 0,
-        cost_per_result: 0,
         created_time: '2024-01-15T10:00:00Z'
       },
       {
         id: 'mock-campaign-2',
-        name: 'CA01-CAM01-AUDIZEN-TC-AD01-20/09',
+        name: 'Campanha Teste 2',
         status: 'PAUSED',
         objective: 'OUTCOME_CONVERSIONS',
-        daily_budget: 100,
-        spend: 324.56,
-        results: 0,
-        cost_per_result: 0,
         created_time: '2024-01-10T15:30:00Z'
       }
     ]
