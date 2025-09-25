@@ -1219,34 +1219,62 @@ export class FacebookAPI {
     timeRange?: { since: string; until: string }
   ) {
     try {
-      // Campos básicos e seguros da API de Insights do Facebook
+      // Campos completos da API de Insights do Facebook
       const fields = [
         // Identificação básica
         'campaign_id',
         'campaign_name',
+        'adset_id',
+        'adset_name',
+        'ad_id',
+        'ad_name',
         
-        // Métricas básicas (garantidas)
+        // Métricas básicas
         'impressions',
         'clicks',
         'spend',
         'reach',
         'frequency',
         
-        // Métricas de custo (garantidas)
+        // Métricas de custo
         'cpm',
         'cpc',
         'ctr',
+        'cpp',
         
-        // Métricas de engajamento (garantidas)
+        // Métricas de engajamento
         'inline_link_clicks',
         'inline_post_engagement',
+        'link_clicks',
+        'post_engagement',
+        'page_engagement',
+        'landing_page_views',
         
-        // Métricas de conversão (garantidas)
+        // Métricas de conversão
         'conversions',
-        'cost_per_conversion'
+        'cost_per_conversion',
+        'conversion_rate',
+        'conversion_values',
+        'cost_per_action_type',
+        
+        // Métricas específicas de compra
+        'actions',
+        'action_values',
+        
+        // Métricas de ROI/ROAS
+        'roas',
+        'return_on_ad_spend',
+        
+        // Métricas de qualidade
+        'quality_ranking',
+        'engagement_rate_ranking',
+        'conversion_rate_ranking'
       ].join(',')
 
       let url = `${this.baseUrl}/${campaignId}/insights?fields=${fields}&level=${level}&access_token=${accessToken}`
+      
+      // Adicionar breakdowns para ações específicas
+      url += `&action_attribution_windows=["1d_click","7d_click","28d_click"]`
       
       if (timeRange) {
         url += `&time_range=${JSON.stringify(timeRange)}`
@@ -1278,34 +1306,62 @@ export class FacebookAPI {
     timeRange?: { since: string; until: string }
   ) {
     try {
-      // Campos básicos e seguros da API de Insights do Facebook
+      // Campos completos da API de Insights do Facebook
       const fields = [
         // Identificação básica
         'campaign_id',
         'campaign_name',
+        'adset_id',
+        'adset_name',
+        'ad_id',
+        'ad_name',
         
-        // Métricas básicas (garantidas)
+        // Métricas básicas
         'impressions',
         'clicks',
         'spend',
         'reach',
         'frequency',
         
-        // Métricas de custo (garantidas)
+        // Métricas de custo
         'cpm',
         'cpc',
         'ctr',
+        'cpp',
         
-        // Métricas de engajamento (garantidas)
+        // Métricas de engajamento
         'inline_link_clicks',
         'inline_post_engagement',
+        'link_clicks',
+        'post_engagement',
+        'page_engagement',
+        'landing_page_views',
         
-        // Métricas de conversão (garantidas)
+        // Métricas de conversão
         'conversions',
-        'cost_per_conversion'
+        'cost_per_conversion',
+        'conversion_rate',
+        'conversion_values',
+        'cost_per_action_type',
+        
+        // Métricas específicas de compra
+        'actions',
+        'action_values',
+        
+        // Métricas de ROI/ROAS
+        'roas',
+        'return_on_ad_spend',
+        
+        // Métricas de qualidade
+        'quality_ranking',
+        'engagement_rate_ranking',
+        'conversion_rate_ranking'
       ].join(',')
 
       let url = `${this.baseUrl}/${accountId}/insights?fields=${fields}&level=campaign&access_token=${accessToken}`
+      
+      // Adicionar breakdowns para ações específicas
+      url += `&action_attribution_windows=["1d_click","7d_click","28d_click"]`
       
       if (timeRange) {
         url += `&time_range=${JSON.stringify(timeRange)}`
