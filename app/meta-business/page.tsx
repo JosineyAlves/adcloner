@@ -31,7 +31,6 @@ import DateSelector, { DateRange } from '@/components/dashboard/DateSelector'
 import CampaignsTable from '@/components/meta-business/CampaignsTable'
 import AdSetsTable from '@/components/meta-business/AdSetsTable'
 import AdsTable from '@/components/meta-business/AdsTable'
-import CampaignSelector from '@/components/meta-business/CampaignSelector'
 import SelectionIndicator from '@/components/meta-business/SelectionIndicator'
 import { 
   MetaCampaign, 
@@ -79,8 +78,6 @@ export default function MetaBusinessPage() {
   const [selectedAdSets, setSelectedAdSets] = useState<Set<string>>(new Set())
   const [selectedAds, setSelectedAds] = useState<Set<string>>(new Set())
   
-  // Estado para filtro de campanhas
-  const [filteredCampaignIds, setFilteredCampaignIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     fetchAccounts()
@@ -248,24 +245,24 @@ export default function MetaBusinessPage() {
     }))
   }
 
-  // Funções de filtro de campanhas
-  const handleCampaignFilter = (campaignIds: string[]) => {
-    setFilteredCampaignIds(new Set(campaignIds))
-  }
-
-  const clearCampaignFilter = () => {
-    setFilteredCampaignIds(new Set())
-  }
 
   // Filtrar dados baseado na seleção de campanhas
   const getFilteredAdSets = () => {
-    if (filteredCampaignIds.size === 0) return adSets
-    return adSets.filter(adSet => filteredCampaignIds.has(adSet.campaign_id))
+    if (selectedCampaigns.size === 0) return adSets
+    return adSets.filter(adSet => selectedCampaigns.has(adSet.campaign_id))
   }
 
   const getFilteredAds = () => {
-    if (filteredCampaignIds.size === 0) return ads
-    return ads.filter(ad => filteredCampaignIds.has(ad.campaign_id))
+    if (selectedCampaigns.size === 0) return ads
+    return ads.filter(ad => selectedCampaigns.has(ad.campaign_id))
+  }
+
+  // Limpar seleção de campanhas quando mudar de aba
+  const handleTabChange = (tab: 'campaigns' | 'adsets' | 'ads') => {
+    setActiveTab(tab)
+    if (tab !== 'campaigns') {
+      setSelectedCampaigns(new Set())
+    }
   }
 
   // Funções de seleção em massa
@@ -535,7 +532,7 @@ export default function MetaBusinessPage() {
                     return (
                       <button
                         key={tab.id}
-                        onClick={() => setActiveTab(tab.id as any)}
+                        onClick={() => handleTabChange(tab.id as any)}
                         className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
                           activeTab === tab.id
                             ? 'border-blue-500 text-blue-600 dark:text-blue-400'
@@ -553,67 +550,45 @@ export default function MetaBusinessPage() {
                 </nav>
               </div>
 
-              {/* Seletor de Campanhas e Indicador de Seleção */}
-              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
-                <div className="flex items-center justify-between">
-                  {/* Seletor de Campanhas */}
-                  <div className="flex items-center space-x-4">
-                    <CampaignSelector
-                      campaigns={campaigns}
-                      selectedCampaignIds={Array.from(filteredCampaignIds)}
-                      onSelectionChange={handleCampaignFilter}
-                      onClear={clearCampaignFilter}
-                    />
-                    
-                    {/* Indicador de filtro ativo */}
-                    {filteredCampaignIds.size > 0 && (
-                      <div className="flex items-center space-x-2 text-sm text-blue-600">
-                        <span>Filtrado por {filteredCampaignIds.size} campanha{filteredCampaignIds.size > 1 ? 's' : ''}</span>
-                        <button
-                          onClick={clearCampaignFilter}
-                          className="text-blue-500 hover:text-blue-700"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Indicador de Seleção em Massa */}
-                  {activeTab === 'campaigns' && selectedCampaigns.size > 0 && (
-                    <SelectionIndicator
-                      type="campaigns"
-                      count={selectedCampaigns.size}
-                      onActivate={() => handleBulkStatusUpdate('campaigns', 'ACTIVE')}
-                      onPause={() => handleBulkStatusUpdate('campaigns', 'PAUSED')}
-                      onArchive={() => handleBulkStatusUpdate('campaigns', 'ARCHIVED')}
-                      onClear={() => setSelectedCampaigns(new Set())}
-                    />
-                  )}
-                  
-                  {activeTab === 'adsets' && selectedAdSets.size > 0 && (
-                    <SelectionIndicator
-                      type="adsets"
-                      count={selectedAdSets.size}
-                      onActivate={() => handleBulkStatusUpdate('adsets', 'ACTIVE')}
-                      onPause={() => handleBulkStatusUpdate('adsets', 'PAUSED')}
-                      onArchive={() => handleBulkStatusUpdate('adsets', 'ARCHIVED')}
-                      onClear={() => setSelectedAdSets(new Set())}
-                    />
-                  )}
-                  
-                  {activeTab === 'ads' && selectedAds.size > 0 && (
-                    <SelectionIndicator
-                      type="ads"
-                      count={selectedAds.size}
-                      onActivate={() => handleBulkStatusUpdate('ads', 'ACTIVE')}
-                      onPause={() => handleBulkStatusUpdate('ads', 'PAUSED')}
-                      onArchive={() => handleBulkStatusUpdate('ads', 'ARCHIVED')}
-                      onClear={() => setSelectedAds(new Set())}
-                    />
-                  )}
+              {/* Indicador de Seleção em Massa */}
+              {selectedCampaigns.size > 0 && (
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
+                  <SelectionIndicator
+                    type="campaigns"
+                    count={selectedCampaigns.size}
+                    onActivate={() => handleBulkStatusUpdate('campaigns', 'ACTIVE')}
+                    onPause={() => handleBulkStatusUpdate('campaigns', 'PAUSED')}
+                    onArchive={() => handleBulkStatusUpdate('campaigns', 'ARCHIVED')}
+                    onClear={() => setSelectedCampaigns(new Set())}
+                  />
                 </div>
-              </div>
+              )}
+              
+              {selectedAdSets.size > 0 && (
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
+                  <SelectionIndicator
+                    type="adsets"
+                    count={selectedAdSets.size}
+                    onActivate={() => handleBulkStatusUpdate('adsets', 'ACTIVE')}
+                    onPause={() => handleBulkStatusUpdate('adsets', 'PAUSED')}
+                    onArchive={() => handleBulkStatusUpdate('adsets', 'ARCHIVED')}
+                    onClear={() => setSelectedAdSets(new Set())}
+                  />
+                </div>
+              )}
+              
+              {selectedAds.size > 0 && (
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
+                  <SelectionIndicator
+                    type="ads"
+                    count={selectedAds.size}
+                    onActivate={() => handleBulkStatusUpdate('ads', 'ACTIVE')}
+                    onPause={() => handleBulkStatusUpdate('ads', 'PAUSED')}
+                    onArchive={() => handleBulkStatusUpdate('ads', 'ARCHIVED')}
+                    onClear={() => setSelectedAds(new Set())}
+                  />
+                </div>
+              )}
 
               <div className="p-6">
                 {activeTab === 'campaigns' && (
