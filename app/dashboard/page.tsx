@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { 
   DollarSign, 
@@ -75,7 +75,7 @@ export default function DashboardPage() {
   const [datePreset, setDatePreset] = useState<string>('last_30d')
   const [customRange, setCustomRange] = useState<DateRange | undefined>()
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setIsRefreshing(true)
       const activeAccounts = accounts.filter(a => a.status === 'active')
@@ -156,16 +156,21 @@ export default function DashboardPage() {
     } finally {
       setIsRefreshing(false)
     }
-  }
+  }, [accounts, datePreset, customRange])
+
+  // Ref para evitar dependências desnecessárias
+  const fetchDashboardDataRef = useRef(fetchDashboardData)
+  fetchDashboardDataRef.current = fetchDashboardData
 
   // Debounce da função fetchDashboardData para evitar múltiplos refreshs
   const debouncedFetchDashboardData = useDebounce('dashboard-fetch', fetchDashboardData, 3000)
 
   useEffect(() => {
     if (accounts.length > 0) {
-      debouncedFetchDashboardData()
+      // Usar ref para evitar dependência circular
+      fetchDashboardDataRef.current()
     }
-  }, [accounts, datePreset, customRange, debouncedFetchDashboardData])
+  }, [accounts, datePreset, customRange])
 
   const handleRefresh = useDebounce('dashboard-refresh', async () => {
     await refreshAccounts()

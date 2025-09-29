@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { 
   Eye, 
@@ -81,7 +81,7 @@ export default function MetaBusinessPage() {
   const [metrics, setMetrics] = useState<MetricConfig[]>(ALL_METRICS)
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setIsRefreshing(true)
       const activeAccounts = accounts.filter(a => a.status === 'active')
@@ -145,7 +145,7 @@ export default function MetaBusinessPage() {
     } finally {
       setIsRefreshing(false)
     }
-  }
+  }, [accounts, filters.datePreset, filters.customRange])
 
   const calculateStats = (campaigns: MetaCampaign[], adSets: MetaAdSet[], ads: MetaAd[]) => {
     const totalSpend = campaigns.reduce((sum, c) => sum + c.spend, 0)
@@ -167,6 +167,10 @@ export default function MetaBusinessPage() {
     })
   }
 
+  // Ref para evitar dependências desnecessárias
+  const fetchDataRef = useRef(fetchData)
+  fetchDataRef.current = fetchData
+
   // Debounce da função fetchData para evitar múltiplos refreshs
   const debouncedFetchData = useDebounce('meta-business-fetch', fetchData, 3000)
 
@@ -176,9 +180,10 @@ export default function MetaBusinessPage() {
         ...prev,
         accountIds: accounts.map(acc => acc.id)
       }))
-      debouncedFetchData()
+      // Usar ref para evitar dependência circular
+      fetchDataRef.current()
     }
-  }, [accounts, filters, debouncedFetchData])
+  }, [accounts, filters.datePreset, filters.customRange])
 
   const handleRefresh = useDebounce('meta-business-refresh', async () => {
     await refreshAccounts()
