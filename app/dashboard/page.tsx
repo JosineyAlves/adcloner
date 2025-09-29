@@ -72,8 +72,8 @@ export default function DashboardPage() {
   })
   
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
-  const [datePreset, setDatePreset] = useState<string>('last_30d')
-  const [customRange, setCustomRange] = useState<DateRange | undefined>()
+  const [datePreset, setDatePreset] = useState('last_30d')
+  const [customRange, setCustomRange] = useState<DateRange | undefined>(undefined)
 
   const fetchDashboardData = useCallback(async () => {
     try {

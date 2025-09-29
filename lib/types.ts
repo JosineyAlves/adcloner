@@ -135,15 +135,78 @@ export interface MetaCampaign {
   lifetime_budget?: number
   budget_type: 'daily' | 'lifetime'
   advantage_campaign_budget: boolean
-  spend: number
-  impressions: number
-  clicks: number
-  cpc: number
-  ctr: number
   created_time: string
   updated_time: string
   account_id: string
   account_name: string
+  
+  // Métricas básicas
+  spend: number
+  impressions: number
+  clicks: number
+  reach: number
+  frequency: number
+  
+  // Métricas de custo
+  cpc: number
+  ctr: number
+  cpm: number
+  cost_per_conversion: number
+  cost_per_action_type: number
+  cost_per_inline_link_click: number
+  cost_per_unique_click: number
+  cost_per_landing_page_view: number
+  
+  // Métricas de engajamento
+  inline_link_clicks: number
+  inline_post_engagement: number
+  post_engagement: number
+  page_engagement: number
+  post_reactions: number
+  post_comments: number
+  post_shares: number
+  
+  // Métricas de conversão
+  conversions: number
+  conversion_rate: number
+  conversion_values: number
+  conversion_rate_ranking: number
+  
+  // Métricas de vídeo
+  video_views: number
+  video_views_3s: number
+  video_views_25: number
+  video_views_50: number
+  video_views_75: number
+  video_views_100: number
+  video_play_actions: number
+  video_play_curve_actions: number
+  
+  // Métricas de qualidade
+  quality_ranking: number
+  engagement_rate_ranking: number
+  quality_score: number
+  
+  // Métricas de ações
+  actions: number
+  purchase: number
+  add_to_cart: number
+  initiate_checkout: number
+  lead: number
+  app_install: number
+  app_events: number
+  
+  // Métricas de landing page
+  landing_page_views: number
+  landing_page_views_ctr: number
+  
+  // Métricas de alcance e frequência
+  unique_clicks: number
+  unique_link_clicks: number
+  unique_inline_link_clicks: number
+  unique_ctr: number
+  frequency_distribution: number
+  effective_frequency: number
 }
 
 export interface MetaAdSet {
@@ -225,11 +288,6 @@ export interface MetaInsights {
 }
 
 export interface MetaBusinessFilters {
-  datePreset: string
-  customRange?: {
-    since: string
-    until: string
-  }
   status: string[]
   search: string
   accountIds: string[]

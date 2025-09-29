@@ -18,7 +18,6 @@ import { MetaCampaign } from '@/lib/types'
 import { MetricConfig } from '@/lib/metrics-config'
 import StatusToggle from './StatusToggle'
 import BudgetEditor from './BudgetEditor'
-import MetricsColumn from './MetricsColumn'
 import toast from 'react-hot-toast'
 
 interface CampaignsTableProps {
@@ -80,6 +79,23 @@ export default function CampaignsTable({
 
   const formatPercentage = (value: number) => {
     return `${value.toFixed(2)}%`
+  }
+
+  const formatMetricValue = (value: any, type: 'number' | 'currency' | 'percentage') => {
+    if (value === null || value === undefined) return '-'
+    
+    const numValue = typeof value === 'number' ? value : parseFloat(value)
+    
+    if (isNaN(numValue)) return '-'
+    
+    switch (type) {
+      case 'currency':
+        return formatCurrency(numValue)
+      case 'percentage':
+        return formatPercentage(numValue)
+      default:
+        return formatNumber(numValue)
+    }
   }
 
   if (campaigns.length === 0) {
@@ -171,11 +187,11 @@ export default function CampaignsTable({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 CTR
               </th>
-              {showMetrics && (
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Métricas Avançadas
+              {showMetrics && metrics.filter(m => m.visible).map((metric) => (
+                <th key={metric.id} className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {metric.label}
                 </th>
-              )}
+              ))}
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -256,15 +272,15 @@ export default function CampaignsTable({
                 <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                   {formatPercentage(campaign.ctr)}
                 </td>
-                {showMetrics && (
-                  <td className="px-6 py-4">
-                    <MetricsColumn
-                      data={campaign}
-                      metrics={metrics}
-                      visibleMetrics={metrics.filter(m => m.visible).map(m => m.id)}
-                    />
-                  </td>
-                )}
+                {showMetrics && metrics.filter(m => m.visible).map((metric) => {
+                  const value = (campaign as any)[metric.id]
+                  const formattedValue = formatMetricValue(value, metric.type)
+                  return (
+                    <td key={metric.id} className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                      {formattedValue}
+                    </td>
+                  )
+                })}
               </tr>
             ))}
           </tbody>

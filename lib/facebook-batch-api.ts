@@ -207,9 +207,88 @@ export class FacebookBatchAPI {
   createCampaignInsightsBatch(campaignIds: string[], datePreset: string, since?: string, until?: string): BatchRequest[] {
     const timeRange = since && until ? `&time_range=${JSON.stringify({since, until})}` : ''
     
+    // Todos os campos disponíveis na API de Insights do Facebook
+    const fields = [
+      // Identificação básica
+      'campaign_id',
+      'campaign_name',
+      'adset_id',
+      'adset_name',
+      'ad_id',
+      'ad_name',
+      
+      // Métricas básicas
+      'impressions',
+      'clicks',
+      'spend',
+      'reach',
+      'frequency',
+      
+      // Métricas de custo
+      'cpm',
+      'cpc',
+      'ctr',
+      'cost_per_conversion',
+      'cost_per_action_type',
+      'cost_per_inline_link_click',
+      'cost_per_unique_click',
+      'cost_per_landing_page_view',
+      
+      // Métricas de engajamento
+      'inline_link_clicks',
+      'inline_post_engagement',
+      'post_engagement',
+      'page_engagement',
+      'post_reactions',
+      'post_comments',
+      'post_shares',
+      
+      // Métricas de conversão
+      'conversions',
+      'conversion_rate',
+      'conversion_values',
+      'conversion_rate_ranking',
+      
+      // Métricas de vídeo
+      'video_views',
+      'video_views_3s',
+      'video_views_25',
+      'video_views_50',
+      'video_views_75',
+      'video_views_100',
+      'video_play_actions',
+      'video_play_curve_actions',
+      
+      // Métricas de qualidade
+      'quality_ranking',
+      'engagement_rate_ranking',
+      'quality_score',
+      
+      // Métricas de ações
+      'actions',
+      'purchase',
+      'add_to_cart',
+      'initiate_checkout',
+      'lead',
+      'app_install',
+      'app_events',
+      
+      // Métricas de landing page
+      'landing_page_views',
+      'landing_page_views_ctr',
+      
+      // Métricas de alcance e frequência
+      'unique_clicks',
+      'unique_link_clicks',
+      'unique_inline_link_clicks',
+      'unique_ctr',
+      'frequency_distribution',
+      'effective_frequency'
+    ].join(',')
+    
     return campaignIds.map(campaignId => ({
       method: 'GET',
-      relative_url: `${campaignId}/insights?fields=impressions,clicks,spend,cpc,ctr&level=campaign&date_preset=${datePreset}${timeRange}`
+      relative_url: `${campaignId}/insights?fields=${fields}&level=campaign&date_preset=${datePreset}${timeRange}`
     }))
   }
 
@@ -233,9 +312,88 @@ export class FacebookBatchAPI {
   createAdSetInsightsBatch(adSetIds: string[], datePreset: string, since?: string, until?: string): BatchRequest[] {
     const timeRange = since && until ? `&time_range=${JSON.stringify({since, until})}` : ''
     
+    // Todos os campos disponíveis na API de Insights do Facebook
+    const fields = [
+      // Identificação básica
+      'campaign_id',
+      'campaign_name',
+      'adset_id',
+      'adset_name',
+      'ad_id',
+      'ad_name',
+      
+      // Métricas básicas
+      'impressions',
+      'clicks',
+      'spend',
+      'reach',
+      'frequency',
+      
+      // Métricas de custo
+      'cpm',
+      'cpc',
+      'ctr',
+      'cost_per_conversion',
+      'cost_per_action_type',
+      'cost_per_inline_link_click',
+      'cost_per_unique_click',
+      'cost_per_landing_page_view',
+      
+      // Métricas de engajamento
+      'inline_link_clicks',
+      'inline_post_engagement',
+      'post_engagement',
+      'page_engagement',
+      'post_reactions',
+      'post_comments',
+      'post_shares',
+      
+      // Métricas de conversão
+      'conversions',
+      'conversion_rate',
+      'conversion_values',
+      'conversion_rate_ranking',
+      
+      // Métricas de vídeo
+      'video_views',
+      'video_views_3s',
+      'video_views_25',
+      'video_views_50',
+      'video_views_75',
+      'video_views_100',
+      'video_play_actions',
+      'video_play_curve_actions',
+      
+      // Métricas de qualidade
+      'quality_ranking',
+      'engagement_rate_ranking',
+      'quality_score',
+      
+      // Métricas de ações
+      'actions',
+      'purchase',
+      'add_to_cart',
+      'initiate_checkout',
+      'lead',
+      'app_install',
+      'app_events',
+      
+      // Métricas de landing page
+      'landing_page_views',
+      'landing_page_views_ctr',
+      
+      // Métricas de alcance e frequência
+      'unique_clicks',
+      'unique_link_clicks',
+      'unique_inline_link_clicks',
+      'unique_ctr',
+      'frequency_distribution',
+      'effective_frequency'
+    ].join(',')
+    
     return adSetIds.map(adSetId => ({
       method: 'GET',
-      relative_url: `${adSetId}/insights?fields=impressions,clicks,spend,cpc,ctr&level=adset&date_preset=${datePreset}${timeRange}`
+      relative_url: `${adSetId}/insights?fields=${fields}&level=adset&date_preset=${datePreset}${timeRange}`
     }))
   }
 
@@ -259,9 +417,88 @@ export class FacebookBatchAPI {
   createAdInsightsBatch(adIds: string[], datePreset: string, since?: string, until?: string): BatchRequest[] {
     const timeRange = since && until ? `&time_range=${JSON.stringify({since, until})}` : ''
     
+    // Todos os campos disponíveis na API de Insights do Facebook
+    const fields = [
+      // Identificação básica
+      'campaign_id',
+      'campaign_name',
+      'adset_id',
+      'adset_name',
+      'ad_id',
+      'ad_name',
+      
+      // Métricas básicas
+      'impressions',
+      'clicks',
+      'spend',
+      'reach',
+      'frequency',
+      
+      // Métricas de custo
+      'cpm',
+      'cpc',
+      'ctr',
+      'cost_per_conversion',
+      'cost_per_action_type',
+      'cost_per_inline_link_click',
+      'cost_per_unique_click',
+      'cost_per_landing_page_view',
+      
+      // Métricas de engajamento
+      'inline_link_clicks',
+      'inline_post_engagement',
+      'post_engagement',
+      'page_engagement',
+      'post_reactions',
+      'post_comments',
+      'post_shares',
+      
+      // Métricas de conversão
+      'conversions',
+      'conversion_rate',
+      'conversion_values',
+      'conversion_rate_ranking',
+      
+      // Métricas de vídeo
+      'video_views',
+      'video_views_3s',
+      'video_views_25',
+      'video_views_50',
+      'video_views_75',
+      'video_views_100',
+      'video_play_actions',
+      'video_play_curve_actions',
+      
+      // Métricas de qualidade
+      'quality_ranking',
+      'engagement_rate_ranking',
+      'quality_score',
+      
+      // Métricas de ações
+      'actions',
+      'purchase',
+      'add_to_cart',
+      'initiate_checkout',
+      'lead',
+      'app_install',
+      'app_events',
+      
+      // Métricas de landing page
+      'landing_page_views',
+      'landing_page_views_ctr',
+      
+      // Métricas de alcance e frequência
+      'unique_clicks',
+      'unique_link_clicks',
+      'unique_inline_link_clicks',
+      'unique_ctr',
+      'frequency_distribution',
+      'effective_frequency'
+    ].join(',')
+    
     return adIds.map(adId => ({
       method: 'GET',
-      relative_url: `${adId}/insights?fields=impressions,clicks,spend,cpc,ctr&level=ad&date_preset=${datePreset}${timeRange}`
+      relative_url: `${adId}/insights?fields=${fields}&level=ad&date_preset=${datePreset}${timeRange}`
     }))
   }
 }

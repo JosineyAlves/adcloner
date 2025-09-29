@@ -4,6 +4,7 @@ import './globals.css'
 import { Toaster } from 'react-hot-toast'
 import FacebookSDK from '@/components/providers/FacebookSDK'
 import { AppProvider } from '@/contexts/AppContext'
+import { DateProvider } from '@/contexts/DateContext'
 
 const inter = Inter({ subsets: ['latin'] })
 

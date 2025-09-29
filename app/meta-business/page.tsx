@@ -35,7 +35,6 @@ import {
   MetaCampaign, 
   MetaAdSet, 
   MetaAd, 
-  MetaBusinessFilters, 
   MetaBusinessStats
 } from '@/lib/types'
 import { useApp } from '@/contexts/AppContext'
@@ -45,6 +44,8 @@ import toast from 'react-hot-toast'
 export default function MetaBusinessPage() {
   const { accounts, isLoading: accountsLoading, refreshAccounts } = useApp()
   const [activeTab, setActiveTab] = useState<'campaigns' | 'adsets' | 'ads'>('campaigns')
+  const [datePreset, setDatePreset] = useState('last_30d')
+  const [customRange, setCustomRange] = useState<DateRange | undefined>(undefined)
   const [campaigns, setCampaigns] = useState<MetaCampaign[]>([])
   const [adSets, setAdSets] = useState<MetaAdSet[]>([])
   const [ads, setAds] = useState<MetaAd[]>([])
@@ -63,13 +64,11 @@ export default function MetaBusinessPage() {
     activeAds: 0
   })
   
-  // Filtros globais
-  const [filters, setFilters] = useState<MetaBusinessFilters>({
-    datePreset: 'today',
-    customRange: undefined,
-    status: [],
+  // Filtros globais (removido datePreset e customRange)
+  const [filters, setFilters] = useState({
+    status: [] as string[],
     search: '',
-    accountIds: []
+    accountIds: [] as string[]
   })
 
   // Estados de seleção em massa
@@ -99,7 +98,7 @@ export default function MetaBusinessPage() {
       for (const account of activeAccounts) {
         try {
           // Buscar campanhas
-          const campaignsResponse = await fetch(`/api/meta-business/campaigns?accountId=${account.id}&datePreset=${filters.datePreset}${filters.customRange ? `&since=${filters.customRange.since}&until=${filters.customRange.until}` : ''}`, {
+          const campaignsResponse = await fetch(`/api/meta-business/campaigns?accountId=${account.id}&datePreset=${datePreset}${customRange ? `&since=${customRange.since}&until=${customRange.until}` : ''}`, {
             credentials: 'include'
           })
           
@@ -109,7 +108,7 @@ export default function MetaBusinessPage() {
           }
 
           // Buscar Ad Sets
-          const adSetsResponse = await fetch(`/api/meta-business/adsets?accountId=${account.id}&datePreset=${filters.datePreset}${filters.customRange ? `&since=${filters.customRange.since}&until=${filters.customRange.until}` : ''}`, {
+          const adSetsResponse = await fetch(`/api/meta-business/adsets?accountId=${account.id}&datePreset=${datePreset}${customRange ? `&since=${customRange.since}&until=${customRange.until}` : ''}`, {
             credentials: 'include'
           })
           
@@ -119,7 +118,7 @@ export default function MetaBusinessPage() {
           }
 
           // Buscar Ads
-          const adsResponse = await fetch(`/api/meta-business/ads?accountId=${account.id}&datePreset=${filters.datePreset}${filters.customRange ? `&since=${filters.customRange.since}&until=${filters.customRange.until}` : ''}`, {
+          const adsResponse = await fetch(`/api/meta-business/ads?accountId=${account.id}&datePreset=${datePreset}${customRange ? `&since=${customRange.since}&until=${customRange.until}` : ''}`, {
             credentials: 'include'
           })
           
@@ -145,7 +144,7 @@ export default function MetaBusinessPage() {
     } finally {
       setIsRefreshing(false)
     }
-  }, [accounts, filters.datePreset, filters.customRange])
+  }, [accounts, datePreset, customRange])
 
   const calculateStats = (campaigns: MetaCampaign[], adSets: MetaAdSet[], ads: MetaAd[]) => {
     const totalSpend = campaigns.reduce((sum, c) => sum + c.spend, 0)
@@ -183,7 +182,7 @@ export default function MetaBusinessPage() {
       // Usar ref para evitar dependência circular
       fetchDataRef.current()
     }
-  }, [accounts, filters.datePreset, filters.customRange])
+  }, [accounts, datePreset, customRange])
 
   const handleRefresh = useDebounce('meta-business-refresh', async () => {
     await refreshAccounts()
@@ -192,18 +191,14 @@ export default function MetaBusinessPage() {
   }, 2000)
 
   const handleDatePresetChange = (preset: string) => {
-    setFilters(prev => ({
-      ...prev,
-      datePreset: preset,
-      customRange: preset !== 'custom' ? undefined : prev.customRange
-    }))
+    setDatePreset(preset)
+    if (preset !== 'custom') {
+      setCustomRange(undefined)
+    }
   }
 
   const handleCustomRangeChange = (range: DateRange) => {
-    setFilters(prev => ({
-      ...prev,
-      customRange: range
-    }))
+    setCustomRange(range)
   }
 
   const handleSearchChange = (search: string) => {
@@ -416,8 +411,8 @@ export default function MetaBusinessPage() {
                   onCategoryChange={handleCategoryChange}
                 />
                 <DateSelector
-                  datePreset={filters.datePreset}
-                  customRange={filters.customRange}
+                  datePreset={datePreset}
+                  customRange={customRange}
                   onDatePresetChange={handleDatePresetChange}
                   onCustomRangeChange={handleCustomRangeChange}
                 />
