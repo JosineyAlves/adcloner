@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { BarChart3, ChevronDown, X, GripVertical } from 'lucide-react'
-import { MetricConfig } from './MetricsSelector'
+import { MetricConfig } from '@/lib/metrics-config'
 
 interface MainMetricsOrderSelectorProps {
   metrics: MetricConfig[]
