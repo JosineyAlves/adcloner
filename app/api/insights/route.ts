@@ -3,6 +3,8 @@ import { FacebookAPI } from '@/lib/facebook-api'
 
 const facebookAPI = new FacebookAPI()
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)

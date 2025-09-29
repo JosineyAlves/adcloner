@@ -15,8 +15,10 @@ import {
   BarChart3
 } from 'lucide-react'
 import { MetaCampaign } from '@/lib/types'
+import { MetricConfig } from '@/lib/metrics-config'
 import StatusToggle from './StatusToggle'
 import BudgetEditor from './BudgetEditor'
+import MetricsColumn from './MetricsColumn'
 import toast from 'react-hot-toast'
 
 interface CampaignsTableProps {
@@ -26,6 +28,8 @@ interface CampaignsTableProps {
   onStatusToggle: (type: 'campaigns' | 'adsets' | 'ads', id: string, currentStatus: string) => void
   onBudgetUpdate: (type: 'campaigns' | 'adsets', id: string, budget: number, budgetType: 'daily' | 'lifetime') => void
   onBulkStatusUpdate: (type: 'campaigns' | 'adsets' | 'ads', status: string) => void
+  metrics?: MetricConfig[]
+  showMetrics?: boolean
 }
 
 export default function CampaignsTable({
@@ -34,7 +38,9 @@ export default function CampaignsTable({
   onSelectionChange,
   onStatusToggle,
   onBudgetUpdate,
-  onBulkStatusUpdate
+  onBulkStatusUpdate,
+  metrics = [],
+  showMetrics = false
 }: CampaignsTableProps) {
 
   const handleSelectAll = () => {
@@ -165,6 +171,11 @@ export default function CampaignsTable({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 CTR
               </th>
+              {showMetrics && (
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Métricas Avançadas
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -245,6 +256,15 @@ export default function CampaignsTable({
                 <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                   {formatPercentage(campaign.ctr)}
                 </td>
+                {showMetrics && (
+                  <td className="px-6 py-4">
+                    <MetricsColumn
+                      data={campaign}
+                      metrics={metrics}
+                      visibleMetrics={metrics.filter(m => m.visible).map(m => m.id)}
+                    />
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

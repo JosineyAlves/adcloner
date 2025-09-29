@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { FacebookAPI } from '@/lib/facebook-api'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   try {
     const accessToken = request.cookies.get('fb_access_token')?.value

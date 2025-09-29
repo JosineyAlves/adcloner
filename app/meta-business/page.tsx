@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { 
   Eye, 
@@ -8,7 +8,6 @@ import {
   MousePointer, 
   Target,
   TrendingUp, 
-  BarChart3, 
   RefreshCw, 
   Settings, 
   Play, 
@@ -21,6 +20,7 @@ import {
   Layers,
   Megaphone
 } from 'lucide-react'
+import { ALL_METRICS, MetricConfig } from '@/lib/metrics-config'
 import CampaignsIcon from '@/components/meta-business/icons/CampaignsIcon'
 import AdSetsIcon from '@/components/meta-business/icons/AdSetsIcon'
 import AdsIcon from '@/components/meta-business/icons/AdsIcon'
@@ -30,6 +30,7 @@ import DateSelector, { DateRange } from '@/components/dashboard/DateSelector'
 import CampaignsTable from '@/components/meta-business/CampaignsTable'
 import AdSetsTable from '@/components/meta-business/AdSetsTable'
 import AdsTable from '@/components/meta-business/AdsTable'
+import MetaBusinessMetricsSelector from '@/components/meta-business/MetricsSelector'
 import { 
   MetaCampaign, 
   MetaAdSet, 
@@ -38,6 +39,7 @@ import {
   MetaBusinessStats
 } from '@/lib/types'
 import { useApp } from '@/contexts/AppContext'
+import { useDebounce } from '@/lib/debounce'
 import toast from 'react-hot-toast'
 
 export default function MetaBusinessPage() {
@@ -75,15 +77,9 @@ export default function MetaBusinessPage() {
   const [selectedAdSets, setSelectedAdSets] = useState<Set<string>>(new Set())
   const [selectedAds, setSelectedAds] = useState<Set<string>>(new Set())
 
-  useEffect(() => {
-    if (accounts.length > 0) {
-      setFilters(prev => ({
-        ...prev,
-        accountIds: accounts.map(acc => acc.id)
-      }))
-      fetchData()
-    }
-  }, [accounts, filters])
+  // Estados para métricas avançadas
+  const [metrics, setMetrics] = useState<MetricConfig[]>(ALL_METRICS)
+  const [selectedCategory, setSelectedCategory] = useState<string>('all')
 
   const fetchData = async () => {
     try {
@@ -171,10 +167,24 @@ export default function MetaBusinessPage() {
     })
   }
 
-  const handleRefresh = async () => {
+  // Debounce da função fetchData para evitar múltiplos refreshs
+  const debouncedFetchData = useDebounce('meta-business-fetch', fetchData, 3000)
+
+  useEffect(() => {
+    if (accounts.length > 0) {
+      setFilters(prev => ({
+        ...prev,
+        accountIds: accounts.map(acc => acc.id)
+      }))
+      debouncedFetchData()
+    }
+  }, [accounts, filters, debouncedFetchData])
+
+  const handleRefresh = useDebounce('meta-business-refresh', async () => {
     await refreshAccounts()
+    await debouncedFetchData()
     toast.success('Dados atualizados!')
-  }
+  }, 2000)
 
   const handleDatePresetChange = (preset: string) => {
     setFilters(prev => ({
@@ -212,6 +222,16 @@ export default function MetaBusinessPage() {
       accountIds
     }))
   }
+
+  // Funções para gerenciar métricas
+  const handleMetricsChange = (newMetrics: MetricConfig[]) => {
+    setMetrics(newMetrics)
+  }
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category)
+  }
+
 
   // Funções de seleção em massa
   const handleSelectAll = (type: 'campaigns' | 'adsets' | 'ads') => {
@@ -382,20 +402,28 @@ export default function MetaBusinessPage() {
                 Gerencie campanhas, conjuntos e anúncios do Facebook/Instagram
               </p>
             </div>
-            <div className="flex items-center space-x-3">
-              <DateSelector
-                datePreset={filters.datePreset}
-                customRange={filters.customRange}
-                onDatePresetChange={handleDatePresetChange}
-                onCustomRangeChange={handleCustomRangeChange}
-              />
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+                <MetaBusinessMetricsSelector
+                  metrics={metrics}
+                  onMetricsChange={handleMetricsChange}
+                  selectedCategory={selectedCategory}
+                  onCategoryChange={handleCategoryChange}
+                />
+                <DateSelector
+                  datePreset={filters.datePreset}
+                  customRange={filters.customRange}
+                  onDatePresetChange={handleDatePresetChange}
+                  onCustomRangeChange={handleCustomRangeChange}
+                />
+              </div>
               <button
                 onClick={handleRefresh}
                 disabled={isRefreshing}
-                className="btn-secondary flex items-center space-x-2"
+                className="btn-secondary flex items-center justify-center space-x-2 px-4 py-2"
               >
                 <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                <span>Atualizar</span>
+                <span className="hidden sm:inline">Atualizar</span>
               </button>
             </div>
           </div>
@@ -408,7 +436,7 @@ export default function MetaBusinessPage() {
             transition={{ duration: 0.5 }}
             className="space-y-6"
           >
-            {/* Cards de Estatísticas */}
+            {/* Cards de Estatísticas Básicas */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatsCard
                 title="Gasto Total"
@@ -435,6 +463,7 @@ export default function MetaBusinessPage() {
                 iconColor="text-purple-600"
               />
             </div>
+
 
             {/* Filtros */}
             <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
@@ -507,6 +536,8 @@ export default function MetaBusinessPage() {
                     onStatusToggle={handleToggleStatus}
                     onBudgetUpdate={handleBudgetUpdate}
                     onBulkStatusUpdate={handleBulkStatusUpdate}
+                    metrics={metrics}
+                    showMetrics={true}
                   />
                 )}
                 
@@ -518,6 +549,8 @@ export default function MetaBusinessPage() {
                     onStatusToggle={handleToggleStatus}
                     onBudgetUpdate={handleBudgetUpdate}
                     onBulkStatusUpdate={handleBulkStatusUpdate}
+                    metrics={metrics}
+                    showMetrics={true}
                   />
                 )}
                 
@@ -528,6 +561,8 @@ export default function MetaBusinessPage() {
                     onSelectionChange={setSelectedAds}
                     onStatusToggle={handleToggleStatus}
                     onBulkStatusUpdate={handleBulkStatusUpdate}
+                    metrics={metrics}
+                    showMetrics={true}
                   />
                 )}
               </div>

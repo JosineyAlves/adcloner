@@ -15,7 +15,9 @@ import {
   Eye
 } from 'lucide-react'
 import { MetaAd } from '@/lib/types'
+import { MetricConfig } from '@/lib/metrics-config'
 import StatusToggle from './StatusToggle'
+import MetricsColumn from './MetricsColumn'
 import toast from 'react-hot-toast'
 
 interface AdsTableProps {
@@ -24,6 +26,8 @@ interface AdsTableProps {
   onSelectionChange: (selected: Set<string>) => void
   onStatusToggle: (type: 'campaigns' | 'adsets' | 'ads', id: string, currentStatus: string) => void
   onBulkStatusUpdate: (type: 'campaigns' | 'adsets' | 'ads', status: string) => void
+  metrics?: MetricConfig[]
+  showMetrics?: boolean
 }
 
 export default function AdsTable({
@@ -31,7 +35,9 @@ export default function AdsTable({
   selectedAds,
   onSelectionChange,
   onStatusToggle,
-  onBulkStatusUpdate
+  onBulkStatusUpdate,
+  metrics = [],
+  showMetrics = false
 }: AdsTableProps) {
   const handleSelectAll = () => {
     if (selectedAds.size === ads.length) {

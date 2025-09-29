@@ -14,8 +14,10 @@ import {
   Target
 } from 'lucide-react'
 import { MetaAdSet } from '@/lib/types'
+import { MetricConfig } from '@/lib/metrics-config'
 import StatusToggle from './StatusToggle'
 import BudgetEditor from './BudgetEditor'
+import MetricsColumn from './MetricsColumn'
 import toast from 'react-hot-toast'
 
 interface AdSetsTableProps {
@@ -25,6 +27,8 @@ interface AdSetsTableProps {
   onStatusToggle: (type: 'campaigns' | 'adsets' | 'ads', id: string, currentStatus: string) => void
   onBudgetUpdate: (type: 'campaigns' | 'adsets', id: string, budget: number, budgetType: 'daily' | 'lifetime') => void
   onBulkStatusUpdate: (type: 'campaigns' | 'adsets' | 'ads', status: string) => void
+  metrics?: MetricConfig[]
+  showMetrics?: boolean
 }
 
 export default function AdSetsTable({
@@ -33,7 +37,9 @@ export default function AdSetsTable({
   onSelectionChange,
   onStatusToggle,
   onBudgetUpdate,
-  onBulkStatusUpdate
+  onBulkStatusUpdate,
+  metrics = [],
+  showMetrics = false
 }: AdSetsTableProps) {
 
   const handleSelectAll = () => {

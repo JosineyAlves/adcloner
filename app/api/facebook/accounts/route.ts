@@ -4,6 +4,8 @@ import { FacebookAccount } from '@/lib/types'
 
 const facebookAPI = new FacebookAPI()
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     // Verificar se temos um token de acesso

@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { cache } from '@/lib/cache'
+import { facebookBatchAPI } from '@/lib/facebook-batch-api'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,102 +27,144 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Verificar cache primeiro com TTL inteligente
+    const cacheKey = cache.generateKey('ads', { accountId, datePreset, since, until })
+    const cachedData = cache.get(cacheKey)
+    
+    if (cachedData) {
+      console.log('📦 Retornando ads do cache (TTL inteligente)')
+      return NextResponse.json(cachedData)
+    }
+
     try {
-      // Buscar campanhas primeiro para obter Ads
-      const campaignsResponse = await fetch(
-        `https://graph.facebook.com/v23.0/${accountId}/campaigns?fields=id,name&access_token=${accessToken}`
-      )
+      console.log('🚀 Iniciando busca de ads com Batch Requests')
       
-      const campaignsData = await campaignsResponse.json()
+      // PASSO 1: Buscar ads usando batch request
+      const adsBatch = facebookBatchAPI.createAdsBatch(accountId, datePreset, since || undefined, until || undefined)
+      const adsResponses = await facebookBatchAPI.makeBatchRequest(adsBatch, accessToken)
       
-      if (campaignsData.error) {
-        console.error('Facebook API error:', campaignsData.error)
+      if (adsResponses[0].code !== 200) {
+        const errorData = JSON.parse(adsResponses[0].body || '{}')
+        console.error('❌ Erro ao buscar ads:', errorData)
         return NextResponse.json(
-          { error: campaignsData.error.message },
+          { error: errorData.error?.message || 'Failed to fetch ads' },
           { status: 400 }
         )
       }
 
+      const adsData = JSON.parse(adsResponses[0].body || '{}')
       const ads: any[] = []
       
-      if (campaignsData.data) {
-        // Buscar Ads de cada campanha
-        for (const campaign of campaignsData.data) {
+      if (adsData.data && adsData.data.length > 0) {
+        console.log(`📊 Encontrados ${adsData.data.length} ads`)
+        
+        // PASSO 2: Buscar insights em batch (até 50 por vez)
+        const adIds = adsData.data.map((ad: any) => ad.id)
+        const insightsBatch = facebookBatchAPI.createAdInsightsBatch(adIds, datePreset, since || undefined, until || undefined)
+        const insightsResponses = await facebookBatchAPI.makeBatchRequest(insightsBatch, accessToken)
+        
+        console.log(`📈 Buscando insights para ${adIds.length} ads em ${Math.ceil(insightsBatch.length / 50)} lotes`)
+        
+        // PASSO 3: Processar ads com insights
+        for (let i = 0; i < adsData.data.length; i++) {
+          const ad = adsData.data[i]
+          const insightsResponse = insightsResponses[i]
+          
           try {
-            const adsResponse = await fetch(
-              `https://graph.facebook.com/v23.0/${campaign.id}/ads?fields=id,name,status,effective_status,adset{id,name},creative{id,name,thumbnail_url,object_story_spec},created_time,updated_time&access_token=${accessToken}`
-            )
-            
-            const adsData = await adsResponse.json()
-            
-            if (adsData.data) {
-              for (const ad of adsData.data) {
-                try {
-                  let insights = {
-                    impressions: 0,
-                    clicks: 0,
-                    spend: 0,
-                    cpc: 0,
-                    ctr: 0
-                  }
+            let insights = {
+              impressions: 0,
+              clicks: 0,
+              spend: 0,
+              cpc: 0,
+              ctr: 0
+            }
 
-                  // Buscar insights do Ad
-                  const insightsResponse = await fetch(
-                    `https://graph.facebook.com/v23.0/${ad.id}/insights?fields=impressions,clicks,spend,cpc,ctr&level=ad&date_preset=${datePreset}${since && until ? `&time_range=${JSON.stringify({since, until})}` : ''}&access_token=${accessToken}`
-                  )
-                  
-                  const insightsData = await insightsResponse.json()
-                  
-                  if (insightsData.data && insightsData.data.length > 0) {
-                    const insight = insightsData.data[0]
-                    insights = {
-                      impressions: parseInt(insight.impressions || '0'),
-                      clicks: parseInt(insight.clicks || '0'),
-                      spend: parseFloat(insight.spend || '0'),
-                      cpc: parseFloat(insight.cpc || '0'),
-                      ctr: parseFloat(insight.ctr || '0')
-                    }
-                  }
-
-                  const metaAd = {
-                    id: ad.id,
-                    name: ad.name,
-                    adset_id: ad.adset?.id || '',
-                    adset_name: ad.adset?.name || '',
-                    campaign_id: campaign.id,
-                    campaign_name: campaign.name,
-                    status: ad.status,
-                    effective_status: ad.effective_status || ad.status,
-                    creative: {
-                      id: ad.creative?.id || '',
-                      name: ad.creative?.name || '',
-                      thumbnail_url: ad.creative?.thumbnail_url,
-                      object_story_spec: ad.creative?.object_story_spec
-                    },
-                    spend: insights.spend,
-                    impressions: insights.impressions,
-                    clicks: insights.clicks,
-                    cpc: insights.cpc,
-                    ctr: insights.ctr,
-                    created_time: ad.created_time,
-                    updated_time: ad.updated_time,
-                    account_id: accountId,
-                    account_name: 'Facebook Account'
-                  }
-
-                  ads.push(metaAd)
-                } catch (error) {
-                  console.error(`Error processing ad ${ad.id}:`, error)
+            if (insightsResponse.code === 200) {
+              const insightsData = JSON.parse(insightsResponse.body || '{}')
+              if (insightsData.data && insightsData.data.length > 0) {
+                const insight = insightsData.data[0]
+                insights = {
+                  impressions: parseInt(insight.impressions || '0'),
+                  clicks: parseInt(insight.clicks || '0'),
+                  spend: parseFloat(insight.spend || '0'),
+                  cpc: parseFloat(insight.cpc || '0'),
+                  ctr: parseFloat(insight.ctr || '0')
                 }
               }
+            } else {
+              console.warn(`⚠️ Erro ao buscar insights do ad ${ad.id}:`, insightsResponse)
             }
+
+            const metaAd = {
+              id: ad.id,
+              name: ad.name,
+              adset_id: ad.adset?.id || '',
+              adset_name: ad.adset?.name || '',
+              campaign_id: ad.campaign?.id || '',
+              campaign_name: ad.campaign?.name || '',
+              status: ad.status,
+              effective_status: ad.effective_status || ad.status,
+              creative: {
+                title: ad.creative?.title || '',
+                body: ad.creative?.body || '',
+                image_url: ad.creative?.image_url || '',
+                video_id: ad.creative?.video_id || '',
+                link_url: ad.creative?.link_url || '',
+                call_to_action_type: ad.creative?.call_to_action_type || 'LEARN_MORE'
+              },
+              spend: insights.spend,
+              impressions: insights.impressions,
+              clicks: insights.clicks,
+              cpc: insights.cpc,
+              ctr: insights.ctr,
+              created_time: ad.created_time,
+              updated_time: ad.updated_time,
+              account_id: accountId,
+              account_name: 'Facebook Account'
+            }
+
+            ads.push(metaAd)
           } catch (error) {
-            console.error(`Error processing campaign ${campaign.id}:`, error)
+            console.error(`Error processing ad ${ad.id}:`, error)
+            // Adicionar ad sem insights em caso de erro
+            ads.push({
+              id: ad.id,
+              name: ad.name,
+              adset_id: ad.adset?.id || '',
+              adset_name: ad.adset?.name || '',
+              campaign_id: ad.campaign?.id || '',
+              campaign_name: ad.campaign?.name || '',
+              status: ad.status,
+              effective_status: ad.effective_status || ad.status,
+              creative: {
+                title: ad.creative?.title || '',
+                body: ad.creative?.body || '',
+                image_url: ad.creative?.image_url || '',
+                video_id: ad.creative?.video_id || '',
+                link_url: ad.creative?.link_url || '',
+                call_to_action_type: ad.creative?.call_to_action_type || 'LEARN_MORE'
+              },
+              spend: 0,
+              impressions: 0,
+              clicks: 0,
+              cpc: 0,
+              ctr: 0,
+              created_time: ad.created_time,
+              updated_time: ad.updated_time,
+              account_id: accountId,
+              account_name: 'Facebook Account'
+            })
           }
         }
       }
 
-      return NextResponse.json({ ads })
+      const result = { ads }
+      
+      // Salvar no cache com TTL inteligente (8 minutos para ads)
+      cache.setWithIntelligentTTL(cacheKey, result, 'ads')
+      
+      console.log(`✅ Ads processados com sucesso: ${ads.length} itens`)
+      return NextResponse.json(result)
     } catch (error) {
       console.error('Error fetching ads:', error)
       return NextResponse.json(

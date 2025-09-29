@@ -3,6 +3,9 @@ import { FacebookAPI } from '@/lib/facebook-api'
 import { MetaCampaign } from '@/lib/types'
 import { facebookRateLimiter } from '@/lib/rate-limiter'
 import { cache } from '@/lib/cache'
+import { facebookBatchAPI } from '@/lib/facebook-batch-api'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,54 +32,59 @@ export async function GET(request: NextRequest) {
 
     const facebookAPI = new FacebookAPI()
     
-    // Verificar cache primeiro
+    // Verificar cache primeiro com TTL inteligente
     const cacheKey = cache.generateKey('campaigns', { accountId, datePreset, since, until })
     const cachedData = cache.get(cacheKey)
     
     if (cachedData) {
-      console.log('📦 Retornando campanhas do cache')
+      console.log('📦 Retornando campanhas do cache (TTL inteligente)')
       return NextResponse.json(cachedData)
     }
     
     try {
-      // Buscar campanhas da conta com rate limiting
-      const campaignsResponse = await facebookRateLimiter.executeWithRetry(async () => {
-        return fetch(
-          `https://graph.facebook.com/v23.0/${accountId}/campaigns?fields=id,name,objective,status,effective_status,daily_budget,lifetime_budget,created_time,updated_time&access_token=${accessToken}`
-        )
-      })
+      console.log('🚀 Iniciando busca de campanhas com Batch Requests')
       
-      const campaignsData = await campaignsResponse.json()
+      // PASSO 1: Buscar campanhas usando batch request
+      const campaignsBatch = facebookBatchAPI.createCampaignsBatch(accountId, datePreset, since, until)
+      const campaignsResponses = await facebookBatchAPI.makeBatchRequest(campaignsBatch, accessToken)
       
-      if (campaignsData.error) {
-        console.error('Facebook API error:', campaignsData.error)
+      if (campaignsResponses[0].code !== 200) {
+        const errorData = JSON.parse(campaignsResponses[0].body || '{}')
+        console.error('❌ Erro ao buscar campanhas:', errorData)
         return NextResponse.json(
-          { error: campaignsData.error.message },
+          { error: errorData.error?.message || 'Failed to fetch campaigns' },
           { status: 400 }
         )
       }
 
+      const campaignsData = JSON.parse(campaignsResponses[0].body || '{}')
       const campaigns: MetaCampaign[] = []
       
-      if (campaignsData.data) {
-        // Buscar insights para cada campanha
-        for (const campaign of campaignsData.data) {
-          try {
-            let insights = {
-              impressions: 0,
-              clicks: 0,
-              spend: 0,
-              cpc: 0,
-              ctr: 0
-            }
+      if (campaignsData.data && campaignsData.data.length > 0) {
+        console.log(`📊 Encontradas ${campaignsData.data.length} campanhas`)
+        
+        // PASSO 2: Buscar insights em batch (até 50 por vez)
+        const campaignIds = campaignsData.data.map((c: any) => c.id)
+        const insightsBatch = facebookBatchAPI.createCampaignInsightsBatch(campaignIds, datePreset, since, until)
+        const insightsResponses = await facebookBatchAPI.makeBatchRequest(insightsBatch, accessToken)
+        
+        console.log(`📈 Buscando insights para ${campaignIds.length} campanhas em ${Math.ceil(insightsBatch.length / 50)} lotes`)
+        
+        // PASSO 3: Processar campanhas com insights
+        for (let i = 0; i < campaignsData.data.length; i++) {
+          const campaign = campaignsData.data[i]
+          const insightsResponse = insightsResponses[i]
+          
+          let insights = {
+            impressions: 0,
+            clicks: 0,
+            spend: 0,
+            cpc: 0,
+            ctr: 0
+          }
 
-            // Buscar insights da campanha
-            const insightsResponse = await fetch(
-              `https://graph.facebook.com/v23.0/${campaign.id}/insights?fields=impressions,clicks,spend,cpc,ctr&level=campaign&date_preset=${datePreset}${since && until ? `&time_range=${JSON.stringify({since, until})}` : ''}&access_token=${accessToken}`
-            )
-            
-            const insightsData = await insightsResponse.json()
-            
+          if (insightsResponse.code === 200) {
+            const insightsData = JSON.parse(insightsResponse.body || '{}')
             if (insightsData.data && insightsData.data.length > 0) {
               const insight = insightsData.data[0]
               insights = {
@@ -87,35 +95,12 @@ export async function GET(request: NextRequest) {
                 ctr: parseFloat(insight.ctr || '0')
               }
             }
+          } else {
+            console.warn(`⚠️ Erro ao buscar insights da campanha ${campaign.id}:`, insightsResponse)
+          }
 
-            // Verificar se tem Advantage Campaign Budget
-            let advantageCampaignBudget = false
-            
-            try {
-              const campaignDetailsResponse = await fetch(
-                `https://graph.facebook.com/v23.0/${campaign.id}?fields=is_advantage_campaign_budget,daily_budget,lifetime_budget&access_token=${accessToken}`
-              )
-              
-              const campaignDetails = await campaignDetailsResponse.json()
-              
-              if (campaignDetails.error) {
-                console.warn(`Error fetching campaign details for ${campaign.id}:`, campaignDetails.error)
-                // Se houver erro, verificar se tem orçamento definido
-                advantageCampaignBudget = !!(campaign.daily_budget || campaign.lifetime_budget)
-              } else {
-                // Verificar se o campo existe e é true
-                if (campaignDetails.is_advantage_campaign_budget !== undefined) {
-                  advantageCampaignBudget = campaignDetails.is_advantage_campaign_budget === true
-                } else {
-                  // Se o campo não estiver disponível, verificar se tem orçamento
-                  advantageCampaignBudget = !!(campaignDetails.daily_budget || campaignDetails.lifetime_budget || campaign.daily_budget || campaign.lifetime_budget)
-                }
-              }
-            } catch (error) {
-              console.warn(`Error fetching campaign details for ${campaign.id}:`, error)
-              // Em caso de erro, assumir CBO se tem orçamento
-              advantageCampaignBudget = !!(campaign.daily_budget || campaign.lifetime_budget)
-            }
+          // Verificar se tem Advantage Campaign Budget (simplificado)
+          const advantageCampaignBudget = !!(campaign.daily_budget || campaign.lifetime_budget)
 
             const metaCampaign: MetaCampaign = {
               id: campaign.id,
@@ -171,9 +156,10 @@ export async function GET(request: NextRequest) {
 
       const result = { campaigns }
       
-      // Salvar no cache por 2 minutos
-      cache.set(cacheKey, result, 2 * 60 * 1000)
+      // Salvar no cache com TTL inteligente (15 minutos para campanhas)
+      cache.setWithIntelligentTTL(cacheKey, result, 'campaigns')
       
+      console.log(`✅ Campanhas processadas com sucesso: ${campaigns.length} itens`)
       return NextResponse.json(result)
     } catch (error) {
       console.error('Error fetching campaigns:', error)

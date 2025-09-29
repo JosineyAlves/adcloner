@@ -25,7 +25,7 @@ export function AppProvider({ children }: AppProviderProps) {
       const response = await fetch('/api/facebook/accounts', {
         credentials: 'include'
       })
-
+      
       if (response.ok) {
         const data = await response.json()
         setAccounts(data.accounts || [])
