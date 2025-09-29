@@ -1145,31 +1145,83 @@ export class FacebookAPI {
     timeRange?: { since: string; until: string }
   ) {
     try {
-      // Campos básicos e seguros da API de Insights do Facebook
+      // Todos os campos disponíveis na API de Insights do Facebook
       const fields = [
         // Identificação básica
         'campaign_id',
         'campaign_name',
+        'adset_id',
+        'adset_name',
+        'ad_id',
+        'ad_name',
         
-        // Métricas básicas (garantidas)
+        // Métricas básicas
         'impressions',
         'clicks',
         'spend',
         'reach',
         'frequency',
         
-        // Métricas de custo (garantidas)
+        // Métricas de custo
         'cpm',
         'cpc',
         'ctr',
+        'cost_per_conversion',
+        'cost_per_action_type',
+        'cost_per_inline_link_click',
+        'cost_per_unique_click',
+        'cost_per_landing_page_view',
         
-        // Métricas de engajamento (garantidas)
+        // Métricas de engajamento
         'inline_link_clicks',
         'inline_post_engagement',
+        'post_engagement',
+        'page_engagement',
+        'post_reactions',
+        'post_comments',
+        'post_shares',
         
-        // Métricas de conversão (garantidas)
+        // Métricas de conversão
         'conversions',
-        'cost_per_conversion'
+        'conversion_rate',
+        'conversion_values',
+        'conversion_rate_ranking',
+        
+        // Métricas de vídeo
+        'video_views',
+        'video_views_3s',
+        'video_views_25',
+        'video_views_50',
+        'video_views_75',
+        'video_views_100',
+        'video_play_actions',
+        'video_play_curve_actions',
+        
+        // Métricas de qualidade
+        'quality_ranking',
+        'engagement_rate_ranking',
+        'quality_score',
+        
+        // Métricas de ações
+        'actions',
+        'purchase',
+        'add_to_cart',
+        'initiate_checkout',
+        'lead',
+        'app_install',
+        'app_events',
+        
+        // Métricas de landing page
+        'landing_page_views',
+        'landing_page_views_ctr',
+        
+        // Métricas de alcance e frequência
+        'unique_clicks',
+        'unique_link_clicks',
+        'unique_inline_link_clicks',
+        'unique_ctr',
+        'frequency_distribution',
+        'effective_frequency'
       ].join(',')
 
       let url = `${this.baseUrl}/${campaignId}/insights?fields=${fields}&level=${level}&access_token=${accessToken}`
@@ -1204,31 +1256,83 @@ export class FacebookAPI {
     timeRange?: { since: string; until: string }
   ) {
     try {
-      // Campos básicos e seguros da API de Insights do Facebook
+      // Todos os campos disponíveis na API de Insights do Facebook
       const fields = [
         // Identificação básica
         'campaign_id',
         'campaign_name',
+        'adset_id',
+        'adset_name',
+        'ad_id',
+        'ad_name',
         
-        // Métricas básicas (garantidas)
+        // Métricas básicas
         'impressions',
         'clicks',
         'spend',
         'reach',
         'frequency',
         
-        // Métricas de custo (garantidas)
+        // Métricas de custo
         'cpm',
         'cpc',
         'ctr',
+        'cost_per_conversion',
+        'cost_per_action_type',
+        'cost_per_inline_link_click',
+        'cost_per_unique_click',
+        'cost_per_landing_page_view',
         
-        // Métricas de engajamento (garantidas)
+        // Métricas de engajamento
         'inline_link_clicks',
         'inline_post_engagement',
+        'post_engagement',
+        'page_engagement',
+        'post_reactions',
+        'post_comments',
+        'post_shares',
         
-        // Métricas de conversão (garantidas)
+        // Métricas de conversão
         'conversions',
-        'cost_per_conversion'
+        'conversion_rate',
+        'conversion_values',
+        'conversion_rate_ranking',
+        
+        // Métricas de vídeo
+        'video_views',
+        'video_views_3s',
+        'video_views_25',
+        'video_views_50',
+        'video_views_75',
+        'video_views_100',
+        'video_play_actions',
+        'video_play_curve_actions',
+        
+        // Métricas de qualidade
+        'quality_ranking',
+        'engagement_rate_ranking',
+        'quality_score',
+        
+        // Métricas de ações
+        'actions',
+        'purchase',
+        'add_to_cart',
+        'initiate_checkout',
+        'lead',
+        'app_install',
+        'app_events',
+        
+        // Métricas de landing page
+        'landing_page_views',
+        'landing_page_views_ctr',
+        
+        // Métricas de alcance e frequência
+        'unique_clicks',
+        'unique_link_clicks',
+        'unique_inline_link_clicks',
+        'unique_ctr',
+        'frequency_distribution',
+        'effective_frequency'
       ].join(',')
 
       let url = `${this.baseUrl}/${accountId}/insights?fields=${fields}&level=campaign&access_token=${accessToken}`

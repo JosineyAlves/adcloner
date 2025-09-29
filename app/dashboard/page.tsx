@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Eye, DollarSign, MousePointer, Target, TrendingUp, BarChart3, RefreshCw, Settings, Repeat, Percent, Link, Heart } from 'lucide-react'
+import { BarChart3, RefreshCw, Settings } from 'lucide-react'
 import Sidebar from '@/components/layout/Sidebar'
 import StatsCard from '@/components/dashboard/StatsCard'
 import ColumnConfigModal from '@/components/dashboard/ColumnConfigModal'
 import DateSelector, { DateRange } from '@/components/dashboard/DateSelector'
 import MainMetricsSelector from '@/components/dashboard/MainMetricsSelector'
 import MainMetricsOrderSelector from '@/components/dashboard/MainMetricsOrderSelector'
-import { MetricConfig } from '@/components/dashboard/MetricsSelector'
+import { MetricConfig, MAIN_METRICS } from '@/lib/metrics-config'
 import { ColumnConfig, DEFAULT_COLUMNS, getVisibleColumns, formatColumnValue } from '@/lib/column-config'
 import { useApp } from '@/contexts/AppContext'
 import toast from 'react-hot-toast'
@@ -24,128 +24,7 @@ export default function DashboardPage() {
   const [isConfigModalOpen, setIsConfigModalOpen] = useState<boolean>(false)
   
   // Configuração das métricas principais
-  const [mainMetrics, setMainMetrics] = useState<MetricConfig[]>([
-    {
-      id: 'impressions',
-      label: 'Impressões',
-      description: 'Número de vezes que seus anúncios foram exibidos',
-      icon: Eye,
-      iconColor: 'text-blue-600',
-      type: 'number',
-      visible: true,
-      order: 1
-    },
-    {
-      id: 'clicks',
-      label: 'Cliques',
-      description: 'Número de cliques em seus anúncios',
-      icon: MousePointer,
-      iconColor: 'text-green-600',
-      type: 'number',
-      visible: true,
-      order: 2
-    },
-    {
-      id: 'spend',
-      label: 'Gasto',
-      description: 'Valor total gasto em anúncios',
-      icon: DollarSign,
-      iconColor: 'text-red-600',
-      type: 'currency',
-      visible: true,
-      order: 3
-    },
-    {
-      id: 'reach',
-      label: 'Alcance',
-      description: 'Número de pessoas únicas que viram seus anúncios',
-      icon: Target,
-      iconColor: 'text-purple-600',
-      type: 'number',
-      visible: true,
-      order: 4
-    },
-    {
-      id: 'frequency',
-      label: 'Frequência',
-      description: 'Média de vezes que cada pessoa viu seu anúncio',
-      icon: Repeat,
-      iconColor: 'text-orange-600',
-      type: 'number',
-      visible: false,
-      order: 5
-    },
-    {
-      id: 'cpm',
-      label: 'CPM',
-      description: 'Custo por mil impressões',
-      icon: TrendingUp,
-      iconColor: 'text-indigo-600',
-      type: 'currency',
-      visible: false,
-      order: 6
-    },
-    {
-      id: 'cpc',
-      label: 'CPC',
-      description: 'Custo por clique',
-      icon: MousePointer,
-      iconColor: 'text-teal-600',
-      type: 'currency',
-      visible: false,
-      order: 7
-    },
-    {
-      id: 'ctr',
-      label: 'CTR',
-      description: 'Taxa de clique (cliques / impressões)',
-      icon: Percent,
-      iconColor: 'text-pink-600',
-      type: 'percentage',
-      visible: false,
-      order: 8
-    },
-    {
-      id: 'conversions',
-      label: 'Conversões',
-      description: 'Número de conversões realizadas',
-      icon: Target,
-      iconColor: 'text-emerald-600',
-      type: 'number',
-      visible: false,
-      order: 9
-    },
-    {
-      id: 'cost_per_conversion',
-      label: 'Custo por Conversão',
-      description: 'Custo médio por conversão',
-      icon: DollarSign,
-      iconColor: 'text-amber-600',
-      type: 'currency',
-      visible: false,
-      order: 10
-    },
-    {
-      id: 'inline_link_clicks',
-      label: 'Cliques em Links',
-      description: 'Número de cliques em links específicos',
-      icon: Link,
-      iconColor: 'text-cyan-600',
-      type: 'number',
-      visible: false,
-      order: 11
-    },
-    {
-      id: 'inline_post_engagement',
-      label: 'Engajamento',
-      description: 'Interações com o post (likes, comentários, shares)',
-      icon: Heart,
-      iconColor: 'text-rose-600',
-      type: 'number',
-      visible: false,
-      order: 12
-    }
-  ])
+  const [mainMetrics, setMainMetrics] = useState<MetricConfig[]>(MAIN_METRICS)
 
   useEffect(() => {
     if (accounts.length > 0) {
