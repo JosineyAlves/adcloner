@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       console.log('🚀 Iniciando busca de campanhas com Batch Requests')
       
       // PASSO 1: Buscar campanhas usando batch request
-      const campaignsBatch = facebookBatchAPI.createCampaignsBatch(accountId, datePreset, since, until)
+      const campaignsBatch = facebookBatchAPI.createCampaignsBatch(accountId, datePreset, since || undefined, until || undefined)
       const campaignsResponses = await facebookBatchAPI.makeBatchRequest(campaignsBatch, accessToken)
       
       if (campaignsResponses[0].code !== 200) {
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
         
         // PASSO 2: Buscar insights em batch (até 50 por vez)
         const campaignIds = campaignsData.data.map((c: any) => c.id)
-        const insightsBatch = facebookBatchAPI.createCampaignInsightsBatch(campaignIds, datePreset, since, until)
+        const insightsBatch = facebookBatchAPI.createCampaignInsightsBatch(campaignIds, datePreset, since || undefined, until || undefined)
         const insightsResponses = await facebookBatchAPI.makeBatchRequest(insightsBatch, accessToken)
         
         console.log(`📈 Buscando insights para ${campaignIds.length} campanhas em ${Math.ceil(insightsBatch.length / 50)} lotes`)
@@ -75,32 +75,33 @@ export async function GET(request: NextRequest) {
           const campaign = campaignsData.data[i]
           const insightsResponse = insightsResponses[i]
           
-          let insights = {
-            impressions: 0,
-            clicks: 0,
-            spend: 0,
-            cpc: 0,
-            ctr: 0
-          }
-
-          if (insightsResponse.code === 200) {
-            const insightsData = JSON.parse(insightsResponse.body || '{}')
-            if (insightsData.data && insightsData.data.length > 0) {
-              const insight = insightsData.data[0]
-              insights = {
-                impressions: parseInt(insight.impressions || '0'),
-                clicks: parseInt(insight.clicks || '0'),
-                spend: parseFloat(insight.spend || '0'),
-                cpc: parseFloat(insight.cpc || '0'),
-                ctr: parseFloat(insight.ctr || '0')
-              }
+          try {
+            let insights = {
+              impressions: 0,
+              clicks: 0,
+              spend: 0,
+              cpc: 0,
+              ctr: 0
             }
-          } else {
-            console.warn(`⚠️ Erro ao buscar insights da campanha ${campaign.id}:`, insightsResponse)
-          }
 
-          // Verificar se tem Advantage Campaign Budget (simplificado)
-          const advantageCampaignBudget = !!(campaign.daily_budget || campaign.lifetime_budget)
+            if (insightsResponse.code === 200) {
+              const insightsData = JSON.parse(insightsResponse.body || '{}')
+              if (insightsData.data && insightsData.data.length > 0) {
+                const insight = insightsData.data[0]
+                insights = {
+                  impressions: parseInt(insight.impressions || '0'),
+                  clicks: parseInt(insight.clicks || '0'),
+                  spend: parseFloat(insight.spend || '0'),
+                  cpc: parseFloat(insight.cpc || '0'),
+                  ctr: parseFloat(insight.ctr || '0')
+                }
+              }
+            } else {
+              console.warn(`⚠️ Erro ao buscar insights da campanha ${campaign.id}:`, insightsResponse)
+            }
+
+            // Verificar se tem Advantage Campaign Budget (simplificado)
+            const advantageCampaignBudget = !!(campaign.daily_budget || campaign.lifetime_budget)
 
             const metaCampaign: MetaCampaign = {
               id: campaign.id,
@@ -127,7 +128,6 @@ export async function GET(request: NextRequest) {
           } catch (error) {
             console.error(`Error processing campaign ${campaign.id}:`, error)
             // Adicionar campanha sem insights em caso de erro
-            // Em caso de erro, assumir CBO se tem orçamento
             const fallbackAdvantageBudget = !!(campaign.daily_budget || campaign.lifetime_budget)
             
             campaigns.push({
