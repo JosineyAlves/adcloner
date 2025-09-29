@@ -94,131 +94,79 @@ export async function GET(request: NextRequest) {
               cost_per_unique_click: 0,
               cost_per_landing_page_view: 0,
               
-              // Métricas de engajamento
+              // Métricas de engajamento (apenas as válidas)
               inline_link_clicks: 0,
               inline_post_engagement: 0,
-              post_engagement: 0,
-              page_engagement: 0,
-              post_reactions: 0,
-              post_comments: 0,
-              post_shares: 0,
               
               // Métricas de conversão
               conversions: 0,
-              conversion_rate: 0,
               conversion_values: 0,
               conversion_rate_ranking: 0,
               
-              // Métricas de vídeo
-              video_views: 0,
-              video_views_3s: 0,
-              video_views_25: 0,
-              video_views_50: 0,
-              video_views_75: 0,
-              video_views_100: 0,
+              // Métricas de vídeo (apenas as válidas)
               video_play_actions: 0,
               video_play_curve_actions: 0,
               
               // Métricas de qualidade
               quality_ranking: 0,
               engagement_rate_ranking: 0,
-              quality_score: 0,
               
-              // Métricas de ações
+              // Métricas de ações (apenas as válidas)
               actions: 0,
-              purchase: 0,
-              add_to_cart: 0,
-              initiate_checkout: 0,
-              lead: 0,
-              app_install: 0,
-              app_events: 0,
               
-              // Métricas de landing page
-              landing_page_views: 0,
-              landing_page_views_ctr: 0,
-              
-              // Métricas de alcance e frequência
+              // Métricas de alcance e frequência (apenas as válidas)
               unique_clicks: 0,
-              unique_link_clicks: 0,
               unique_inline_link_clicks: 0,
-              unique_ctr: 0,
-              frequency_distribution: 0,
-              effective_frequency: 0
+              unique_ctr: 0
             }
 
             if (insightsResponse.code === 200) {
               const insightsData = JSON.parse(insightsResponse.body || '{}')
               if (insightsData.data && insightsData.data.length > 0) {
                 const insight = insightsData.data[0]
-                insights = {
-                  // Métricas básicas
-                  impressions: parseInt(insight.impressions || '0'),
-                  clicks: parseInt(insight.clicks || '0'),
-                  spend: parseFloat(insight.spend || '0'),
-                  reach: parseInt(insight.reach || '0'),
-                  frequency: parseFloat(insight.frequency || '0'),
-                  
-                  // Métricas de custo
-                  cpm: parseFloat(insight.cpm || '0'),
-                  cpc: parseFloat(insight.cpc || '0'),
-                  ctr: parseFloat(insight.ctr || '0'),
-                  cost_per_conversion: parseFloat(insight.cost_per_conversion || '0'),
-                  cost_per_action_type: parseFloat(insight.cost_per_action_type || '0'),
-                  cost_per_inline_link_click: parseFloat(insight.cost_per_inline_link_click || '0'),
-                  cost_per_unique_click: parseFloat(insight.cost_per_unique_click || '0'),
-                  cost_per_landing_page_view: parseFloat(insight.cost_per_landing_page_view || '0'),
-                  
-                  // Métricas de engajamento
-                  inline_link_clicks: parseInt(insight.inline_link_clicks || '0'),
-                  inline_post_engagement: parseInt(insight.inline_post_engagement || '0'),
-                  post_engagement: parseInt(insight.post_engagement || '0'),
-                  page_engagement: parseInt(insight.page_engagement || '0'),
-                  post_reactions: parseInt(insight.post_reactions || '0'),
-                  post_comments: parseInt(insight.post_comments || '0'),
-                  post_shares: parseInt(insight.post_shares || '0'),
-                  
-                  // Métricas de conversão
-                  conversions: parseInt(insight.conversions || '0'),
-                  conversion_rate: parseFloat(insight.conversion_rate || '0'),
-                  conversion_values: parseFloat(insight.conversion_values || '0'),
-                  conversion_rate_ranking: parseFloat(insight.conversion_rate_ranking || '0'),
-                  
-                  // Métricas de vídeo
-                  video_views: parseInt(insight.video_views || '0'),
-                  video_views_3s: parseInt(insight.video_views_3s || '0'),
-                  video_views_25: parseInt(insight.video_views_25 || '0'),
-                  video_views_50: parseInt(insight.video_views_50 || '0'),
-                  video_views_75: parseInt(insight.video_views_75 || '0'),
-                  video_views_100: parseInt(insight.video_views_100 || '0'),
-                  video_play_actions: parseInt(insight.video_play_actions || '0'),
-                  video_play_curve_actions: parseInt(insight.video_play_curve_actions || '0'),
-                  
-                  // Métricas de qualidade
-                  quality_ranking: parseFloat(insight.quality_ranking || '0'),
-                  engagement_rate_ranking: parseFloat(insight.engagement_rate_ranking || '0'),
-                  quality_score: parseFloat(insight.quality_score || '0'),
-                  
-                  // Métricas de ações
-                  actions: parseInt(insight.actions || '0'),
-                  purchase: parseInt(insight.purchase || '0'),
-                  add_to_cart: parseInt(insight.add_to_cart || '0'),
-                  initiate_checkout: parseInt(insight.initiate_checkout || '0'),
-                  lead: parseInt(insight.lead || '0'),
-                  app_install: parseInt(insight.app_install || '0'),
-                  app_events: parseInt(insight.app_events || '0'),
-                  
-                  // Métricas de landing page
-                  landing_page_views: parseInt(insight.landing_page_views || '0'),
-                  landing_page_views_ctr: parseFloat(insight.landing_page_views_ctr || '0'),
-                  
-                  // Métricas de alcance e frequência
-                  unique_clicks: parseInt(insight.unique_clicks || '0'),
-                  unique_link_clicks: parseInt(insight.unique_link_clicks || '0'),
-                  unique_inline_link_clicks: parseInt(insight.unique_inline_link_clicks || '0'),
-                  unique_ctr: parseFloat(insight.unique_ctr || '0'),
-                  frequency_distribution: parseFloat(insight.frequency_distribution || '0'),
-                  effective_frequency: parseFloat(insight.effective_frequency || '0')
-                }
+              insights = {
+                // Métricas básicas
+                impressions: parseInt(insight.impressions || '0'),
+                clicks: parseInt(insight.clicks || '0'),
+                spend: parseFloat(insight.spend || '0'),
+                reach: parseInt(insight.reach || '0'),
+                frequency: parseFloat(insight.frequency || '0'),
+                
+                // Métricas de custo
+                cpm: parseFloat(insight.cpm || '0'),
+                cpc: parseFloat(insight.cpc || '0'),
+                ctr: parseFloat(insight.ctr || '0'),
+                cost_per_conversion: parseFloat(insight.cost_per_conversion || '0'),
+                cost_per_action_type: parseFloat(insight.cost_per_action_type || '0'),
+                cost_per_inline_link_click: parseFloat(insight.cost_per_inline_link_click || '0'),
+                cost_per_unique_click: parseFloat(insight.cost_per_unique_click || '0'),
+                cost_per_landing_page_view: parseFloat(insight.cost_per_landing_page_view || '0'),
+                
+                // Métricas de engajamento (apenas as válidas)
+                inline_link_clicks: parseInt(insight.inline_link_clicks || '0'),
+                inline_post_engagement: parseInt(insight.inline_post_engagement || '0'),
+                
+                // Métricas de conversão
+                conversions: parseInt(insight.conversions || '0'),
+                conversion_values: parseFloat(insight.conversion_values || '0'),
+                conversion_rate_ranking: parseFloat(insight.conversion_rate_ranking || '0'),
+                
+                // Métricas de vídeo (apenas as válidas)
+                video_play_actions: parseInt(insight.video_play_actions || '0'),
+                video_play_curve_actions: parseInt(insight.video_play_curve_actions || '0'),
+                
+                // Métricas de qualidade
+                quality_ranking: parseFloat(insight.quality_ranking || '0'),
+                engagement_rate_ranking: parseFloat(insight.engagement_rate_ranking || '0'),
+                
+                // Métricas de ações (apenas as válidas)
+                actions: parseInt(insight.actions || '0'),
+                
+                // Métricas de alcance e frequência (apenas as válidas)
+                unique_clicks: parseInt(insight.unique_clicks || '0'),
+                unique_inline_link_clicks: parseInt(insight.unique_inline_link_clicks || '0'),
+                unique_ctr: parseFloat(insight.unique_ctr || '0')
+              }
               }
             } else {
               console.warn(`⚠️ Erro ao buscar insights da campanha ${campaign.id}:`, insightsResponse)
@@ -259,56 +207,30 @@ export async function GET(request: NextRequest) {
               cost_per_unique_click: insights.cost_per_unique_click,
               cost_per_landing_page_view: insights.cost_per_landing_page_view,
               
-              // Métricas de engajamento
+              // Métricas de engajamento (apenas as válidas)
               inline_link_clicks: insights.inline_link_clicks,
               inline_post_engagement: insights.inline_post_engagement,
-              post_engagement: insights.post_engagement,
-              page_engagement: insights.page_engagement,
-              post_reactions: insights.post_reactions,
-              post_comments: insights.post_comments,
-              post_shares: insights.post_shares,
               
               // Métricas de conversão
               conversions: insights.conversions,
-              conversion_rate: insights.conversion_rate,
               conversion_values: insights.conversion_values,
               conversion_rate_ranking: insights.conversion_rate_ranking,
               
-              // Métricas de vídeo
-              video_views: insights.video_views,
-              video_views_3s: insights.video_views_3s,
-              video_views_25: insights.video_views_25,
-              video_views_50: insights.video_views_50,
-              video_views_75: insights.video_views_75,
-              video_views_100: insights.video_views_100,
+              // Métricas de vídeo (apenas as válidas)
               video_play_actions: insights.video_play_actions,
               video_play_curve_actions: insights.video_play_curve_actions,
               
               // Métricas de qualidade
               quality_ranking: insights.quality_ranking,
               engagement_rate_ranking: insights.engagement_rate_ranking,
-              quality_score: insights.quality_score,
               
-              // Métricas de ações
+              // Métricas de ações (apenas as válidas)
               actions: insights.actions,
-              purchase: insights.purchase,
-              add_to_cart: insights.add_to_cart,
-              initiate_checkout: insights.initiate_checkout,
-              lead: insights.lead,
-              app_install: insights.app_install,
-              app_events: insights.app_events,
               
-              // Métricas de landing page
-              landing_page_views: insights.landing_page_views,
-              landing_page_views_ctr: insights.landing_page_views_ctr,
-              
-              // Métricas de alcance e frequência
+              // Métricas de alcance e frequência (apenas as válidas)
               unique_clicks: insights.unique_clicks,
-              unique_link_clicks: insights.unique_link_clicks,
               unique_inline_link_clicks: insights.unique_inline_link_clicks,
-              unique_ctr: insights.unique_ctr,
-              frequency_distribution: insights.frequency_distribution,
-              effective_frequency: insights.effective_frequency
+              unique_ctr: insights.unique_ctr
             }
 
             campaigns.push(metaCampaign)
@@ -349,56 +271,30 @@ export async function GET(request: NextRequest) {
               cost_per_unique_click: 0,
               cost_per_landing_page_view: 0,
               
-              // Métricas de engajamento
+              // Métricas de engajamento (apenas as válidas)
               inline_link_clicks: 0,
               inline_post_engagement: 0,
-              post_engagement: 0,
-              page_engagement: 0,
-              post_reactions: 0,
-              post_comments: 0,
-              post_shares: 0,
               
               // Métricas de conversão
               conversions: 0,
-              conversion_rate: 0,
               conversion_values: 0,
               conversion_rate_ranking: 0,
               
-              // Métricas de vídeo
-              video_views: 0,
-              video_views_3s: 0,
-              video_views_25: 0,
-              video_views_50: 0,
-              video_views_75: 0,
-              video_views_100: 0,
+              // Métricas de vídeo (apenas as válidas)
               video_play_actions: 0,
               video_play_curve_actions: 0,
               
               // Métricas de qualidade
               quality_ranking: 0,
               engagement_rate_ranking: 0,
-              quality_score: 0,
               
-              // Métricas de ações
+              // Métricas de ações (apenas as válidas)
               actions: 0,
-              purchase: 0,
-              add_to_cart: 0,
-              initiate_checkout: 0,
-              lead: 0,
-              app_install: 0,
-              app_events: 0,
               
-              // Métricas de landing page
-              landing_page_views: 0,
-              landing_page_views_ctr: 0,
-              
-              // Métricas de alcance e frequência
+              // Métricas de alcance e frequência (apenas as válidas)
               unique_clicks: 0,
-              unique_link_clicks: 0,
               unique_inline_link_clicks: 0,
-              unique_ctr: 0,
-              frequency_distribution: 0,
-              effective_frequency: 0
+              unique_ctr: 0
             })
           }
         }

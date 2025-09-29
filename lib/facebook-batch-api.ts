@@ -207,7 +207,7 @@ export class FacebookBatchAPI {
   createCampaignInsightsBatch(campaignIds: string[], datePreset: string, since?: string, until?: string): BatchRequest[] {
     const timeRange = since && until ? `&time_range=${JSON.stringify({since, until})}` : ''
     
-    // Todos os campos disponíveis na API de Insights do Facebook
+    // Campos válidos na API de Insights do Facebook (apenas os suportados oficialmente)
     const fields = [
       // Identificação básica
       'campaign_id',
@@ -234,56 +234,30 @@ export class FacebookBatchAPI {
       'cost_per_unique_click',
       'cost_per_landing_page_view',
       
-      // Métricas de engajamento
+      // Métricas de engajamento (apenas as válidas)
       'inline_link_clicks',
       'inline_post_engagement',
-      'post_engagement',
-      'page_engagement',
-      'post_reactions',
-      'post_comments',
-      'post_shares',
       
       // Métricas de conversão
       'conversions',
-      'conversion_rate',
       'conversion_values',
       'conversion_rate_ranking',
       
-      // Métricas de vídeo
-      'video_views',
-      'video_views_3s',
-      'video_views_25',
-      'video_views_50',
-      'video_views_75',
-      'video_views_100',
+      // Métricas de vídeo (apenas as válidas)
       'video_play_actions',
       'video_play_curve_actions',
       
       // Métricas de qualidade
       'quality_ranking',
       'engagement_rate_ranking',
-      'quality_score',
       
-      // Métricas de ações
+      // Métricas de ações (apenas as válidas)
       'actions',
-      'purchase',
-      'add_to_cart',
-      'initiate_checkout',
-      'lead',
-      'app_install',
-      'app_events',
       
-      // Métricas de landing page
-      'landing_page_views',
-      'landing_page_views_ctr',
-      
-      // Métricas de alcance e frequência
+      // Métricas de alcance e frequência (apenas as válidas)
       'unique_clicks',
-      'unique_link_clicks',
       'unique_inline_link_clicks',
-      'unique_ctr',
-      'frequency_distribution',
-      'effective_frequency'
+      'unique_ctr'
     ].join(',')
     
     return campaignIds.map(campaignId => ({
@@ -312,7 +286,7 @@ export class FacebookBatchAPI {
   createAdSetInsightsBatch(adSetIds: string[], datePreset: string, since?: string, until?: string): BatchRequest[] {
     const timeRange = since && until ? `&time_range=${JSON.stringify({since, until})}` : ''
     
-    // Todos os campos disponíveis na API de Insights do Facebook
+    // Campos válidos na API de Insights do Facebook (apenas os suportados oficialmente)
     const fields = [
       // Identificação básica
       'campaign_id',
@@ -339,56 +313,30 @@ export class FacebookBatchAPI {
       'cost_per_unique_click',
       'cost_per_landing_page_view',
       
-      // Métricas de engajamento
+      // Métricas de engajamento (apenas as válidas)
       'inline_link_clicks',
       'inline_post_engagement',
-      'post_engagement',
-      'page_engagement',
-      'post_reactions',
-      'post_comments',
-      'post_shares',
       
       // Métricas de conversão
       'conversions',
-      'conversion_rate',
       'conversion_values',
       'conversion_rate_ranking',
       
-      // Métricas de vídeo
-      'video_views',
-      'video_views_3s',
-      'video_views_25',
-      'video_views_50',
-      'video_views_75',
-      'video_views_100',
+      // Métricas de vídeo (apenas as válidas)
       'video_play_actions',
       'video_play_curve_actions',
       
       // Métricas de qualidade
       'quality_ranking',
       'engagement_rate_ranking',
-      'quality_score',
       
-      // Métricas de ações
+      // Métricas de ações (apenas as válidas)
       'actions',
-      'purchase',
-      'add_to_cart',
-      'initiate_checkout',
-      'lead',
-      'app_install',
-      'app_events',
       
-      // Métricas de landing page
-      'landing_page_views',
-      'landing_page_views_ctr',
-      
-      // Métricas de alcance e frequência
+      // Métricas de alcance e frequência (apenas as válidas)
       'unique_clicks',
-      'unique_link_clicks',
       'unique_inline_link_clicks',
-      'unique_ctr',
-      'frequency_distribution',
-      'effective_frequency'
+      'unique_ctr'
     ].join(',')
     
     return adSetIds.map(adSetId => ({
@@ -417,7 +365,7 @@ export class FacebookBatchAPI {
   createAdInsightsBatch(adIds: string[], datePreset: string, since?: string, until?: string): BatchRequest[] {
     const timeRange = since && until ? `&time_range=${JSON.stringify({since, until})}` : ''
     
-    // Todos os campos disponíveis na API de Insights do Facebook
+    // Campos válidos na API de Insights do Facebook (apenas os suportados oficialmente)
     const fields = [
       // Identificação básica
       'campaign_id',
@@ -444,56 +392,30 @@ export class FacebookBatchAPI {
       'cost_per_unique_click',
       'cost_per_landing_page_view',
       
-      // Métricas de engajamento
+      // Métricas de engajamento (apenas as válidas)
       'inline_link_clicks',
       'inline_post_engagement',
-      'post_engagement',
-      'page_engagement',
-      'post_reactions',
-      'post_comments',
-      'post_shares',
       
       // Métricas de conversão
       'conversions',
-      'conversion_rate',
       'conversion_values',
       'conversion_rate_ranking',
       
-      // Métricas de vídeo
-      'video_views',
-      'video_views_3s',
-      'video_views_25',
-      'video_views_50',
-      'video_views_75',
-      'video_views_100',
+      // Métricas de vídeo (apenas as válidas)
       'video_play_actions',
       'video_play_curve_actions',
       
       // Métricas de qualidade
       'quality_ranking',
       'engagement_rate_ranking',
-      'quality_score',
       
-      // Métricas de ações
+      // Métricas de ações (apenas as válidas)
       'actions',
-      'purchase',
-      'add_to_cart',
-      'initiate_checkout',
-      'lead',
-      'app_install',
-      'app_events',
       
-      // Métricas de landing page
-      'landing_page_views',
-      'landing_page_views_ctr',
-      
-      // Métricas de alcance e frequência
+      // Métricas de alcance e frequência (apenas as válidas)
       'unique_clicks',
-      'unique_link_clicks',
       'unique_inline_link_clicks',
-      'unique_ctr',
-      'frequency_distribution',
-      'effective_frequency'
+      'unique_ctr'
     ].join(',')
     
     return adIds.map(adId => ({

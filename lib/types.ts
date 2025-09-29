@@ -157,56 +157,30 @@ export interface MetaCampaign {
   cost_per_unique_click: number
   cost_per_landing_page_view: number
   
-  // Métricas de engajamento
+  // Métricas de engajamento (apenas as válidas)
   inline_link_clicks: number
   inline_post_engagement: number
-  post_engagement: number
-  page_engagement: number
-  post_reactions: number
-  post_comments: number
-  post_shares: number
   
   // Métricas de conversão
   conversions: number
-  conversion_rate: number
   conversion_values: number
   conversion_rate_ranking: number
   
-  // Métricas de vídeo
-  video_views: number
-  video_views_3s: number
-  video_views_25: number
-  video_views_50: number
-  video_views_75: number
-  video_views_100: number
+  // Métricas de vídeo (apenas as válidas)
   video_play_actions: number
   video_play_curve_actions: number
   
   // Métricas de qualidade
   quality_ranking: number
   engagement_rate_ranking: number
-  quality_score: number
   
-  // Métricas de ações
+  // Métricas de ações (apenas as válidas)
   actions: number
-  purchase: number
-  add_to_cart: number
-  initiate_checkout: number
-  lead: number
-  app_install: number
-  app_events: number
   
-  // Métricas de landing page
-  landing_page_views: number
-  landing_page_views_ctr: number
-  
-  // Métricas de alcance e frequência
+  // Métricas de alcance e frequência (apenas as válidas)
   unique_clicks: number
-  unique_link_clicks: number
   unique_inline_link_clicks: number
   unique_ctr: number
-  frequency_distribution: number
-  effective_frequency: number
 }
 
 export interface MetaAdSet {
