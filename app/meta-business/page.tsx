@@ -225,9 +225,10 @@ export default function MetaBusinessPage() {
 
   // Funções para gerenciar métricas
   const handleMetricsChange = (metricIds: string[]) => {
-    const newMetrics = metricIds
-      .map(id => ALL_METRICS.find(metric => metric.id === id))
-      .filter(Boolean) as MetricConfig[]
+    const newMetrics = ALL_METRICS.map(metric => ({
+      ...metric,
+      visible: metricIds.includes(metric.id)
+    }))
     setMetrics(newMetrics)
   }
 
