@@ -79,13 +79,7 @@ export async function GET(request: NextRequest) {
               cpc: 0,
               ctr: 0,
               
-              // Métricas de vídeo (válidas e suportadas)
-              video_views: 0,
-              video_views_25: 0,
-              video_views_50: 0,
-              video_views_75: 0,
-              video_views_95: 0,
-              video_views_100: 0,
+              // Métricas de vídeo (apenas as válidas na API de Insights)
               video_play_actions: 0,
               video_play_curve_actions: 0
             }
@@ -101,13 +95,7 @@ export async function GET(request: NextRequest) {
                   cpc: parseFloat(insight.cpc || '0'),
                   ctr: parseFloat(insight.ctr || '0'),
                   
-                  // Métricas de vídeo (válidas e suportadas)
-                  video_views: parseInt(insight.video_views || '0'),
-                  video_views_25: parseInt(insight.video_views_25 || '0'),
-                  video_views_50: parseInt(insight.video_views_50 || '0'),
-                  video_views_75: parseInt(insight.video_views_75 || '0'),
-                  video_views_95: parseInt(insight.video_views_95 || '0'),
-                  video_views_100: parseInt(insight.video_views_100 || '0'),
+                  // Métricas de vídeo (apenas as válidas na API de Insights)
                   video_play_actions: parseInt(insight.video_play_actions || '0'),
                   video_play_curve_actions: parseInt(insight.video_play_curve_actions || '0')
                 }
@@ -143,13 +131,7 @@ export async function GET(request: NextRequest) {
               cpc: insights.cpc,
               ctr: insights.ctr,
               
-              // Métricas de vídeo (válidas e suportadas)
-              video_views: insights.video_views || 0,
-              video_views_25: insights.video_views_25 || 0,
-              video_views_50: insights.video_views_50 || 0,
-              video_views_75: insights.video_views_75 || 0,
-              video_views_95: insights.video_views_95 || 0,
-              video_views_100: insights.video_views_100 || 0,
+              // Métricas de vídeo (apenas as válidas na API de Insights)
               video_play_actions: insights.video_play_actions || 0,
               video_play_curve_actions: insights.video_play_curve_actions || 0,
               
@@ -187,13 +169,7 @@ export async function GET(request: NextRequest) {
               cpc: 0,
               ctr: 0,
               
-              // Métricas de vídeo (válidas e suportadas)
-              video_views: 0,
-              video_views_25: 0,
-              video_views_50: 0,
-              video_views_75: 0,
-              video_views_95: 0,
-              video_views_100: 0,
+              // Métricas de vídeo (apenas as válidas na API de Insights)
               video_play_actions: 0,
               video_play_curve_actions: 0,
               

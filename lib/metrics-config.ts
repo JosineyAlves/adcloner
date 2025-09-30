@@ -264,73 +264,7 @@ export const ALL_METRICS: MetricConfig[] = [
     category: 'conversion'
   },
 
-  // === MÉTRICAS DE VÍDEO (válidas e suportadas) ===
-  {
-    id: 'video_views',
-    label: 'Reproduções de Vídeo',
-    description: 'Número total de reproduções de vídeo',
-    icon: Play,
-    iconColor: 'text-blue-500',
-    type: 'number',
-    visible: false,
-    order: 19,
-    category: 'video'
-  },
-  {
-    id: 'video_views_25',
-    label: 'Reproduções de 25%',
-    description: 'Reproduções de 25% do vídeo',
-    icon: PlayCircle,
-    iconColor: 'text-blue-400',
-    type: 'number',
-    visible: false,
-    order: 20,
-    category: 'video'
-  },
-  {
-    id: 'video_views_50',
-    label: 'Reproduções de 50%',
-    description: 'Reproduções de 50% do vídeo',
-    icon: PlayCircle,
-    iconColor: 'text-blue-300',
-    type: 'number',
-    visible: false,
-    order: 21,
-    category: 'video'
-  },
-  {
-    id: 'video_views_75',
-    label: 'Reproduções de 75%',
-    description: 'Reproduções de 75% do vídeo',
-    icon: PlayCircle,
-    iconColor: 'text-blue-300',
-    type: 'number',
-    visible: false,
-    order: 22,
-    category: 'video'
-  },
-  {
-    id: 'video_views_95',
-    label: 'Reproduções de 95%',
-    description: 'Reproduções de 95% do vídeo',
-    icon: PlayCircle,
-    iconColor: 'text-blue-200',
-    type: 'number',
-    visible: false,
-    order: 23,
-    category: 'video'
-  },
-  {
-    id: 'video_views_100',
-    label: 'Reproduções Completas',
-    description: 'Reproduções completas do vídeo (100%)',
-    icon: CheckCircle,
-    iconColor: 'text-green-500',
-    type: 'number',
-    visible: false,
-    order: 24,
-    category: 'video'
-  },
+  // === MÉTRICAS DE VÍDEO (apenas as válidas na API de Insights) ===
   {
     id: 'video_play_actions',
     label: 'Ações de Reprodução',
@@ -339,7 +273,7 @@ export const ALL_METRICS: MetricConfig[] = [
     iconColor: 'text-purple-500',
     type: 'number',
     visible: false,
-    order: 25,
+    order: 19,
     category: 'video'
   },
   {
@@ -350,7 +284,7 @@ export const ALL_METRICS: MetricConfig[] = [
     iconColor: 'text-purple-400',
     type: 'number',
     visible: false,
-    order: 26,
+    order: 20,
     category: 'video'
   },
 
@@ -363,7 +297,7 @@ export const ALL_METRICS: MetricConfig[] = [
     iconColor: 'text-yellow-500',
     type: 'number',
     visible: false,
-    order: 27,
+    order: 21,
     category: 'quality'
   },
   {
@@ -374,7 +308,7 @@ export const ALL_METRICS: MetricConfig[] = [
     iconColor: 'text-green-500',
     type: 'number',
     visible: false,
-    order: 28,
+    order: 22,
     category: 'quality'
   },
 
@@ -387,7 +321,7 @@ export const ALL_METRICS: MetricConfig[] = [
     iconColor: 'text-blue-500',
     type: 'number',
     visible: false,
-    order: 29,
+    order: 23,
     category: 'actions'
   },
 
@@ -400,7 +334,7 @@ export const ALL_METRICS: MetricConfig[] = [
     iconColor: 'text-pink-500',
     type: 'number',
     visible: false,
-    order: 30,
+    order: 24,
     category: 'reach'
   },
   {
@@ -411,7 +345,7 @@ export const ALL_METRICS: MetricConfig[] = [
     iconColor: 'text-blue-400',
     type: 'number',
     visible: false,
-    order: 31,
+    order: 25,
     category: 'reach'
   },
   {
@@ -422,7 +356,7 @@ export const ALL_METRICS: MetricConfig[] = [
     iconColor: 'text-green-400',
     type: 'percentage',
     visible: false,
-    order: 32,
+    order: 26,
     category: 'reach'
   }
 ]
