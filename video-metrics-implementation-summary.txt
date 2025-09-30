@@ -1,0 +1,23 @@
+﻿As seguintes mÃ©tricas precisam ser adicionadas em 3 lugares em cada arquivo de rota:
+
+1. InicializaÃ§Ã£o do objeto insights (com valor 0)
+2. Mapeamento dos dados da API
+3. Objeto metaCampaign/metaAdSet/metaAd
+
+MÃ©tricas a adicionar:
+
+      // MÃ©tricas de vÃ­deo - Porcentagem de visualizaÃ§Ã£o
+      video_p25_watched_actions: 0,
+      video_p50_watched_actions: 0,
+      video_p75_watched_actions: 0,
+      video_p100_watched_actions: 0,
+      
+      // MÃ©tricas de vÃ­deo - Tempo
+      video_30_sec_watched_actions: 0,
+      video_avg_time_watched_actions: 0,
+
+Arquivos a atualizar:
+- app/api/meta-business/campaigns/route.ts (linhas ~109, ~150, ~226)
+- app/api/meta-business/adsets/route.ts
+- app/api/meta-business/ads/route.ts
+

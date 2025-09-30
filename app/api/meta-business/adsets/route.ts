@@ -83,7 +83,17 @@ export async function GET(request: NextRequest) {
               
               // Métricas de vídeo (apenas as válidas na API de Insights)
               video_play_actions: 0,
-              video_play_curve_actions: 0
+              video_play_curve_actions: 0,
+              
+              // Métricas de vídeo - Porcentagem de visualização
+              video_p25_watched_actions: 0,
+              video_p50_watched_actions: 0,
+              video_p75_watched_actions: 0,
+              video_p100_watched_actions: 0,
+              
+              // Métricas de vídeo - Tempo
+              video_30_sec_watched_actions: 0,
+              video_avg_time_watched_actions: 0
             }
 
             if (insightsResponse.code === 200) {
@@ -99,7 +109,17 @@ export async function GET(request: NextRequest) {
                   
                   // Métricas de vídeo (apenas as válidas na API de Insights)
                   video_play_actions: parseInt(insight.video_play_actions || '0'),
-                  video_play_curve_actions: parseInt(insight.video_play_curve_actions || '0')
+                  video_play_curve_actions: parseInt(insight.video_play_curve_actions || '0'),
+                  
+                  // Métricas de vídeo - Porcentagem de visualização
+                  video_p25_watched_actions: parseInt(insight.video_p25_watched_actions || '0'),
+                  video_p50_watched_actions: parseInt(insight.video_p50_watched_actions || '0'),
+                  video_p75_watched_actions: parseInt(insight.video_p75_watched_actions || '0'),
+                  video_p100_watched_actions: parseInt(insight.video_p100_watched_actions || '0'),
+                  
+                  // Métricas de vídeo - Tempo
+                  video_30_sec_watched_actions: parseInt(insight.video_30_sec_watched_actions || '0'),
+                  video_avg_time_watched_actions: parseInt(insight.video_avg_time_watched_actions || '0')
                 }
               }
             } else {
@@ -147,6 +167,16 @@ export async function GET(request: NextRequest) {
               video_play_actions: insights.video_play_actions || 0,
               video_play_curve_actions: insights.video_play_curve_actions || 0,
               
+              // Métricas de vídeo - Porcentagem de visualização
+              video_p25_watched_actions: insights.video_p25_watched_actions || 0,
+              video_p50_watched_actions: insights.video_p50_watched_actions || 0,
+              video_p75_watched_actions: insights.video_p75_watched_actions || 0,
+              video_p100_watched_actions: insights.video_p100_watched_actions || 0,
+              
+              // Métricas de vídeo - Tempo
+              video_30_sec_watched_actions: insights.video_30_sec_watched_actions || 0,
+              video_avg_time_watched_actions: insights.video_avg_time_watched_actions || 0,
+              
               // Métricas de vídeo detalhadas
               videoMetrics: videoMetrics,
               
@@ -187,6 +217,16 @@ export async function GET(request: NextRequest) {
               // Métricas de vídeo (apenas as válidas na API de Insights)
               video_play_actions: 0,
               video_play_curve_actions: 0,
+              
+              // Métricas de vídeo - Porcentagem de visualização
+              video_p25_watched_actions: 0,
+              video_p50_watched_actions: 0,
+              video_p75_watched_actions: 0,
+              video_p100_watched_actions: 0,
+              
+              // Métricas de vídeo - Tempo
+              video_30_sec_watched_actions: 0,
+              video_avg_time_watched_actions: 0,
               
               created_time: adSet.created_time,
               updated_time: adSet.updated_time,

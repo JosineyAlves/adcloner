@@ -1,0 +1,16 @@
+﻿MÃ©tricas de VÃ­deo para Adicionar:
+
+ApÃ³s 'video_play_curve_actions',
+
+Adicionar:
+
+      // MÃ©tricas de vÃ­deo - Porcentagem de visualizaÃ§Ã£o  
+      'video_p25_watched_actions',
+      'video_p50_watched_actions',
+      'video_p75_watched_actions',
+      'video_p100_watched_actions',
+      
+      // MÃ©tricas de vÃ­deo - Tempo
+      'video_30_sec_watched_actions',
+      'video_avg_time_watched_actions',
+

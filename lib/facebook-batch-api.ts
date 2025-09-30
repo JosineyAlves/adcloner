@@ -247,6 +247,16 @@ export class FacebookBatchAPI {
       'video_play_actions',
       'video_play_curve_actions',
       
+      // Métricas de vídeo - Porcentagem de visualização
+      'video_p25_watched_actions',
+      'video_p50_watched_actions',
+      'video_p75_watched_actions',
+      'video_p100_watched_actions',
+      
+      // Métricas de vídeo - Tempo
+      'video_30_sec_watched_actions',
+      'video_avg_time_watched_actions',
+      
       // Métricas de qualidade
       'quality_ranking',
       'engagement_rate_ranking',
@@ -326,6 +336,16 @@ export class FacebookBatchAPI {
       'video_play_actions',
       'video_play_curve_actions',
       
+      // Métricas de vídeo - Porcentagem de visualização
+      'video_p25_watched_actions',
+      'video_p50_watched_actions',
+      'video_p75_watched_actions',
+      'video_p100_watched_actions',
+      
+      // Métricas de vídeo - Tempo
+      'video_30_sec_watched_actions',
+      'video_avg_time_watched_actions',
+      
       // Métricas de qualidade
       'quality_ranking',
       'engagement_rate_ranking',
@@ -404,6 +424,16 @@ export class FacebookBatchAPI {
       // Métricas de vídeo (apenas as válidas na API de Insights)
       'video_play_actions',
       'video_play_curve_actions',
+      
+      // Métricas de vídeo - Porcentagem de visualização
+      'video_p25_watched_actions',
+      'video_p50_watched_actions',
+      'video_p75_watched_actions',
+      'video_p100_watched_actions',
+      
+      // Métricas de vídeo - Tempo
+      'video_30_sec_watched_actions',
+      'video_avg_time_watched_actions',
       
       // Métricas de qualidade
       'quality_ranking',

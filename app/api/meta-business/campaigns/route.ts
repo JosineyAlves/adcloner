@@ -108,6 +108,16 @@ export async function GET(request: NextRequest) {
               video_play_actions: 0,
               video_play_curve_actions: 0,
               
+              // Métricas de vídeo - Porcentagem de visualização
+              video_p25_watched_actions: 0,
+              video_p50_watched_actions: 0,
+              video_p75_watched_actions: 0,
+              video_p100_watched_actions: 0,
+              
+              // Métricas de vídeo - Tempo
+              video_30_sec_watched_actions: 0,
+              video_avg_time_watched_actions: 0,
+              
               // Métricas de qualidade
               quality_ranking: 0,
               engagement_rate_ranking: 0,
@@ -155,6 +165,16 @@ export async function GET(request: NextRequest) {
                 // Métricas de vídeo (apenas as válidas na API de Insights)
                 video_play_actions: parseInt(insight.video_play_actions || '0'),
                 video_play_curve_actions: parseInt(insight.video_play_curve_actions || '0'),
+                
+                // Métricas de vídeo - Porcentagem de visualização
+                video_p25_watched_actions: parseInt(insight.video_p25_watched_actions || '0'),
+                video_p50_watched_actions: parseInt(insight.video_p50_watched_actions || '0'),
+                video_p75_watched_actions: parseInt(insight.video_p75_watched_actions || '0'),
+                video_p100_watched_actions: parseInt(insight.video_p100_watched_actions || '0'),
+                
+                // Métricas de vídeo - Tempo
+                video_30_sec_watched_actions: parseInt(insight.video_30_sec_watched_actions || '0'),
+                video_avg_time_watched_actions: parseInt(insight.video_avg_time_watched_actions || '0'),
                 
                 // Métricas de qualidade
                 quality_ranking: parseFloat(insight.quality_ranking || '0'),
@@ -225,6 +245,16 @@ export async function GET(request: NextRequest) {
               video_play_actions: insights.video_play_actions,
               video_play_curve_actions: insights.video_play_curve_actions,
               
+              // Métricas de vídeo - Porcentagem de visualização
+              video_p25_watched_actions: insights.video_p25_watched_actions,
+              video_p50_watched_actions: insights.video_p50_watched_actions,
+              video_p75_watched_actions: insights.video_p75_watched_actions,
+              video_p100_watched_actions: insights.video_p100_watched_actions,
+              
+              // Métricas de vídeo - Tempo
+              video_30_sec_watched_actions: insights.video_30_sec_watched_actions,
+              video_avg_time_watched_actions: insights.video_avg_time_watched_actions,
+              
               // Métricas de qualidade
               quality_ranking: insights.quality_ranking,
               engagement_rate_ranking: insights.engagement_rate_ranking,
@@ -291,6 +321,16 @@ export async function GET(request: NextRequest) {
               // Métricas de vídeo (apenas as válidas na API de Insights)
               video_play_actions: 0,
               video_play_curve_actions: 0,
+              
+              // Métricas de vídeo - Porcentagem de visualização
+              video_p25_watched_actions: 0,
+              video_p50_watched_actions: 0,
+              video_p75_watched_actions: 0,
+              video_p100_watched_actions: 0,
+              
+              // Métricas de vídeo - Tempo
+              video_30_sec_watched_actions: 0,
+              video_avg_time_watched_actions: 0,
               
               // Métricas de qualidade
               quality_ranking: 0,

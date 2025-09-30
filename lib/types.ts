@@ -170,6 +170,16 @@ export interface MetaCampaign {
   video_play_actions: number
   video_play_curve_actions: number
   
+  // Métricas de vídeo - Porcentagem de visualização
+  video_p25_watched_actions: number
+  video_p50_watched_actions: number
+  video_p75_watched_actions: number
+  video_p100_watched_actions: number
+  
+  // Métricas de vídeo - Tempo
+  video_30_sec_watched_actions: number
+  video_avg_time_watched_actions: number
+  
   // Métricas de qualidade
   quality_ranking: number
   engagement_rate_ranking: number
@@ -181,8 +191,9 @@ export interface MetaCampaign {
   unique_clicks: number
   unique_inline_link_clicks: number
   unique_ctr: number
-    // Métricas de vídeo detalhadas
-    videoMetrics?: VideoMetrics
+  
+  // Métricas de vídeo detalhadas
+  videoMetrics?: VideoMetrics
 }
 
 export interface MetaAdSet {
@@ -215,9 +226,19 @@ export interface MetaAdSet {
   // Métricas de vídeo (apenas as válidas na API de Insights)
   video_play_actions: number
   video_play_curve_actions: number
+  
+  // Métricas de vídeo - Porcentagem de visualização
+  video_p25_watched_actions: number
+  video_p50_watched_actions: number
+  video_p75_watched_actions: number
+  video_p100_watched_actions: number
+  
+  // Métricas de vídeo - Tempo
+  video_30_sec_watched_actions: number
+  video_avg_time_watched_actions: number
 
-    // Métricas de vídeo detalhadas
-    videoMetrics?: VideoMetrics
+  // Métricas de vídeo detalhadas
+  videoMetrics?: VideoMetrics
   
   created_time: string
   updated_time: string
@@ -249,9 +270,19 @@ export interface MetaAd {
   // Métricas de vídeo (apenas as válidas na API de Insights)
   video_play_actions: number
   video_play_curve_actions: number
+  
+  // Métricas de vídeo - Porcentagem de visualização
+  video_p25_watched_actions: number
+  video_p50_watched_actions: number
+  video_p75_watched_actions: number
+  video_p100_watched_actions: number
+  
+  // Métricas de vídeo - Tempo
+  video_30_sec_watched_actions: number
+  video_avg_time_watched_actions: number
 
-    // Métricas de vídeo detalhadas
-    videoMetrics?: VideoMetrics
+  // Métricas de vídeo detalhadas
+  videoMetrics?: VideoMetrics
   
   created_time: string
   updated_time: string
