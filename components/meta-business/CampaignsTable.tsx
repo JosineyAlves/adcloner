@@ -41,6 +41,10 @@ export default function CampaignsTable({
   metrics = [],
   showMetrics = false
 }: CampaignsTableProps) {
+  
+  // Debug: verificar métricas recebidas
+  console.log('📊 CampaignsTable - Métricas recebidas:', metrics.filter(m => m.visible).map(m => m.label))
+  console.log('📊 CampaignsTable - showMetrics:', showMetrics)
 
   const handleSelectAll = () => {
     if (selectedCampaigns.size === campaigns.length) {
@@ -121,21 +125,6 @@ export default function CampaignsTable({
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           Orçamento
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Gasto
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Impressões
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Cliques
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          CPC
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          CTR
                         </th>
                         {showMetrics && metrics.filter(m => m.visible).map((metric) => (
                           <th key={metric.id} className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -223,21 +212,6 @@ export default function CampaignsTable({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Orçamento
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Gasto
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Impressões
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Cliques
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                CPC
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                CTR
-              </th>
               {showMetrics && metrics.filter(m => m.visible).map((metric) => (
                 <th key={metric.id} className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   {metric.label}
@@ -307,21 +281,6 @@ export default function CampaignsTable({
                     isCBO={campaign.advantage_campaign_budget}
                     level="campaign"
                   />
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                  {formatCurrency(campaign.spend)}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                  {formatNumber(campaign.impressions)}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                  {formatNumber(campaign.clicks)}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                  {formatCurrency(campaign.cpc)}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                  {formatPercentage(campaign.ctr)}
                 </td>
                 {showMetrics && metrics.filter(m => m.visible).map((metric) => {
                   const value = (campaign as any)[metric.id]

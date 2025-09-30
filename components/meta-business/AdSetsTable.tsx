@@ -41,6 +41,10 @@ export default function AdSetsTable({
   metrics = [],
   showMetrics = false
 }: AdSetsTableProps) {
+  
+  // Debug: verificar métricas recebidas
+  console.log('📊 AdSetsTable - Métricas recebidas:', metrics.filter(m => m.visible).map(m => m.label))
+  console.log('📊 AdSetsTable - showMetrics:', showMetrics)
 
   const handleSelectAll = () => {
     if (selectedAdSets.size === adSets.length) {
@@ -97,14 +101,52 @@ export default function AdSetsTable({
 
   if (adSets.length === 0) {
     return (
-      <div className="text-center py-12">
-        <Target className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-          Nenhum conjunto encontrado
-        </h3>
-        <p className="text-gray-600 dark:text-gray-400">
-          Não há conjuntos de anúncios disponíveis para o período selecionado.
-        </p>
+      <div className="space-y-4">
+        {/* Cabeçalho da tabela mesmo sem dados */}
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 dark:bg-gray-700">
+              <tr>
+                <th className="px-6 py-3 text-left">
+                  <input
+                    type="checkbox"
+                    disabled
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Conjunto
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Orçamento
+                </th>
+                {showMetrics && metrics.filter(m => m.visible).map((metric) => (
+                  <th key={metric.id} className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    {metric.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="bg-white dark:bg-gray-800">
+              <tr>
+                <td colSpan={4 + (showMetrics ? metrics.filter(m => m.visible).length : 0)} className="px-6 py-12 text-center">
+                  <div className="flex flex-col items-center">
+                    <Target className="w-12 h-12 text-gray-400 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                      Nenhum conjunto encontrado
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Não há conjuntos de anúncios disponíveis para o período selecionado.
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     )
   }
@@ -167,26 +209,13 @@ export default function AdSetsTable({
                 Conjunto
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Campanha
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Orçamento
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Lance
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Targeting
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Gasto
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                CPC
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                CTR
-              </th>
+              {showMetrics && metrics.filter(m => m.visible).map((metric) => (
+                <th key={metric.id} className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {metric.label}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -214,9 +243,6 @@ export default function AdSetsTable({
                   <div className="text-sm font-medium text-gray-900 dark:text-white">
                     {adSet.name}
                   </div>
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                  {adSet.campaign_name}
                 </td>
                 <td className="px-6 py-4">
                   <BudgetEditor
@@ -258,18 +284,15 @@ export default function AdSetsTable({
                 <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                   {adSet.bid_amount ? formatCurrency(adSet.bid_amount) : '-'}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
-                  {formatTargeting(adSet.targeting)}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                  {formatCurrency(adSet.spend)}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                  {formatCurrency(adSet.cpc)}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                  {formatPercentage(adSet.ctr)}
-                </td>
+                {showMetrics && metrics.filter(m => m.visible).map((metric) => {
+                  const value = (adSet as any)[metric.id]
+                  const formattedValue = formatMetricValue(value, metric.type)
+                  return (
+                    <td key={metric.id} className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                      {formattedValue}
+                    </td>
+                  )
+                })}
               </tr>
             ))}
           </tbody>

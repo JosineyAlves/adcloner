@@ -1,4 +1,5 @@
-// Ícones removidos para simplificar a interface
+// Configuração de métricas baseada apenas nas métricas nativas da Meta Insights API
+// Removidas métricas calculadas e não nativas
 
 export interface MetricConfig {
   id: string
@@ -7,12 +8,12 @@ export interface MetricConfig {
   type: 'number' | 'currency' | 'percentage'
   visible: boolean
   order: number
-  category: 'basic' | 'cost' | 'engagement' | 'conversion' | 'video' | 'quality' | 'actions' | 'landing' | 'reach' | 'frequency'
+  category: 'basic' | 'cost' | 'engagement' | 'conversion' | 'video' | 'reach' | 'frequency'
 }
 
-// Métricas organizadas por ordem de importância e uso
+// Métricas nativas da Meta Insights API organizadas por ordem de importância
 export const ALL_METRICS: MetricConfig[] = [
-  // === MÉTRICAS PRINCIPAIS (Sempre visíveis) ===
+  // === MÉTRICAS BÁSICAS (Sempre visíveis) ===
   {
     id: 'impressions',
     label: 'Impressões',
@@ -40,6 +41,8 @@ export const ALL_METRICS: MetricConfig[] = [
     order: 3,
     category: 'basic'
   },
+
+  // === MÉTRICAS DE CONVERSÃO ===
   {
     id: 'conversions',
     label: 'Conversões',
@@ -59,7 +62,7 @@ export const ALL_METRICS: MetricConfig[] = [
     category: 'conversion'
   },
 
-  // === MÉTRICAS DE CUSTO (Importantes para análise) ===
+  // === MÉTRICAS DE CUSTO ===
   {
     id: 'cpc',
     label: 'CPC',
@@ -92,7 +95,7 @@ export const ALL_METRICS: MetricConfig[] = [
     label: 'Custo por Conversão',
     description: 'Custo médio por conversão',
     type: 'currency',
-    visible: true,
+    visible: false,
     order: 9,
     category: 'cost'
   },
@@ -127,183 +130,37 @@ export const ALL_METRICS: MetricConfig[] = [
     order: 12,
     category: 'engagement'
   },
-  {
-    id: 'inline_post_engagement',
-    label: 'Engajamento Inline',
-    description: 'Engajamento com posts inline',
-    type: 'number',
-    visible: false,
-    order: 13,
-    category: 'engagement'
-  },
 
-  // === MÉTRICAS DE VÍDEO ===
+  // === MÉTRICAS DE VÍDEO (Nativas Atuais da Meta) ===
   {
-    id: 'video_play_actions',
-    label: 'Reproduções de Vídeo',
-    description: 'Ações de reprodução de vídeo',
+    id: 'total_video_views',
+    label: 'Visualizações de Vídeo',
+    description: 'Número de visualizações de pelo menos 3 segundos',
     type: 'number',
     visible: false,
     order: 14,
     category: 'video'
   },
   {
-    id: 'video_play_curve_actions',
-    label: 'Curva de Reprodução',
-    description: 'Ações da curva de reprodução',
+    id: 'total_video_complete_views',
+    label: 'Visualizações Completas',
+    description: 'Número de visualizações até 97% ou mais do vídeo',
     type: 'number',
     visible: false,
     order: 15,
     category: 'video'
   },
-  {
-    id: 'video_p25_watched_actions',
-    label: 'Visualizações 25%',
-    description: 'Número de vezes que o vídeo foi reproduzido até 25% do seu comprimento',
-    type: 'number',
-    visible: false,
-    order: 16,
-    category: 'video'
-  },
-  {
-    id: 'video_p50_watched_actions',
-    label: 'Visualizações 50%',
-    description: 'Número de vezes que o vídeo foi reproduzido até 50% do seu comprimento',
-    type: 'number',
-    visible: false,
-    order: 17,
-    category: 'video'
-  },
-  {
-    id: 'video_p75_watched_actions',
-    label: 'Visualizações 75%',
-    description: 'Número de vezes que o vídeo foi reproduzido até 75% do seu comprimento',
-    type: 'number',
-    visible: false,
-    order: 18,
-    category: 'video'
-  },
-  {
-    id: 'video_p100_watched_actions',
-    label: 'Visualizações 100%',
-    description: 'Número de vezes que o vídeo foi reproduzido até 100% do seu comprimento',
-    type: 'number',
-    visible: false,
-    order: 19,
-    category: 'video'
-  },
-  {
-    id: 'video_30_sec_watched_actions',
-    label: 'Visualizações 30s',
-    description: 'Número de vezes que o vídeo foi assistido por 30 segundos',
-    type: 'number',
-    visible: false,
-    order: 20,
-    category: 'video'
-  },
-  {
-    id: 'video_avg_time_watched_actions',
-    label: 'Tempo Médio Assistido',
-    description: 'Tempo médio que o vídeo foi assistido',
-    type: 'number',
-    visible: false,
-    order: 21,
-    category: 'video'
-  },
 
-  // === KPIs DE VÍDEO CALCULADOS ===
-  {
-    id: 'holdRate',
-    label: 'Hold Rate',
-    description: 'Vídeos assistidos 75% / impressões (%)',
-    type: 'percentage',
-    visible: false,
-    order: 22,
-    category: 'video'
-  },
-  {
-    id: 'bodyConversion',
-    label: 'Conversão do Body',
-    description: 'Compras / Vídeos assistidos 75% (%)',
-    type: 'percentage',
-    visible: false,
-    order: 23,
-    category: 'video'
-  },
-  {
-    id: 'bodyRetention',
-    label: 'Retenção do Body',
-    description: 'Vídeos assistidos 75% / Vídeos iniciados (%)',
-    type: 'percentage',
-    visible: false,
-    order: 24,
-    category: 'video'
-  },
-  {
-    id: 'ctaRate',
-    label: 'CTA Rate',
-    description: 'Cliques no Link / Vídeos assistidos 75% (%)',
-    type: 'percentage',
-    visible: false,
-    order: 25,
-    category: 'video'
-  },
-  {
-    id: 'hookPlayRate',
-    label: 'Play Rate do Hook',
-    description: 'Vídeos iniciados / Impressões (%)',
-    type: 'percentage',
-    visible: false,
-    order: 26,
-    category: 'video'
-  },
+  // === MÉTRICAS DE QUALIDADE (REMOVIDAS - NÃO NATIVAS) ===
 
-  // === MÉTRICAS DE QUALIDADE ===
-  {
-    id: 'quality_ranking',
-    label: 'Ranking de Qualidade',
-    description: 'Ranking da qualidade do anúncio',
-    type: 'number',
-    visible: false,
-    order: 27,
-    category: 'quality'
-  },
-  {
-    id: 'engagement_rate_ranking',
-    label: 'Ranking de Engajamento',
-    description: 'Ranking da taxa de engajamento',
-    type: 'number',
-    visible: false,
-    order: 28,
-    category: 'quality'
-  },
-  {
-    id: 'conversion_rate_ranking',
-    label: 'Ranking de Taxa de Conversão',
-    description: 'Ranking da taxa de conversão',
-    type: 'number',
-    visible: false,
-    order: 29,
-    category: 'quality'
-  },
-
-  // === MÉTRICAS AVANÇADAS DE CUSTO ===
-  {
-    id: 'cost_per_action_type',
-    label: 'Custo por Tipo de Ação',
-    description: 'Custo por tipo específico de ação',
-    type: 'currency',
-    visible: false,
-    order: 30,
-    category: 'cost'
-  },
+  // === MÉTRICAS DE CUSTO AVANÇADAS ===
   {
     id: 'cost_per_inline_link_click',
     label: 'Custo por Clique em Link',
     description: 'Custo por clique em links inline',
     type: 'currency',
     visible: false,
-    order: 31,
+    order: 26,
     category: 'cost'
   },
   {
@@ -312,7 +169,7 @@ export const ALL_METRICS: MetricConfig[] = [
     description: 'Custo por clique único',
     type: 'currency',
     visible: false,
-    order: 32,
+    order: 27,
     category: 'cost'
   },
   {
@@ -321,20 +178,11 @@ export const ALL_METRICS: MetricConfig[] = [
     description: 'Custo por visualização da página de destino',
     type: 'currency',
     visible: false,
-    order: 33,
+    order: 28,
     category: 'cost'
   },
 
-  // === MÉTRICAS DE AÇÕES ===
-  {
-    id: 'actions',
-    label: 'Ações',
-    description: 'Número total de ações',
-    type: 'number',
-    visible: false,
-    order: 34,
-    category: 'actions'
-  },
+  // === MÉTRICAS DE AÇÕES (REMOVIDAS - NÃO RELEVANTES) ===
 
   // === MÉTRICAS DE ALCANCE AVANÇADAS ===
   {
@@ -343,7 +191,7 @@ export const ALL_METRICS: MetricConfig[] = [
     description: 'Número de cliques únicos',
     type: 'number',
     visible: false,
-    order: 35,
+    order: 30,
     category: 'reach'
   },
   {
@@ -352,7 +200,7 @@ export const ALL_METRICS: MetricConfig[] = [
     description: 'Cliques únicos em links inline',
     type: 'number',
     visible: false,
-    order: 36,
+    order: 31,
     category: 'reach'
   },
   {
@@ -361,9 +209,11 @@ export const ALL_METRICS: MetricConfig[] = [
     description: 'Taxa de cliques única',
     type: 'percentage',
     visible: false,
-    order: 37,
+    order: 32,
     category: 'reach'
-  }
+  },
+
+  // === MÉTRICAS DE LANDING PAGE (REMOVIDAS - NÃO NATIVAS) ===
 ]
 
 // Métricas principais para o dashboard (as mais importantes)
@@ -376,9 +226,6 @@ export const METRICS_BY_CATEGORY = {
   engagement: ALL_METRICS.filter(m => m.category === 'engagement'),
   conversion: ALL_METRICS.filter(m => m.category === 'conversion'),
   video: ALL_METRICS.filter(m => m.category === 'video'),
-  quality: ALL_METRICS.filter(m => m.category === 'quality'),
-  actions: ALL_METRICS.filter(m => m.category === 'actions'),
-  landing: ALL_METRICS.filter(m => m.category === 'landing'),
   reach: ALL_METRICS.filter(m => m.category === 'reach'),
   frequency: ALL_METRICS.filter(m => m.category === 'frequency')
 }
@@ -391,10 +238,7 @@ export const CATEGORY_ORDER = [
   'reach',
   'frequency',
   'engagement',
-  'video',
-  'quality',
-  'actions',
-  'landing'
+  'video'
 ]
 
 // Labels das categorias para exibição
@@ -405,8 +249,5 @@ export const CATEGORY_LABELS = {
   reach: 'Alcance',
   frequency: 'Frequência',
   engagement: 'Engajamento',
-  video: 'Vídeo',
-  quality: 'Qualidade',
-  actions: 'Ações',
-  landing: 'Landing Page'
+  video: 'Vídeo'
 }

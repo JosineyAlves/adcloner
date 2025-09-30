@@ -20,7 +20,7 @@ import {
   Layers,
   Megaphone
 } from 'lucide-react'
-import { ALL_METRICS, MetricConfig } from '@/lib/metrics-config'
+import { ALL_METRICS, MAIN_METRICS, MetricConfig } from '@/lib/metrics-config'
 import CampaignsIcon from '@/components/meta-business/icons/CampaignsIcon'
 import AdSetsIcon from '@/components/meta-business/icons/AdSetsIcon'
 import AdsIcon from '@/components/meta-business/icons/AdsIcon'
@@ -77,7 +77,13 @@ export default function MetaBusinessPage() {
   const [selectedAds, setSelectedAds] = useState<Set<string>>(new Set())
 
   // Estados para métricas avançadas
-  const [metrics, setMetrics] = useState<MetricConfig[]>(ALL_METRICS)
+  const [metrics, setMetrics] = useState<MetricConfig[]>(() => {
+    // Inicializar com métricas principais visíveis
+    return ALL_METRICS.map(metric => ({
+      ...metric,
+      visible: MAIN_METRICS.some(m => m.id === metric.id)
+    }))
+  })
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
 
   const fetchData = useCallback(async () => {
@@ -225,11 +231,23 @@ export default function MetaBusinessPage() {
 
   // Funções para gerenciar métricas
   const handleMetricsChange = (metricIds: string[]) => {
-    const newMetrics = ALL_METRICS.map(metric => ({
-      ...metric,
-      visible: metricIds.includes(metric.id)
-    }))
-    setMetrics(newMetrics)
+    console.log('🔄 Atualizando métricas:', metricIds)
+    
+    // Manter a ordem das métricas selecionadas
+    const newMetrics = metricIds.map(id => {
+      const metric = ALL_METRICS.find(m => m.id === id)
+      return metric ? { ...metric, visible: true } : null
+    }).filter(Boolean) as MetricConfig[]
+    
+    // Adicionar métricas não selecionadas como invisíveis
+    const hiddenMetrics = ALL_METRICS.filter(metric => 
+      !metricIds.includes(metric.id)
+    ).map(metric => ({ ...metric, visible: false }))
+    
+    const finalMetrics = [...newMetrics, ...hiddenMetrics]
+    console.log('📊 Métricas finais:', finalMetrics.filter(m => m.visible).map(m => m.label))
+    
+    setMetrics(finalMetrics)
   }
 
   const handleCategoryChange = (category: string) => {

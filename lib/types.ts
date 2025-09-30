@@ -152,7 +152,6 @@ export interface MetaCampaign {
   ctr: number
   cpm: number
   cost_per_conversion: number
-  cost_per_action_type: number
   cost_per_inline_link_click: number
   cost_per_unique_click: number
   cost_per_landing_page_view: number
@@ -164,33 +163,21 @@ export interface MetaCampaign {
   // Métricas de conversão
   conversions: number
   conversion_values: number
-  conversion_rate_ranking: number
   
-  // Métricas de vídeo (apenas as válidas na API de Insights)
-  video_play_actions: number
-  video_play_curve_actions: number
+  // Métricas de vídeo (nativas atuais da Meta)
+  total_video_views: number
+  total_video_complete_views: number
   
-  // Métricas de vídeo - Porcentagem de visualização
-  video_p25_watched_actions: number
-  video_p50_watched_actions: number
-  video_p75_watched_actions: number
-  video_p100_watched_actions: number
+  // Métricas de qualidade (removidas - não nativas)
   
-  // Métricas de vídeo - Tempo
-  video_30_sec_watched_actions: number
-  video_avg_time_watched_actions: number
-  
-  // Métricas de qualidade
-  quality_ranking: number
-  engagement_rate_ranking: number
-  
-  // Métricas de ações (apenas as válidas)
-  actions: number
+  // Métricas de ações (removidas - não relevantes)
   
   // Métricas de alcance e frequência (apenas as válidas)
   unique_clicks: number
   unique_inline_link_clicks: number
   unique_ctr: number
+  
+  // Métricas de landing page (removidas - não nativas)
   
   // Métricas de vídeo detalhadas
   videoMetrics?: VideoMetrics
@@ -222,20 +209,43 @@ export interface MetaAdSet {
   clicks: number
   cpc: number
   ctr: number
+  reach: number
+  frequency: number
+  cpm: number
+  cost_per_conversion: number
+  conversions: number
+  conversion_values: number
   
-  // Métricas de vídeo (apenas as válidas na API de Insights)
+  // Métricas de engajamento
+  inline_link_clicks: number
+  
+  // Métricas de vídeo (nativas da Meta Insights API)
   video_play_actions: number
   video_play_curve_actions: number
-  
-  // Métricas de vídeo - Porcentagem de visualização
   video_p25_watched_actions: number
   video_p50_watched_actions: number
   video_p75_watched_actions: number
   video_p100_watched_actions: number
-  
-  // Métricas de vídeo - Tempo
   video_30_sec_watched_actions: number
   video_avg_time_watched_actions: number
+  
+  // Métricas de qualidade (removidas - não nativas)
+  conversion_rate_ranking: number
+  
+  // Métricas de custo avançadas
+  cost_per_inline_link_click: number
+  cost_per_unique_click: number
+  cost_per_landing_page_view: number
+  
+  // Métricas de ações
+  actions: number
+  
+  // Métricas de alcance avançadas
+  unique_clicks: number
+  unique_inline_link_clicks: number
+  unique_ctr: number
+  
+  // Métricas de landing page (removidas - não nativas)
 
   // Métricas de vídeo detalhadas
   videoMetrics?: VideoMetrics
@@ -266,20 +276,43 @@ export interface MetaAd {
   clicks: number
   cpc: number
   ctr: number
+  reach: number
+  frequency: number
+  cpm: number
+  cost_per_conversion: number
+  conversions: number
+  conversion_values: number
   
-  // Métricas de vídeo (apenas as válidas na API de Insights)
+  // Métricas de engajamento
+  inline_link_clicks: number
+  
+  // Métricas de vídeo (nativas da Meta Insights API)
   video_play_actions: number
   video_play_curve_actions: number
-  
-  // Métricas de vídeo - Porcentagem de visualização
   video_p25_watched_actions: number
   video_p50_watched_actions: number
   video_p75_watched_actions: number
   video_p100_watched_actions: number
-  
-  // Métricas de vídeo - Tempo
   video_30_sec_watched_actions: number
   video_avg_time_watched_actions: number
+  
+  // Métricas de qualidade (removidas - não nativas)
+  conversion_rate_ranking: number
+  
+  // Métricas de custo avançadas
+  cost_per_inline_link_click: number
+  cost_per_unique_click: number
+  cost_per_landing_page_view: number
+  
+  // Métricas de ações
+  actions: number
+  
+  // Métricas de alcance avançadas
+  unique_clicks: number
+  unique_inline_link_clicks: number
+  unique_ctr: number
+  
+  // Métricas de landing page (removidas - não nativas)
 
   // Métricas de vídeo detalhadas
   videoMetrics?: VideoMetrics

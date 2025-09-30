@@ -229,40 +229,25 @@ export class FacebookBatchAPI {
       'cpc',
       'ctr',
       'cost_per_conversion',
-      'cost_per_action_type',
       'cost_per_inline_link_click',
       'cost_per_unique_click',
       'cost_per_landing_page_view',
       
       // Métricas de engajamento (apenas as válidas)
       'inline_link_clicks',
-      'inline_post_engagement',
       
       // Métricas de conversão
       'conversions',
       'conversion_values',
-      'conversion_rate_ranking',
       
       // Métricas de vídeo (apenas as válidas na API de Insights)
-      'video_play_actions',
-      'video_play_curve_actions',
+      'total_video_views',
+      'total_video_complete_views',
+      'total_video_10s_views',
+      'total_video_avg_time_watched',
       
-      // Métricas de vídeo - Porcentagem de visualização
-      'video_p25_watched_actions',
-      'video_p50_watched_actions',
-      'video_p75_watched_actions',
-      'video_p100_watched_actions',
       
-      // Métricas de vídeo - Tempo
-      'video_30_sec_watched_actions',
-      'video_avg_time_watched_actions',
-      
-      // Métricas de qualidade
-      'quality_ranking',
-      'engagement_rate_ranking',
-      
-      // Métricas de ações (apenas as válidas)
-      'actions',
+      // Métricas de ações (removidas - não relevantes)
       
       // Métricas de alcance e frequência (apenas as válidas)
       'unique_clicks',
@@ -318,41 +303,23 @@ export class FacebookBatchAPI {
       'cpc',
       'ctr',
       'cost_per_conversion',
-      'cost_per_action_type',
       'cost_per_inline_link_click',
       'cost_per_unique_click',
       'cost_per_landing_page_view',
       
       // Métricas de engajamento (apenas as válidas)
       'inline_link_clicks',
-      'inline_post_engagement',
       
       // Métricas de conversão
       'conversions',
       'conversion_values',
-      'conversion_rate_ranking',
       
       // Métricas de vídeo (apenas as válidas na API de Insights)
-      'video_play_actions',
-      'video_play_curve_actions',
+      'total_video_views',
+      'total_video_complete_views',
       
-      // Métricas de vídeo - Porcentagem de visualização
-      'video_p25_watched_actions',
-      'video_p50_watched_actions',
-      'video_p75_watched_actions',
-      'video_p100_watched_actions',
       
-      // Métricas de vídeo - Tempo
-      'video_30_sec_watched_actions',
-      'video_avg_time_watched_actions',
-      
-      // Métricas de qualidade
-      'quality_ranking',
-      'engagement_rate_ranking',
-      
-      // Métricas de ações (apenas as válidas)
-      'actions',
-      
+     
       // Métricas de alcance e frequência (apenas as válidas)
       'unique_clicks',
       'unique_inline_link_clicks',
@@ -407,40 +374,26 @@ export class FacebookBatchAPI {
       'cpc',
       'ctr',
       'cost_per_conversion',
-      'cost_per_action_type',
       'cost_per_inline_link_click',
       'cost_per_unique_click',
       'cost_per_landing_page_view',
       
       // Métricas de engajamento (apenas as válidas)
       'inline_link_clicks',
-      'inline_post_engagement',
       
       // Métricas de conversão
       'conversions',
       'conversion_values',
-      'conversion_rate_ranking',
       
       // Métricas de vídeo (apenas as válidas na API de Insights)
-      'video_play_actions',
-      'video_play_curve_actions',
+      'total_video_views',
+      'total_video_complete_views',
+      'total_video_10s_views',
+      'total_video_avg_time_watched',
       
-      // Métricas de vídeo - Porcentagem de visualização
-      'video_p25_watched_actions',
-      'video_p50_watched_actions',
-      'video_p75_watched_actions',
-      'video_p100_watched_actions',
+      // Métricas de qualidade (removidas - não nativas)
       
-      // Métricas de vídeo - Tempo
-      'video_30_sec_watched_actions',
-      'video_avg_time_watched_actions',
-      
-      // Métricas de qualidade
-      'quality_ranking',
-      'engagement_rate_ranking',
-      
-      // Métricas de ações (apenas as válidas)
-      'actions',
+      // Métricas de ações (removidas - não relevantes)
       
       // Métricas de alcance e frequência (apenas as válidas)
       'unique_clicks',

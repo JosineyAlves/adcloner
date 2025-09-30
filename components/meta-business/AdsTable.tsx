@@ -39,6 +39,10 @@ export default function AdsTable({
   metrics = [],
   showMetrics = false
 }: AdsTableProps) {
+  
+  // Debug: verificar métricas recebidas
+  console.log('📊 AdsTable - Métricas recebidas:', metrics.filter(m => m.visible).map(m => m.label))
+  console.log('📊 AdsTable - showMetrics:', showMetrics)
   const handleSelectAll = () => {
     if (selectedAds.size === ads.length) {
       onSelectionChange(new Set())
@@ -118,14 +122,52 @@ export default function AdsTable({
 
   if (ads.length === 0) {
     return (
-      <div className="text-center py-12">
-        <Eye className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-          Nenhum anúncio encontrado
-        </h3>
-        <p className="text-gray-600 dark:text-gray-400">
-          Não há anúncios disponíveis para o período selecionado.
-        </p>
+      <div className="space-y-4">
+        {/* Cabeçalho da tabela mesmo sem dados */}
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 dark:bg-gray-700">
+              <tr>
+                <th className="px-6 py-3 text-left">
+                  <input
+                    type="checkbox"
+                    disabled
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Anúncio
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Orçamento
+                </th>
+                {showMetrics && metrics.filter(m => m.visible).map((metric) => (
+                  <th key={metric.id} className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    {metric.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="bg-white dark:bg-gray-800">
+              <tr>
+                <td colSpan={4 + (showMetrics ? metrics.filter(m => m.visible).length : 0)} className="px-6 py-12 text-center">
+                  <div className="flex flex-col items-center">
+                    <Eye className="w-12 h-12 text-gray-400 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                      Nenhum anúncio encontrado
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Não há anúncios disponíveis para o período selecionado.
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     )
   }
@@ -188,26 +230,13 @@ export default function AdsTable({
                 Anúncio
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Conjunto
+                Orçamento
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Criativo
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Gasto
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Impressões
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Cliques
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                CPC
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                CTR
-              </th>
+              {showMetrics && metrics.filter(m => m.visible).map((metric) => (
+                <th key={metric.id} className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {metric.label}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -236,48 +265,23 @@ export default function AdsTable({
                     {ad.name}
                   </div>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                  {ad.adset_name}
-                </td>
                 <td className="px-6 py-4">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                      <img
-                        src={getCreativeThumbnail(ad.creative)}
-                        alt="Creative thumbnail"
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.src = 'https://via.placeholder.com/60x60/6B7280/FFFFFF?text=?'
-                        }}
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        {ad.creative.name}
-                      </div>
-                      <div className="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400">
-                        {getCreativeIcon(ad.creative)}
-                        <span className="capitalize">{getCreativeType(ad.creative)}</span>
-                      </div>
-                    </div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-white">
+                    {ad.daily_budget ? formatCurrency(ad.daily_budget) : ad.lifetime_budget ? formatCurrency(ad.lifetime_budget) : '-'}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {ad.budget_type === 'daily' ? 'Diário' : 'Vida útil'}
                   </div>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                  {formatCurrency(ad.spend)}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                  {formatNumber(ad.impressions)}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                  {formatNumber(ad.clicks)}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                  {formatCurrency(ad.cpc)}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                  {formatPercentage(ad.ctr)}
-                </td>
+                {showMetrics && metrics.filter(m => m.visible).map((metric) => {
+                  const value = (ad as any)[metric.id]
+                  const formattedValue = formatMetricValue(value, metric.type)
+                  return (
+                    <td key={metric.id} className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                      {formattedValue}
+                    </td>
+                  )
+                })}
               </tr>
             ))}
           </tbody>

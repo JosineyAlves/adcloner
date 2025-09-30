@@ -7,6 +7,21 @@ import { VideoMetrics } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
 
+// Função para processar métricas de vídeo que retornam arrays de AdsActionStats
+function processVideoMetric(videoMetric: any): number {
+  if (!videoMetric) return 0
+  
+  // Se for um array de AdsActionStats, somar os valores
+  if (Array.isArray(videoMetric)) {
+    return videoMetric.reduce((total, action) => {
+      return total + parseInt(action.value || '0')
+    }, 0)
+  }
+  
+  // Se for um número simples, retornar diretamente
+  return parseInt(videoMetric.toString() || '0')
+}
+
 export async function GET(request: NextRequest) {
   try {
     const accessToken = request.cookies.get('fb_access_token')?.value
@@ -111,15 +126,15 @@ export async function GET(request: NextRequest) {
                   video_play_actions: parseInt(insight.video_play_actions || '0'),
                   video_play_curve_actions: parseInt(insight.video_play_curve_actions || '0'),
                   
-                  // Métricas de vídeo - Porcentagem de visualização
-                  video_p25_watched_actions: parseInt(insight.video_p25_watched_actions || '0'),
-                  video_p50_watched_actions: parseInt(insight.video_p50_watched_actions || '0'),
-                  video_p75_watched_actions: parseInt(insight.video_p75_watched_actions || '0'),
-                  video_p100_watched_actions: parseInt(insight.video_p100_watched_actions || '0'),
+                  // Métricas de vídeo - Porcentagem de visualização (processar arrays de AdsActionStats)
+                  video_p25_watched_actions: processVideoMetric(insight.video_p25_watched_actions),
+                  video_p50_watched_actions: processVideoMetric(insight.video_p50_watched_actions),
+                  video_p75_watched_actions: processVideoMetric(insight.video_p75_watched_actions),
+                  video_p100_watched_actions: processVideoMetric(insight.video_p100_watched_actions),
                   
                   // Métricas de vídeo - Tempo
-                  video_30_sec_watched_actions: parseInt(insight.video_30_sec_watched_actions || '0'),
-                  video_avg_time_watched_actions: parseInt(insight.video_avg_time_watched_actions || '0')
+                  video_30_sec_watched_actions: processVideoMetric(insight.video_30_sec_watched_actions),
+                  video_avg_time_watched_actions: processVideoMetric(insight.video_avg_time_watched_actions)
                 }
               }
             } else {
