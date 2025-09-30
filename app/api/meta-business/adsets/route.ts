@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { facebookRateLimiter } from '@/lib/rate-limiter'
 import { cache } from '@/lib/cache'
 import { facebookBatchAPI } from '@/lib/facebook-batch-api'
+import { videoMetricsAPI } from '@/lib/video-metrics'
+import { VideoMetrics } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
 
@@ -107,6 +109,16 @@ export async function GET(request: NextRequest) {
             // Verificar se a campanha pai usa CBO (simplificado)
             const campaignAdvantageBudget = false // Assumir ABO por padrão para evitar rate limit
 
+            // Buscar métricas de vídeo para o adset
+            let videoMetrics: VideoMetrics | undefined = undefined
+            try {
+              // Para adsets, precisamos buscar os anúncios primeiro para encontrar vídeos
+              // Por simplicidade, vamos assumir que não há vídeos em adsets por enquanto
+              // A implementação completa exigiria buscar anúncios individuais
+            } catch (error) {
+              console.warn(`⚠️ Erro ao buscar métricas de vídeo do adset ${adSet.id}:`, error)
+            }
+
             const metaAdSet = {
               id: adSet.id,
               name: adSet.name,
@@ -134,6 +146,9 @@ export async function GET(request: NextRequest) {
               // Métricas de vídeo (apenas as válidas na API de Insights)
               video_play_actions: insights.video_play_actions || 0,
               video_play_curve_actions: insights.video_play_curve_actions || 0,
+              
+              // Métricas de vídeo detalhadas
+              videoMetrics: videoMetrics,
               
               created_time: adSet.created_time,
               updated_time: adSet.updated_time,

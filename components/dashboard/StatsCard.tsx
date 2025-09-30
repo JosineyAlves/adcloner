@@ -9,8 +9,8 @@ interface StatsCardProps {
   changeType?: 'positive' | 'negative' | 'neutral'
   trend?: 'up' | 'down' | 'neutral'
   description?: string
-  icon: LucideIcon
-  iconColor: string
+  icon?: LucideIcon
+  iconColor?: string
 }
 
 export default function StatsCard({ 
@@ -84,9 +84,11 @@ export default function StatsCard({
             </p>
           )}
         </div>
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${iconColor} flex-shrink-0`}>
-          <Icon className="w-6 h-6 text-white" />
-        </div>
+        {Icon && (
+          <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${iconColor || 'bg-blue-500'} flex-shrink-0`}>
+            <Icon className="w-6 h-6 text-white" />
+          </div>
+        )}
       </div>
     </div>
   )

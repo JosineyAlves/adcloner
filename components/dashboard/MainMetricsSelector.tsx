@@ -81,7 +81,7 @@ export default function MainMetricsSelector({
                       className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
                       <div className="flex items-center space-x-3">
-                        <div className={`w-3 h-3 rounded-full ${option.iconColor}`} />
+                        <div className="w-3 h-3 rounded-full bg-blue-500" />
                         <div>
                           <div className="font-medium text-gray-900 dark:text-white">
                             {option.label}

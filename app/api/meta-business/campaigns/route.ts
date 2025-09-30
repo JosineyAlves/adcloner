@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { FacebookAPI } from '@/lib/facebook-api'
-import { MetaCampaign } from '@/lib/types'
+import { MetaCampaign, VideoMetrics } from '@/lib/types'
 import { facebookRateLimiter } from '@/lib/rate-limiter'
 import { cache } from '@/lib/cache'
 import { facebookBatchAPI } from '@/lib/facebook-batch-api'
+import { videoMetricsAPI } from '@/lib/video-metrics'
 
 export const dynamic = 'force-dynamic'
 
@@ -175,6 +176,10 @@ export async function GET(request: NextRequest) {
             // Verificar se tem Advantage Campaign Budget (simplificado)
             const advantageCampaignBudget = !!(campaign.daily_budget || campaign.lifetime_budget)
 
+            // Métricas de vídeo serão implementadas posteriormente
+            // Para campanhas, seria necessário buscar anúncios individuais
+            const videoMetrics: VideoMetrics | undefined = undefined
+
             const metaCampaign: MetaCampaign = {
               id: campaign.id,
               name: campaign.name,
@@ -230,7 +235,10 @@ export async function GET(request: NextRequest) {
               // Métricas de alcance e frequência (apenas as válidas)
               unique_clicks: insights.unique_clicks,
               unique_inline_link_clicks: insights.unique_inline_link_clicks,
-              unique_ctr: insights.unique_ctr
+              unique_ctr: insights.unique_ctr,
+              
+              // Métricas de vídeo detalhadas
+              videoMetrics: videoMetrics
             }
 
             campaigns.push(metaCampaign)

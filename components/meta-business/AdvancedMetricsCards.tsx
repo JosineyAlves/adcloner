@@ -74,8 +74,6 @@ export default function AdvancedMetricsCards({
           <StatsCard
             title={metric.label}
             value={getMetricValue(metric)}
-            icon={metric.icon}
-            iconColor={metric.iconColor}
             trend={getMetricTrend(metric.id)}
             description={metric.description}
           />

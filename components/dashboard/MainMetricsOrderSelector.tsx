@@ -119,7 +119,7 @@ export default function MainMetricsOrderSelector({
                     >
                       <div className="flex items-center space-x-3">
                         <GripVertical className="w-4 h-4 text-gray-400" />
-                        <div className={`w-3 h-3 rounded-full ${metric.iconColor}`} />
+                        <div className="w-3 h-3 rounded-full bg-blue-500" />
                         <div>
                           <div className="font-medium text-gray-900 dark:text-white">
                             {metric.label}

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cache } from '@/lib/cache'
 import { facebookBatchAPI } from '@/lib/facebook-batch-api'
+import { videoMetricsAPI } from '@/lib/video-metrics'
+import { VideoMetrics } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
 
@@ -103,6 +105,31 @@ export async function GET(request: NextRequest) {
               console.warn(`⚠️ Erro ao buscar insights do ad ${ad.id}:`, insightsResponse)
             }
 
+            // Buscar métricas de vídeo para o anúncio
+            let videoMetrics: VideoMetrics | undefined = undefined
+            try {
+              // Verificar se o anúncio tem um vídeo
+              if (ad.creative?.video_id) {
+                const videoInsights = await videoMetricsAPI.getVideoInsights(ad.creative.video_id, accessToken)
+                if (videoInsights.video_views > 0) {
+                  // Calcular KPIs de vídeo
+                  const videoKPIs = videoMetricsAPI.calculateVideoKPIs(
+                    videoInsights,
+                    insights.impressions,
+                    insights.clicks,
+                    0 // conversions não disponível na API de ads
+                  )
+                  
+                  videoMetrics = {
+                    ...videoInsights,
+                    ...videoKPIs
+                  }
+                }
+              }
+            } catch (error) {
+              console.warn(`⚠️ Erro ao buscar métricas de vídeo do ad ${ad.id}:`, error)
+            }
+
             const metaAd = {
               id: ad.id,
               name: ad.name,
@@ -126,15 +153,12 @@ export async function GET(request: NextRequest) {
               cpc: insights.cpc,
               ctr: insights.ctr,
               
-              // Métricas de vídeo (válidas e suportadas)
-              video_views: insights.video_views || 0,
-              video_views_25: insights.video_views_25 || 0,
-              video_views_50: insights.video_views_50 || 0,
-              video_views_75: insights.video_views_75 || 0,
-              video_views_95: insights.video_views_95 || 0,
-              video_views_100: insights.video_views_100 || 0,
+              // Métricas de vídeo (apenas as válidas na API de Insights)
               video_play_actions: insights.video_play_actions || 0,
               video_play_curve_actions: insights.video_play_curve_actions || 0,
+              
+              // Métricas de vídeo detalhadas
+              videoMetrics: videoMetrics,
               
               created_time: ad.created_time,
               updated_time: ad.updated_time,

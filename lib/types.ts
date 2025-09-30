@@ -181,6 +181,8 @@ export interface MetaCampaign {
   unique_clicks: number
   unique_inline_link_clicks: number
   unique_ctr: number
+    // Métricas de vídeo detalhadas
+    videoMetrics?: VideoMetrics
 }
 
 export interface MetaAdSet {
@@ -213,6 +215,9 @@ export interface MetaAdSet {
   // Métricas de vídeo (apenas as válidas na API de Insights)
   video_play_actions: number
   video_play_curve_actions: number
+
+    // Métricas de vídeo detalhadas
+    videoMetrics?: VideoMetrics
   
   created_time: string
   updated_time: string
@@ -244,11 +249,31 @@ export interface MetaAd {
   // Métricas de vídeo (apenas as válidas na API de Insights)
   video_play_actions: number
   video_play_curve_actions: number
+
+    // Métricas de vídeo detalhadas
+    videoMetrics?: VideoMetrics
   
   created_time: string
   updated_time: string
   account_id: string
   account_name: string
+}
+// Adicionar após a interface MetaAd
+
+export interface VideoMetrics {
+  video_views: number
+  video_views_25: number
+  video_views_50: number
+  video_views_75: number
+  video_views_95: number
+  video_views_100: number
+  
+  // KPIs Calculados
+  holdRate: number
+  bodyConversion: number
+  bodyRetention: number
+  ctaRate: number
+  hookPlayRate: number
 }
 
 export interface MetaInsights {

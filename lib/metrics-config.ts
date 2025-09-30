@@ -1,70 +1,22 @@
-import { 
-  Eye, 
-  MousePointer, 
-  DollarSign, 
-  Target, 
-  Repeat, 
-  TrendingUp, 
-  Percent, 
-  Link, 
-  Heart, 
-  Play, 
-  ShoppingCart, 
-  CheckCircle, 
-  Users, 
-  Globe, 
-  Smartphone, 
-  BarChart3,
-  Zap,
-  Star,
-  Activity,
-  Clock,
-  Download,
-  MessageSquare,
-  ThumbsUp,
-  Share2,
-  Search,
-  Filter,
-  Award,
-  TrendingDown,
-  Minus,
-  Plus,
-  Hash,
-  Tag,
-  ExternalLink,
-  UserCheck,
-  MousePointerClick,
-  CreditCard,
-  Building,
-  Smile,
-  MessageCircle,
-  Share,
-  PlayCircle,
-  ShoppingBag,
-  UserPlus
-} from 'lucide-react'
+// Ícones removidos para simplificar a interface
 
 export interface MetricConfig {
   id: string
   label: string
   description: string
-  icon: any
-  iconColor: string
   type: 'number' | 'currency' | 'percentage'
   visible: boolean
   order: number
   category: 'basic' | 'cost' | 'engagement' | 'conversion' | 'video' | 'quality' | 'actions' | 'landing' | 'reach' | 'frequency'
 }
 
-// Métricas válidas disponíveis na API do Meta (apenas as suportadas oficialmente)
+// Métricas organizadas por ordem de importância e uso
 export const ALL_METRICS: MetricConfig[] = [
-  // === MÉTRICAS BÁSICAS ===
+  // === MÉTRICAS PRINCIPAIS (Sempre visíveis) ===
   {
     id: 'impressions',
     label: 'Impressões',
     description: 'Número de vezes que o anúncio foi exibido',
-    icon: Eye,
-    iconColor: 'text-blue-600',
     type: 'number',
     visible: true,
     order: 1,
@@ -74,8 +26,6 @@ export const ALL_METRICS: MetricConfig[] = [
     id: 'clicks',
     label: 'Cliques',
     description: 'Número de cliques no anúncio',
-    icon: MousePointer,
-    iconColor: 'text-green-600',
     type: 'number',
     visible: true,
     order: 2,
@@ -85,66 +35,54 @@ export const ALL_METRICS: MetricConfig[] = [
     id: 'spend',
     label: 'Gasto',
     description: 'Valor total gasto no anúncio',
-    icon: DollarSign,
-    iconColor: 'text-red-600',
     type: 'currency',
     visible: true,
     order: 3,
     category: 'basic'
   },
   {
-    id: 'reach',
-    label: 'Alcance',
-    description: 'Número de pessoas únicas que viram o anúncio',
-    icon: Users,
-    iconColor: 'text-purple-600',
+    id: 'conversions',
+    label: 'Conversões',
+    description: 'Número total de conversões',
     type: 'number',
     visible: true,
     order: 4,
-    category: 'basic'
+    category: 'conversion'
   },
   {
-    id: 'frequency',
-    label: 'Frequência',
-    description: 'Número médio de vezes que cada pessoa viu o anúncio',
-    icon: Repeat,
-    iconColor: 'text-orange-600',
-    type: 'number',
+    id: 'conversion_values',
+    label: 'Valor das Conversões',
+    description: 'Valor total das conversões',
+    type: 'currency',
     visible: true,
     order: 5,
-    category: 'basic'
+    category: 'conversion'
   },
 
-  // === MÉTRICAS DE CUSTO ===
+  // === MÉTRICAS DE CUSTO (Importantes para análise) ===
   {
-    id: 'cpm',
-    label: 'CPM',
-    description: 'Custo por mil impressões',
-    icon: TrendingUp,
-    iconColor: 'text-red-500',
+    id: 'cpc',
+    label: 'CPC',
+    description: 'Custo por clique',
     type: 'currency',
     visible: true,
     order: 6,
     category: 'cost'
   },
   {
-    id: 'cpc',
-    label: 'CPC',
-    description: 'Custo por clique',
-    icon: Target,
-    iconColor: 'text-blue-500',
-    type: 'currency',
+    id: 'ctr',
+    label: 'CTR',
+    description: 'Taxa de cliques',
+    type: 'percentage',
     visible: true,
     order: 7,
     category: 'cost'
   },
   {
-    id: 'ctr',
-    label: 'CTR',
-    description: 'Taxa de cliques',
-    icon: MousePointerClick,
-    iconColor: 'text-green-500',
-    type: 'percentage',
+    id: 'cpm',
+    label: 'CPM',
+    description: 'Custo por mil impressões',
+    type: 'currency',
     visible: true,
     order: 8,
     category: 'cost'
@@ -153,138 +91,170 @@ export const ALL_METRICS: MetricConfig[] = [
     id: 'cost_per_conversion',
     label: 'Custo por Conversão',
     description: 'Custo médio por conversão',
-    icon: CreditCard,
-    iconColor: 'text-purple-500',
     type: 'currency',
     visible: true,
     order: 9,
     category: 'cost'
   },
-  {
-    id: 'cost_per_action_type',
-    label: 'Custo por Tipo de Ação',
-    description: 'Custo por tipo específico de ação',
-    icon: Activity,
-    iconColor: 'text-indigo-500',
-    type: 'currency',
-    visible: false,
-    order: 10,
-    category: 'cost'
-  },
-  {
-    id: 'cost_per_inline_link_click',
-    label: 'Custo por Clique em Link',
-    description: 'Custo por clique em links inline',
-    icon: ExternalLink,
-    iconColor: 'text-teal-500',
-    type: 'currency',
-    visible: false,
-    order: 11,
-    category: 'cost'
-  },
-  {
-    id: 'cost_per_unique_click',
-    label: 'Custo por Clique Único',
-    description: 'Custo por clique único',
-    icon: UserCheck,
-    iconColor: 'text-pink-500',
-    type: 'currency',
-    visible: false,
-    order: 12,
-    category: 'cost'
-  },
-  {
-    id: 'cost_per_landing_page_view',
-    label: 'Custo por Visualização de Página',
-    description: 'Custo por visualização da página de destino',
-    icon: Globe,
-    iconColor: 'text-cyan-500',
-    type: 'currency',
-    visible: false,
-    order: 13,
-    category: 'cost'
-  },
 
-  // === MÉTRICAS DE ENGAJAMENTO (apenas as válidas) ===
+  // === MÉTRICAS DE ALCANCE E FREQUÊNCIA ===
   {
-    id: 'inline_link_clicks',
-    label: 'Cliques em Links Inline',
-    description: 'Cliques em links dentro do anúncio',
-    icon: Link,
-    iconColor: 'text-blue-400',
+    id: 'reach',
+    label: 'Alcance',
+    description: 'Número de pessoas únicas que viram o anúncio',
     type: 'number',
     visible: false,
-    order: 14,
+    order: 10,
+    category: 'reach'
+  },
+  {
+    id: 'frequency',
+    label: 'Frequência',
+    description: 'Número médio de vezes que cada pessoa viu o anúncio',
+    type: 'number',
+    visible: false,
+    order: 11,
+    category: 'frequency'
+  },
+
+  // === MÉTRICAS DE ENGAJAMENTO ===
+  {
+    id: 'inline_link_clicks',
+    label: 'Cliques em Links',
+    description: 'Cliques em links dentro do anúncio',
+    type: 'number',
+    visible: false,
+    order: 12,
     category: 'engagement'
   },
   {
     id: 'inline_post_engagement',
     label: 'Engajamento Inline',
     description: 'Engajamento com posts inline',
-    icon: Heart,
-    iconColor: 'text-red-400',
     type: 'number',
     visible: false,
-    order: 15,
+    order: 13,
     category: 'engagement'
   },
 
-  // === MÉTRICAS DE CONVERSÃO ===
-  {
-    id: 'conversions',
-    label: 'Conversões',
-    description: 'Número total de conversões',
-    icon: Target,
-    iconColor: 'text-green-600',
-    type: 'number',
-    visible: true,
-    order: 16,
-    category: 'conversion'
-  },
-  {
-    id: 'conversion_values',
-    label: 'Valor das Conversões',
-    description: 'Valor total das conversões',
-    icon: DollarSign,
-    iconColor: 'text-green-500',
-    type: 'currency',
-    visible: true,
-    order: 17,
-    category: 'conversion'
-  },
-  {
-    id: 'conversion_rate_ranking',
-    label: 'Ranking de Taxa de Conversão',
-    description: 'Ranking da taxa de conversão',
-    icon: Award,
-    iconColor: 'text-yellow-500',
-    type: 'number',
-    visible: false,
-    order: 18,
-    category: 'conversion'
-  },
-
-  // === MÉTRICAS DE VÍDEO (apenas as válidas na API de Insights) ===
+  // === MÉTRICAS DE VÍDEO ===
   {
     id: 'video_play_actions',
-    label: 'Ações de Reprodução',
+    label: 'Reproduções de Vídeo',
     description: 'Ações de reprodução de vídeo',
-    icon: Play,
-    iconColor: 'text-purple-500',
     type: 'number',
     visible: false,
-    order: 19,
+    order: 14,
     category: 'video'
   },
   {
     id: 'video_play_curve_actions',
     label: 'Curva de Reprodução',
     description: 'Ações da curva de reprodução',
-    icon: TrendingUp,
-    iconColor: 'text-purple-400',
+    type: 'number',
+    visible: false,
+    order: 15,
+    category: 'video'
+  },
+  {
+    id: 'video_views',
+    label: 'Reproduções de Vídeo',
+    description: 'Total de reproduções de vídeo iniciadas',
+    type: 'number',
+    visible: false,
+    order: 16,
+    category: 'video'
+  },
+  {
+    id: 'video_views_25',
+    label: 'Reproduções 25%',
+    description: 'Reproduções que chegaram a 25% do vídeo',
+    type: 'number',
+    visible: false,
+    order: 17,
+    category: 'video'
+  },
+  {
+    id: 'video_views_50',
+    label: 'Reproduções 50%',
+    description: 'Reproduções que chegaram a 50% do vídeo',
+    type: 'number',
+    visible: false,
+    order: 18,
+    category: 'video'
+  },
+  {
+    id: 'video_views_75',
+    label: 'Reproduções 75%',
+    description: 'Reproduções que chegaram a 75% do vídeo',
+    type: 'number',
+    visible: false,
+    order: 19,
+    category: 'video'
+  },
+  {
+    id: 'video_views_95',
+    label: 'Reproduções 95%',
+    description: 'Reproduções que chegaram a 95% do vídeo',
     type: 'number',
     visible: false,
     order: 20,
+    category: 'video'
+  },
+  {
+    id: 'video_views_100',
+    label: 'Reproduções 100%',
+    description: 'Reproduções que chegaram ao final do vídeo',
+    type: 'number',
+    visible: false,
+    order: 21,
+    category: 'video'
+  },
+
+  // === KPIs DE VÍDEO CALCULADOS ===
+  {
+    id: 'holdRate',
+    label: 'Hold Rate',
+    description: 'Vídeos assistidos 75% / impressões (%)',
+    type: 'percentage',
+    visible: false,
+    order: 22,
+    category: 'video'
+  },
+  {
+    id: 'bodyConversion',
+    label: 'Conversão do Body',
+    description: 'Compras / Vídeos assistidos 75% (%)',
+    type: 'percentage',
+    visible: false,
+    order: 23,
+    category: 'video'
+  },
+  {
+    id: 'bodyRetention',
+    label: 'Retenção do Body',
+    description: 'Vídeos assistidos 75% / Vídeos iniciados (%)',
+    type: 'percentage',
+    visible: false,
+    order: 24,
+    category: 'video'
+  },
+  {
+    id: 'ctaRate',
+    label: 'CTA Rate',
+    description: 'Cliques no Link / Vídeos assistidos 75% (%)',
+    type: 'percentage',
+    visible: false,
+    order: 25,
+    category: 'video'
+  },
+  {
+    id: 'hookPlayRate',
+    label: 'Play Rate do Hook',
+    description: 'Vídeos iniciados / Impressões (%)',
+    type: 'percentage',
+    visible: false,
+    order: 26,
     category: 'video'
   },
 
@@ -293,78 +263,113 @@ export const ALL_METRICS: MetricConfig[] = [
     id: 'quality_ranking',
     label: 'Ranking de Qualidade',
     description: 'Ranking da qualidade do anúncio',
-    icon: Star,
-    iconColor: 'text-yellow-500',
     type: 'number',
     visible: false,
-    order: 21,
+    order: 27,
     category: 'quality'
   },
   {
     id: 'engagement_rate_ranking',
     label: 'Ranking de Engajamento',
     description: 'Ranking da taxa de engajamento',
-    icon: TrendingUp,
-    iconColor: 'text-green-500',
     type: 'number',
     visible: false,
-    order: 22,
+    order: 28,
+    category: 'quality'
+  },
+  {
+    id: 'conversion_rate_ranking',
+    label: 'Ranking de Taxa de Conversão',
+    description: 'Ranking da taxa de conversão',
+    type: 'number',
+    visible: false,
+    order: 29,
     category: 'quality'
   },
 
-  // === MÉTRICAS DE AÇÕES (apenas as válidas) ===
+  // === MÉTRICAS AVANÇADAS DE CUSTO ===
+  {
+    id: 'cost_per_action_type',
+    label: 'Custo por Tipo de Ação',
+    description: 'Custo por tipo específico de ação',
+    type: 'currency',
+    visible: false,
+    order: 30,
+    category: 'cost'
+  },
+  {
+    id: 'cost_per_inline_link_click',
+    label: 'Custo por Clique em Link',
+    description: 'Custo por clique em links inline',
+    type: 'currency',
+    visible: false,
+    order: 31,
+    category: 'cost'
+  },
+  {
+    id: 'cost_per_unique_click',
+    label: 'Custo por Clique Único',
+    description: 'Custo por clique único',
+    type: 'currency',
+    visible: false,
+    order: 32,
+    category: 'cost'
+  },
+  {
+    id: 'cost_per_landing_page_view',
+    label: 'Custo por Visualização de Página',
+    description: 'Custo por visualização da página de destino',
+    type: 'currency',
+    visible: false,
+    order: 33,
+    category: 'cost'
+  },
+
+  // === MÉTRICAS DE AÇÕES ===
   {
     id: 'actions',
     label: 'Ações',
     description: 'Número total de ações',
-    icon: Activity,
-    iconColor: 'text-blue-500',
     type: 'number',
     visible: false,
-    order: 23,
+    order: 34,
     category: 'actions'
   },
 
-  // === MÉTRICAS DE ALCANCE E FREQUÊNCIA (apenas as válidas) ===
+  // === MÉTRICAS DE ALCANCE AVANÇADAS ===
   {
     id: 'unique_clicks',
     label: 'Cliques Únicos',
     description: 'Número de cliques únicos',
-    icon: UserCheck,
-    iconColor: 'text-pink-500',
     type: 'number',
     visible: false,
-    order: 24,
+    order: 35,
     category: 'reach'
   },
   {
     id: 'unique_inline_link_clicks',
     label: 'Cliques Únicos Inline',
     description: 'Cliques únicos em links inline',
-    icon: Link,
-    iconColor: 'text-blue-400',
     type: 'number',
     visible: false,
-    order: 25,
+    order: 36,
     category: 'reach'
   },
   {
     id: 'unique_ctr',
     label: 'CTR Único',
     description: 'Taxa de cliques única',
-    icon: MousePointerClick,
-    iconColor: 'text-green-400',
     type: 'percentage',
     visible: false,
-    order: 26,
+    order: 37,
     category: 'reach'
   }
 ]
 
-// Métricas principais para o dashboard
+// Métricas principais para o dashboard (as mais importantes)
 export const MAIN_METRICS: MetricConfig[] = ALL_METRICS.filter(metric => metric.visible)
 
-// Categorização das métricas
+// Categorização das métricas para filtros
 export const METRICS_BY_CATEGORY = {
   basic: ALL_METRICS.filter(m => m.category === 'basic'),
   cost: ALL_METRICS.filter(m => m.category === 'cost'),
@@ -376,4 +381,32 @@ export const METRICS_BY_CATEGORY = {
   landing: ALL_METRICS.filter(m => m.category === 'landing'),
   reach: ALL_METRICS.filter(m => m.category === 'reach'),
   frequency: ALL_METRICS.filter(m => m.category === 'frequency')
+}
+
+// Categorias organizadas por ordem de importância
+export const CATEGORY_ORDER = [
+  'basic',
+  'conversion', 
+  'cost',
+  'reach',
+  'frequency',
+  'engagement',
+  'video',
+  'quality',
+  'actions',
+  'landing'
+]
+
+// Labels das categorias para exibição
+export const CATEGORY_LABELS = {
+  basic: 'Métricas Básicas',
+  conversion: 'Conversão',
+  cost: 'Custo',
+  reach: 'Alcance',
+  frequency: 'Frequência',
+  engagement: 'Engajamento',
+  video: 'Vídeo',
+  quality: 'Qualidade',
+  actions: 'Ações',
+  landing: 'Landing Page'
 }

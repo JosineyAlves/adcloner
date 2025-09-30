@@ -224,7 +224,10 @@ export default function MetaBusinessPage() {
   }
 
   // Funções para gerenciar métricas
-  const handleMetricsChange = (newMetrics: MetricConfig[]) => {
+  const handleMetricsChange = (metricIds: string[]) => {
+    const newMetrics = metricIds
+      .map(id => ALL_METRICS.find(metric => metric.id === id))
+      .filter(Boolean) as MetricConfig[]
     setMetrics(newMetrics)
   }
 
@@ -405,10 +408,7 @@ export default function MetaBusinessPage() {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
                 <MetaBusinessMetricsSelector
-                  metrics={metrics}
                   onMetricsChange={handleMetricsChange}
-                  selectedCategory={selectedCategory}
-                  onCategoryChange={handleCategoryChange}
                 />
                 <DateSelector
                   datePreset={datePreset}
