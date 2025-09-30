@@ -166,7 +166,13 @@ export interface MetaCampaign {
   conversion_values: number
   conversion_rate_ranking: number
   
-  // Métricas de vídeo (apenas as válidas)
+  // Métricas de vídeo (válidas e suportadas)
+  video_views: number
+  video_views_25: number
+  video_views_50: number
+  video_views_75: number
+  video_views_95: number
+  video_views_100: number
   video_play_actions: number
   video_play_curve_actions: number
   
@@ -209,6 +215,17 @@ export interface MetaAdSet {
   clicks: number
   cpc: number
   ctr: number
+  
+  // Métricas de vídeo (válidas e suportadas)
+  video_views: number
+  video_views_25: number
+  video_views_50: number
+  video_views_75: number
+  video_views_95: number
+  video_views_100: number
+  video_play_actions: number
+  video_play_curve_actions: number
+  
   created_time: string
   updated_time: string
   account_id: string
@@ -235,6 +252,17 @@ export interface MetaAd {
   clicks: number
   cpc: number
   ctr: number
+  
+  // Métricas de vídeo (válidas e suportadas)
+  video_views: number
+  video_views_25: number
+  video_views_50: number
+  video_views_75: number
+  video_views_95: number
+  video_views_100: number
+  video_play_actions: number
+  video_play_curve_actions: number
+  
   created_time: string
   updated_time: string
   account_id: string

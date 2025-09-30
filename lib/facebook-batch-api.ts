@@ -243,7 +243,13 @@ export class FacebookBatchAPI {
       'conversion_values',
       'conversion_rate_ranking',
       
-      // Métricas de vídeo (apenas as válidas)
+      // Métricas de vídeo (válidas e suportadas)
+      'video_views',
+      'video_views_25',
+      'video_views_50',
+      'video_views_75',
+      'video_views_95',
+      'video_views_100',
       'video_play_actions',
       'video_play_curve_actions',
       
@@ -322,7 +328,13 @@ export class FacebookBatchAPI {
       'conversion_values',
       'conversion_rate_ranking',
       
-      // Métricas de vídeo (apenas as válidas)
+      // Métricas de vídeo (válidas e suportadas)
+      'video_views',
+      'video_views_25',
+      'video_views_50',
+      'video_views_75',
+      'video_views_95',
+      'video_views_100',
       'video_play_actions',
       'video_play_curve_actions',
       
@@ -401,7 +413,13 @@ export class FacebookBatchAPI {
       'conversion_values',
       'conversion_rate_ranking',
       
-      // Métricas de vídeo (apenas as válidas)
+      // Métricas de vídeo (válidas e suportadas)
+      'video_views',
+      'video_views_25',
+      'video_views_50',
+      'video_views_75',
+      'video_views_95',
+      'video_views_100',
       'video_play_actions',
       'video_play_curve_actions',
       

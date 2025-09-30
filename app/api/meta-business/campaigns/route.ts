@@ -103,7 +103,13 @@ export async function GET(request: NextRequest) {
               conversion_values: 0,
               conversion_rate_ranking: 0,
               
-              // Métricas de vídeo (apenas as válidas)
+              // Métricas de vídeo (válidas e suportadas)
+              video_views: 0,
+              video_views_25: 0,
+              video_views_50: 0,
+              video_views_75: 0,
+              video_views_95: 0,
+              video_views_100: 0,
               video_play_actions: 0,
               video_play_curve_actions: 0,
               
@@ -122,8 +128,8 @@ export async function GET(request: NextRequest) {
 
             if (insightsResponse.code === 200) {
               const insightsData = JSON.parse(insightsResponse.body || '{}')
-              if (insightsData.data && insightsData.data.length > 0) {
-                const insight = insightsData.data[0]
+            if (insightsData.data && insightsData.data.length > 0) {
+              const insight = insightsData.data[0]
               insights = {
                 // Métricas básicas
                 impressions: parseInt(insight.impressions || '0'),
@@ -151,7 +157,13 @@ export async function GET(request: NextRequest) {
                 conversion_values: parseFloat(insight.conversion_values || '0'),
                 conversion_rate_ranking: parseFloat(insight.conversion_rate_ranking || '0'),
                 
-                // Métricas de vídeo (apenas as válidas)
+                // Métricas de vídeo (válidas e suportadas)
+                video_views: parseInt(insight.video_views || '0'),
+                video_views_25: parseInt(insight.video_views_25 || '0'),
+                video_views_50: parseInt(insight.video_views_50 || '0'),
+                video_views_75: parseInt(insight.video_views_75 || '0'),
+                video_views_95: parseInt(insight.video_views_95 || '0'),
+                video_views_100: parseInt(insight.video_views_100 || '0'),
                 video_play_actions: parseInt(insight.video_play_actions || '0'),
                 video_play_curve_actions: parseInt(insight.video_play_curve_actions || '0'),
                 
@@ -216,7 +228,13 @@ export async function GET(request: NextRequest) {
               conversion_values: insights.conversion_values,
               conversion_rate_ranking: insights.conversion_rate_ranking,
               
-              // Métricas de vídeo (apenas as válidas)
+              // Métricas de vídeo (válidas e suportadas)
+              video_views: insights.video_views,
+              video_views_25: insights.video_views_25,
+              video_views_50: insights.video_views_50,
+              video_views_75: insights.video_views_75,
+              video_views_95: insights.video_views_95,
+              video_views_100: insights.video_views_100,
               video_play_actions: insights.video_play_actions,
               video_play_curve_actions: insights.video_play_curve_actions,
               
@@ -280,7 +298,13 @@ export async function GET(request: NextRequest) {
               conversion_values: 0,
               conversion_rate_ranking: 0,
               
-              // Métricas de vídeo (apenas as válidas)
+              // Métricas de vídeo (válidas e suportadas)
+              video_views: 0,
+              video_views_25: 0,
+              video_views_50: 0,
+              video_views_75: 0,
+              video_views_95: 0,
+              video_views_100: 0,
               video_play_actions: 0,
               video_play_curve_actions: 0,
               

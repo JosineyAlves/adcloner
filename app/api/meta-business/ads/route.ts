@@ -76,7 +76,17 @@ export async function GET(request: NextRequest) {
               clicks: 0,
               spend: 0,
               cpc: 0,
-              ctr: 0
+              ctr: 0,
+              
+              // Métricas de vídeo (válidas e suportadas)
+              video_views: 0,
+              video_views_25: 0,
+              video_views_50: 0,
+              video_views_75: 0,
+              video_views_95: 0,
+              video_views_100: 0,
+              video_play_actions: 0,
+              video_play_curve_actions: 0
             }
 
             if (insightsResponse.code === 200) {
@@ -88,7 +98,17 @@ export async function GET(request: NextRequest) {
                   clicks: parseInt(insight.clicks || '0'),
                   spend: parseFloat(insight.spend || '0'),
                   cpc: parseFloat(insight.cpc || '0'),
-                  ctr: parseFloat(insight.ctr || '0')
+                  ctr: parseFloat(insight.ctr || '0'),
+                  
+                  // Métricas de vídeo (válidas e suportadas)
+                  video_views: parseInt(insight.video_views || '0'),
+                  video_views_25: parseInt(insight.video_views_25 || '0'),
+                  video_views_50: parseInt(insight.video_views_50 || '0'),
+                  video_views_75: parseInt(insight.video_views_75 || '0'),
+                  video_views_95: parseInt(insight.video_views_95 || '0'),
+                  video_views_100: parseInt(insight.video_views_100 || '0'),
+                  video_play_actions: parseInt(insight.video_play_actions || '0'),
+                  video_play_curve_actions: parseInt(insight.video_play_curve_actions || '0')
                 }
               }
             } else {
@@ -117,6 +137,17 @@ export async function GET(request: NextRequest) {
               clicks: insights.clicks,
               cpc: insights.cpc,
               ctr: insights.ctr,
+              
+              // Métricas de vídeo (válidas e suportadas)
+              video_views: insights.video_views || 0,
+              video_views_25: insights.video_views_25 || 0,
+              video_views_50: insights.video_views_50 || 0,
+              video_views_75: insights.video_views_75 || 0,
+              video_views_95: insights.video_views_95 || 0,
+              video_views_100: insights.video_views_100 || 0,
+              video_play_actions: insights.video_play_actions || 0,
+              video_play_curve_actions: insights.video_play_curve_actions || 0,
+              
               created_time: ad.created_time,
               updated_time: ad.updated_time,
               account_id: accountId,
@@ -149,6 +180,17 @@ export async function GET(request: NextRequest) {
               clicks: 0,
               cpc: 0,
               ctr: 0,
+              
+              // Métricas de vídeo (válidas e suportadas)
+              video_views: 0,
+              video_views_25: 0,
+              video_views_50: 0,
+              video_views_75: 0,
+              video_views_95: 0,
+              video_views_100: 0,
+              video_play_actions: 0,
+              video_play_curve_actions: 0,
+              
               created_time: ad.created_time,
               updated_time: ad.updated_time,
               account_id: accountId,
