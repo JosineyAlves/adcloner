@@ -158,7 +158,6 @@ export interface MetaCampaign {
   
   // Métricas de engajamento (apenas as válidas)
   inline_link_clicks: number
-  inline_post_engagement: number
   
   // Métricas de conversão
   conversions: number
