@@ -100,6 +100,7 @@ export async function GET(request: NextRequest) {
               cpm: 0,
               cpc: 0,
               ctr: 0,
+              cost_per_inline_link_click: 0,
               
               // Métricas de engajamento
               inline_link_clicks: 0,
@@ -138,10 +139,11 @@ export async function GET(request: NextRequest) {
                   reach: parseInt(insight.reach || '0'),
                   frequency: parseFloat(insight.frequency || '0'),
                   
-                  // Métricas de custo
-                  cpm: parseFloat(insight.cpm || '0'),
-                  cpc: parseFloat(insight.cpc || '0'),
-                  ctr: parseFloat(insight.ctr || '0'),
+              // Métricas de custo
+              cpm: parseFloat(insight.cpm || '0'),
+              cpc: parseFloat(insight.cpc || '0'),
+              ctr: parseFloat(insight.ctr || '0'),
+              cost_per_inline_link_click: parseFloat(insight.cost_per_inline_link_click || '0'),
                   
                   // Métricas de engajamento
                   inline_link_clicks: parseInt(insight.inline_link_clicks || '0'),
@@ -214,6 +216,7 @@ export async function GET(request: NextRequest) {
               cpm: insights.cpm,
               cpc: insights.cpc,
               ctr: insights.ctr,
+              cost_per_inline_link_click: insights.cost_per_inline_link_click,
               
               // Métricas de engajamento
               inline_link_clicks: insights.inline_link_clicks,
@@ -281,6 +284,7 @@ export async function GET(request: NextRequest) {
               cpm: 0,
               cpc: 0,
               ctr: 0,
+              cost_per_inline_link_click: 0,
               
               // Métricas de engajamento
               inline_link_clicks: 0,
