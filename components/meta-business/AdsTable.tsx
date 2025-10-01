@@ -81,6 +81,24 @@ export default function AdsTable({
     return `${value.toFixed(2)}%`
   }
 
+  const formatMetricValue = (value: any, type: 'number' | 'currency' | 'percentage') => {
+    if (value === null || value === undefined) return '-'
+    
+    const numValue = typeof value === 'number' ? value : parseFloat(value)
+    
+    if (isNaN(numValue)) return '-'
+    
+    switch (type) {
+      case 'currency':
+        return formatCurrency(numValue)
+      case 'percentage':
+        return formatPercentage(numValue)
+      case 'number':
+      default:
+        return formatNumber(numValue)
+    }
+  }
+
   const getCreativeType = (creative: MetaAd['creative']) => {
     if (creative.object_story_spec?.link_data?.video_id) {
       return 'video'

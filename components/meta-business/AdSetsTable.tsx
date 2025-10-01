@@ -85,6 +85,24 @@ export default function AdSetsTable({
     return `${value.toFixed(2)}%`
   }
 
+  const formatMetricValue = (value: any, type: 'number' | 'currency' | 'percentage') => {
+    if (value === null || value === undefined) return '-'
+    
+    const numValue = typeof value === 'number' ? value : parseFloat(value)
+    
+    if (isNaN(numValue)) return '-'
+    
+    switch (type) {
+      case 'currency':
+        return formatCurrency(numValue)
+      case 'percentage':
+        return formatPercentage(numValue)
+      case 'number':
+      default:
+        return formatNumber(numValue)
+    }
+  }
+
   const formatTargeting = (targeting: MetaAdSet['targeting']) => {
     const parts = []
     if (targeting.age_min && targeting.age_max) {
