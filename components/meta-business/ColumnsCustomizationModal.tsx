@@ -121,7 +121,7 @@ export default function ColumnsCustomizationModal({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Personalize as colunas</h2>
+            <h2 className="text-xl font-semibold text-gray-900">Colunas</h2>
             <p className="text-sm text-gray-600 mt-1">
               Escolha como você quer visualizar as colunas na tabela.
             </p>
