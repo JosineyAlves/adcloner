@@ -116,9 +116,7 @@ export async function GET(request: NextRequest) {
               conversions: 0,
               conversion_values: 0,
               
-              // Métricas de vídeo (nativas atuais da Meta)
-              total_video_views: 0,
-              total_video_complete_views: 0,
+              // Métricas de vídeo (removidas - não suportadas)
               
               // Métricas de qualidade (removidas - não nativas)
               
@@ -158,9 +156,7 @@ export async function GET(request: NextRequest) {
                 conversions: parseInt(insight.conversions || '0'),
                 conversion_values: parseFloat(insight.conversion_values || '0'),
                 
-                // Métricas de vídeo (nativas atuais da Meta)
-                total_video_views: parseInt(insight.total_video_views || '0'),
-                total_video_complete_views: parseInt(insight.total_video_complete_views || '0'),
+                // Métricas de vídeo (removidas - não suportadas)
                 
                 // Métricas de qualidade (removidas - não nativas)
                 
@@ -221,9 +217,7 @@ export async function GET(request: NextRequest) {
               conversions: insights.conversions,
               conversion_values: insights.conversion_values,
               
-              // Métricas de vídeo (nativas atuais da Meta)
-              total_video_views: insights.total_video_views,
-              total_video_complete_views: insights.total_video_complete_views,
+              // Métricas de vídeo (removidas - não suportadas)
               
               // Métricas de qualidade (removidas - não nativas)
               
@@ -282,9 +276,7 @@ export async function GET(request: NextRequest) {
               conversions: 0,
               conversion_values: 0,
               
-              // Métricas de vídeo (nativas atuais da Meta)
-              total_video_views: 0,
-              total_video_complete_views: 0,
+              // Métricas de vídeo (removidas - não suportadas)
               
               // Métricas de qualidade (removidas - não nativas)
               

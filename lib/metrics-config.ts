@@ -8,7 +8,7 @@ export interface MetricConfig {
   type: 'number' | 'currency' | 'percentage'
   visible: boolean
   order: number
-  category: 'basic' | 'cost' | 'engagement' | 'conversion' | 'video' | 'reach' | 'frequency'
+  category: 'basic' | 'cost' | 'engagement' | 'conversion' | 'reach' | 'frequency'
 }
 
 // Métricas nativas da Meta Insights API organizadas por ordem de importância
@@ -131,25 +131,7 @@ export const ALL_METRICS: MetricConfig[] = [
     category: 'engagement'
   },
 
-  // === MÉTRICAS DE VÍDEO (Nativas Atuais da Meta) ===
-  {
-    id: 'total_video_views',
-    label: 'Visualizações de Vídeo',
-    description: 'Número de visualizações de pelo menos 3 segundos',
-    type: 'number',
-    visible: false,
-    order: 14,
-    category: 'video'
-  },
-  {
-    id: 'total_video_complete_views',
-    label: 'Visualizações Completas',
-    description: 'Número de visualizações até 97% ou mais do vídeo',
-    type: 'number',
-    visible: false,
-    order: 15,
-    category: 'video'
-  },
+  // === MÉTRICAS DE VÍDEO (REMOVIDAS - NÃO SUPORTADAS) ===
 
   // === MÉTRICAS DE QUALIDADE (REMOVIDAS - NÃO NATIVAS) ===
 
@@ -225,7 +207,6 @@ export const METRICS_BY_CATEGORY = {
   cost: ALL_METRICS.filter(m => m.category === 'cost'),
   engagement: ALL_METRICS.filter(m => m.category === 'engagement'),
   conversion: ALL_METRICS.filter(m => m.category === 'conversion'),
-  video: ALL_METRICS.filter(m => m.category === 'video'),
   reach: ALL_METRICS.filter(m => m.category === 'reach'),
   frequency: ALL_METRICS.filter(m => m.category === 'frequency')
 }
@@ -237,8 +218,7 @@ export const CATEGORY_ORDER = [
   'cost',
   'reach',
   'frequency',
-  'engagement',
-  'video'
+  'engagement'
 ]
 
 // Labels das categorias para exibição
@@ -248,6 +228,5 @@ export const CATEGORY_LABELS = {
   cost: 'Custo',
   reach: 'Alcance',
   frequency: 'Frequência',
-  engagement: 'Engajamento',
-  video: 'Vídeo'
+  engagement: 'Engajamento'
 }

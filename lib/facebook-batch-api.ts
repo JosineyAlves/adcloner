@@ -240,9 +240,7 @@ export class FacebookBatchAPI {
       'conversions',
       'conversion_values',
       
-      // Métricas de vídeo (apenas as válidas na API de Insights)
-      'total_video_views',
-      'total_video_complete_views',
+      // Métricas de vídeo (removidas - não suportadas)
       'total_video_10s_views',
       'total_video_avg_time_watched',
       
@@ -314,12 +312,12 @@ export class FacebookBatchAPI {
       'conversions',
       'conversion_values',
       
-      // Métricas de vídeo (apenas as válidas na API de Insights)
-      'total_video_views',
-      'total_video_complete_views',
+      // Métricas de vídeo (removidas - não suportadas)
       
+      // Métricas de qualidade (removidas - não nativas)
       
-     
+      // Métricas de ações (removidas - não relevantes)
+      
       // Métricas de alcance e frequência (apenas as válidas)
       'unique_clicks',
       'unique_inline_link_clicks',
@@ -385,9 +383,7 @@ export class FacebookBatchAPI {
       'conversions',
       'conversion_values',
       
-      // Métricas de vídeo (apenas as válidas na API de Insights)
-      'total_video_views',
-      'total_video_complete_views',
+      // Métricas de vídeo (removidas - não suportadas)
       'total_video_10s_views',
       'total_video_avg_time_watched',
       

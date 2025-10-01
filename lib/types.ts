@@ -163,9 +163,7 @@ export interface MetaCampaign {
   conversions: number
   conversion_values: number
   
-  // Métricas de vídeo (nativas atuais da Meta)
-  total_video_views: number
-  total_video_complete_views: number
+  // Métricas de vídeo (removidas - não suportadas)
   
   // Métricas de qualidade (removidas - não nativas)
   
