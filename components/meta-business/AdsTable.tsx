@@ -284,11 +284,11 @@ export default function AdsTable({
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">
-                    {ad.daily_budget ? formatCurrency(ad.daily_budget) : ad.lifetime_budget ? formatCurrency(ad.lifetime_budget) : '-'}
+                  <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    N/A
                   </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {ad.budget_type === 'daily' ? 'Diário' : 'Vida útil'}
+                    Definido no Ad Set
                   </div>
                 </td>
                 {showMetrics && metrics.filter(m => m.visible).map((metric) => {
