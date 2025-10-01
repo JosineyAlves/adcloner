@@ -181,8 +181,8 @@ export async function GET(request: NextRequest) {
                 conversion_rate_ranking: parseFloat(insight.conversion_rate_ranking || '0'),
                 
                 // Métricas de vídeo (apenas as válidas na API de Insights)
-                video_play_actions: parseInt(insight.video_play_actions || '0'),
-                video_play_curve_actions: parseInt(insight.video_play_curve_actions || '0'),
+                video_play_actions: processVideoMetric(insight.video_play_actions),
+                video_play_curve_actions: processVideoMetric(insight.video_play_curve_actions),
                 
                 // Métricas de vídeo - Porcentagem de visualização (processar arrays de AdsActionStats)
                 video_p25_watched_actions: processVideoMetric(insight.video_p25_watched_actions),

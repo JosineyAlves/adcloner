@@ -114,6 +114,14 @@ export default function ColumnsCustomizationModal({
     onClose()
   }
 
+  const handleSelectAll = () => {
+    const allMetricIds = availableMetrics.map(metric => metric.id)
+    setSelected(allMetricIds)
+  }
+
+  const handleDeselectAll = () => {
+    setSelected([])
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -126,12 +134,26 @@ export default function ColumnsCustomizationModal({
               Escolha como você quer visualizar as colunas na tabela.
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleSelectAll}
+              className="px-3 py-1.5 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+            >
+              Selecionar Todas
+            </button>
+            <button
+              onClick={handleDeselectAll}
+              className="px-3 py-1.5 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+            >
+              Desmarcar Todas
+            </button>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
