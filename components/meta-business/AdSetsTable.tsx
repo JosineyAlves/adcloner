@@ -46,6 +46,39 @@ export default function AdSetsTable({
   console.log('📊 AdSetsTable - Métricas recebidas:', metrics.filter(m => m.visible).map(m => m.label))
   console.log('📊 AdSetsTable - showMetrics:', showMetrics)
 
+  // Funções de formatação
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value)
+  }
+
+  const formatNumber = (value: number) => {
+    return new Intl.NumberFormat('pt-BR').format(value)
+  }
+
+  const formatPercentage = (value: number) => {
+    return `${value.toFixed(2)}%`
+  }
+
+  const formatMetricValue = (value: any, type: 'number' | 'currency' | 'percentage') => {
+    if (value === null || value === undefined) return '-'
+    
+    const numValue = typeof value === 'number' ? value : parseFloat(value)
+    
+    if (isNaN(numValue)) return '-'
+    
+    switch (type) {
+      case 'currency':
+        return formatCurrency(numValue)
+      case 'percentage':
+        return formatPercentage(numValue)
+      default:
+        return formatNumber(numValue)
+    }
+  }
+
   const handleSelectAll = () => {
     if (selectedAdSets.size === adSets.length) {
       onSelectionChange(new Set())
@@ -66,23 +99,6 @@ export default function AdSetsTable({
 
   const handleStatusToggle = async (adSetId: string, currentStatus: string) => {
     await onStatusToggle('adsets', adSetId, currentStatus)
-  }
-
-
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value)
-  }
-
-  const formatNumber = (value: number) => {
-    return new Intl.NumberFormat('pt-BR').format(value)
-  }
-
-  const formatPercentage = (value: number) => {
-    return `${value.toFixed(2)}%`
   }
 
   const formatTargeting = (targeting: MetaAdSet['targeting']) => {

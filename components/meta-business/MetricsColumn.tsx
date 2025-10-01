@@ -49,12 +49,12 @@ export default function MetricsColumn({ data, metrics, visibleMetrics }: Metrics
     switch (metric.category) {
       case 'cost':
         return numValue > 0 ? 'text-red-600' : 'text-gray-500'
-      case 'conversion':
-        return numValue > 0 ? 'text-green-600' : 'text-gray-500'
       case 'engagement':
         return numValue > 0 ? 'text-blue-600' : 'text-gray-500'
       case 'video':
         return numValue > 0 ? 'text-purple-600' : 'text-gray-500'
+      case 'actions':
+        return numValue > 0 ? 'text-green-600' : 'text-gray-500'
       default:
         return numValue > 0 ? 'text-gray-900 dark:text-white' : 'text-gray-500'
     }

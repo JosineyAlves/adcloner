@@ -43,6 +43,39 @@ export default function AdsTable({
   // Debug: verificar métricas recebidas
   console.log('📊 AdsTable - Métricas recebidas:', metrics.filter(m => m.visible).map(m => m.label))
   console.log('📊 AdsTable - showMetrics:', showMetrics)
+
+  // Funções de formatação
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value)
+  }
+
+  const formatNumber = (value: number) => {
+    return new Intl.NumberFormat('pt-BR').format(value)
+  }
+
+  const formatPercentage = (value: number) => {
+    return `${value.toFixed(2)}%`
+  }
+
+  const formatMetricValue = (value: any, type: 'number' | 'currency' | 'percentage') => {
+    if (value === null || value === undefined) return '-'
+    
+    const numValue = typeof value === 'number' ? value : parseFloat(value)
+    
+    if (isNaN(numValue)) return '-'
+    
+    switch (type) {
+      case 'currency':
+        return formatCurrency(numValue)
+      case 'percentage':
+        return formatPercentage(numValue)
+      default:
+        return formatNumber(numValue)
+    }
+  }
   const handleSelectAll = () => {
     if (selectedAds.size === ads.length) {
       onSelectionChange(new Set())
@@ -63,22 +96,6 @@ export default function AdsTable({
 
   const handleStatusToggle = async (adId: string, currentStatus: string) => {
     await onStatusToggle('ads', adId, currentStatus)
-  }
-
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value)
-  }
-
-  const formatNumber = (value: number) => {
-    return new Intl.NumberFormat('pt-BR').format(value)
-  }
-
-  const formatPercentage = (value: number) => {
-    return `${value.toFixed(2)}%`
   }
 
   const getCreativeType = (creative: MetaAd['creative']) => {
@@ -267,10 +284,10 @@ export default function AdsTable({
                 </td>
                 <td className="px-6 py-4">
                   <div className="text-sm font-medium text-gray-900 dark:text-white">
-                    {ad.daily_budget ? formatCurrency(ad.daily_budget) : ad.lifetime_budget ? formatCurrency(ad.lifetime_budget) : '-'}
+                    -
                   </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {ad.budget_type === 'daily' ? 'Diário' : 'Vida útil'}
+                    Definido no conjunto
                   </div>
                 </td>
                 {showMetrics && metrics.filter(m => m.visible).map((metric) => {
