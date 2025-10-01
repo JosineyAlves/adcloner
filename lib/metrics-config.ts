@@ -7,7 +7,7 @@ export interface MetricConfig {
   type: 'number' | 'currency' | 'percentage'
   visible: boolean
   order: number
-  category: 'basic' | 'cost' | 'engagement' | 'video' | 'quality' | 'actions' | 'reach' | 'frequency'
+  category: 'basic' | 'cost' | 'engagement' | 'video' | 'reach' | 'frequency'
 }
 
 // Métricas nativas da Meta Insights API organizadas por categoria
@@ -70,24 +70,6 @@ export const ALL_METRICS: MetricConfig[] = [
     category: 'cost'
   },
   {
-    id: 'cpp',
-    label: 'CPP',
-    description: 'Custo por mil pessoas alcançadas',
-    type: 'currency',
-    visible: false,
-    order: 7,
-    category: 'cost'
-  },
-  {
-    id: 'cost_per_action_type',
-    label: 'Custo por Tipo de Ação',
-    description: 'Custo por tipo específico de ação',
-    type: 'currency',
-    visible: false,
-    order: 8,
-    category: 'cost'
-  },
-  {
     id: 'cost_per_unique_click',
     label: 'Custo por Clique Único',
     description: 'Custo por clique único',
@@ -103,15 +85,6 @@ export const ALL_METRICS: MetricConfig[] = [
     type: 'currency',
     visible: false,
     order: 10,
-    category: 'cost'
-  },
-  {
-    id: 'cost_per_unique_inline_post_engagement',
-    label: 'Custo por Engajamento Único Inline',
-    description: 'Custo por engajamento único em posts inline',
-    type: 'currency',
-    visible: false,
-    order: 11,
     category: 'cost'
   },
 
@@ -263,171 +236,6 @@ export const ALL_METRICS: MetricConfig[] = [
     visible: false,
     order: 27,
     category: 'video'
-  },
-  {
-    id: 'video_thruplay_actions',
-    label: 'Visualizações Completas',
-    description: 'Número de vezes que o vídeo foi reproduzido até o final ou por pelo menos 15 segundos',
-    type: 'number',
-    visible: false,
-    order: 28,
-    category: 'video'
-  },
-  {
-    id: 'video_watched_actions',
-    label: 'Visualizações Assistidas',
-    description: 'Número de vezes que o vídeo foi assistido',
-    type: 'number',
-    visible: false,
-    order: 29,
-    category: 'video'
-  },
-  {
-    id: 'video_avg_percent_watched',
-    label: 'Percentual Médio Assistido',
-    description: 'Percentual médio do vídeo que foi assistido',
-    type: 'percentage',
-    visible: false,
-    order: 30,
-    category: 'video'
-  },
-  {
-    id: 'video_avg_time_watched',
-    label: 'Tempo Médio Assistido',
-    description: 'Tempo médio que o vídeo foi assistido',
-    type: 'number',
-    visible: false,
-    order: 31,
-    category: 'video'
-  },
-
-  // === MÉTRICAS DE AÇÕES ===
-  {
-    id: 'actions',
-    label: 'Ações',
-    description: 'Número total de ações',
-    type: 'number',
-    visible: false,
-    order: 32,
-    category: 'actions'
-  },
-  {
-    id: 'action_values',
-    label: 'Valor das Ações',
-    description: 'Valor total das ações',
-    type: 'currency',
-    visible: false,
-    order: 33,
-    category: 'actions'
-  },
-  {
-    id: 'unique_actions',
-    label: 'Ações Únicas',
-    description: 'Número de ações únicas',
-    type: 'number',
-    visible: false,
-    order: 34,
-    category: 'actions'
-  },
-
-  // === MÉTRICAS DE QUALIDADE ===
-  {
-    id: 'quality_ranking',
-    label: 'Ranking de Qualidade',
-    description: 'Ranking da qualidade do anúncio',
-    type: 'number',
-    visible: false,
-    order: 35,
-    category: 'quality'
-  },
-  {
-    id: 'engagement_rate_ranking',
-    label: 'Ranking de Engajamento',
-    description: 'Ranking da taxa de engajamento',
-    type: 'number',
-    visible: false,
-    order: 36,
-    category: 'quality'
-  },
-
-  // === MÉTRICAS SOCIAIS ===
-  {
-    id: 'social_clicks',
-    label: 'Cliques Sociais',
-    description: 'Número de cliques em anúncios do contexto social',
-    type: 'number',
-    visible: false,
-    order: 37,
-    category: 'engagement'
-  },
-  {
-    id: 'social_impressions',
-    label: 'Impressões Sociais',
-    description: 'Número de impressões do contexto social',
-    type: 'number',
-    visible: false,
-    order: 38,
-    category: 'engagement'
-  },
-  {
-    id: 'social_reach',
-    label: 'Alcance Social',
-    description: 'Número de pessoas que viram anúncios do contexto social',
-    type: 'number',
-    visible: false,
-    order: 39,
-    category: 'engagement'
-  },
-  {
-    id: 'social_spend',
-    label: 'Gasto Social',
-    description: 'Valor gasto em anúncios do contexto social',
-    type: 'currency',
-    visible: false,
-    order: 40,
-    category: 'engagement'
-  },
-
-  // === MÉTRICAS DE DEEP LINK ===
-  {
-    id: 'deeplink_clicks',
-    label: 'Cliques em Deep Link',
-    description: 'Número de cliques no deep link',
-    type: 'number',
-    visible: false,
-    order: 41,
-    category: 'engagement'
-  },
-
-  // === MÉTRICAS DE APP STORE ===
-  {
-    id: 'app_store_clicks',
-    label: 'Cliques na App Store',
-    description: 'Número de cliques no link da app store',
-    type: 'number',
-    visible: false,
-    order: 42,
-    category: 'engagement'
-  },
-
-  // === MÉTRICAS DE CANVAS ===
-  {
-    id: 'canvas_avg_view_percent',
-    label: 'Percentual Médio de Visualização do Canvas',
-    description: 'Percentual médio de um anúncio Canvas visualizado',
-    type: 'percentage',
-    visible: false,
-    order: 43,
-    category: 'engagement'
-  },
-  {
-    id: 'canvas_avg_view_time',
-    label: 'Tempo Médio de Visualização do Canvas',
-    description: 'Tempo médio gasto visualizando um anúncio Canvas',
-    type: 'number',
-    visible: false,
-    order: 44,
-    category: 'engagement'
   }
 ]
 
@@ -440,8 +248,6 @@ export const METRICS_BY_CATEGORY = {
   cost: ALL_METRICS.filter(m => m.category === 'cost'),
   engagement: ALL_METRICS.filter(m => m.category === 'engagement'),
   video: ALL_METRICS.filter(m => m.category === 'video'),
-  quality: ALL_METRICS.filter(m => m.category === 'quality'),
-  actions: ALL_METRICS.filter(m => m.category === 'actions'),
   reach: ALL_METRICS.filter(m => m.category === 'reach'),
   frequency: ALL_METRICS.filter(m => m.category === 'frequency')
 }
@@ -453,9 +259,7 @@ export const CATEGORY_ORDER = [
   'reach',
   'frequency',
   'engagement',
-  'video',
-  'quality',
-  'actions'
+  'video'
 ]
 
 // Labels das categorias para exibição
@@ -465,7 +269,5 @@ export const CATEGORY_LABELS = {
   reach: 'Alcance',
   frequency: 'Frequência',
   engagement: 'Engajamento',
-  video: 'Vídeo',
-  quality: 'Qualidade',
-  actions: 'Ações'
+  video: 'Vídeo'
 }
