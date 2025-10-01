@@ -34,7 +34,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
   },
   {
     id: 'clicks',
-    label: 'Cliques',
+    label: 'Cliques (todos)',
     category: 'Métricas Básicas',
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),
@@ -86,7 +86,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
   },
   {
     id: 'cpc',
-    label: 'CPC',
+    label: 'CPC (todos)',
     category: 'Métricas de Custo',
     type: 'currency',
     format: (value) => `R$ ${parseFloat(value || '0').toFixed(2)}`,
@@ -108,7 +108,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
   // Métricas de engajamento
   {
     id: 'inline_link_clicks',
-    label: 'Cliques em Links',
+    label: 'Cliques no Link',
     category: 'Engajamento',
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),

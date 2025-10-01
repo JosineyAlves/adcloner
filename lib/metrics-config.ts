@@ -24,7 +24,7 @@ export const ALL_METRICS: MetricConfig[] = [
   },
   {
     id: 'clicks',
-    label: 'Cliques',
+    label: 'Cliques (todos)',
     description: 'Número de cliques no anúncio',
     type: 'number',
     visible: true,
@@ -44,7 +44,7 @@ export const ALL_METRICS: MetricConfig[] = [
   // === MÉTRICAS DE CUSTO ===
   {
     id: 'cpc',
-    label: 'CPC',
+    label: 'CPC (todos)',
     description: 'Custo por clique',
     type: 'currency',
     visible: true,
@@ -71,7 +71,7 @@ export const ALL_METRICS: MetricConfig[] = [
   },
   {
     id: 'cost_per_unique_click',
-    label: 'Custo por Clique Único',
+    label: 'CPC (custo por clique no link)',
     description: 'Custo por clique único',
     type: 'currency',
     visible: false,
@@ -138,7 +138,7 @@ export const ALL_METRICS: MetricConfig[] = [
   // === MÉTRICAS DE ENGAJAMENTO ===
   {
     id: 'inline_link_clicks',
-    label: 'Cliques em Links Inline',
+    label: 'Cliques no Link',
     description: 'Cliques em links dentro do anúncio',
     type: 'number',
     visible: false,
