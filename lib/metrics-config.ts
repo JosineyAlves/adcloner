@@ -53,7 +53,7 @@ export const ALL_METRICS: MetricConfig[] = [
   },
   {
     id: 'ctr',
-    label: 'CTR',
+    label: 'CTR (todos)',
     description: 'Taxa de cliques',
     type: 'percentage',
     visible: true,
@@ -147,8 +147,8 @@ export const ALL_METRICS: MetricConfig[] = [
   },
   {
     id: 'inline_link_click_ctr',
-    label: 'CTR de Links Inline',
-    description: 'Taxa de cliques em links inline',
+    label: 'CTR (taxa de cliques no link)',
+    description: 'Taxa de cliques no links',
     type: 'percentage',
     visible: false,
     order: 18,
@@ -174,8 +174,8 @@ export const ALL_METRICS: MetricConfig[] = [
   },
   {
     id: 'unique_inline_link_click_ctr',
-    label: 'CTR Único Inline',
-    description: 'Taxa de cliques única em links inline',
+    label: 'CTR único (taxa de cliques no link)',
+    description: 'Taxa de cliques única no link',
     type: 'percentage',
     visible: false,
     order: 21,
