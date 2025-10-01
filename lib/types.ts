@@ -159,6 +159,7 @@ export interface MetaCampaign {
   
   // Métricas de engajamento (apenas as válidas)
   inline_link_clicks: number
+  inline_link_click_ctr: number
   inline_post_engagement: number
   
   // Métricas de conversão
@@ -190,6 +191,7 @@ export interface MetaCampaign {
   // Métricas de alcance e frequência (apenas as válidas)
   unique_clicks: number
   unique_inline_link_clicks: number
+  unique_inline_link_click_ctr: number
   unique_ctr: number
   
   // Métricas de vídeo detalhadas
@@ -222,6 +224,17 @@ export interface MetaAdSet {
   clicks: number
   cpc: number
   ctr: number
+  
+  // Métricas de engajamento
+  inline_link_clicks: number
+  inline_link_click_ctr: number
+  inline_post_engagement: number
+  
+  // Métricas de alcance e frequência
+  unique_clicks: number
+  unique_inline_link_clicks: number
+  unique_inline_link_click_ctr: number
+  unique_ctr: number
   
   // Métricas de vídeo (apenas as válidas na API de Insights)
   video_play_actions: number
@@ -266,6 +279,17 @@ export interface MetaAd {
   clicks: number
   cpc: number
   ctr: number
+  
+  // Métricas de engajamento
+  inline_link_clicks: number
+  inline_link_click_ctr: number
+  inline_post_engagement: number
+  
+  // Métricas de alcance e frequência
+  unique_clicks: number
+  unique_inline_link_clicks: number
+  unique_inline_link_click_ctr: number
+  unique_ctr: number
   
   // Métricas de vídeo (apenas as válidas na API de Insights)
   video_play_actions: number

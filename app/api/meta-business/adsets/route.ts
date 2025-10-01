@@ -96,6 +96,17 @@ export async function GET(request: NextRequest) {
               cpc: 0,
               ctr: 0,
               
+              // Métricas de engajamento
+              inline_link_clicks: 0,
+              inline_link_click_ctr: 0,
+              inline_post_engagement: 0,
+              
+              // Métricas de alcance e frequência
+              unique_clicks: 0,
+              unique_inline_link_clicks: 0,
+              unique_inline_link_click_ctr: 0,
+              unique_ctr: 0,
+              
               // Métricas de vídeo (apenas as válidas na API de Insights)
               video_play_actions: 0,
               video_play_curve_actions: 0,
@@ -121,6 +132,17 @@ export async function GET(request: NextRequest) {
                   spend: parseFloat(insight.spend || '0'),
                   cpc: parseFloat(insight.cpc || '0'),
                   ctr: parseFloat(insight.ctr || '0'),
+                  
+                  // Métricas de engajamento
+                  inline_link_clicks: parseInt(insight.inline_link_clicks || '0'),
+                  inline_link_click_ctr: parseFloat(insight.inline_link_click_ctr || '0'),
+                  inline_post_engagement: parseInt(insight.inline_post_engagement || '0'),
+                  
+                  // Métricas de alcance e frequência
+                  unique_clicks: parseInt(insight.unique_clicks || '0'),
+                  unique_inline_link_clicks: parseInt(insight.unique_inline_link_clicks || '0'),
+                  unique_inline_link_click_ctr: parseFloat(insight.unique_inline_link_click_ctr || '0'),
+                  unique_ctr: parseFloat(insight.unique_ctr || '0'),
                   
                   // Métricas de vídeo (apenas as válidas na API de Insights)
                   video_play_actions: parseInt(insight.video_play_actions || '0'),
@@ -178,6 +200,17 @@ export async function GET(request: NextRequest) {
               cpc: insights.cpc,
               ctr: insights.ctr,
               
+              // Métricas de engajamento
+              inline_link_clicks: insights.inline_link_clicks,
+              inline_link_click_ctr: insights.inline_link_click_ctr,
+              inline_post_engagement: insights.inline_post_engagement,
+              
+              // Métricas de alcance e frequência
+              unique_clicks: insights.unique_clicks,
+              unique_inline_link_clicks: insights.unique_inline_link_clicks,
+              unique_inline_link_click_ctr: insights.unique_inline_link_click_ctr,
+              unique_ctr: insights.unique_ctr,
+              
               // Métricas de vídeo (apenas as válidas na API de Insights)
               video_play_actions: insights.video_play_actions || 0,
               video_play_curve_actions: insights.video_play_curve_actions || 0,
@@ -228,6 +261,17 @@ export async function GET(request: NextRequest) {
               clicks: 0,
               cpc: 0,
               ctr: 0,
+              
+              // Métricas de engajamento
+              inline_link_clicks: 0,
+              inline_link_click_ctr: 0,
+              inline_post_engagement: 0,
+              
+              // Métricas de alcance e frequência
+              unique_clicks: 0,
+              unique_inline_link_clicks: 0,
+              unique_inline_link_click_ctr: 0,
+              unique_ctr: 0,
               
               // Métricas de vídeo (apenas as válidas na API de Insights)
               video_play_actions: 0,

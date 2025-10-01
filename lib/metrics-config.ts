@@ -109,7 +109,7 @@ export const ALL_METRICS: MetricConfig[] = [
   },
   {
     id: 'unique_clicks',
-    label: 'Cliques Únicos',
+    label: 'Cliques únicos (todos)',
     description: 'Número de cliques únicos',
     type: 'number',
     visible: false,
@@ -118,7 +118,7 @@ export const ALL_METRICS: MetricConfig[] = [
   },
   {
     id: 'unique_ctr',
-    label: 'CTR Único',
+    label: 'CTR único (todos)',
     description: 'Taxa de cliques única',
     type: 'percentage',
     visible: false,
@@ -165,7 +165,7 @@ export const ALL_METRICS: MetricConfig[] = [
   },
   {
     id: 'unique_inline_link_clicks',
-    label: 'Cliques Únicos Inline',
+    label: 'Cliques no link únicos',
     description: 'Cliques únicos em links inline',
     type: 'number',
     visible: false,

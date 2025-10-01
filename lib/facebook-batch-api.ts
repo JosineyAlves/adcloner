@@ -236,6 +236,7 @@ export class FacebookBatchAPI {
       
       // Métricas de engajamento (apenas as válidas)
       'inline_link_clicks',
+      'inline_link_click_ctr',
       'inline_post_engagement',
       
       // Métricas de conversão
@@ -267,6 +268,7 @@ export class FacebookBatchAPI {
       // Métricas de alcance e frequência (apenas as válidas)
       'unique_clicks',
       'unique_inline_link_clicks',
+      'unique_inline_link_click_ctr',
       'unique_ctr'
     ].join(',')
     
@@ -325,6 +327,7 @@ export class FacebookBatchAPI {
       
       // Métricas de engajamento (apenas as válidas)
       'inline_link_clicks',
+      'inline_link_click_ctr',
       'inline_post_engagement',
       
       // Métricas de conversão
@@ -356,6 +359,7 @@ export class FacebookBatchAPI {
       // Métricas de alcance e frequência (apenas as válidas)
       'unique_clicks',
       'unique_inline_link_clicks',
+      'unique_inline_link_click_ctr',
       'unique_ctr'
     ].join(',')
     
@@ -414,6 +418,7 @@ export class FacebookBatchAPI {
       
       // Métricas de engajamento (apenas as válidas)
       'inline_link_clicks',
+      'inline_link_click_ctr',
       'inline_post_engagement',
       
       // Métricas de conversão
@@ -445,6 +450,7 @@ export class FacebookBatchAPI {
       // Métricas de alcance e frequência (apenas as válidas)
       'unique_clicks',
       'unique_inline_link_clicks',
+      'unique_inline_link_click_ctr',
       'unique_ctr'
     ].join(',')
     
