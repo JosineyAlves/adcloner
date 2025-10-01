@@ -81,24 +81,6 @@ export default function AdsTable({
     return `${value.toFixed(2)}%`
   }
 
-  const formatMetricValue = (value: any, type: 'number' | 'currency' | 'percentage') => {
-    if (value === null || value === undefined) return '-'
-    
-    const numValue = typeof value === 'number' ? value : parseFloat(value)
-    
-    if (isNaN(numValue)) return '-'
-    
-    switch (type) {
-      case 'currency':
-        return formatCurrency(numValue)
-      case 'percentage':
-        return formatPercentage(numValue)
-      case 'number':
-      default:
-        return formatNumber(numValue)
-    }
-  }
-
   const getCreativeType = (creative: MetaAd['creative']) => {
     if (creative.object_story_spec?.link_data?.video_id) {
       return 'video'
@@ -284,11 +266,11 @@ export default function AdsTable({
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    N/A
+                  <div className="text-sm font-medium text-gray-900 dark:text-white">
+                    {ad.daily_budget ? formatCurrency(ad.daily_budget) : ad.lifetime_budget ? formatCurrency(ad.lifetime_budget) : '-'}
                   </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">
-                    Definido no Ad Set
+                    {ad.budget_type === 'daily' ? 'Diário' : 'Vida útil'}
                   </div>
                 </td>
                 {showMetrics && metrics.filter(m => m.visible).map((metric) => {

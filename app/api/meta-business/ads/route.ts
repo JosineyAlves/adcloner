@@ -95,7 +95,19 @@ export async function GET(request: NextRequest) {
               cpc: 0,
               ctr: 0,
               
-              // Métricas de vídeo (removidas - não suportadas)
+              // Métricas de vídeo (apenas as válidas na API de Insights)
+              video_play_actions: 0,
+              video_play_curve_actions: 0,
+              
+              // Métricas de vídeo - Porcentagem de visualização
+              video_p25_watched_actions: 0,
+              video_p50_watched_actions: 0,
+              video_p75_watched_actions: 0,
+              video_p100_watched_actions: 0,
+              
+              // Métricas de vídeo - Tempo
+              video_30_sec_watched_actions: 0,
+              video_avg_time_watched_actions: 0
             }
 
             if (insightsResponse.code === 200) {
@@ -109,7 +121,19 @@ export async function GET(request: NextRequest) {
                   cpc: parseFloat(insight.cpc || '0'),
                   ctr: parseFloat(insight.ctr || '0'),
                   
-                  // Métricas de vídeo (removidas - não suportadas)
+                  // Métricas de vídeo (apenas as válidas na API de Insights)
+                  video_play_actions: parseInt(insight.video_play_actions || '0'),
+                  video_play_curve_actions: parseInt(insight.video_play_curve_actions || '0'),
+                  
+                  // Métricas de vídeo - Porcentagem de visualização (processar arrays de AdsActionStats)
+                  video_p25_watched_actions: processVideoMetric(insight.video_p25_watched_actions),
+                  video_p50_watched_actions: processVideoMetric(insight.video_p50_watched_actions),
+                  video_p75_watched_actions: processVideoMetric(insight.video_p75_watched_actions),
+                  video_p100_watched_actions: processVideoMetric(insight.video_p100_watched_actions),
+                  
+                  // Métricas de vídeo - Tempo
+                  video_30_sec_watched_actions: processVideoMetric(insight.video_30_sec_watched_actions),
+                  video_avg_time_watched_actions: processVideoMetric(insight.video_avg_time_watched_actions)
                 }
               }
             } else {
@@ -164,7 +188,19 @@ export async function GET(request: NextRequest) {
               cpc: insights.cpc,
               ctr: insights.ctr,
               
-              // Métricas de vídeo (removidas - não suportadas)
+              // Métricas de vídeo (apenas as válidas na API de Insights)
+              video_play_actions: insights.video_play_actions || 0,
+              video_play_curve_actions: insights.video_play_curve_actions || 0,
+              
+              // Métricas de vídeo - Porcentagem de visualização
+              video_p25_watched_actions: insights.video_p25_watched_actions || 0,
+              video_p50_watched_actions: insights.video_p50_watched_actions || 0,
+              video_p75_watched_actions: insights.video_p75_watched_actions || 0,
+              video_p100_watched_actions: insights.video_p100_watched_actions || 0,
+              
+              // Métricas de vídeo - Tempo
+              video_30_sec_watched_actions: insights.video_30_sec_watched_actions || 0,
+              video_avg_time_watched_actions: insights.video_avg_time_watched_actions || 0,
               
               // Métricas de vídeo detalhadas
               videoMetrics: videoMetrics,
@@ -202,7 +238,19 @@ export async function GET(request: NextRequest) {
               cpc: 0,
               ctr: 0,
               
-              // Métricas de vídeo (removidas - não suportadas),
+              // Métricas de vídeo (apenas as válidas na API de Insights)
+              video_play_actions: 0,
+              video_play_curve_actions: 0,
+              
+              // Métricas de vídeo - Porcentagem de visualização
+              video_p25_watched_actions: 0,
+              video_p50_watched_actions: 0,
+              video_p75_watched_actions: 0,
+              video_p100_watched_actions: 0,
+              
+              // Métricas de vídeo - Tempo
+              video_30_sec_watched_actions: 0,
+              video_avg_time_watched_actions: 0,
               
               created_time: ad.created_time,
               updated_time: ad.updated_time,
