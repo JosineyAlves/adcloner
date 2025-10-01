@@ -93,6 +93,11 @@ export async function GET(request: NextRequest) {
               impressions: 0,
               clicks: 0,
               spend: 0,
+              reach: 0,
+              frequency: 0,
+              
+              // Métricas de custo
+              cpm: 0,
               cpc: 0,
               ctr: 0,
               
@@ -130,6 +135,11 @@ export async function GET(request: NextRequest) {
                   impressions: parseInt(insight.impressions || '0'),
                   clicks: parseInt(insight.clicks || '0'),
                   spend: parseFloat(insight.spend || '0'),
+                  reach: parseInt(insight.reach || '0'),
+                  frequency: parseFloat(insight.frequency || '0'),
+                  
+                  // Métricas de custo
+                  cpm: parseFloat(insight.cpm || '0'),
                   cpc: parseFloat(insight.cpc || '0'),
                   ctr: parseFloat(insight.ctr || '0'),
                   
@@ -197,6 +207,11 @@ export async function GET(request: NextRequest) {
               spend: insights.spend,
               impressions: insights.impressions,
               clicks: insights.clicks,
+              reach: insights.reach,
+              frequency: insights.frequency,
+              
+              // Métricas de custo
+              cpm: insights.cpm,
               cpc: insights.cpc,
               ctr: insights.ctr,
               
@@ -259,6 +274,11 @@ export async function GET(request: NextRequest) {
               spend: 0,
               impressions: 0,
               clicks: 0,
+              reach: 0,
+              frequency: 0,
+              
+              // Métricas de custo
+              cpm: 0,
               cpc: 0,
               ctr: 0,
               
