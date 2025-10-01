@@ -78,15 +78,6 @@ export const ALL_METRICS: MetricConfig[] = [
     order: 9,
     category: 'cost'
   },
-  {
-    id: 'cost_per_unique_inline_link_click',
-    label: 'Custo por Clique Único Inline',
-    description: 'Custo por clique único em links inline',
-    type: 'currency',
-    visible: false,
-    order: 10,
-    category: 'cost'
-  },
 
   // === MÉTRICAS DE ALCANCE E FREQUÊNCIA ===
   {
@@ -123,15 +114,6 @@ export const ALL_METRICS: MetricConfig[] = [
     type: 'percentage',
     visible: false,
     order: 15,
-    category: 'reach'
-  },
-  {
-    id: 'unique_impressions',
-    label: 'Impressões Únicas',
-    description: 'Número de impressões únicas',
-    type: 'number',
-    visible: false,
-    order: 16,
     category: 'reach'
   },
 
@@ -179,15 +161,6 @@ export const ALL_METRICS: MetricConfig[] = [
     type: 'percentage',
     visible: false,
     order: 21,
-    category: 'engagement'
-  },
-  {
-    id: 'unique_inline_post_engagement',
-    label: 'Engajamento Único Inline',
-    description: 'Engajamento único com posts inline',
-    type: 'number',
-    visible: false,
-    order: 22,
     category: 'engagement'
   },
 
