@@ -297,9 +297,6 @@ export default function AdSetsTable({
                     level="adset"
                   />
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                  {adSet.bid_amount ? formatCurrency(adSet.bid_amount) : '-'}
-                </td>
                 {showMetrics && metrics.filter(m => m.visible).map((metric) => {
                   const value = (adSet as any)[metric.id]
                   const formattedValue = formatMetricValue(value, metric.type)
