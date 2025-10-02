@@ -113,7 +113,7 @@ export const ALL_METRICS: MetricConfig[] = [
     description: 'Taxa de cliques única',
     type: 'percentage',
     visible: false,
-    order: 15,
+    order: 17,
     category: 'reach'
   },
 
@@ -124,7 +124,7 @@ export const ALL_METRICS: MetricConfig[] = [
     description: 'Cliques em links dentro do anúncio',
     type: 'number',
     visible: false,
-    order: 17,
+    order: 15,
     category: 'engagement'
   },
   {
