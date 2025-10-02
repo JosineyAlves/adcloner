@@ -258,14 +258,12 @@ export default function AccountsTable({
 
                 {/* Colunas dinâmicas de métricas */}
                 {showMetrics && metrics.filter(m => m.visible).map((metric) => {
-                  const value = (account as any)[metric.id]
                   return (
                     <td key={metric.id} className="px-6 py-4 whitespace-nowrap">
                       <MetricsColumn 
-                        metric={metric} 
-                        value={value} 
-                        entity={account}
-                        entityType="account"
+                        data={account}
+                        metrics={metrics}
+                        visibleMetrics={[metric.id]}
                       />
                     </td>
                   )

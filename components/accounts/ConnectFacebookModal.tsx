@@ -180,7 +180,7 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
     } catch (error) {
       console.error('Erro ao verificar status de login:', error)
     }
-  }, [isOpen])
+  }, [isOpen, checkLoginStatus])
 
   const getStatusIcon = () => {
     switch (connectionStatus) {
