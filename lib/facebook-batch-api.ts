@@ -282,6 +282,87 @@ export class FacebookBatchAPI {
   }
 
   /**
+   * Cria batch de requisições para insights de contas (level=account)
+   */
+  createAccountInsightsBatch(accountId: string, datePreset: string, since?: string, until?: string): BatchRequest[] {
+    const timeRange = since && until ? `&time_range=${JSON.stringify({since, until})}` : ''
+    
+    // Campos válidos na API de Insights do Facebook para level=account
+    const fields = [
+      // Identificação básica
+      'account_id',
+      'account_name',
+      'account_currency',
+      
+      // Métricas básicas
+      'impressions',
+      'clicks',
+      'spend',
+      'reach',
+      'frequency',
+      
+      // Métricas de custo (baseado na documentação oficial do Meta)
+      'cpm',
+      'cpc',
+      'ctr',
+      'cost_per_conversion',
+      'cost_per_action_type',
+      'cost_per_inline_link_click',
+      'cost_per_unique_click',
+      'cost_per_unique_inline_link_click',
+      'cost_per_landing_page_view',
+      'cost_per_ad_click',
+      'cost_per_outbound_click',
+      'cost_per_unique_outbound_click',
+      'cost_per_thruplay',
+      'cost_per_15_sec_video_view',
+      'cost_per_2_sec_continuous_video_view',
+      
+      // Métricas de engajamento (apenas as válidas)
+      'inline_link_clicks',
+      'inline_link_click_ctr',
+      'inline_post_engagement',
+      
+      // Métricas de conversão
+      'conversions',
+      'conversion_values',
+      'conversion_rate_ranking',
+      
+      // Métricas de vídeo (baseado na documentação oficial do Meta)
+      'video_play_actions',
+      'video_p25_watched_actions',
+      'video_p50_watched_actions',
+      'video_p75_watched_actions',
+      'video_p95_watched_actions',
+      'video_p100_watched_actions',
+      'video_continuous_2_sec_watched_actions',
+      'video_time_watched_actions',
+      
+      // Métricas de qualidade
+      'quality_ranking',
+      'engagement_rate_ranking',
+      
+      // Métricas de ações (apenas as válidas)
+      'actions',
+      
+      // Métricas de alcance e frequência (apenas as válidas)
+      'unique_clicks',
+      'unique_inline_link_clicks',
+      'unique_inline_link_click_ctr',
+      'unique_ctr',
+      
+      // Campos de data
+      'date_start',
+      'date_stop'
+    ].join(',')
+    
+    return [{
+      method: 'GET',
+      relative_url: `${accountId}/insights?fields=${fields}&level=account&date_preset=${datePreset}${timeRange}`
+    }]
+  }
+
+  /**
    * Cria batch de requisições para ad sets
    */
   createAdSetsBatch(accountId: string, datePreset: string, since?: string, until?: string): BatchRequest[] {

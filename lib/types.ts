@@ -125,6 +125,72 @@ export interface User {
 
 // ===== TIPOS PARA META BUSINESS VIEW =====
 
+export interface MetaAccount {
+  id: string
+  name: string
+  account_currency: string
+  date_start: string
+  date_stop: string
+  created_time: string
+  updated_time: string
+  
+  // Métricas básicas (disponíveis em todos os níveis)
+  spend: number
+  impressions: number
+  clicks: number
+  reach: number
+  frequency: number
+  
+  // Métricas de custo (disponíveis em todos os níveis)
+  cpc: number
+  ctr: number
+  cpm: number
+  cost_per_unique_click: number
+  cost_per_unique_inline_link_click: number
+  
+  // Métricas de engajamento (disponíveis em todos os níveis)
+  inline_link_clicks: number
+  inline_link_click_ctr: number
+  inline_post_engagement: number
+  
+  // Métricas únicas (disponíveis em todos os níveis)
+  unique_clicks: number
+  unique_inline_link_clicks: number
+  unique_inline_link_click_ctr: number
+  unique_ctr: number
+  
+  // Métricas de vídeo (apenas as válidas na API de Insights)
+  video_play_actions: number
+  video_p25_watched_actions: number
+  video_p50_watched_actions: number
+  video_p75_watched_actions: number
+  video_p95_watched_actions: number
+  video_p100_watched_actions: number
+  video_continuous_2_sec_watched_actions: number
+  video_time_watched_actions: number
+  
+  // Métricas específicas de contas (level=account)
+  cost_per_conversion: number
+  cost_per_action_type: number
+  cost_per_inline_link_click: number
+  cost_per_landing_page_view: number
+  cost_per_ad_click: number
+  cost_per_outbound_click: number
+  cost_per_unique_outbound_click: number
+  cost_per_thruplay: number
+  cost_per_15_sec_video_view: number
+  cost_per_2_sec_continuous_video_view: number
+  conversions: number
+  conversion_values: number
+  conversion_rate_ranking: number
+  quality_ranking: number
+  engagement_rate_ranking: number
+  actions: number
+  
+  // Métricas de vídeo detalhadas
+  videoMetrics?: VideoMetrics
+}
+
 export interface MetaCampaign {
   id: string
   name: string
