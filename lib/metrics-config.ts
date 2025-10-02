@@ -74,7 +74,7 @@ export const ALL_METRICS: MetricConfig[] = [
     label: 'CPC (custo por clique no link)',
     description: 'O custo médio para cada clique no link.',
     type: 'currency',
-    visible: false,
+    visible: true,
     order: 9,
     category: 'cost'
   },
