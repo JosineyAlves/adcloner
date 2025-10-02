@@ -70,9 +70,9 @@ export const ALL_METRICS: MetricConfig[] = [
     category: 'cost'
   },
   {
-    id: 'cost_per_unique_inline_link_click',
+    id: 'cost_per_inline_link_click',
     label: 'CPC (custo por clique no link)',
-    description: 'Custo por clique único em link inline',
+    description: 'O custo médio para cada clique no link.',
     type: 'currency',
     visible: false,
     order: 9,
