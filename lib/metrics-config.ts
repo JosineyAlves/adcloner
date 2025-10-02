@@ -108,17 +108,6 @@ export const ALL_METRICS: MetricConfig[] = [
     category: 'reach'
   },
   {
-    id: 'unique_ctr',
-    label: 'CTR único (todos)',
-    description: 'Taxa de cliques única',
-    type: 'percentage',
-    visible: false,
-    order: 17,
-    category: 'reach'
-  },
-
-  // === MÉTRICAS DE ENGAJAMENTO ===
-  {
     id: 'inline_link_clicks',
     label: 'Cliques no Link',
     description: 'Cliques em links dentro do anúncio',
@@ -128,12 +117,21 @@ export const ALL_METRICS: MetricConfig[] = [
     category: 'engagement'
   },
   {
+    id: 'unique_ctr',
+    label: 'CTR único (todos)',
+    description: 'Taxa de cliques única',
+    type: 'percentage',
+    visible: false,
+    order: 16,
+    category: 'reach'
+  },
+  {
     id: 'inline_link_click_ctr',
     label: 'CTR (taxa de cliques no link)',
     description: 'Taxa de cliques no links',
     type: 'percentage',
     visible: false,
-    order: 18,
+    order: 17,
     category: 'engagement'
   },
   {
@@ -142,7 +140,7 @@ export const ALL_METRICS: MetricConfig[] = [
     description: 'Engajamento com post',
     type: 'number',
     visible: false,
-    order: 19,
+    order: 18,
     category: 'engagement'
   },
   {
@@ -151,7 +149,7 @@ export const ALL_METRICS: MetricConfig[] = [
     description: 'Cliques únicos em links inline',
     type: 'number',
     visible: false,
-    order: 20,
+    order: 19,
     category: 'engagement'
   },
   {
@@ -160,7 +158,7 @@ export const ALL_METRICS: MetricConfig[] = [
     description: 'Taxa de cliques única no link',
     type: 'percentage',
     visible: false,
-    order: 21,
+    order: 20,
     category: 'engagement'
   },
 
@@ -171,7 +169,7 @@ export const ALL_METRICS: MetricConfig[] = [
     description: 'Ações de reprodução de vídeo',
     type: 'number',
     visible: false,
-    order: 23,
+    order: 21,
     category: 'video'
   },
   {
@@ -180,7 +178,7 @@ export const ALL_METRICS: MetricConfig[] = [
     description: 'Número de vezes que o vídeo foi reproduzido até 25% do seu comprimento',
     type: 'number',
     visible: false,
-    order: 24,
+    order: 22,
     category: 'video'
   },
   {
@@ -189,7 +187,7 @@ export const ALL_METRICS: MetricConfig[] = [
     description: 'Número de vezes que o vídeo foi reproduzido até 50% do seu comprimento',
     type: 'number',
     visible: false,
-    order: 25,
+    order: 23,
     category: 'video'
   },
   {
@@ -198,7 +196,7 @@ export const ALL_METRICS: MetricConfig[] = [
     description: 'Número de vezes que o vídeo foi reproduzido até 75% do seu comprimento',
     type: 'number',
     visible: false,
-    order: 26,
+    order: 24,
     category: 'video'
   },
   {
@@ -207,7 +205,7 @@ export const ALL_METRICS: MetricConfig[] = [
     description: 'Número de vezes que o vídeo foi reproduzido até 100% do seu comprimento',
     type: 'number',
     visible: false,
-    order: 27,
+    order: 25,
     category: 'video'
   }
 ]

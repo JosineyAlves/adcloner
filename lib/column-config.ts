@@ -81,7 +81,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'currency',
     format: (value) => `R$ ${parseFloat(value || '0').toFixed(2)}`,
     visible: true,
-    order: 7,
+    order: 6,
     fixed: true // Sempre visível
   },
   {
@@ -91,7 +91,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'currency',
     format: (value) => `R$ ${parseFloat(value || '0').toFixed(2)}`,
     visible: true,
-    order: 8,
+    order: 4,
     fixed: true // Sempre visível
   },
   {
@@ -101,7 +101,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'percentage',
     format: (value) => `${parseFloat(value || '0').toFixed(2)}%`,
     visible: true,
-    order: 9,
+    order: 5,
     fixed: true // Sempre visível
   },
 
@@ -113,7 +113,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: false,
-    order: 12
+    order: 15
   },
   {
     id: 'inline_post_engagement',
@@ -122,7 +122,7 @@ export const DEFAULT_COLUMNS: ColumnConfig[] = [
     type: 'number',
     format: (value) => parseInt(value || '0').toLocaleString(),
     visible: false,
-    order: 13
+    order: 18
   },
 
   // Métricas de conversão
