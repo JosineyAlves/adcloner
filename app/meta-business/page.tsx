@@ -21,17 +21,20 @@ import {
   Megaphone
 } from 'lucide-react'
 import { ALL_METRICS, MAIN_METRICS, MetricConfig } from '@/lib/metrics-config'
+import AccountsIcon from '@/components/meta-business/icons/AccountsIcon'
 import CampaignsIcon from '@/components/meta-business/icons/CampaignsIcon'
 import AdSetsIcon from '@/components/meta-business/icons/AdSetsIcon'
 import AdsIcon from '@/components/meta-business/icons/AdsIcon'
 import Sidebar from '@/components/layout/Sidebar'
 import StatsCard from '@/components/dashboard/StatsCard'
 import DateSelector, { DateRange } from '@/components/dashboard/DateSelector'
+import AccountsTable from '@/components/meta-business/AccountsTable'
 import CampaignsTable from '@/components/meta-business/CampaignsTable'
 import AdSetsTable from '@/components/meta-business/AdSetsTable'
 import AdsTable from '@/components/meta-business/AdsTable'
 import MetaBusinessMetricsSelector from '@/components/meta-business/MetricsSelector'
 import { 
+  MetaAccount,
   MetaCampaign, 
   MetaAdSet, 
   MetaAd, 
@@ -42,10 +45,11 @@ import { useDebounce } from '@/lib/debounce'
 import toast from 'react-hot-toast'
 
 export default function MetaBusinessPage() {
-  const { accounts, isLoading: accountsLoading, refreshAccounts } = useApp()
-  const [activeTab, setActiveTab] = useState<'campaigns' | 'adsets' | 'ads'>('campaigns')
+  const { accounts: facebookAccounts, isLoading: accountsLoading, refreshAccounts } = useApp()
+  const [activeTab, setActiveTab] = useState<'accounts' | 'campaigns' | 'adsets' | 'ads'>('accounts')
   const [datePreset, setDatePreset] = useState('last_30d')
   const [customRange, setCustomRange] = useState<DateRange | undefined>(undefined)
+  const [accounts, setAccounts] = useState<MetaAccount[]>([])
   const [campaigns, setCampaigns] = useState<MetaCampaign[]>([])
   const [adSets, setAdSets] = useState<MetaAdSet[]>([])
   const [ads, setAds] = useState<MetaAd[]>([])
@@ -89,7 +93,7 @@ export default function MetaBusinessPage() {
   const fetchData = useCallback(async () => {
     try {
       setIsRefreshing(true)
-      const activeAccounts = accounts.filter(a => a.status === 'active')
+      const activeAccounts = facebookAccounts.filter(a => a.status === 'active')
       
       if (activeAccounts.length === 0) {
         toast.error('Nenhuma conta ativa encontrada')
@@ -97,12 +101,23 @@ export default function MetaBusinessPage() {
       }
 
       // Buscar dados de todas as contas ativas
+      const allAccounts: MetaAccount[] = []
       const allCampaigns: MetaCampaign[] = []
       const allAdSets: MetaAdSet[] = []
       const allAds: MetaAd[] = []
 
       for (const account of activeAccounts) {
         try {
+          // Buscar dados da conta
+          const accountsResponse = await fetch(`/api/meta-business/accounts?accountId=${account.id}&datePreset=${datePreset}${customRange ? `&since=${customRange.since}&until=${customRange.until}` : ''}`, {
+            credentials: 'include'
+          })
+          
+          if (accountsResponse.ok) {
+            const accountsData = await accountsResponse.json()
+            allAccounts.push(...accountsData.accounts || [])
+          }
+
           // Buscar campanhas
           const campaignsResponse = await fetch(`/api/meta-business/campaigns?accountId=${account.id}&datePreset=${datePreset}${customRange ? `&since=${customRange.since}&until=${customRange.until}` : ''}`, {
             credentials: 'include'
@@ -137,12 +152,13 @@ export default function MetaBusinessPage() {
         }
       }
 
+      setAccounts(allAccounts)
       setCampaigns(allCampaigns)
       setAdSets(allAdSets)
       setAds(allAds)
 
       // Calcular estatísticas
-      calculateStats(allCampaigns, allAdSets, allAds)
+      calculateStats(allAccounts, allCampaigns, allAdSets, allAds)
       
     } catch (error) {
       console.error('Error fetching data:', error)
@@ -150,12 +166,14 @@ export default function MetaBusinessPage() {
     } finally {
       setIsRefreshing(false)
     }
-  }, [accounts, datePreset, customRange])
+  }, [facebookAccounts, datePreset, customRange])
 
-  const calculateStats = (campaigns: MetaCampaign[], adSets: MetaAdSet[], ads: MetaAd[]) => {
-    const totalSpend = campaigns.reduce((sum, c) => sum + c.spend, 0)
-    const totalImpressions = campaigns.reduce((sum, c) => sum + c.impressions, 0)
-    const totalClicks = campaigns.reduce((sum, c) => sum + c.clicks, 0)
+  const calculateStats = (accounts: MetaAccount[], campaigns: MetaCampaign[], adSets: MetaAdSet[], ads: MetaAd[]) => {
+    // Usar dados das contas se disponíveis, senão usar campanhas
+    const dataSource = accounts.length > 0 ? accounts : campaigns
+    const totalSpend = dataSource.reduce((sum, c) => sum + c.spend, 0)
+    const totalImpressions = dataSource.reduce((sum, c) => sum + c.impressions, 0)
+    const totalClicks = dataSource.reduce((sum, c) => sum + c.clicks, 0)
     
     setStats({
       totalSpend,
@@ -188,7 +206,7 @@ export default function MetaBusinessPage() {
       // Usar ref para evitar dependência circular
       fetchDataRef.current()
     }
-  }, [accounts, datePreset, customRange])
+  }, [facebookAccounts, datePreset, customRange])
 
   const handleRefresh = useDebounce('meta-business-refresh', async () => {
     await refreshAccounts()
@@ -520,6 +538,7 @@ export default function MetaBusinessPage() {
               <div className="border-b border-gray-200 dark:border-gray-700">
                 <nav className="flex space-x-8 px-6">
                   {[
+                    { id: 'accounts', label: 'Contas', icon: AccountsIcon, count: accounts.length },
                     { id: 'campaigns', label: 'Campanhas', icon: CampaignsIcon, count: filteredCampaigns.length },
                     { id: 'adsets', label: 'Conjuntos', icon: AdSetsIcon, count: filteredAdSets.length },
                     { id: 'ads', label: 'Anúncios', icon: AdsIcon, count: filteredAds.length }
@@ -547,6 +566,14 @@ export default function MetaBusinessPage() {
               </div>
 
               <div className="p-6">
+                {activeTab === 'accounts' && (
+                  <AccountsTable
+                    accounts={accounts}
+                    metrics={metrics}
+                    showMetrics={true}
+                  />
+                )}
+                
                 {activeTab === 'campaigns' && (
                   <CampaignsTable
                     campaigns={filteredCampaigns}
