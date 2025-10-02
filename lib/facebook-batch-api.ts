@@ -224,7 +224,7 @@ export class FacebookBatchAPI {
       'reach',
       'frequency',
       
-      // Métricas de custo
+      // Métricas de custo (baseado na documentação oficial do Meta)
       'cpm',
       'cpc',
       'ctr',
@@ -234,6 +234,12 @@ export class FacebookBatchAPI {
       'cost_per_unique_click',
       'cost_per_unique_inline_link_click',
       'cost_per_landing_page_view',
+      'cost_per_ad_click',
+      'cost_per_outbound_click',
+      'cost_per_unique_outbound_click',
+      'cost_per_thruplay',
+      'cost_per_15_sec_video_view',
+      'cost_per_2_sec_continuous_video_view',
       
       // Métricas de engajamento (apenas as válidas)
       'inline_link_clicks',
@@ -245,19 +251,15 @@ export class FacebookBatchAPI {
       'conversion_values',
       'conversion_rate_ranking',
       
-      // Métricas de vídeo (apenas as válidas na API de Insights)
+      // Métricas de vídeo (baseado na documentação oficial do Meta)
       'video_play_actions',
-      'video_play_curve_actions',
-      
-      // Métricas de vídeo - Porcentagem de visualização
       'video_p25_watched_actions',
       'video_p50_watched_actions',
       'video_p75_watched_actions',
+      'video_p95_watched_actions',
       'video_p100_watched_actions',
-      
-      // Métricas de vídeo - Tempo
-      'video_30_sec_watched_actions',
-      'video_avg_time_watched_actions',
+      'video_continuous_2_sec_watched_actions',
+      'video_time_watched_actions',
       
       // Métricas de qualidade
       'quality_ranking',
@@ -316,7 +318,7 @@ export class FacebookBatchAPI {
       'reach',
       'frequency',
       
-      // Métricas de custo
+      // Métricas de custo (baseado na documentação oficial do Meta)
       'cpm',
       'cpc',
       'ctr',
@@ -326,6 +328,12 @@ export class FacebookBatchAPI {
       'cost_per_unique_click',
       'cost_per_unique_inline_link_click',
       'cost_per_landing_page_view',
+      'cost_per_ad_click',
+      'cost_per_outbound_click',
+      'cost_per_unique_outbound_click',
+      'cost_per_thruplay',
+      'cost_per_15_sec_video_view',
+      'cost_per_2_sec_continuous_video_view',
       
       // Métricas de engajamento (apenas as válidas)
       'inline_link_clicks',
@@ -337,19 +345,15 @@ export class FacebookBatchAPI {
       'conversion_values',
       'conversion_rate_ranking',
       
-      // Métricas de vídeo (apenas as válidas na API de Insights)
+      // Métricas de vídeo (baseado na documentação oficial do Meta)
       'video_play_actions',
-      'video_play_curve_actions',
-      
-      // Métricas de vídeo - Porcentagem de visualização
       'video_p25_watched_actions',
       'video_p50_watched_actions',
       'video_p75_watched_actions',
+      'video_p95_watched_actions',
       'video_p100_watched_actions',
-      
-      // Métricas de vídeo - Tempo
-      'video_30_sec_watched_actions',
-      'video_avg_time_watched_actions',
+      'video_continuous_2_sec_watched_actions',
+      'video_time_watched_actions',
       
       // Métricas de qualidade
       'quality_ranking',
@@ -408,7 +412,7 @@ export class FacebookBatchAPI {
       'reach',
       'frequency',
       
-      // Métricas de custo
+      // Métricas de custo (baseado na documentação oficial do Meta)
       'cpm',
       'cpc',
       'ctr',
@@ -418,6 +422,12 @@ export class FacebookBatchAPI {
       'cost_per_unique_click',
       'cost_per_unique_inline_link_click',
       'cost_per_landing_page_view',
+      'cost_per_ad_click',
+      'cost_per_outbound_click',
+      'cost_per_unique_outbound_click',
+      'cost_per_thruplay',
+      'cost_per_15_sec_video_view',
+      'cost_per_2_sec_continuous_video_view',
       
       // Métricas de engajamento (apenas as válidas)
       'inline_link_clicks',
@@ -429,19 +439,15 @@ export class FacebookBatchAPI {
       'conversion_values',
       'conversion_rate_ranking',
       
-      // Métricas de vídeo (apenas as válidas na API de Insights)
+      // Métricas de vídeo (baseado na documentação oficial do Meta)
       'video_play_actions',
-      'video_play_curve_actions',
-      
-      // Métricas de vídeo - Porcentagem de visualização
       'video_p25_watched_actions',
       'video_p50_watched_actions',
       'video_p75_watched_actions',
+      'video_p95_watched_actions',
       'video_p100_watched_actions',
-      
-      // Métricas de vídeo - Tempo
-      'video_30_sec_watched_actions',
-      'video_avg_time_watched_actions',
+      'video_continuous_2_sec_watched_actions',
+      'video_time_watched_actions',
       
       // Métricas de qualidade
       'quality_ranking',
