@@ -7,8 +7,8 @@ const facebookBatchAPI = new FacebookBatchAPI()
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const accountId = searchParams.get('account_id')
-    const datePreset = searchParams.get('date_preset') || 'last_7d'
+    const accountId = searchParams.get('accountId') || searchParams.get('account_id')
+    const datePreset = searchParams.get('datePreset') || searchParams.get('date_preset') || 'last_7d'
     const since = searchParams.get('since')
     const until = searchParams.get('until')
     const accessToken = request.cookies.get('fb_access_token')?.value
