@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const datePreset = searchParams.get('date_preset') || 'last_7d'
     const since = searchParams.get('since')
     const until = searchParams.get('until')
-    const accessToken = request.headers.get('authorization')?.replace('Bearer ', '')
+    const accessToken = request.cookies.get('fb_access_token')?.value
 
     if (!accessToken) {
       return NextResponse.json(

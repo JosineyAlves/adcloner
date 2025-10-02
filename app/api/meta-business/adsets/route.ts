@@ -189,7 +189,7 @@ export async function GET(request: NextRequest) {
             const metaAdSet = {
               id: adSet.id,
               name: adSet.name,
-              campaign_id: adSet.campaign?.id || '',
+              campaign_id: adSet.campaign_id || adSet.campaign?.id || '',
               campaign_name: adSet.campaign?.name || '',
               campaign_advantage_budget: campaignAdvantageBudget,
               status: adSet.status,

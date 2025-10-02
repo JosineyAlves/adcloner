@@ -198,9 +198,9 @@ export async function GET(request: NextRequest) {
                   const metaAd = {
                     id: ad.id,
                     name: ad.name,
-                    adset_id: ad.adset?.id || '',
+                    adset_id: ad.adset_id || ad.adset?.id || '',
                     adset_name: ad.adset?.name || '',
-              campaign_id: ad.campaign?.id || '',
+              campaign_id: ad.campaign_id || ad.campaign?.id || '',
               campaign_name: ad.campaign?.name || '',
                     status: ad.status,
                     effective_status: ad.effective_status || ad.status,
