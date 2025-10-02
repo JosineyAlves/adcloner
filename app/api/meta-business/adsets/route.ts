@@ -217,7 +217,7 @@ export async function GET(request: NextRequest) {
               ctr: insights.ctr,
               cost_per_unique_click: insights.cost_per_unique_click,
               cost_per_unique_inline_link_click: insights.cost_per_unique_inline_link_click,
-              cost_per_inline_link_click: (insights as any).cost_per_inline_link_click || 0,
+              cost_per_inline_link_click: (insights as any).cost_per_inline_link_click,
               
               // Métricas de engajamento (disponíveis em todos os níveis)
               inline_link_clicks: insights.inline_link_clicks,
