@@ -232,6 +232,7 @@ export class FacebookBatchAPI {
       'cost_per_action_type',
       'cost_per_inline_link_click',
       'cost_per_unique_click',
+      'cost_per_unique_inline_link_click',
       'cost_per_landing_page_view',
       
       // Métricas de engajamento (apenas as válidas)
@@ -323,6 +324,7 @@ export class FacebookBatchAPI {
       'cost_per_action_type',
       'cost_per_inline_link_click',
       'cost_per_unique_click',
+      'cost_per_unique_inline_link_click',
       'cost_per_landing_page_view',
       
       // Métricas de engajamento (apenas as válidas)
@@ -414,6 +416,7 @@ export class FacebookBatchAPI {
       'cost_per_action_type',
       'cost_per_inline_link_click',
       'cost_per_unique_click',
+      'cost_per_unique_inline_link_click',
       'cost_per_landing_page_view',
       
       // Métricas de engajamento (apenas as válidas)

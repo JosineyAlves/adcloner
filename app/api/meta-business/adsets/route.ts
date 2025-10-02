@@ -127,6 +127,8 @@ export async function GET(request: NextRequest) {
               const insightsData = JSON.parse(insightsResponse.body || '{}')
               if (insightsData.data && insightsData.data.length > 0) {
                 const insight = insightsData.data[0]
+                // Debug: Log detalhado de TODOS os campos retornados pela API
+                console.log(`🔍 AdSet ${adSet.id} - Dados completos da API:`, JSON.stringify(insight, null, 2))
                 // Debug: Log dos valores de reach e frequency
                 console.log(`🔍 AdSet ${adSet.id} - Reach da API: ${insight.reach}, Frequency da API: ${insight.frequency}`)
                 // Debug: Log dos valores de CPC
