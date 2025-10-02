@@ -89,44 +89,38 @@ export async function GET(request: NextRequest) {
           
                 try {
                   let insights = {
+                    // Métricas básicas (disponíveis em todos os níveis)
                     impressions: 0,
                     clicks: 0,
                     spend: 0,
-              reach: 0,
-              frequency: 0,
-              
-              // Métricas de custo
-              cpm: 0,
+                    reach: 0,
+                    frequency: 0,
+                    
+                    // Métricas de custo (disponíveis em todos os níveis)
+                    cpm: 0,
                     cpc: 0,
-              ctr: 0,
-              cost_per_unique_click: 0,
-              cost_per_unique_inline_link_click: 0,
-              
-              // Métricas de engajamento
-              inline_link_clicks: 0,
-              inline_link_click_ctr: 0,
-              inline_post_engagement: 0,
-              
-              // Métricas de alcance e frequência
-              unique_clicks: 0,
-              unique_inline_link_clicks: 0,
-              unique_inline_link_click_ctr: 0,
-              unique_ctr: 0,
-              
-              // Métricas de vídeo (apenas as válidas na API de Insights)
-              video_play_actions: 0,
-              video_play_curve_actions: 0,
-              
-              // Métricas de vídeo - Porcentagem de visualização
-              video_p25_watched_actions: 0,
-              video_p50_watched_actions: 0,
-              video_p75_watched_actions: 0,
-              video_p100_watched_actions: 0,
-              
-              // Métricas de vídeo - Tempo
-              video_30_sec_watched_actions: 0,
-              video_avg_time_watched_actions: 0
-            }
+                    ctr: 0,
+                    cost_per_unique_click: 0,
+                    cost_per_unique_inline_link_click: 0,
+                    
+                    // Métricas de engajamento (disponíveis em todos os níveis)
+                    inline_link_clicks: 0,
+                    inline_link_click_ctr: 0,
+                    inline_post_engagement: 0,
+                    
+                    // Métricas únicas (disponíveis em todos os níveis)
+                    unique_clicks: 0,
+                    unique_inline_link_clicks: 0,
+                    unique_inline_link_click_ctr: 0,
+                    unique_ctr: 0,
+                    
+                    // Métricas de vídeo (disponíveis em todos os níveis)
+                    video_play_actions: 0,
+                    video_p25_watched_actions: 0,
+                    video_p50_watched_actions: 0,
+                    video_p75_watched_actions: 0,
+                    video_p100_watched_actions: 0
+                  }
 
             if (insightsResponse.code === 200) {
               const insightsData = JSON.parse(insightsResponse.body || '{}')
@@ -137,44 +131,38 @@ export async function GET(request: NextRequest) {
                     // Debug: Log dos valores de CPC
                     console.log(`💰 Ad ${ad.id} - CPC: ${insight.cpc}, Cost per unique click: ${insight.cost_per_unique_click}, Cost per unique inline link click: ${insight.cost_per_unique_inline_link_click}`)
                     insights = {
+                      // Métricas básicas (disponíveis em todos os níveis)
                       impressions: parseInt(insight.impressions || '0'),
                       clicks: parseInt(insight.clicks || '0'),
                       spend: parseFloat(insight.spend || '0'),
-                  reach: parseInt(insight.reach || '0'),
-                  frequency: parseFloat(insight.frequency || '0'),
-                  
-                  // Métricas de custo
-                  cpm: parseFloat(insight.cpm || '0'),
-                  cpc: parseFloat(insight.cpc || '0'),
-                  ctr: parseFloat(insight.ctr || '0'),
-                  cost_per_unique_click: parseFloat(insight.cost_per_unique_click || '0'),
-                  cost_per_unique_inline_link_click: parseFloat(insight.cost_per_unique_inline_link_click || '0'),
-                  
-                  // Métricas de engajamento
-                  inline_link_clicks: parseInt(insight.inline_link_clicks || '0'),
-                  inline_link_click_ctr: parseFloat(insight.inline_link_click_ctr || '0'),
-                  inline_post_engagement: parseInt(insight.inline_post_engagement || '0'),
-                  
-                  // Métricas de alcance e frequência
-                  unique_clicks: parseInt(insight.unique_clicks || '0'),
-                  unique_inline_link_clicks: parseInt(insight.unique_inline_link_clicks || '0'),
-                  unique_inline_link_click_ctr: parseFloat(insight.unique_inline_link_click_ctr || '0'),
-                  unique_ctr: parseFloat(insight.unique_ctr || '0'),
-                  
-                // Métricas de vídeo (apenas as válidas na API de Insights)
-                video_play_actions: processVideoMetric(insight.video_play_actions),
-                video_play_curve_actions: processVideoMetric(insight.video_play_curve_actions),
-                  
-                  // Métricas de vídeo - Porcentagem de visualização (processar arrays de AdsActionStats)
-                  video_p25_watched_actions: processVideoMetric(insight.video_p25_watched_actions),
-                  video_p50_watched_actions: processVideoMetric(insight.video_p50_watched_actions),
-                  video_p75_watched_actions: processVideoMetric(insight.video_p75_watched_actions),
-                  video_p100_watched_actions: processVideoMetric(insight.video_p100_watched_actions),
-                  
-                  // Métricas de vídeo - Tempo
-                  video_30_sec_watched_actions: processVideoMetric(insight.video_30_sec_watched_actions),
-                  video_avg_time_watched_actions: processVideoMetric(insight.video_avg_time_watched_actions)
-                }
+                      reach: parseInt(insight.reach || '0'),
+                      frequency: parseFloat(insight.frequency || '0'),
+                      
+                      // Métricas de custo (disponíveis em todos os níveis)
+                      cpm: parseFloat(insight.cpm || '0'),
+                      cpc: parseFloat(insight.cpc || '0'),
+                      ctr: parseFloat(insight.ctr || '0'),
+                      cost_per_unique_click: parseFloat(insight.cost_per_unique_click || '0'),
+                      cost_per_unique_inline_link_click: parseFloat(insight.cost_per_unique_inline_link_click || '0'),
+                      
+                      // Métricas de engajamento (disponíveis em todos os níveis)
+                      inline_link_clicks: parseInt(insight.inline_link_clicks || '0'),
+                      inline_link_click_ctr: parseFloat(insight.inline_link_click_ctr || '0'),
+                      inline_post_engagement: parseInt(insight.inline_post_engagement || '0'),
+                      
+                      // Métricas únicas (disponíveis em todos os níveis)
+                      unique_clicks: parseInt(insight.unique_clicks || '0'),
+                      unique_inline_link_clicks: parseInt(insight.unique_inline_link_clicks || '0'),
+                      unique_inline_link_click_ctr: parseFloat(insight.unique_inline_link_click_ctr || '0'),
+                      unique_ctr: parseFloat(insight.unique_ctr || '0'),
+                      
+                      // Métricas de vídeo (disponíveis em todos os níveis)
+                      video_play_actions: processVideoMetric(insight.video_play_actions),
+                      video_p25_watched_actions: processVideoMetric(insight.video_p25_watched_actions),
+                      video_p50_watched_actions: processVideoMetric(insight.video_p50_watched_actions),
+                      video_p75_watched_actions: processVideoMetric(insight.video_p75_watched_actions),
+                      video_p100_watched_actions: processVideoMetric(insight.video_p100_watched_actions)
+                    }
               }
             } else {
               console.warn(`⚠️ Erro ao buscar insights do ad ${ad.id}:`, insightsResponse)
@@ -222,43 +210,37 @@ export async function GET(request: NextRequest) {
                 link_url: ad.creative?.link_url || '',
                 call_to_action_type: ad.creative?.call_to_action_type || 'LEARN_MORE'
                     },
+                    // Métricas básicas (disponíveis em todos os níveis)
                     spend: insights.spend,
                     impressions: insights.impressions,
                     clicks: insights.clicks,
-              reach: insights.reach,
-              frequency: insights.frequency,
-              
-              // Métricas de custo
-              cpm: insights.cpm,
-              cpc: insights.cpc,
-              ctr: insights.ctr,
-              cost_per_unique_click: insights.cost_per_unique_click,
-              cost_per_unique_inline_link_click: insights.cost_per_unique_inline_link_click,
-              
-              // Métricas de engajamento
-              inline_link_clicks: insights.inline_link_clicks,
-              inline_link_click_ctr: insights.inline_link_click_ctr,
-              inline_post_engagement: insights.inline_post_engagement,
-              
-              // Métricas de alcance e frequência
-              unique_clicks: insights.unique_clicks,
-              unique_inline_link_clicks: insights.unique_inline_link_clicks,
-              unique_inline_link_click_ctr: insights.unique_inline_link_click_ctr,
-              unique_ctr: insights.unique_ctr,
-              
-              // Métricas de vídeo (apenas as válidas na API de Insights)
-              video_play_actions: insights.video_play_actions || 0,
-              video_play_curve_actions: insights.video_play_curve_actions || 0,
-              
-              // Métricas de vídeo - Porcentagem de visualização
-              video_p25_watched_actions: insights.video_p25_watched_actions || 0,
-              video_p50_watched_actions: insights.video_p50_watched_actions || 0,
-              video_p75_watched_actions: insights.video_p75_watched_actions || 0,
-              video_p100_watched_actions: insights.video_p100_watched_actions || 0,
-              
-              // Métricas de vídeo - Tempo
-              video_30_sec_watched_actions: insights.video_30_sec_watched_actions || 0,
-              video_avg_time_watched_actions: insights.video_avg_time_watched_actions || 0,
+                    reach: insights.reach,
+                    frequency: insights.frequency,
+                    
+                    // Métricas de custo (disponíveis em todos os níveis)
+                    cpm: insights.cpm,
+                    cpc: insights.cpc,
+                    ctr: insights.ctr,
+                    cost_per_unique_click: insights.cost_per_unique_click,
+                    cost_per_unique_inline_link_click: insights.cost_per_unique_inline_link_click,
+                    
+                    // Métricas de engajamento (disponíveis em todos os níveis)
+                    inline_link_clicks: insights.inline_link_clicks,
+                    inline_link_click_ctr: insights.inline_link_click_ctr,
+                    inline_post_engagement: insights.inline_post_engagement,
+                    
+                    // Métricas únicas (disponíveis em todos os níveis)
+                    unique_clicks: insights.unique_clicks,
+                    unique_inline_link_clicks: insights.unique_inline_link_clicks,
+                    unique_inline_link_click_ctr: insights.unique_inline_link_click_ctr,
+                    unique_ctr: insights.unique_ctr,
+                    
+                    // Métricas de vídeo (disponíveis em todos os níveis)
+                    video_play_actions: insights.video_play_actions || 0,
+                    video_p25_watched_actions: insights.video_p25_watched_actions || 0,
+                    video_p50_watched_actions: insights.video_p50_watched_actions || 0,
+                    video_p75_watched_actions: insights.video_p75_watched_actions || 0,
+                    video_p100_watched_actions: insights.video_p100_watched_actions || 0,
               
               // Métricas de vídeo detalhadas
               videoMetrics: videoMetrics,
@@ -290,43 +272,37 @@ export async function GET(request: NextRequest) {
                 link_url: ad.creative?.link_url || '',
                 call_to_action_type: ad.creative?.call_to_action_type || 'LEARN_MORE'
               },
+              // Métricas básicas (disponíveis em todos os níveis)
               spend: 0,
               impressions: 0,
               clicks: 0,
               reach: 0,
               frequency: 0,
               
-              // Métricas de custo
+              // Métricas de custo (disponíveis em todos os níveis)
               cpm: 0,
               cpc: 0,
               ctr: 0,
               cost_per_unique_click: 0,
               cost_per_unique_inline_link_click: 0,
               
-              // Métricas de engajamento
+              // Métricas de engajamento (disponíveis em todos os níveis)
               inline_link_clicks: 0,
               inline_link_click_ctr: 0,
               inline_post_engagement: 0,
               
-              // Métricas de alcance e frequência
+              // Métricas únicas (disponíveis em todos os níveis)
               unique_clicks: 0,
               unique_inline_link_clicks: 0,
               unique_inline_link_click_ctr: 0,
               unique_ctr: 0,
               
-              // Métricas de vídeo (apenas as válidas na API de Insights)
+              // Métricas de vídeo (disponíveis em todos os níveis)
               video_play_actions: 0,
-              video_play_curve_actions: 0,
-              
-              // Métricas de vídeo - Porcentagem de visualização
               video_p25_watched_actions: 0,
               video_p50_watched_actions: 0,
               video_p75_watched_actions: 0,
               video_p100_watched_actions: 0,
-              
-              // Métricas de vídeo - Tempo
-              video_30_sec_watched_actions: 0,
-              video_avg_time_watched_actions: 0,
               
               created_time: ad.created_time,
               updated_time: ad.updated_time,

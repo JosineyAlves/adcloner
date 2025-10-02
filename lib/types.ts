@@ -168,19 +168,12 @@ export interface MetaCampaign {
   conversion_values: number
   conversion_rate_ranking: number
   
-  // Métricas de vídeo (apenas as válidas na API de Insights)
+  // Métricas de vídeo (disponíveis em todos os níveis)
   video_play_actions: number
-  video_play_curve_actions: number
-  
-  // Métricas de vídeo - Porcentagem de visualização
   video_p25_watched_actions: number
   video_p50_watched_actions: number
   video_p75_watched_actions: number
   video_p100_watched_actions: number
-  
-  // Métricas de vídeo - Tempo
-  video_30_sec_watched_actions: number
-  video_avg_time_watched_actions: number
   
   // Métricas de qualidade
   quality_ranking: number

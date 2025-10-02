@@ -93,60 +93,49 @@ export async function GET(request: NextRequest) {
           
           try {
             let insights = {
-              // Métricas básicas
+              // Métricas básicas (disponíveis em todos os níveis)
               impressions: 0,
               clicks: 0,
               spend: 0,
               reach: 0,
               frequency: 0,
               
-              // Métricas de custo
+              // Métricas de custo (disponíveis em todos os níveis)
               cpm: 0,
               cpc: 0,
               ctr: 0,
-              cost_per_conversion: 0,
-              cost_per_action_type: 0,
-              cost_per_inline_link_click: 0,
               cost_per_unique_click: 0,
               cost_per_unique_inline_link_click: 0,
-              cost_per_landing_page_view: 0,
               
-              // Métricas de engajamento (apenas as válidas)
+              // Métricas de engajamento (disponíveis em todos os níveis)
               inline_link_clicks: 0,
               inline_link_click_ctr: 0,
               inline_post_engagement: 0,
               
-              // Métricas de conversão
-              conversions: 0,
-              conversion_values: 0,
-              conversion_rate_ranking: 0,
+              // Métricas únicas (disponíveis em todos os níveis)
+              unique_clicks: 0,
+              unique_inline_link_clicks: 0,
+              unique_inline_link_click_ctr: 0,
+              unique_ctr: 0,
               
-              // Métricas de vídeo (apenas as válidas na API de Insights)
+              // Métricas de vídeo (disponíveis em todos os níveis)
               video_play_actions: 0,
-              video_play_curve_actions: 0,
-              
-              // Métricas de vídeo - Porcentagem de visualização
               video_p25_watched_actions: 0,
               video_p50_watched_actions: 0,
               video_p75_watched_actions: 0,
               video_p100_watched_actions: 0,
               
-              // Métricas de vídeo - Tempo
-              video_30_sec_watched_actions: 0,
-              video_avg_time_watched_actions: 0,
-              
-              // Métricas de qualidade
+              // Métricas específicas de campanhas (não disponíveis em adsets/ads)
+              cost_per_conversion: 0,
+              cost_per_action_type: 0,
+              cost_per_inline_link_click: 0,
+              cost_per_landing_page_view: 0,
+              conversions: 0,
+              conversion_values: 0,
+              conversion_rate_ranking: 0,
               quality_ranking: 0,
               engagement_rate_ranking: 0,
-              
-              // Métricas de ações (apenas as válidas)
-              actions: 0,
-              
-              // Métricas de alcance e frequência (apenas as válidas)
-              unique_clicks: 0,
-              unique_inline_link_clicks: 0,
-              unique_inline_link_click_ctr: 0,
-              unique_ctr: 0
+              actions: 0
             }
 
             if (insightsResponse.code === 200) {
@@ -158,60 +147,49 @@ export async function GET(request: NextRequest) {
               // Debug: Log dos valores de CPC
               console.log(`💰 Campaign ${campaign.id} - CPC: ${insight.cpc}, Cost per unique click: ${insight.cost_per_unique_click}, Cost per unique inline link click: ${insight.cost_per_unique_inline_link_click}`)
               insights = {
-                // Métricas básicas
+                // Métricas básicas (disponíveis em todos os níveis)
                 impressions: parseInt(insight.impressions || '0'),
                 clicks: parseInt(insight.clicks || '0'),
                 spend: parseFloat(insight.spend || '0'),
                 reach: parseInt(insight.reach || '0'),
                 frequency: parseFloat(insight.frequency || '0'),
                 
-                // Métricas de custo
+                // Métricas de custo (disponíveis em todos os níveis)
                 cpm: parseFloat(insight.cpm || '0'),
                 cpc: parseFloat(insight.cpc || '0'),
                 ctr: parseFloat(insight.ctr || '0'),
-                cost_per_conversion: parseFloat(insight.cost_per_conversion || '0'),
-                cost_per_action_type: parseFloat(insight.cost_per_action_type || '0'),
-                cost_per_inline_link_click: parseFloat(insight.cost_per_inline_link_click || '0'),
                 cost_per_unique_click: parseFloat(insight.cost_per_unique_click || '0'),
                 cost_per_unique_inline_link_click: parseFloat(insight.cost_per_unique_inline_link_click || '0'),
-                cost_per_landing_page_view: parseFloat(insight.cost_per_landing_page_view || '0'),
                 
-                // Métricas de engajamento (apenas as válidas)
+                // Métricas de engajamento (disponíveis em todos os níveis)
                 inline_link_clicks: parseInt(insight.inline_link_clicks || '0'),
                 inline_link_click_ctr: parseFloat(insight.inline_link_click_ctr || '0'),
                 inline_post_engagement: parseInt(insight.inline_post_engagement || '0'),
                 
-                // Métricas de conversão
-                conversions: parseInt(insight.conversions || '0'),
-                conversion_values: parseFloat(insight.conversion_values || '0'),
-                conversion_rate_ranking: parseFloat(insight.conversion_rate_ranking || '0'),
+                // Métricas únicas (disponíveis em todos os níveis)
+                unique_clicks: parseInt(insight.unique_clicks || '0'),
+                unique_inline_link_clicks: parseInt(insight.unique_inline_link_clicks || '0'),
+                unique_inline_link_click_ctr: parseFloat(insight.unique_inline_link_click_ctr || '0'),
+                unique_ctr: parseFloat(insight.unique_ctr || '0'),
                 
-                // Métricas de vídeo (apenas as válidas na API de Insights)
+                // Métricas de vídeo (disponíveis em todos os níveis)
                 video_play_actions: processVideoMetric(insight.video_play_actions),
-                video_play_curve_actions: processVideoMetric(insight.video_play_curve_actions),
-                
-                // Métricas de vídeo - Porcentagem de visualização (processar arrays de AdsActionStats)
                 video_p25_watched_actions: processVideoMetric(insight.video_p25_watched_actions),
                 video_p50_watched_actions: processVideoMetric(insight.video_p50_watched_actions),
                 video_p75_watched_actions: processVideoMetric(insight.video_p75_watched_actions),
                 video_p100_watched_actions: processVideoMetric(insight.video_p100_watched_actions),
                 
-                // Métricas de vídeo - Tempo
-                video_30_sec_watched_actions: processVideoMetric(insight.video_30_sec_watched_actions),
-                video_avg_time_watched_actions: processVideoMetric(insight.video_avg_time_watched_actions),
-                
-                // Métricas de qualidade
+                // Métricas específicas de campanhas (não disponíveis em adsets/ads)
+                cost_per_conversion: parseFloat(insight.cost_per_conversion || '0'),
+                cost_per_action_type: parseFloat(insight.cost_per_action_type || '0'),
+                cost_per_inline_link_click: parseFloat(insight.cost_per_inline_link_click || '0'),
+                cost_per_landing_page_view: parseFloat(insight.cost_per_landing_page_view || '0'),
+                conversions: parseInt(insight.conversions || '0'),
+                conversion_values: parseFloat(insight.conversion_values || '0'),
+                conversion_rate_ranking: parseFloat(insight.conversion_rate_ranking || '0'),
                 quality_ranking: parseFloat(insight.quality_ranking || '0'),
                 engagement_rate_ranking: parseFloat(insight.engagement_rate_ranking || '0'),
-                
-                // Métricas de ações (apenas as válidas)
-                actions: parseInt(insight.actions || '0'),
-                
-                // Métricas de alcance e frequência (apenas as válidas)
-                unique_clicks: parseInt(insight.unique_clicks || '0'),
-                unique_inline_link_clicks: parseInt(insight.unique_inline_link_clicks || '0'),
-                unique_inline_link_click_ctr: parseFloat(insight.unique_inline_link_click_ctr || '0'),
-                unique_ctr: parseFloat(insight.unique_ctr || '0')
+                actions: parseInt(insight.actions || '0')
               }
               }
             } else {
@@ -240,60 +218,49 @@ export async function GET(request: NextRequest) {
               account_id: accountId,
               account_name: 'Facebook Account', // TODO: Buscar nome da conta
               
-              // Métricas básicas
+              // Métricas básicas (disponíveis em todos os níveis)
               spend: insights.spend,
               impressions: insights.impressions,
               clicks: insights.clicks,
               reach: insights.reach,
               frequency: insights.frequency,
               
-              // Métricas de custo
+              // Métricas de custo (disponíveis em todos os níveis)
               cpc: insights.cpc,
               ctr: insights.ctr,
               cpm: insights.cpm,
-              cost_per_conversion: insights.cost_per_conversion,
-              cost_per_action_type: insights.cost_per_action_type,
-              cost_per_inline_link_click: insights.cost_per_inline_link_click,
               cost_per_unique_click: insights.cost_per_unique_click,
               cost_per_unique_inline_link_click: insights.cost_per_unique_inline_link_click,
-              cost_per_landing_page_view: insights.cost_per_landing_page_view,
               
-              // Métricas de engajamento (apenas as válidas)
+              // Métricas de engajamento (disponíveis em todos os níveis)
               inline_link_clicks: insights.inline_link_clicks,
               inline_link_click_ctr: insights.inline_link_click_ctr,
               inline_post_engagement: insights.inline_post_engagement,
               
-              // Métricas de conversão
-              conversions: insights.conversions,
-              conversion_values: insights.conversion_values,
-              conversion_rate_ranking: insights.conversion_rate_ranking,
+              // Métricas únicas (disponíveis em todos os níveis)
+              unique_clicks: insights.unique_clicks,
+              unique_inline_link_clicks: insights.unique_inline_link_clicks,
+              unique_inline_link_click_ctr: insights.unique_inline_link_click_ctr,
+              unique_ctr: insights.unique_ctr,
               
-              // Métricas de vídeo (apenas as válidas na API de Insights)
+              // Métricas de vídeo (disponíveis em todos os níveis)
               video_play_actions: insights.video_play_actions,
-              video_play_curve_actions: insights.video_play_curve_actions,
-              
-              // Métricas de vídeo - Porcentagem de visualização
               video_p25_watched_actions: insights.video_p25_watched_actions,
               video_p50_watched_actions: insights.video_p50_watched_actions,
               video_p75_watched_actions: insights.video_p75_watched_actions,
               video_p100_watched_actions: insights.video_p100_watched_actions,
               
-              // Métricas de vídeo - Tempo
-              video_30_sec_watched_actions: insights.video_30_sec_watched_actions,
-              video_avg_time_watched_actions: insights.video_avg_time_watched_actions,
-              
-              // Métricas de qualidade
+              // Métricas específicas de campanhas (não disponíveis em adsets/ads)
+              cost_per_conversion: insights.cost_per_conversion,
+              cost_per_action_type: insights.cost_per_action_type,
+              cost_per_inline_link_click: insights.cost_per_inline_link_click,
+              cost_per_landing_page_view: insights.cost_per_landing_page_view,
+              conversions: insights.conversions,
+              conversion_values: insights.conversion_values,
+              conversion_rate_ranking: insights.conversion_rate_ranking,
               quality_ranking: insights.quality_ranking,
               engagement_rate_ranking: insights.engagement_rate_ranking,
-              
-              // Métricas de ações (apenas as válidas)
               actions: insights.actions,
-              
-              // Métricas de alcance e frequência (apenas as válidas)
-              unique_clicks: insights.unique_clicks,
-              unique_inline_link_clicks: insights.unique_inline_link_clicks,
-              unique_inline_link_click_ctr: insights.unique_inline_link_click_ctr,
-              unique_ctr: insights.unique_ctr,
               
               // Métricas de vídeo detalhadas
               videoMetrics: videoMetrics
@@ -320,60 +287,49 @@ export async function GET(request: NextRequest) {
               account_id: accountId,
               account_name: 'Facebook Account',
               
-              // Métricas básicas (valores padrão)
+              // Métricas básicas (disponíveis em todos os níveis)
               spend: 0,
               impressions: 0,
               clicks: 0,
               reach: 0,
               frequency: 0,
               
-              // Métricas de custo
+              // Métricas de custo (disponíveis em todos os níveis)
               cpc: 0,
               ctr: 0,
               cpm: 0,
-              cost_per_conversion: 0,
-              cost_per_action_type: 0,
-              cost_per_inline_link_click: 0,
               cost_per_unique_click: 0,
               cost_per_unique_inline_link_click: 0,
-              cost_per_landing_page_view: 0,
               
-              // Métricas de engajamento (apenas as válidas)
+              // Métricas de engajamento (disponíveis em todos os níveis)
               inline_link_clicks: 0,
               inline_link_click_ctr: 0,
               inline_post_engagement: 0,
               
-              // Métricas de conversão
-              conversions: 0,
-              conversion_values: 0,
-              conversion_rate_ranking: 0,
+              // Métricas únicas (disponíveis em todos os níveis)
+              unique_clicks: 0,
+              unique_inline_link_clicks: 0,
+              unique_inline_link_click_ctr: 0,
+              unique_ctr: 0,
               
-              // Métricas de vídeo (apenas as válidas na API de Insights)
+              // Métricas de vídeo (disponíveis em todos os níveis)
               video_play_actions: 0,
-              video_play_curve_actions: 0,
-              
-              // Métricas de vídeo - Porcentagem de visualização
               video_p25_watched_actions: 0,
               video_p50_watched_actions: 0,
               video_p75_watched_actions: 0,
               video_p100_watched_actions: 0,
               
-              // Métricas de vídeo - Tempo
-              video_30_sec_watched_actions: 0,
-              video_avg_time_watched_actions: 0,
-              
-              // Métricas de qualidade
+              // Métricas específicas de campanhas (não disponíveis em adsets/ads)
+              cost_per_conversion: 0,
+              cost_per_action_type: 0,
+              cost_per_inline_link_click: 0,
+              cost_per_landing_page_view: 0,
+              conversions: 0,
+              conversion_values: 0,
+              conversion_rate_ranking: 0,
               quality_ranking: 0,
               engagement_rate_ranking: 0,
-              
-              // Métricas de ações (apenas as válidas)
-              actions: 0,
-              
-              // Métricas de alcance e frequência (apenas as válidas)
-              unique_clicks: 0,
-              unique_inline_link_clicks: 0,
-              unique_inline_link_click_ctr: 0,
-              unique_ctr: 0
+              actions: 0
             })
           }
         }
