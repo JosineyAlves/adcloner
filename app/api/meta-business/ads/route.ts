@@ -87,19 +87,20 @@ export async function GET(request: NextRequest) {
           const ad = adsData.data[i]
           const insightsResponse = insightsResponses[i]
           
-          try {
-            let insights = {
-              impressions: 0,
-              clicks: 0,
-              spend: 0,
+                try {
+                  let insights = {
+                    impressions: 0,
+                    clicks: 0,
+                    spend: 0,
               reach: 0,
               frequency: 0,
               
               // Métricas de custo
               cpm: 0,
-              cpc: 0,
+                    cpc: 0,
               ctr: 0,
-              cost_per_inline_link_click: 0,
+              cost_per_unique_click: 0,
+              cost_per_unique_inline_link_click: 0,
               
               // Métricas de engajamento
               inline_link_clicks: 0,
@@ -129,12 +130,16 @@ export async function GET(request: NextRequest) {
 
             if (insightsResponse.code === 200) {
               const insightsData = JSON.parse(insightsResponse.body || '{}')
-              if (insightsData.data && insightsData.data.length > 0) {
-                const insight = insightsData.data[0]
-                insights = {
-                  impressions: parseInt(insight.impressions || '0'),
-                  clicks: parseInt(insight.clicks || '0'),
-                  spend: parseFloat(insight.spend || '0'),
+                  if (insightsData.data && insightsData.data.length > 0) {
+                    const insight = insightsData.data[0]
+                    // Debug: Log dos valores de reach e frequency
+                    console.log(`🔍 Ad ${ad.id} - Reach da API: ${insight.reach}, Frequency da API: ${insight.frequency}`)
+                    // Debug: Log dos valores de CPC
+                    console.log(`💰 Ad ${ad.id} - CPC: ${insight.cpc}, Cost per unique click: ${insight.cost_per_unique_click}, Cost per unique inline link click: ${insight.cost_per_unique_inline_link_click}`)
+                    insights = {
+                      impressions: parseInt(insight.impressions || '0'),
+                      clicks: parseInt(insight.clicks || '0'),
+                      spend: parseFloat(insight.spend || '0'),
                   reach: parseInt(insight.reach || '0'),
                   frequency: parseFloat(insight.frequency || '0'),
                   
@@ -142,7 +147,8 @@ export async function GET(request: NextRequest) {
                   cpm: parseFloat(insight.cpm || '0'),
                   cpc: parseFloat(insight.cpc || '0'),
                   ctr: parseFloat(insight.ctr || '0'),
-                  cost_per_inline_link_click: parseFloat(insight.cost_per_inline_link_click || '0'),
+                  cost_per_unique_click: parseFloat(insight.cost_per_unique_click || '0'),
+                  cost_per_unique_inline_link_click: parseFloat(insight.cost_per_unique_inline_link_click || '0'),
                   
                   // Métricas de engajamento
                   inline_link_clicks: parseInt(insight.inline_link_clicks || '0'),
@@ -197,28 +203,28 @@ export async function GET(request: NextRequest) {
               }
             } catch (error) {
               console.warn(`⚠️ Erro ao buscar métricas de vídeo do ad ${ad.id}:`, error)
-            }
+                  }
 
-            const metaAd = {
-              id: ad.id,
-              name: ad.name,
-              adset_id: ad.adset?.id || '',
-              adset_name: ad.adset?.name || '',
+                  const metaAd = {
+                    id: ad.id,
+                    name: ad.name,
+                    adset_id: ad.adset?.id || '',
+                    adset_name: ad.adset?.name || '',
               campaign_id: ad.campaign?.id || '',
               campaign_name: ad.campaign?.name || '',
-              status: ad.status,
-              effective_status: ad.effective_status || ad.status,
-              creative: {
+                    status: ad.status,
+                    effective_status: ad.effective_status || ad.status,
+                    creative: {
                 title: ad.creative?.title || '',
                 body: ad.creative?.body || '',
                 image_url: ad.creative?.image_url || '',
                 video_id: ad.creative?.video_id || '',
                 link_url: ad.creative?.link_url || '',
                 call_to_action_type: ad.creative?.call_to_action_type || 'LEARN_MORE'
-              },
-              spend: insights.spend,
-              impressions: insights.impressions,
-              clicks: insights.clicks,
+                    },
+                    spend: insights.spend,
+                    impressions: insights.impressions,
+                    clicks: insights.clicks,
               reach: insights.reach,
               frequency: insights.frequency,
               
@@ -226,7 +232,8 @@ export async function GET(request: NextRequest) {
               cpm: insights.cpm,
               cpc: insights.cpc,
               ctr: insights.ctr,
-              cost_per_inline_link_click: insights.cost_per_inline_link_click,
+              cost_per_unique_click: insights.cost_per_unique_click,
+              cost_per_unique_inline_link_click: insights.cost_per_unique_inline_link_click,
               
               // Métricas de engajamento
               inline_link_clicks: insights.inline_link_clicks,
@@ -256,15 +263,15 @@ export async function GET(request: NextRequest) {
               // Métricas de vídeo detalhadas
               videoMetrics: videoMetrics,
               
-              created_time: ad.created_time,
-              updated_time: ad.updated_time,
-              account_id: accountId,
-              account_name: 'Facebook Account'
-            }
+                    created_time: ad.created_time,
+                    updated_time: ad.updated_time,
+                    account_id: accountId,
+                    account_name: 'Facebook Account'
+                  }
 
-            ads.push(metaAd)
-          } catch (error) {
-            console.error(`Error processing ad ${ad.id}:`, error)
+                  ads.push(metaAd)
+                } catch (error) {
+                  console.error(`Error processing ad ${ad.id}:`, error)
             // Adicionar ad sem insights em caso de erro
             ads.push({
               id: ad.id,
@@ -293,7 +300,8 @@ export async function GET(request: NextRequest) {
               cpm: 0,
               cpc: 0,
               ctr: 0,
-              cost_per_inline_link_click: 0,
+              cost_per_unique_click: 0,
+              cost_per_unique_inline_link_click: 0,
               
               // Métricas de engajamento
               inline_link_clicks: 0,

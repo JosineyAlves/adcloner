@@ -108,6 +108,7 @@ export async function GET(request: NextRequest) {
               cost_per_action_type: 0,
               cost_per_inline_link_click: 0,
               cost_per_unique_click: 0,
+              cost_per_unique_inline_link_click: 0,
               cost_per_landing_page_view: 0,
               
               // Métricas de engajamento (apenas as válidas)
@@ -152,6 +153,10 @@ export async function GET(request: NextRequest) {
               const insightsData = JSON.parse(insightsResponse.body || '{}')
             if (insightsData.data && insightsData.data.length > 0) {
               const insight = insightsData.data[0]
+              // Debug: Log dos valores de reach e frequency
+              console.log(`🔍 Campaign ${campaign.id} - Reach da API: ${insight.reach}, Frequency da API: ${insight.frequency}`)
+              // Debug: Log dos valores de CPC
+              console.log(`💰 Campaign ${campaign.id} - CPC: ${insight.cpc}, Cost per unique click: ${insight.cost_per_unique_click}, Cost per unique inline link click: ${insight.cost_per_unique_inline_link_click}`)
               insights = {
                 // Métricas básicas
                 impressions: parseInt(insight.impressions || '0'),
@@ -168,6 +173,7 @@ export async function GET(request: NextRequest) {
                 cost_per_action_type: parseFloat(insight.cost_per_action_type || '0'),
                 cost_per_inline_link_click: parseFloat(insight.cost_per_inline_link_click || '0'),
                 cost_per_unique_click: parseFloat(insight.cost_per_unique_click || '0'),
+                cost_per_unique_inline_link_click: parseFloat(insight.cost_per_unique_inline_link_click || '0'),
                 cost_per_landing_page_view: parseFloat(insight.cost_per_landing_page_view || '0'),
                 
                 // Métricas de engajamento (apenas as válidas)
@@ -249,6 +255,7 @@ export async function GET(request: NextRequest) {
               cost_per_action_type: insights.cost_per_action_type,
               cost_per_inline_link_click: insights.cost_per_inline_link_click,
               cost_per_unique_click: insights.cost_per_unique_click,
+              cost_per_unique_inline_link_click: insights.cost_per_unique_inline_link_click,
               cost_per_landing_page_view: insights.cost_per_landing_page_view,
               
               // Métricas de engajamento (apenas as válidas)
@@ -328,6 +335,7 @@ export async function GET(request: NextRequest) {
               cost_per_action_type: 0,
               cost_per_inline_link_click: 0,
               cost_per_unique_click: 0,
+              cost_per_unique_inline_link_click: 0,
               cost_per_landing_page_view: 0,
               
               // Métricas de engajamento (apenas as válidas)

@@ -70,9 +70,9 @@ export const ALL_METRICS: MetricConfig[] = [
     category: 'cost'
   },
   {
-    id: 'cost_per_unique_click',
+    id: 'cost_per_unique_inline_link_click',
     label: 'CPC (custo por clique no link)',
-    description: 'Custo por clique único',
+    description: 'Custo por clique único em link inline',
     type: 'currency',
     visible: false,
     order: 9,
@@ -138,8 +138,8 @@ export const ALL_METRICS: MetricConfig[] = [
   },
   {
     id: 'inline_post_engagement',
-    label: 'Engajamento Inline',
-    description: 'Engajamento com posts inline',
+    label: 'Engajamentos com o post',
+    description: 'Engajamento com post',
     type: 'number',
     visible: false,
     order: 19,

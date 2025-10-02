@@ -155,6 +155,7 @@ export interface MetaCampaign {
   cost_per_action_type: number
   cost_per_inline_link_click: number
   cost_per_unique_click: number
+  cost_per_unique_inline_link_click: number
   cost_per_landing_page_view: number
   
   // Métricas de engajamento (apenas as válidas)
@@ -224,6 +225,8 @@ export interface MetaAdSet {
   clicks: number
   cpc: number
   ctr: number
+  cost_per_unique_click: number
+  cost_per_unique_inline_link_click: number
   
   // Métricas de engajamento
   inline_link_clicks: number
@@ -279,6 +282,8 @@ export interface MetaAd {
   clicks: number
   cpc: number
   ctr: number
+  cost_per_unique_click: number
+  cost_per_unique_inline_link_click: number
   
   // Métricas de engajamento
   inline_link_clicks: number

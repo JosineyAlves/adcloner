@@ -100,7 +100,8 @@ export async function GET(request: NextRequest) {
               cpm: 0,
               cpc: 0,
               ctr: 0,
-              cost_per_inline_link_click: 0,
+              cost_per_unique_click: 0,
+              cost_per_unique_inline_link_click: 0,
               
               // Métricas de engajamento
               inline_link_clicks: 0,
@@ -132,6 +133,10 @@ export async function GET(request: NextRequest) {
               const insightsData = JSON.parse(insightsResponse.body || '{}')
               if (insightsData.data && insightsData.data.length > 0) {
                 const insight = insightsData.data[0]
+                // Debug: Log dos valores de reach e frequency
+                console.log(`🔍 AdSet ${adSet.id} - Reach da API: ${insight.reach}, Frequency da API: ${insight.frequency}`)
+                // Debug: Log dos valores de CPC
+                console.log(`💰 AdSet ${adSet.id} - CPC: ${insight.cpc}, Cost per unique click: ${insight.cost_per_unique_click}, Cost per unique inline link click: ${insight.cost_per_unique_inline_link_click}`)
                 insights = {
                   impressions: parseInt(insight.impressions || '0'),
                   clicks: parseInt(insight.clicks || '0'),
@@ -139,11 +144,12 @@ export async function GET(request: NextRequest) {
                   reach: parseInt(insight.reach || '0'),
                   frequency: parseFloat(insight.frequency || '0'),
                   
-              // Métricas de custo
-              cpm: parseFloat(insight.cpm || '0'),
-              cpc: parseFloat(insight.cpc || '0'),
-              ctr: parseFloat(insight.ctr || '0'),
-              cost_per_inline_link_click: parseFloat(insight.cost_per_inline_link_click || '0'),
+                  // Métricas de custo
+                  cpm: parseFloat(insight.cpm || '0'),
+                  cpc: parseFloat(insight.cpc || '0'),
+                  ctr: parseFloat(insight.ctr || '0'),
+                  cost_per_unique_click: parseFloat(insight.cost_per_unique_click || '0'),
+                  cost_per_unique_inline_link_click: parseFloat(insight.cost_per_unique_inline_link_click || '0'),
                   
                   // Métricas de engajamento
                   inline_link_clicks: parseInt(insight.inline_link_clicks || '0'),
@@ -216,7 +222,8 @@ export async function GET(request: NextRequest) {
               cpm: insights.cpm,
               cpc: insights.cpc,
               ctr: insights.ctr,
-              cost_per_inline_link_click: insights.cost_per_inline_link_click,
+              cost_per_unique_click: insights.cost_per_unique_click,
+              cost_per_unique_inline_link_click: insights.cost_per_unique_inline_link_click,
               
               // Métricas de engajamento
               inline_link_clicks: insights.inline_link_clicks,
@@ -284,7 +291,8 @@ export async function GET(request: NextRequest) {
               cpm: 0,
               cpc: 0,
               ctr: 0,
-              cost_per_inline_link_click: 0,
+              cost_per_unique_click: 0,
+              cost_per_unique_inline_link_click: 0,
               
               // Métricas de engajamento
               inline_link_clicks: 0,
