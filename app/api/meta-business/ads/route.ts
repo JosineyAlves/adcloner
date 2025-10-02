@@ -127,7 +127,9 @@ export async function GET(request: NextRequest) {
                   if (insightsData.data && insightsData.data.length > 0) {
                     const insight = insightsData.data[0]
                     // Debug: Log dos valores de reach e frequency
-                    console.log(`🔍 Ad ${ad.id} - Reach da API: ${insight.reach}, Frequency da API: ${insight.frequency}`)
+                    console.log(`🔍 Ad ${ad.id} (${ad.name}) - Reach da API: ${insight.reach}, Frequency da API: ${insight.frequency}`)
+                    // Debug: Log das impressões para identificar problema
+                    console.log(`📊 Ad ${ad.id} - Impressões da API: ${insight.impressions}, Cliques: ${insight.clicks}, Gasto: ${insight.spend}`)
                     // Debug: Log dos valores de CPC
                     console.log(`💰 Ad ${ad.id} - CPC: ${insight.cpc}, Cost per unique click: ${insight.cost_per_unique_click}, Cost per unique inline link click: ${insight.cost_per_unique_inline_link_click}`)
                     insights = {
@@ -313,7 +315,14 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      const result = { ads }
+      // Remover duplicatas baseado no ID do anúncio
+      const uniqueAds = ads.filter((ad, index, self) => 
+        index === self.findIndex(a => a.id === ad.id)
+      )
+      
+      console.log(`🔄 Ads únicos após remoção de duplicatas: ${uniqueAds.length} (original: ${ads.length})`)
+
+      const result = { ads: uniqueAds }
       
       // Salvar no cache com TTL inteligente (8 minutos para ads)
       cache.setWithIntelligentTTL(cacheKey, result, 'ads')

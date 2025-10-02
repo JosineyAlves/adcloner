@@ -143,7 +143,9 @@ export async function GET(request: NextRequest) {
             if (insightsData.data && insightsData.data.length > 0) {
               const insight = insightsData.data[0]
               // Debug: Log dos valores de reach e frequency
-              console.log(`🔍 Campaign ${campaign.id} - Reach da API: ${insight.reach}, Frequency da API: ${insight.frequency}`)
+              console.log(`🔍 Campaign ${campaign.id} (${campaign.name}) - Reach da API: ${insight.reach}, Frequency da API: ${insight.frequency}`)
+              // Debug: Log das impressões para identificar problema
+              console.log(`📊 Campaign ${campaign.id} - Impressões da API: ${insight.impressions}, Cliques: ${insight.clicks}, Gasto: ${insight.spend}`)
               // Debug: Log dos valores de CPC
               console.log(`💰 Campaign ${campaign.id} - CPC: ${insight.cpc}, Cost per unique click: ${insight.cost_per_unique_click}, Cost per unique inline link click: ${insight.cost_per_unique_inline_link_click}`)
               insights = {
@@ -335,7 +337,14 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      const result = { campaigns }
+      // Remover duplicatas baseado no ID da campanha
+      const uniqueCampaigns = campaigns.filter((campaign, index, self) => 
+        index === self.findIndex(c => c.id === campaign.id)
+      )
+      
+      console.log(`🔄 Campaigns únicas após remoção de duplicatas: ${uniqueCampaigns.length} (original: ${campaigns.length})`)
+
+      const result = { campaigns: uniqueCampaigns }
       
       // Salvar no cache com TTL inteligente (15 minutos para campanhas)
       cache.setWithIntelligentTTL(cacheKey, result, 'campaigns')

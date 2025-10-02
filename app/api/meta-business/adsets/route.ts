@@ -127,12 +127,14 @@ export async function GET(request: NextRequest) {
               const insightsData = JSON.parse(insightsResponse.body || '{}')
               if (insightsData.data && insightsData.data.length > 0) {
                 const insight = insightsData.data[0]
-                // Debug: Log detalhado de TODOS os campos retornados pela API
-                console.log(`🔍 AdSet ${adSet.id} - Dados completos da API:`, JSON.stringify(insight, null, 2))
-                // Debug: Log dos valores de reach e frequency
-                console.log(`🔍 AdSet ${adSet.id} - Reach da API: ${insight.reach}, Frequency da API: ${insight.frequency}`)
-                // Debug: Log dos valores de CPC
-                console.log(`💰 AdSet ${adSet.id} - CPC: ${insight.cpc}, Cost per unique click: ${insight.cost_per_unique_click}, Cost per unique inline link click: ${insight.cost_per_unique_inline_link_click}`)
+            // Debug: Log detalhado de TODOS os campos retornados pela API
+            console.log(`🔍 AdSet ${adSet.id} (${adSet.name}) - Dados completos da API:`, JSON.stringify(insight, null, 2))
+            // Debug: Log dos valores de reach e frequency
+            console.log(`🔍 AdSet ${adSet.id} - Reach da API: ${insight.reach}, Frequency da API: ${insight.frequency}`)
+            // Debug: Log dos valores de CPC
+            console.log(`💰 AdSet ${adSet.id} - CPC: ${insight.cpc}, Cost per unique click: ${insight.cost_per_unique_click}, Cost per unique inline link click: ${insight.cost_per_unique_inline_link_click}`)
+            // Debug: Log das impressões para identificar problema
+            console.log(`📊 AdSet ${adSet.id} - Impressões da API: ${insight.impressions}, Cliques: ${insight.clicks}, Gasto: ${insight.spend}`)
                 insights = {
                   // Métricas básicas (disponíveis em todos os níveis)
                   impressions: parseInt(insight.impressions || '0'),
@@ -306,7 +308,14 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      const result = { adSets }
+      // Remover duplicatas baseado no ID do adset
+      const uniqueAdSets = adSets.filter((adSet, index, self) => 
+        index === self.findIndex(a => a.id === adSet.id)
+      )
+      
+      console.log(`🔄 AdSets únicos após remoção de duplicatas: ${uniqueAdSets.length} (original: ${adSets.length})`)
+
+      const result = { adSets: uniqueAdSets }
       
       // Salvar no cache com TTL inteligente (10 minutos para ad sets)
       cache.setWithIntelligentTTL(cacheKey, result, 'adsets')
