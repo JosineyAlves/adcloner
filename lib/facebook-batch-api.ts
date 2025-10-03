@@ -196,7 +196,7 @@ export class FacebookBatchAPI {
     return [
       {
         method: 'GET',
-        relative_url: `${accountId}/campaigns?fields=id,name,objective,status,effective_status,daily_budget,lifetime_budget,created_time,updated_time&date_preset=${datePreset}${timeRange}`
+        relative_url: `${accountId}/campaigns?fields=id,name,objective,status,effective_status,daily_budget,lifetime_budget,created_time,updated_time&date_preset=${datePreset}&limit=2500${timeRange}`
       }
     ]
   }
@@ -373,7 +373,7 @@ export class FacebookBatchAPI {
     return [
       {
         method: 'GET',
-        relative_url: `${accountId}/adsets?fields=id,name,campaign_id,campaign{id,name},status,effective_status,daily_budget,lifetime_budget,created_time,updated_time&date_preset=${datePreset}${timeRange}`
+        relative_url: `${accountId}/adsets?fields=id,name,campaign_id,campaign{id,name},status,effective_status,daily_budget,lifetime_budget,created_time,updated_time&date_preset=${datePreset}&limit=2500${timeRange}`
       }
     ]
   }
@@ -468,7 +468,7 @@ export class FacebookBatchAPI {
     return [
       {
         method: 'GET',
-        relative_url: `${accountId}/ads?fields=id,name,adset_id,adset{id,name},campaign_id,campaign{id,name},status,effective_status,created_time,updated_time&date_preset=${datePreset}${timeRange}`
+        relative_url: `${accountId}/ads?fields=id,name,adset_id,adset{id,name},campaign_id,campaign{id,name},status,effective_status,created_time,updated_time&date_preset=${datePreset}&limit=2500${timeRange}`
       }
     ]
   }
