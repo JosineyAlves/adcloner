@@ -78,6 +78,33 @@ export const ALL_METRICS: MetricConfig[] = [
     order: 9,
     category: 'cost'
   },
+  {
+    id: 'cost_per_conversion',
+    label: 'Custo por Conversão',
+    description: 'O custo médio para cada conversão.',
+    type: 'currency',
+    visible: true,
+    order: 10,
+    category: 'cost'
+  },
+  {
+    id: 'conversions',
+    label: 'Conversões',
+    description: 'Número total de conversões.',
+    type: 'number',
+    visible: true,
+    order: 11,
+    category: 'cost'
+  },
+  {
+    id: 'conversion_values',
+    label: 'Valor das Conversões',
+    description: 'Valor total das conversões.',
+    type: 'currency',
+    visible: true,
+    order: 12,
+    category: 'cost'
+  },
 
   // === MÉTRICAS DE ALCANCE E FREQUÊNCIA ===
   {

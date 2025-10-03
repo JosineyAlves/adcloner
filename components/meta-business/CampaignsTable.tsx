@@ -154,41 +154,6 @@ export default function CampaignsTable({
 
   return (
     <div className="space-y-4">
-      {/* Ações em lote */}
-      {selectedCampaigns.size > 0 && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                {selectedCampaigns.size} campanha(s) selecionada(s)
-              </span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => onBulkStatusUpdate('campaigns', 'ACTIVE')}
-                className="btn-secondary text-sm flex items-center space-x-1"
-              >
-                <Play className="w-4 h-4" />
-                <span>Ativar</span>
-              </button>
-              <button
-                onClick={() => onBulkStatusUpdate('campaigns', 'PAUSED')}
-                className="btn-secondary text-sm flex items-center space-x-1"
-              >
-                <Pause className="w-4 h-4" />
-                <span>Pausar</span>
-              </button>
-              <button
-                onClick={() => onBulkStatusUpdate('campaigns', 'ARCHIVED')}
-                className="btn-secondary text-sm flex items-center space-x-1"
-              >
-                <Archive className="w-4 h-4" />
-                <span>Arquivar</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Tabela */}
       <div className="overflow-x-auto">

@@ -104,6 +104,9 @@ export async function GET(request: NextRequest) {
               cost_per_unique_click: 0,
               cost_per_unique_inline_link_click: 0,
               cost_per_inline_link_click: 0,
+              cost_per_conversion: 0,
+              conversions: 0,
+              conversion_values: 0,
               
               // Métricas de engajamento (disponíveis em todos os níveis)
               inline_link_clicks: 0,
@@ -151,6 +154,9 @@ export async function GET(request: NextRequest) {
                   cost_per_unique_click: parseFloat(insight.cost_per_unique_click || '0'),
                   cost_per_unique_inline_link_click: parseFloat(insight.cost_per_unique_inline_link_click || '0'),
                   cost_per_inline_link_click: parseFloat(insight.cost_per_inline_link_click || '0'),
+                  cost_per_conversion: parseFloat(insight.cost_per_conversion || '0'),
+                  conversions: parseInt(insight.conversions || '0'),
+                  conversion_values: parseFloat(insight.conversion_values || '0'),
                   
                   // Métricas de engajamento (disponíveis em todos os níveis)
                   inline_link_clicks: parseInt(insight.inline_link_clicks || '0'),
@@ -220,6 +226,9 @@ export async function GET(request: NextRequest) {
               cost_per_unique_click: insights.cost_per_unique_click,
               cost_per_unique_inline_link_click: insights.cost_per_unique_inline_link_click,
               cost_per_inline_link_click: insights.cost_per_inline_link_click,
+              cost_per_conversion: insights.cost_per_conversion,
+              conversions: insights.conversions,
+              conversion_values: insights.conversion_values,
               
               // Métricas de engajamento (disponíveis em todos os níveis)
               inline_link_clicks: insights.inline_link_clicks,
@@ -284,6 +293,9 @@ export async function GET(request: NextRequest) {
               cost_per_unique_click: 0,
               cost_per_unique_inline_link_click: 0,
               cost_per_inline_link_click: 0,
+              cost_per_conversion: 0,
+              conversions: 0,
+              conversion_values: 0,
               
               // Métricas de engajamento (disponíveis em todos os níveis)
               inline_link_clicks: 0,
