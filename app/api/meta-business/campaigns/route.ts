@@ -23,35 +23,49 @@ function processVideoMetric(videoMetric: any): number {
   return parseInt(videoMetric.toString() || '0')
 }
 
-// Função auxiliar para processar métricas de conversão (AdsActionStats)
-function processConversionMetric(conversionMetric: any): number {
-  if (!conversionMetric) return 0
+// Função auxiliar para processar métricas de conversão (estrutura real da API)
+function processConversionMetric(resultsMetric: any): number {
+  if (!resultsMetric) return 0
   
-  // Se for um array de AdsActionStats, somar os valores
-  if (Array.isArray(conversionMetric)) {
-    console.log(`📊 Processando array de conversões com ${conversionMetric.length} itens:`, conversionMetric)
-    return conversionMetric.reduce((total, action) => {
-      const value = parseFloat(action.value || '0')
-      console.log(`  - Action Type: ${action.action_type}, Value: ${value}`)
-      return total + value
+  // Se for um array de resultados, processar cada item
+  if (Array.isArray(resultsMetric)) {
+    console.log(`📊 Processando array de resultados com ${resultsMetric.length} itens:`, resultsMetric)
+    return resultsMetric.reduce((total, result) => {
+      // Estrutura real: { indicator: "actions:offsite_conversion.fb_pixel_purchase", values: [{ value: "1" }] }
+      if (result.values && Array.isArray(result.values)) {
+        const resultValue = result.values.reduce((sum: number, valueObj: any) => {
+          const value = parseFloat(valueObj.value || '0')
+          console.log(`  - Indicator: ${result.indicator}, Value: ${value}`)
+          return sum + value
+        }, 0)
+        return total + resultValue
+      }
+      return total
     }, 0)
   }
   
   // Se for um número simples, retornar diretamente
-  return parseFloat(conversionMetric.toString() || '0')
+  return parseFloat(resultsMetric.toString() || '0')
 }
 
-// Função auxiliar para processar métricas de resultados (AdsInsightsResult)
+// Função auxiliar para processar métricas de resultados (estrutura real da API)
 function processResultsMetric(resultsMetric: any): number {
   if (!resultsMetric) return 0
   
-  // Se for um array de AdsInsightsResult, somar os valores
+  // Se for um array de resultados, processar cada item
   if (Array.isArray(resultsMetric)) {
     console.log(`📊 Processando array de resultados com ${resultsMetric.length} itens:`, resultsMetric)
     return resultsMetric.reduce((total, result) => {
-      const value = parseInt(result.value || '0')
-      console.log(`  - Result Value: ${value}`)
-      return total + value
+      // Estrutura real: { indicator: "actions:offsite_conversion.fb_pixel_purchase", values: [{ value: "1" }] }
+      if (result.values && Array.isArray(result.values)) {
+        const resultValue = result.values.reduce((sum: number, valueObj: any) => {
+          const value = parseInt(valueObj.value || '0')
+          console.log(`  - Indicator: ${result.indicator}, Value: ${value}`)
+          return sum + value
+        }, 0)
+        return total + resultValue
+      }
+      return total
     }, 0)
   }
   
@@ -229,8 +243,8 @@ export async function GET(request: NextRequest) {
                 cost_per_action_type: parseFloat(insight.cost_per_action_type || '0'),
                 cost_per_inline_link_click: parseFloat(insight.cost_per_inline_link_click || '0'),
                 cost_per_landing_page_view: parseFloat(insight.cost_per_landing_page_view || '0'),
-                conversions: processConversionMetric(insight.conversions),
-                conversion_values: processConversionMetric(insight.conversion_values),
+                conversions: processConversionMetric(insight.results),
+                conversion_values: processConversionMetric(insight.results),
                 results: processResultsMetric(insight.results),
                 conversion_rate_ranking: parseFloat(insight.conversion_rate_ranking || '0'),
                 quality_ranking: parseFloat(insight.quality_ranking || '0'),

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste API Meta - Métricas de Conversão</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #1877f2;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #166fe5;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #1877f2;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .success {
+            border-left-color: #28a745;
+            background-color: #d4edda;
+            color: #155724;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .field-analysis {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #e3f2fd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Teste API Meta - Métricas de Conversão</h1>
+        
+        <div class="form-group">
+            <label for="accessToken">Token de Acesso:</label>
+            <input type="password" id="accessToken" placeholder="Cole seu token de acesso aqui...">
+        </div>
+        
+        <div class="form-group">
+            <label for="campaignId">ID da Campanha:</label>
+            <input type="text" id="campaignId" value="120226070874190406" placeholder="ID da campanha para testar">
+        </div>
+        
+        <div class="form-group">
+            <label for="datePreset">Período:</label>
+            <select id="datePreset">
+                <option value="maximum">Máximo (todos os dados)</option>
+                <option value="last_30d">Últimos 30 dias</option>
+                <option value="last_7d">Últimos 7 dias</option>
+                <option value="yesterday">Ontem</option>
+            </select>
+        </div>
+        
+        <button onclick="testConversionAPI()">🚀 Testar API</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function testConversionAPI() {
+            const accessToken = document.getElementById('accessToken').value;
+            const campaignId = document.getElementById('campaignId').value;
+            const datePreset = document.getElementById('datePreset').value;
+            const resultDiv = document.getElementById('result');
+            
+            if (!accessToken) {
+                showResult('❌ Token de acesso é obrigatório!', 'error');
+                return;
+            }
+            
+            if (!campaignId) {
+                showResult('❌ ID da campanha é obrigatório!', 'error');
+                return;
+            }
+            
+            // Campos específicos de conversão (estrutura real da API)
+            const fields = [
+                'results',
+                'cost_per_conversion',
+                'impressions',
+                'clicks',
+                'spend',
+                'reach',
+                'frequency'
+            ].join(',');
+            
+            const url = `https://graph.facebook.com/v23.0/${campaignId}/insights?fields=${fields}&level=campaign&date_preset=${datePreset}`;
+            
+            showResult('🔄 Fazendo requisição para a API do Meta...', 'info');
+            
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    showResult(`❌ Erro da API: ${data.error.message}`, 'error');
+                    return;
+                }
+                
+                // Mostrar resposta completa
+                let resultHTML = '<div class="success">✅ Resposta recebida com sucesso!</div>';
+                resultHTML += '<h3>📊 Dados Completos:</h3>';
+                resultHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                // Analisar métricas de conversão
+                if (data.data && data.data.length > 0) {
+                    const insights = data.data[0];
+                    
+                    resultHTML += '<div class="field-analysis">';
+                    resultHTML += '<h3>🔍 Análise das Métricas de Conversão:</h3>';
+                    
+                    // Métricas básicas
+                    resultHTML += '<h4>📈 Métricas Básicas:</h4>';
+                    resultHTML += `<p><strong>Impressões:</strong> ${insights.impressions || 0}</p>`;
+                    resultHTML += `<p><strong>Cliques:</strong> ${insights.clicks || 0}</p>`;
+                    resultHTML += `<p><strong>Gasto:</strong> ${insights.spend || 0}</p>`;
+                    
+                    // Métricas de conversão
+                    resultHTML += '<h4>🔄 Métricas de Conversão:</h4>';
+                    resultHTML += `<p><strong>Cost per Conversion:</strong> ${JSON.stringify(insights.cost_per_conversion)}</p>`;
+                    resultHTML += `<p><strong>Results:</strong> ${JSON.stringify(insights.results)}</p>`;
+                    
+                    // Verificar tipos
+                    resultHTML += '<h4>🔍 Verificação de Tipos:</h4>';
+                    resultHTML += `<p><strong>results é array?</strong> ${Array.isArray(insights.results)}</p>`;
+                    
+                    // Se for array, mostrar estrutura real
+                    if (Array.isArray(insights.results) && insights.results.length > 0) {
+                        resultHTML += '<h4>🎯 Estrutura de Results (Real):</h4>';
+                        insights.results.forEach((result, index) => {
+                            resultHTML += `<p><strong>${index + 1}.</strong> Indicator: ${result.indicator}</p>`;
+                            if (result.values && Array.isArray(result.values)) {
+                                result.values.forEach((value, valueIndex) => {
+                                    resultHTML += `<p>&nbsp;&nbsp;&nbsp;${valueIndex + 1}. Value: ${value.value} (tipo: ${typeof value.value})</p>`;
+                                });
+                            }
+                        });
+                    }
+                    
+                    // Teste de processamento
+                    resultHTML += '<h4>🧪 Teste de Processamento:</h4>';
+                    
+                    function processConversionMetric(resultsMetric) {
+                        if (!resultsMetric) return 0;
+                        
+                        if (Array.isArray(resultsMetric)) {
+                            return resultsMetric.reduce((total, result) => {
+                                if (result.values && Array.isArray(result.values)) {
+                                    const resultValue = result.values.reduce((sum, valueObj) => {
+                                        const value = parseFloat(valueObj.value || '0');
+                                        return sum + value;
+                                    }, 0);
+                                    return total + resultValue;
+                                }
+                                return total;
+                            }, 0);
+                        }
+                        
+                        return parseFloat(resultsMetric.toString() || '0');
+                    }
+                    
+                    function processResultsMetric(resultsMetric) {
+                        if (!resultsMetric) return 0;
+                        
+                        if (Array.isArray(resultsMetric)) {
+                            return resultsMetric.reduce((total, result) => {
+                                if (result.values && Array.isArray(result.values)) {
+                                    const resultValue = result.values.reduce((sum, valueObj) => {
+                                        const value = parseInt(valueObj.value || '0');
+                                        return sum + value;
+                                    }, 0);
+                                    return total + resultValue;
+                                }
+                                return total;
+                            }, 0);
+                        }
+                        
+                        return parseInt(resultsMetric.toString() || '0');
+                    }
+                    
+                    const processedConversions = processConversionMetric(insights.results);
+                    const processedConversionValues = processConversionMetric(insights.results);
+                    const processedResults = processResultsMetric(insights.results);
+                    
+                    resultHTML += `<p><strong>Conversions Processadas:</strong> ${processedConversions}</p>`;
+                    resultHTML += `<p><strong>Conversion Values Processadas:</strong> ${processedConversionValues}</p>`;
+                    resultHTML += `<p><strong>Results Processadas:</strong> ${processedResults}</p>`;
+                    
+                    resultHTML += '</div>';
+                }
+                
+                showResult(resultHTML, 'success');
+                
+            } catch (error) {
+                showResult(`❌ Erro na requisição: ${error.message}`, 'error');
+            }
+        }
+        
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `<div class="result ${type}">${message}</div>`;
+        }
+        
+        // Instruções iniciais
+        document.addEventListener('DOMContentLoaded', function() {
+            showResult(`
+                <h3>📝 Instruções:</h3>
+                <p><strong>1.</strong> Obtenha seu token de acesso através de uma das opções:</p>
+                <ul>
+                    <li>Interface do AdCloner (Network tab do navegador)</li>
+                    <li>Graph API Explorer: <a href="https://developers.facebook.com/tools/explorer/" target="_blank">https://developers.facebook.com/tools/explorer/</a></li>
+                    <li>Meta Business Manager</li>
+                </ul>
+                <p><strong>2.</strong> Cole o token no campo "Token de Acesso"</p>
+                <p><strong>3.</strong> Clique em "Testar API"</p>
+                <p><strong>4.</strong> Analise os resultados para verificar se as métricas de conversão estão sendo retornadas</p>
+            `, 'info');
+        });
+    </script>
+</body>
+</html>

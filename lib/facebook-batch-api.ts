@@ -247,8 +247,6 @@ export class FacebookBatchAPI {
       'inline_post_engagement',
       
       // Métricas de conversão
-      'conversions',
-      'conversion_values',
       'results',
       'conversion_rate_ranking',
       
@@ -325,8 +323,6 @@ export class FacebookBatchAPI {
       'inline_post_engagement',
       
       // Métricas de conversão
-      'conversions',
-      'conversion_values',
       'results',
       'conversion_rate_ranking',
       
@@ -424,8 +420,6 @@ export class FacebookBatchAPI {
       'inline_post_engagement',
       
       // Métricas de conversão
-      'conversions',
-      'conversion_values',
       'results',
       'conversion_rate_ranking',
       
@@ -519,8 +513,6 @@ export class FacebookBatchAPI {
       'inline_post_engagement',
       
       // Métricas de conversão
-      'conversions',
-      'conversion_values',
       'results',
       'conversion_rate_ranking',
       
