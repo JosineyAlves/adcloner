@@ -22,6 +22,42 @@ function processVideoMetric(videoMetric: any): number {
   return parseInt(videoMetric.toString() || '0')
 }
 
+// Função auxiliar para processar métricas de conversão (AdsActionStats)
+function processConversionMetric(conversionMetric: any): number {
+  if (!conversionMetric) return 0
+  
+  // Se for um array de AdsActionStats, somar os valores
+  if (Array.isArray(conversionMetric)) {
+    console.log(`📊 Processando array de conversões com ${conversionMetric.length} itens:`, conversionMetric)
+    return conversionMetric.reduce((total, action) => {
+      const value = parseFloat(action.value || '0')
+      console.log(`  - Action Type: ${action.action_type}, Value: ${value}`)
+      return total + value
+    }, 0)
+  }
+  
+  // Se for um número simples, retornar diretamente
+  return parseFloat(conversionMetric.toString() || '0')
+}
+
+// Função auxiliar para processar métricas de resultados (AdsInsightsResult)
+function processResultsMetric(resultsMetric: any): number {
+  if (!resultsMetric) return 0
+  
+  // Se for um array de AdsInsightsResult, somar os valores
+  if (Array.isArray(resultsMetric)) {
+    console.log(`📊 Processando array de resultados com ${resultsMetric.length} itens:`, resultsMetric)
+    return resultsMetric.reduce((total, result) => {
+      const value = parseInt(result.value || '0')
+      console.log(`  - Result Value: ${value}`)
+      return total + value
+    }, 0)
+  }
+  
+  // Se for um número simples, retornar diretamente
+  return parseInt(resultsMetric.toString() || '0')
+}
+
 export async function GET(request: NextRequest) {
   try {
     const accessToken = request.cookies.get('fb_access_token')?.value
@@ -141,6 +177,10 @@ export async function GET(request: NextRequest) {
             console.log(`💰 AdSet ${adSet.id} - CPC: ${insight.cpc}, Cost per unique click: ${insight.cost_per_unique_click}, Cost per unique inline link click: ${insight.cost_per_unique_inline_link_click}`)
             // Debug: Log das impressões para identificar problema
             console.log(`📊 AdSet ${adSet.id} - Impressões da API: ${insight.impressions}, Cliques: ${insight.clicks}, Gasto: ${insight.spend}`)
+            // Debug: Log das métricas de conversão
+            console.log(`🔄 AdSet ${adSet.id} - Conversions (raw):`, insight.conversions)
+            console.log(`🔄 AdSet ${adSet.id} - Conversion Values (raw):`, insight.conversion_values)
+            console.log(`🔄 AdSet ${adSet.id} - Results (raw):`, insight.results)
                 insights = {
                   // Métricas básicas (disponíveis em todos os níveis)
                   impressions: parseInt(insight.impressions || '0'),
@@ -157,9 +197,9 @@ export async function GET(request: NextRequest) {
                   cost_per_unique_inline_link_click: parseFloat(insight.cost_per_unique_inline_link_click || '0'),
                   cost_per_inline_link_click: parseFloat(insight.cost_per_inline_link_click || '0'),
                   cost_per_conversion: parseFloat(insight.cost_per_conversion || '0'),
-                  conversions: parseInt(insight.conversions || '0'),
-                  conversion_values: parseFloat(insight.conversion_values || '0'),
-                  results: parseInt(insight.results || '0'),
+                  conversions: processConversionMetric(insight.conversions),
+                  conversion_values: processConversionMetric(insight.conversion_values),
+                  results: processResultsMetric(insight.results),
                   
                   // Métricas de engajamento (disponíveis em todos os níveis)
                   inline_link_clicks: parseInt(insight.inline_link_clicks || '0'),
