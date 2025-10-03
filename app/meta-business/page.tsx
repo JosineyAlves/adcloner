@@ -80,8 +80,15 @@ export default function MetaBusinessPage() {
     ads: 0
   })
   
-  // 🚀 NOVO: Cache TTL (5 minutos)
-  const CACHE_TTL = 5 * 60 * 1000 // 5 minutos em millisegundos
+  // 🚀 NOVO: Cache TTL (15 minutos para evitar rate limiting)
+  const CACHE_TTL = 15 * 60 * 1000 // 15 minutos em millisegundos
+  
+  // 🚀 NOVO: Debounce para mudança de abas (mais agressivo)
+  const TAB_CHANGE_DEBOUNCE = 1000 // 1 segundo de delay
+  
+  // 🚀 NOVO: Cooldown entre requisições (evitar spam)
+  const [lastRequestTime, setLastRequestTime] = useState<{[key: string]: number}>({})
+  const REQUEST_COOLDOWN = 2000 // 2 segundos entre requisições do mesmo tipo
   
   const [stats, setStats] = useState<MetaBusinessStats>({
     totalSpend: 0,
@@ -135,8 +142,21 @@ export default function MetaBusinessPage() {
         return
       }
 
+      // 🚀 NOVO: Verificar cooldown entre requisições
+      const now = Date.now()
+      const lastRequest = lastRequestTime[type] || 0
+      const timeSinceLastRequest = now - lastRequest
+      
+      if (timeSinceLastRequest < REQUEST_COOLDOWN) {
+        const waitTime = REQUEST_COOLDOWN - timeSinceLastRequest
+        console.log(`⏳ Aguardando cooldown para ${type}: ${waitTime}ms`)
+        toast(`Aguardando ${Math.ceil(waitTime/1000)}s antes de carregar ${type}`, { duration: 2000 })
+        return
+      }
+
       console.log(`🔄 Carregando dados de ${type}...`)
       setLoadingStates(prev => ({ ...prev, [type]: true }))
+      setLastRequestTime(prev => ({ ...prev, [type]: now }))
       
       const activeAccounts = facebookAccounts.filter(a => a.status === 'active')
       
@@ -211,7 +231,7 @@ export default function MetaBusinessPage() {
     } finally {
       setLoadingStates(prev => ({ ...prev, [type]: false }))
     }
-  }, [facebookAccounts, datePreset, customRange, accounts, campaigns, adSets, ads, isCacheValid, loadedStates])
+  }, [facebookAccounts, datePreset, customRange, accounts, campaigns, adSets, ads, isCacheValid, loadedStates, lastRequestTime, REQUEST_COOLDOWN])
 
   // 🚀 NOVO: Função para carregar dados iniciais (apenas contas)
   const fetchInitialData = useCallback(async () => {
@@ -226,18 +246,21 @@ export default function MetaBusinessPage() {
     }
   }, [fetchDataByType])
 
-  // 🚀 NOVO: Função para trocar de aba com lazy loading e debounce
+  // 🚀 NOVO: Função para trocar de aba com lazy loading e debounce agressivo
   const handleTabChange = useCallback(async (tabName: 'accounts' | 'campaigns' | 'adsets' | 'ads') => {
     setActiveTab(tabName)
     
     // Se a aba não foi carregada ainda, carregar agora
     if (!loadedStates[tabName]) {
-      // Adicionar pequeno delay para evitar mudanças muito rápidas
+      // Adicionar delay mais agressivo para evitar mudanças muito rápidas
       setTimeout(async () => {
-        await fetchDataByType(tabName)
-      }, 300) // 300ms de delay
+        // Verificar se ainda é a aba ativa (usuário pode ter mudado de aba)
+        if (activeTab === tabName) {
+          await fetchDataByType(tabName)
+        }
+      }, TAB_CHANGE_DEBOUNCE) // 1 segundo de delay
     }
-  }, [loadedStates, fetchDataByType])
+  }, [loadedStates, fetchDataByType, activeTab, TAB_CHANGE_DEBOUNCE])
 
   // 🚀 NOVO: Função para recarregar dados específicos
   const handleRefreshSpecific = useCallback(async (type: 'accounts' | 'campaigns' | 'adsets' | 'ads') => {
@@ -693,6 +716,9 @@ export default function MetaBusinessPage() {
                         {isLoading && <Loader2 className="w-3 h-3 animate-spin" />}
                         {!isLoaded && !isLoading && tab.id !== 'accounts' && (
                           <span className="w-2 h-2 bg-orange-400 rounded-full" title="Clique para carregar" />
+                        )}
+                        {!isLoading && !isLoaded && tab.id !== 'accounts' && lastRequestTime[tab.id] && (Date.now() - lastRequestTime[tab.id]) < REQUEST_COOLDOWN && (
+                          <span className="w-2 h-2 bg-red-400 rounded-full animate-pulse" title="Em cooldown - aguarde" />
                         )}
                       </button>
                     )

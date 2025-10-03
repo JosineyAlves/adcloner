@@ -3,6 +3,7 @@ import { cache } from '@/lib/cache'
 import { facebookBatchAPI } from '@/lib/facebook-batch-api'
 import { videoMetricsAPI } from '@/lib/video-metrics'
 import { VideoMetrics } from '@/lib/types'
+import { checkRateLimit, recordRequestResult } from '@/lib/rate-limiter'
 
 export const dynamic = 'force-dynamic'
 
@@ -213,6 +214,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: 'Account ID is required' },
         { status: 400 }
+      )
+    }
+
+    // 🚀 NOVO: Verificar rate limiting antes de fazer requisições
+    const rateLimitCheck = await checkRateLimit(accountId, 'ads')
+    
+    if (!rateLimitCheck.allowed) {
+      console.warn(`⚠️ Rate limit atingido para conta ${accountId} - ads`)
+      return NextResponse.json(
+        { 
+          error: 'Rate limit exceeded',
+          message: `Muitas requisições. Tente novamente em ${rateLimitCheck.remainingTime} segundos.`,
+          retryAfter: rateLimitCheck.remainingTime
+        },
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': rateLimitCheck.remainingTime?.toString() || '60'
+          }
+        }
       )
     }
 
@@ -540,9 +561,17 @@ export async function GET(request: NextRequest) {
       cache.setWithIntelligentTTL(cacheKey, result, 'ads')
       
       console.log(`✅ Ads processados com sucesso: ${ads.length} itens`)
+      
+      // 🚀 NOVO: Registrar sucesso da requisição
+      recordRequestResult(accountId, 'ads', true)
+      
       return NextResponse.json(result)
     } catch (error) {
       console.error('Error fetching ads:', error)
+      
+      // 🚀 NOVO: Registrar falha da requisição
+      recordRequestResult(accountId, 'ads', false)
+      
       return NextResponse.json(
         { error: 'Failed to fetch ads' },
         { status: 500 }
