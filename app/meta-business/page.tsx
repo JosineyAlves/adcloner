@@ -72,6 +72,17 @@ export default function MetaBusinessPage() {
     ads: false
   })
   
+  // 🚀 NOVO: Cache com timestamps para evitar requisições desnecessárias
+  const [cacheTimestamps, setCacheTimestamps] = useState({
+    accounts: 0,
+    campaigns: 0,
+    adsets: 0,
+    ads: 0
+  })
+  
+  // 🚀 NOVO: Cache TTL (5 minutos)
+  const CACHE_TTL = 5 * 60 * 1000 // 5 minutos em millisegundos
+  
   const [stats, setStats] = useState<MetaBusinessStats>({
     totalSpend: 0,
     totalImpressions: 0,
@@ -108,9 +119,22 @@ export default function MetaBusinessPage() {
   })
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
 
-  // 🚀 NOVO: Função para carregar dados específicos por tipo
-  const fetchDataByType = useCallback(async (type: 'accounts' | 'campaigns' | 'adsets' | 'ads') => {
+  // 🚀 NOVO: Função para verificar se cache é válido
+  const isCacheValid = useCallback((type: string) => {
+    const now = Date.now()
+    const cacheTime = cacheTimestamps[type as keyof typeof cacheTimestamps]
+    return (now - cacheTime) < CACHE_TTL
+  }, [cacheTimestamps, CACHE_TTL])
+
+  // 🚀 NOVO: Função para carregar dados específicos por tipo com cache e rate limiting
+  const fetchDataByType = useCallback(async (type: 'accounts' | 'campaigns' | 'adsets' | 'ads', forceRefresh = false) => {
     try {
+      // Verificar cache primeiro
+      if (!forceRefresh && isCacheValid(type) && loadedStates[type]) {
+        console.log(`📋 Usando cache para ${type}`)
+        return
+      }
+
       console.log(`🔄 Carregando dados de ${type}...`)
       setLoadingStates(prev => ({ ...prev, [type]: true }))
       
@@ -138,9 +162,24 @@ export default function MetaBusinessPage() {
                        type === 'campaigns' ? 'campaigns' :
                        type === 'adsets' ? 'adSets' : 'ads'
             allData.push(...(data[key] || []))
+          } else if (response.status === 429 || response.status === 17) {
+            // Rate limiting detectado
+            const errorData = await response.json()
+            if (errorData.error?.code === 17 && errorData.error?.error_subcode === 2446079) {
+              console.warn(`⚠️ Rate limiting detectado para ${type}`)
+              toast.error(`Rate limit atingido. Aguarde 1 minuto antes de tentar novamente.`)
+              setLoadingStates(prev => ({ ...prev, [type]: false }))
+              return
+            }
           }
         } catch (error) {
           console.error(`Error fetching ${type} for account ${account.id}:`, error)
+          // Se for erro de rate limiting, mostrar mensagem específica
+          if (error instanceof Error && error.message.includes('rate limit')) {
+            toast.error('Rate limit atingido. Aguarde 1 minuto.')
+            setLoadingStates(prev => ({ ...prev, [type]: false }))
+            return
+          }
         }
       }
 
@@ -155,8 +194,9 @@ export default function MetaBusinessPage() {
         setAds(allData)
       }
 
-      // Marcar como carregado
+      // Marcar como carregado e atualizar cache
       setLoadedStates(prev => ({ ...prev, [type]: true }))
+      setCacheTimestamps(prev => ({ ...prev, [type]: Date.now() }))
       
       // Recalcular estatísticas se necessário
       if (type === 'accounts' || type === 'campaigns') {
@@ -171,7 +211,7 @@ export default function MetaBusinessPage() {
     } finally {
       setLoadingStates(prev => ({ ...prev, [type]: false }))
     }
-  }, [facebookAccounts, datePreset, customRange, accounts, campaigns, adSets, ads])
+  }, [facebookAccounts, datePreset, customRange, accounts, campaigns, adSets, ads, isCacheValid, loadedStates])
 
   // 🚀 NOVO: Função para carregar dados iniciais (apenas contas)
   const fetchInitialData = useCallback(async () => {
@@ -186,32 +226,42 @@ export default function MetaBusinessPage() {
     }
   }, [fetchDataByType])
 
-  // 🚀 NOVO: Função para trocar de aba com lazy loading
+  // 🚀 NOVO: Função para trocar de aba com lazy loading e debounce
   const handleTabChange = useCallback(async (tabName: 'accounts' | 'campaigns' | 'adsets' | 'ads') => {
     setActiveTab(tabName)
     
     // Se a aba não foi carregada ainda, carregar agora
     if (!loadedStates[tabName]) {
-      await fetchDataByType(tabName)
+      // Adicionar pequeno delay para evitar mudanças muito rápidas
+      setTimeout(async () => {
+        await fetchDataByType(tabName)
+      }, 300) // 300ms de delay
     }
   }, [loadedStates, fetchDataByType])
 
   // 🚀 NOVO: Função para recarregar dados específicos
   const handleRefreshSpecific = useCallback(async (type: 'accounts' | 'campaigns' | 'adsets' | 'ads') => {
-    setLoadedStates(prev => ({ ...prev, [type]: false }))
-    await fetchDataByType(type)
+    // Limpar cache para forçar refresh
+    setCacheTimestamps(prev => ({ ...prev, [type]: 0 }))
+    await fetchDataByType(type, true) // forceRefresh = true
     toast.success(`${type === 'accounts' ? 'Contas' : type === 'campaigns' ? 'Campanhas' : type === 'adsets' ? 'Conjuntos' : 'Anúncios'} atualizados!`)
   }, [fetchDataByType])
 
   // 🚀 NOVO: Função para recarregar tudo
   const handleRefreshAll = useDebounce('meta-business-refresh-all', async () => {
     await refreshAccounts()
-    // Limpar todos os estados carregados
+    // Limpar todos os estados carregados e cache
     setLoadedStates({
       accounts: false,
       campaigns: false,
       adsets: false,
       ads: false
+    })
+    setCacheTimestamps({
+      accounts: 0,
+      campaigns: 0,
+      adsets: 0,
+      ads: 0
     })
     // Recarregar dados iniciais
     await fetchInitialData()
@@ -262,23 +312,35 @@ export default function MetaBusinessPage() {
     if (preset !== 'custom') {
       setCustomRange(undefined)
     }
-    // 🚀 NOVO: Limpar dados carregados quando mudar período
+    // 🚀 NOVO: Limpar dados carregados e cache quando mudar período
     setLoadedStates({
       accounts: false,
       campaigns: false,
       adsets: false,
       ads: false
     })
+    setCacheTimestamps({
+      accounts: 0,
+      campaigns: 0,
+      adsets: 0,
+      ads: 0
+    })
   }
 
   const handleCustomRangeChange = (range: DateRange) => {
     setCustomRange(range)
-    // 🚀 NOVO: Limpar dados carregados quando mudar período
+    // 🚀 NOVO: Limpar dados carregados e cache quando mudar período
     setLoadedStates({
       accounts: false,
       campaigns: false,
       adsets: false,
       ads: false
+    })
+    setCacheTimestamps({
+      accounts: 0,
+      campaigns: 0,
+      adsets: 0,
+      ads: 0
     })
   }
 
