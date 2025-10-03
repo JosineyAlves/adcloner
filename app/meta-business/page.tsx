@@ -54,15 +54,6 @@ export default function MetaBusinessPage() {
   const [adSets, setAdSets] = useState<MetaAdSet[]>([])
   const [ads, setAds] = useState<MetaAd[]>([])
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
-  
-  // Estados para lazy loading
-  const [loadedTabs, setLoadedTabs] = useState<Set<string>>(new Set(['accounts', 'campaigns']))
-  const [loadingStates, setLoadingStates] = useState({
-    accounts: false,
-    campaigns: false,
-    adsets: false,
-    ads: false
-  })
   const [stats, setStats] = useState<MetaBusinessStats>({
     totalSpend: 0,
     totalImpressions: 0,
@@ -99,10 +90,9 @@ export default function MetaBusinessPage() {
   })
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
 
-  // Função para buscar dados de contas
-  const fetchAccounts = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     try {
-      setLoadingStates(prev => ({ ...prev, accounts: true }))
+      setIsRefreshing(true)
       const activeAccounts = facebookAccounts.filter(a => a.status === 'active')
       
       if (activeAccounts.length === 0) {
@@ -110,10 +100,15 @@ export default function MetaBusinessPage() {
         return
       }
 
+      // Buscar dados de todas as contas ativas
       const allAccounts: MetaAccount[] = []
+      const allCampaigns: MetaCampaign[] = []
+      const allAdSets: MetaAdSet[] = []
+      const allAds: MetaAd[] = []
 
       for (const account of activeAccounts) {
         try {
+          // Buscar dados da conta
           const accountsResponse = await fetch(`/api/meta-business/accounts?accountId=${account.id}&datePreset=${datePreset}${customRange ? `&since=${customRange.since}&until=${customRange.until}` : ''}`, {
             credentials: 'include'
           })
@@ -122,40 +117,8 @@ export default function MetaBusinessPage() {
             const accountsData = await accountsResponse.json()
             allAccounts.push(...accountsData.accounts || [])
           }
-        } catch (error) {
-          console.error(`Error fetching accounts for account ${account.id}:`, error)
-        }
-      }
 
-      setAccounts(allAccounts)
-      setLoadedTabs(prev => new Set(Array.from(prev).concat(['accounts'])))
-      
-      // Calcular estatísticas após carregar contas
-      calculateStats(allAccounts, campaigns, adSets, ads)
-      
-    } catch (error) {
-      console.error('Error fetching accounts:', error)
-      toast.error('Erro ao carregar contas')
-    } finally {
-      setLoadingStates(prev => ({ ...prev, accounts: false }))
-    }
-  }, [facebookAccounts, datePreset, customRange, campaigns, adSets, ads])
-
-  // Função para buscar dados de campanhas
-  const fetchCampaigns = useCallback(async () => {
-    try {
-      setLoadingStates(prev => ({ ...prev, campaigns: true }))
-      const activeAccounts = facebookAccounts.filter(a => a.status === 'active')
-      
-      if (activeAccounts.length === 0) {
-        toast.error('Nenhuma conta ativa encontrada')
-        return
-      }
-
-      const allCampaigns: MetaCampaign[] = []
-
-      for (const account of activeAccounts) {
-        try {
+          // Buscar campanhas
           const campaignsResponse = await fetch(`/api/meta-business/campaigns?accountId=${account.id}&datePreset=${datePreset}${customRange ? `&since=${customRange.since}&until=${customRange.until}` : ''}`, {
             credentials: 'include'
           })
@@ -164,40 +127,8 @@ export default function MetaBusinessPage() {
             const campaignsData = await campaignsResponse.json()
             allCampaigns.push(...campaignsData.campaigns || [])
           }
-        } catch (error) {
-          console.error(`Error fetching campaigns for account ${account.id}:`, error)
-        }
-      }
 
-      setCampaigns(allCampaigns)
-      setLoadedTabs(prev => new Set(Array.from(prev).concat(['campaigns'])))
-      
-      // Calcular estatísticas após carregar campanhas
-      calculateStats(accounts, allCampaigns, adSets, ads)
-      
-    } catch (error) {
-      console.error('Error fetching campaigns:', error)
-      toast.error('Erro ao carregar campanhas')
-    } finally {
-      setLoadingStates(prev => ({ ...prev, campaigns: false }))
-    }
-  }, [facebookAccounts, datePreset, customRange, accounts, adSets, ads])
-
-  // Função para buscar dados de ad sets
-  const fetchAdSets = useCallback(async () => {
-    try {
-      setLoadingStates(prev => ({ ...prev, adsets: true }))
-      const activeAccounts = facebookAccounts.filter(a => a.status === 'active')
-      
-      if (activeAccounts.length === 0) {
-        toast.error('Nenhuma conta ativa encontrada')
-        return
-      }
-
-      const allAdSets: MetaAdSet[] = []
-
-      for (const account of activeAccounts) {
-        try {
+          // Buscar Ad Sets
           const adSetsResponse = await fetch(`/api/meta-business/adsets?accountId=${account.id}&datePreset=${datePreset}${customRange ? `&since=${customRange.since}&until=${customRange.until}` : ''}`, {
             credentials: 'include'
           })
@@ -206,37 +137,8 @@ export default function MetaBusinessPage() {
             const adSetsData = await adSetsResponse.json()
             allAdSets.push(...adSetsData.adSets || [])
           }
-        } catch (error) {
-          console.error(`Error fetching ad sets for account ${account.id}:`, error)
-        }
-      }
 
-      setAdSets(allAdSets)
-      setLoadedTabs(prev => new Set(Array.from(prev).concat(['adsets'])))
-      
-    } catch (error) {
-      console.error('Error fetching ad sets:', error)
-      toast.error('Erro ao carregar conjuntos')
-    } finally {
-      setLoadingStates(prev => ({ ...prev, adsets: false }))
-    }
-  }, [facebookAccounts, datePreset, customRange])
-
-  // Função para buscar dados de ads
-  const fetchAds = useCallback(async () => {
-    try {
-      setLoadingStates(prev => ({ ...prev, ads: true }))
-      const activeAccounts = facebookAccounts.filter(a => a.status === 'active')
-      
-      if (activeAccounts.length === 0) {
-        toast.error('Nenhuma conta ativa encontrada')
-        return
-      }
-
-      const allAds: MetaAd[] = []
-
-      for (const account of activeAccounts) {
-        try {
+          // Buscar Ads
           const adsResponse = await fetch(`/api/meta-business/ads?accountId=${account.id}&datePreset=${datePreset}${customRange ? `&since=${customRange.since}&until=${customRange.until}` : ''}`, {
             credentials: 'include'
           })
@@ -246,39 +148,25 @@ export default function MetaBusinessPage() {
             allAds.push(...adsData.ads || [])
           }
         } catch (error) {
-          console.error(`Error fetching ads for account ${account.id}:`, error)
+          console.error(`Error fetching data for account ${account.id}:`, error)
         }
       }
 
+      setAccounts(allAccounts)
+      setCampaigns(allCampaigns)
+      setAdSets(allAdSets)
       setAds(allAds)
-      setLoadedTabs(prev => new Set(Array.from(prev).concat(['ads'])))
-      
-    } catch (error) {
-      console.error('Error fetching ads:', error)
-      toast.error('Erro ao carregar anúncios')
-    } finally {
-      setLoadingStates(prev => ({ ...prev, ads: false }))
-    }
-  }, [facebookAccounts, datePreset, customRange])
 
-  // Função principal para carregar dados iniciais (contas e campanhas)
-  const fetchInitialData = useCallback(async () => {
-    try {
-      setIsRefreshing(true)
-      
-      // Carregar contas e campanhas em paralelo (mas sequencialmente por conta)
-      await Promise.all([
-        fetchAccounts(),
-        fetchCampaigns()
-      ])
+      // Calcular estatísticas
+      calculateStats(allAccounts, allCampaigns, allAdSets, allAds)
       
     } catch (error) {
-      console.error('Error fetching initial data:', error)
-      toast.error('Erro ao carregar dados iniciais')
+      console.error('Error fetching data:', error)
+      toast.error('Erro ao carregar dados')
     } finally {
       setIsRefreshing(false)
     }
-  }, [fetchAccounts, fetchCampaigns])
+  }, [facebookAccounts, datePreset, customRange])
 
   const calculateStats = (accounts: MetaAccount[], campaigns: MetaCampaign[], adSets: MetaAdSet[], ads: MetaAd[]) => {
     // Usar dados das contas se disponíveis, senão usar campanhas
@@ -302,48 +190,27 @@ export default function MetaBusinessPage() {
     })
   }
 
-  // Função para lidar com mudança de abas com lazy loading
-  const handleTabChange = useCallback(async (tabId: string) => {
-    setActiveTab(tabId as any)
-    
-    // Se a aba ainda não foi carregada, carregar os dados
-    if (!loadedTabs.has(tabId)) {
-      switch(tabId) {
-        case 'adsets':
-          await fetchAdSets()
-          break
-        case 'ads':
-          await fetchAds()
-          break
-        // 'accounts' e 'campaigns' já são carregados inicialmente
-      }
-    }
-  }, [loadedTabs, fetchAdSets, fetchAds])
-
   // Ref para evitar dependências desnecessárias
-  const fetchInitialDataRef = useRef(fetchInitialData)
-  fetchInitialDataRef.current = fetchInitialData
+  const fetchDataRef = useRef(fetchData)
+  fetchDataRef.current = fetchData
 
-  // Debounce da função fetchInitialData para evitar múltiplos refreshs
-  const debouncedFetchInitialData = useDebounce('meta-business-fetch', fetchInitialData, 3000)
+  // Debounce da função fetchData para evitar múltiplos refreshs
+  const debouncedFetchData = useDebounce('meta-business-fetch', fetchData, 3000)
 
   useEffect(() => {
-    if (facebookAccounts.length > 0) {
+    if (accounts.length > 0) {
+      setFilters(prev => ({
+        ...prev,
+        accountIds: accounts.map(acc => acc.id)
+      }))
       // Usar ref para evitar dependência circular
-      fetchInitialDataRef.current()
+      fetchDataRef.current()
     }
   }, [facebookAccounts, datePreset, customRange])
 
   const handleRefresh = useDebounce('meta-business-refresh', async () => {
     await refreshAccounts()
-    // Recarregar todas as abas que já foram carregadas
-    const promises = []
-    if (loadedTabs.has('accounts')) promises.push(fetchAccounts())
-    if (loadedTabs.has('campaigns')) promises.push(fetchCampaigns())
-    if (loadedTabs.has('adsets')) promises.push(fetchAdSets())
-    if (loadedTabs.has('ads')) promises.push(fetchAds())
-    
-    await Promise.all(promises)
+    await debouncedFetchData()
     toast.success('Dados atualizados!')
   }, 2000)
 
@@ -442,10 +309,7 @@ export default function MetaBusinessPage() {
 
       if (response.ok) {
         toast.success(`${type === 'campaigns' ? 'Campanha' : type === 'adsets' ? 'Conjunto' : 'Anúncio'} ${newStatus === 'ACTIVE' ? 'ativado' : 'pausado'}!`)
-        // Recarregar apenas a aba específica
-        if (type === 'campaigns') await fetchCampaigns()
-        else if (type === 'adsets') await fetchAdSets()
-        else if (type === 'ads') await fetchAds()
+        await fetchData() // Recarregar dados
       } else {
         const error = await response.json()
         toast.error(error.message || 'Erro ao alterar status')
@@ -478,10 +342,7 @@ export default function MetaBusinessPage() {
 
       if (response.ok) {
         toast.success(`${selectedIds.length} ${type === 'campaigns' ? 'campanhas' : type === 'adsets' ? 'conjuntos' : 'anúncios'} ${status === 'ACTIVE' ? 'ativados' : 'pausados'}!`)
-        // Recarregar apenas a aba específica
-        if (type === 'campaigns') await fetchCampaigns()
-        else if (type === 'adsets') await fetchAdSets()
-        else if (type === 'ads') await fetchAds()
+        await fetchData() // Recarregar dados
         // Limpar seleção
         if (type === 'campaigns') setSelectedCampaigns(new Set())
         else if (type === 'adsets') setSelectedAdSets(new Set())
@@ -523,8 +384,7 @@ export default function MetaBusinessPage() {
 
       // Recarregar dados em background para sincronizar com o servidor
       setTimeout(() => {
-        if (type === 'campaigns') fetchCampaigns()
-        else if (type === 'adsets') fetchAdSets()
+        fetchData()
       }, 1000)
     } catch (error) {
       console.error('Error updating budget state:', error)
@@ -684,33 +544,20 @@ export default function MetaBusinessPage() {
                     { id: 'ads', label: 'Anúncios', icon: AdsIcon, count: filteredAds.length }
                   ].map((tab) => {
                     const Icon = tab.icon
-                    const isLoading = loadingStates[tab.id as keyof typeof loadingStates]
-                    const isLoaded = loadedTabs.has(tab.id)
-                    
                     return (
                       <button
                         key={tab.id}
-                        onClick={() => handleTabChange(tab.id)}
-                        disabled={isLoading}
+                        onClick={() => setActiveTab(tab.id as any)}
                         className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
                           activeTab === tab.id
                             ? 'border-blue-500 text-blue-600 dark:text-blue-400'
                             : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                        } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        }`}
                       >
                         <Icon className="w-4 h-4" />
                         <span>{tab.label}</span>
-                        <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full text-xs flex items-center space-x-1">
-                          {isLoading ? (
-                            <>
-                              <RefreshCw className="w-3 h-3 animate-spin" />
-                              <span>...</span>
-                            </>
-                          ) : isLoaded ? (
-                            <span>{tab.count}</span>
-                          ) : (
-                            <span>0</span>
-                          )}
+                        <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full text-xs">
+                          {tab.count}
                         </span>
                       </button>
                     )
@@ -720,85 +567,49 @@ export default function MetaBusinessPage() {
 
               <div className="p-6">
                 {activeTab === 'accounts' && (
-                  loadingStates.accounts ? (
-                    <div className="flex items-center justify-center py-12">
-                      <div className="text-center">
-                        <RefreshCw className="w-8 h-8 animate-spin text-primary-600 mx-auto mb-4" />
-                        <p className="text-gray-600 dark:text-gray-400">Carregando contas...</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <AccountsTable
-                      accounts={accounts}
-                      metrics={metrics}
-                      showMetrics={true}
-                    />
-                  )
+                  <AccountsTable
+                    accounts={accounts}
+                    metrics={metrics}
+                    showMetrics={true}
+                  />
                 )}
                 
                 {activeTab === 'campaigns' && (
-                  loadingStates.campaigns ? (
-                    <div className="flex items-center justify-center py-12">
-                      <div className="text-center">
-                        <RefreshCw className="w-8 h-8 animate-spin text-primary-600 mx-auto mb-4" />
-                        <p className="text-gray-600 dark:text-gray-400">Carregando campanhas...</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <CampaignsTable
-                      campaigns={filteredCampaigns}
-                      selectedCampaigns={selectedCampaigns}
-                      onSelectionChange={setSelectedCampaigns}
-                      onStatusToggle={handleToggleStatus}
-                      onBudgetUpdate={handleBudgetUpdate}
-                      onBulkStatusUpdate={handleBulkStatusUpdate}
-                      metrics={metrics}
-                      showMetrics={true}
-                    />
-                  )
+                  <CampaignsTable
+                    campaigns={filteredCampaigns}
+                    selectedCampaigns={selectedCampaigns}
+                    onSelectionChange={setSelectedCampaigns}
+                    onStatusToggle={handleToggleStatus}
+                    onBudgetUpdate={handleBudgetUpdate}
+                    onBulkStatusUpdate={handleBulkStatusUpdate}
+                    metrics={metrics}
+                    showMetrics={true}
+                  />
                 )}
                 
                 {activeTab === 'adsets' && (
-                  loadingStates.adsets ? (
-                    <div className="flex items-center justify-center py-12">
-                      <div className="text-center">
-                        <RefreshCw className="w-8 h-8 animate-spin text-primary-600 mx-auto mb-4" />
-                        <p className="text-gray-600 dark:text-gray-400">Carregando conjuntos...</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <AdSetsTable
-                      adSets={filteredAdSets}
-                      selectedAdSets={selectedAdSets}
-                      onSelectionChange={setSelectedAdSets}
-                      onStatusToggle={handleToggleStatus}
-                      onBudgetUpdate={handleBudgetUpdate}
-                      onBulkStatusUpdate={handleBulkStatusUpdate}
-                      metrics={metrics}
-                      showMetrics={true}
-                    />
-                  )
+                  <AdSetsTable
+                    adSets={filteredAdSets}
+                    selectedAdSets={selectedAdSets}
+                    onSelectionChange={setSelectedAdSets}
+                    onStatusToggle={handleToggleStatus}
+                    onBudgetUpdate={handleBudgetUpdate}
+                    onBulkStatusUpdate={handleBulkStatusUpdate}
+                    metrics={metrics}
+                    showMetrics={true}
+                  />
                 )}
                 
                 {activeTab === 'ads' && (
-                  loadingStates.ads ? (
-                    <div className="flex items-center justify-center py-12">
-                      <div className="text-center">
-                        <RefreshCw className="w-8 h-8 animate-spin text-primary-600 mx-auto mb-4" />
-                        <p className="text-gray-600 dark:text-gray-400">Carregando anúncios...</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <AdsTable
-                      ads={filteredAds}
-                      selectedAds={selectedAds}
-                      onSelectionChange={setSelectedAds}
-                      onStatusToggle={handleToggleStatus}
-                      onBulkStatusUpdate={handleBulkStatusUpdate}
-                      metrics={metrics}
-                      showMetrics={true}
-                    />
-                  )
+                  <AdsTable
+                    ads={filteredAds}
+                    selectedAds={selectedAds}
+                    onSelectionChange={setSelectedAds}
+                    onStatusToggle={handleToggleStatus}
+                    onBulkStatusUpdate={handleBulkStatusUpdate}
+                    metrics={metrics}
+                    showMetrics={true}
+                  />
                 )}
               </div>
             </div>
