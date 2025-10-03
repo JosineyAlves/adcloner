@@ -84,8 +84,53 @@ function processConversionValuesMetric(valuesMetric: any): number {
   // Se for um array de AdsActionStats, processar cada item
   if (Array.isArray(valuesMetric)) {
     console.log(`💰 Processando valores monetários com ${valuesMetric.length} itens:`, valuesMetric)
+    
+    // Buscar ações relacionadas a compras
+    const purchaseActions = valuesMetric.filter((action: any) => 
+      action.action_type && (
+        action.action_type === 'purchase' ||
+        action.action_type === 'omni_purchase' ||
+        action.action_type === 'offsite_conversion.fb_pixel_purchase' ||
+        action.action_type === 'onsite_web_purchase' ||
+        action.action_type === 'web_in_store_purchase' ||
+        action.action_type === 'onsite_web_app_purchase' ||
+        action.action_type === 'web_app_in_store_purchase'
+      )
+    )
+    
+    if (purchaseActions.length > 0) {
+      // Priorizar por ordem de importância: omni > onsite > offsite > genérico
+      const priorityOrder = [
+        'omni_purchase',
+        'onsite_web_purchase',
+        'onsite_web_app_purchase', 
+        'offsite_conversion.fb_pixel_purchase',
+        'web_in_store_purchase',
+        'web_app_in_store_purchase',
+        'purchase'
+      ]
+      
+      let selectedPurchase = null
+      for (const priorityType of priorityOrder) {
+        selectedPurchase = purchaseActions.find(action => action.action_type === priorityType)
+        if (selectedPurchase) break
+      }
+      
+      // Se não encontrou nenhum prioritário, pegar o primeiro
+      if (!selectedPurchase) {
+        selectedPurchase = purchaseActions[0]
+      }
+      
+      const totalValue = parseFloat(selectedPurchase.value || '0')
+      
+      console.log(`💰 Valor de compra encontrado: R$ ${totalValue} (tipo prioritizado: ${selectedPurchase.action_type})`)
+      console.log(`📊 Todos os tipos de compra encontrados:`, purchaseActions.map(a => `${a.action_type}: R$ ${a.value}`).join(', '))
+      
+      return totalValue
+    }
+    
+    // Se não há ações de compra, somar todas (fallback)
     return valuesMetric.reduce((total, action) => {
-      // Estrutura: { action_type: "purchase", value: "150.50" }
       if (action.value) {
         const value = parseFloat(action.value || '0')
         console.log(`  - Action Type: ${action.action_type}, Value: R$ ${value}`)
