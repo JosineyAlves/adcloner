@@ -107,6 +107,7 @@ export async function GET(request: NextRequest) {
               cost_per_conversion: 0,
               conversions: 0,
               conversion_values: 0,
+              results: 0,
               
               // Métricas de engajamento (disponíveis em todos os níveis)
               inline_link_clicks: 0,
@@ -124,6 +125,7 @@ export async function GET(request: NextRequest) {
               video_p25_watched_actions: 0,
               video_p50_watched_actions: 0,
               video_p75_watched_actions: 0,
+              video_p95_watched_actions: 0,
               video_p100_watched_actions: 0
             }
 
@@ -157,6 +159,7 @@ export async function GET(request: NextRequest) {
                   cost_per_conversion: parseFloat(insight.cost_per_conversion || '0'),
                   conversions: parseInt(insight.conversions || '0'),
                   conversion_values: parseFloat(insight.conversion_values || '0'),
+                  results: parseInt(insight.results || '0'),
                   
                   // Métricas de engajamento (disponíveis em todos os níveis)
                   inline_link_clicks: parseInt(insight.inline_link_clicks || '0'),
@@ -174,6 +177,7 @@ export async function GET(request: NextRequest) {
                   video_p25_watched_actions: processVideoMetric(insight.video_p25_watched_actions),
                   video_p50_watched_actions: processVideoMetric(insight.video_p50_watched_actions),
                   video_p75_watched_actions: processVideoMetric(insight.video_p75_watched_actions),
+                  video_p95_watched_actions: processVideoMetric(insight.video_p95_watched_actions),
                   video_p100_watched_actions: processVideoMetric(insight.video_p100_watched_actions)
                 }
               }
@@ -229,6 +233,7 @@ export async function GET(request: NextRequest) {
               cost_per_conversion: insights.cost_per_conversion,
               conversions: insights.conversions,
               conversion_values: insights.conversion_values,
+              results: insights.results,
               
               // Métricas de engajamento (disponíveis em todos os níveis)
               inline_link_clicks: insights.inline_link_clicks,
@@ -246,6 +251,7 @@ export async function GET(request: NextRequest) {
               video_p25_watched_actions: insights.video_p25_watched_actions || 0,
               video_p50_watched_actions: insights.video_p50_watched_actions || 0,
               video_p75_watched_actions: insights.video_p75_watched_actions || 0,
+              video_p95_watched_actions: insights.video_p95_watched_actions || 0,
               video_p100_watched_actions: insights.video_p100_watched_actions || 0,
               
               // Métricas de vídeo detalhadas
@@ -296,6 +302,7 @@ export async function GET(request: NextRequest) {
               cost_per_conversion: 0,
               conversions: 0,
               conversion_values: 0,
+              results: 0,
               
               // Métricas de engajamento (disponíveis em todos os níveis)
               inline_link_clicks: 0,
@@ -313,6 +320,7 @@ export async function GET(request: NextRequest) {
               video_p25_watched_actions: 0,
               video_p50_watched_actions: 0,
               video_p75_watched_actions: 0,
+              video_p95_watched_actions: 0,
               video_p100_watched_actions: 0,
               
               created_time: adSet.created_time,

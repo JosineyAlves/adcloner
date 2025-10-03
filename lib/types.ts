@@ -158,6 +158,7 @@ export interface MetaAccount {
   unique_inline_link_clicks: number
   unique_inline_link_click_ctr: number
   unique_ctr: number
+  results: number
   
   // Métricas de vídeo (apenas as válidas na API de Insights)
   video_play_actions: number
@@ -232,6 +233,7 @@ export interface MetaCampaign {
   // Métricas de conversão
   conversions: number
   conversion_values: number
+  results: number
   conversion_rate_ranking: number
   
   // Métricas de vídeo (disponíveis em todos os níveis)
@@ -239,6 +241,7 @@ export interface MetaCampaign {
   video_p25_watched_actions: number
   video_p50_watched_actions: number
   video_p75_watched_actions: number
+  video_p95_watched_actions: number
   video_p100_watched_actions: number
   
   // Métricas de qualidade
@@ -297,6 +300,7 @@ export interface MetaAdSet {
   unique_inline_link_clicks: number
   unique_inline_link_click_ctr: number
   unique_ctr: number
+  results: number
   
   // Métricas de vídeo (apenas as válidas na API de Insights)
   video_play_actions: number
@@ -306,6 +310,7 @@ export interface MetaAdSet {
   video_p25_watched_actions: number
   video_p50_watched_actions: number
   video_p75_watched_actions: number
+  video_p95_watched_actions: number
   video_p100_watched_actions: number
   
   // Métricas de vídeo - Tempo
@@ -354,6 +359,7 @@ export interface MetaAd {
   unique_inline_link_clicks: number
   unique_inline_link_click_ctr: number
   unique_ctr: number
+  results: number
   
   // Métricas de vídeo (apenas as válidas na API de Insights)
   video_play_actions: number
@@ -363,6 +369,7 @@ export interface MetaAd {
   video_p25_watched_actions: number
   video_p50_watched_actions: number
   video_p75_watched_actions: number
+  video_p95_watched_actions: number
   video_p100_watched_actions: number
   
   // Métricas de vídeo - Tempo

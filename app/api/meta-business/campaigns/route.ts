@@ -123,6 +123,7 @@ export async function GET(request: NextRequest) {
               video_p25_watched_actions: 0,
               video_p50_watched_actions: 0,
               video_p75_watched_actions: 0,
+              video_p95_watched_actions: 0,
               video_p100_watched_actions: 0,
               
               // Métricas específicas de campanhas (não disponíveis em adsets/ads)
@@ -132,6 +133,7 @@ export async function GET(request: NextRequest) {
               cost_per_landing_page_view: 0,
               conversions: 0,
               conversion_values: 0,
+              results: 0,
               conversion_rate_ranking: 0,
               quality_ranking: 0,
               engagement_rate_ranking: 0,
@@ -179,6 +181,7 @@ export async function GET(request: NextRequest) {
                 video_p25_watched_actions: processVideoMetric(insight.video_p25_watched_actions),
                 video_p50_watched_actions: processVideoMetric(insight.video_p50_watched_actions),
                 video_p75_watched_actions: processVideoMetric(insight.video_p75_watched_actions),
+                video_p95_watched_actions: processVideoMetric(insight.video_p95_watched_actions),
                 video_p100_watched_actions: processVideoMetric(insight.video_p100_watched_actions),
                 
                 // Métricas específicas de campanhas (não disponíveis em adsets/ads)
@@ -188,6 +191,7 @@ export async function GET(request: NextRequest) {
                 cost_per_landing_page_view: parseFloat(insight.cost_per_landing_page_view || '0'),
                 conversions: parseInt(insight.conversions || '0'),
                 conversion_values: parseFloat(insight.conversion_values || '0'),
+                results: parseInt(insight.results || '0'),
                 conversion_rate_ranking: parseFloat(insight.conversion_rate_ranking || '0'),
                 quality_ranking: parseFloat(insight.quality_ranking || '0'),
                 engagement_rate_ranking: parseFloat(insight.engagement_rate_ranking || '0'),
@@ -250,6 +254,7 @@ export async function GET(request: NextRequest) {
               video_p25_watched_actions: insights.video_p25_watched_actions,
               video_p50_watched_actions: insights.video_p50_watched_actions,
               video_p75_watched_actions: insights.video_p75_watched_actions,
+              video_p95_watched_actions: insights.video_p95_watched_actions,
               video_p100_watched_actions: insights.video_p100_watched_actions,
               
               // Métricas específicas de campanhas (não disponíveis em adsets/ads)
@@ -259,6 +264,7 @@ export async function GET(request: NextRequest) {
               cost_per_landing_page_view: insights.cost_per_landing_page_view,
               conversions: insights.conversions,
               conversion_values: insights.conversion_values,
+              results: insights.results,
               conversion_rate_ranking: insights.conversion_rate_ranking,
               quality_ranking: insights.quality_ranking,
               engagement_rate_ranking: insights.engagement_rate_ranking,
@@ -319,6 +325,7 @@ export async function GET(request: NextRequest) {
               video_p25_watched_actions: 0,
               video_p50_watched_actions: 0,
               video_p75_watched_actions: 0,
+              video_p95_watched_actions: 0,
               video_p100_watched_actions: 0,
               
               // Métricas específicas de campanhas (não disponíveis em adsets/ads)
@@ -328,6 +335,7 @@ export async function GET(request: NextRequest) {
               cost_per_landing_page_view: 0,
               conversions: 0,
               conversion_values: 0,
+              results: 0,
               conversion_rate_ranking: 0,
               quality_ranking: 0,
               engagement_rate_ranking: 0,

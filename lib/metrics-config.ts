@@ -105,6 +105,15 @@ export const ALL_METRICS: MetricConfig[] = [
     order: 12,
     category: 'cost'
   },
+  {
+    id: 'results',
+    label: 'Resultados',
+    description: 'Número total de resultados obtidos.',
+    type: 'number',
+    visible: true,
+    order: 13,
+    category: 'cost'
+  },
 
   // === MÉTRICAS DE ALCANCE E FREQUÊNCIA ===
   {
@@ -227,12 +236,21 @@ export const ALL_METRICS: MetricConfig[] = [
     category: 'video'
   },
   {
+    id: 'video_p95_watched_actions',
+    label: 'Visualizações 95%',
+    description: 'Número de vezes que o vídeo foi reproduzido até 95% do seu comprimento',
+    type: 'number',
+    visible: false,
+    order: 25,
+    category: 'video'
+  },
+  {
     id: 'video_p100_watched_actions',
     label: 'Visualizações 100%',
     description: 'Número de vezes que o vídeo foi reproduzido até 100% do seu comprimento',
     type: 'number',
     visible: false,
-    order: 25,
+    order: 26,
     category: 'video'
   }
 ]
