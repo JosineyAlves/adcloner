@@ -88,12 +88,21 @@ export const ALL_METRICS: MetricConfig[] = [
     category: 'cost'
   },
   {
+    id: 'cost_per_initiate_checkout',
+    label: 'Custo por Início de Checkout',
+    description: 'O custo médio para cada início de checkout.',
+    type: 'currency',
+    visible: true,
+    order: 11,
+    category: 'cost'
+  },
+  {
     id: 'conversions',
     label: 'Conversões',
     description: 'Número total de conversões.',
     type: 'number',
     visible: true,
-    order: 11,
+    order: 12,
     category: 'cost'
   },
   {
@@ -102,7 +111,7 @@ export const ALL_METRICS: MetricConfig[] = [
     description: 'Valor total das conversões.',
     type: 'currency',
     visible: true,
-    order: 12,
+    order: 13,
     category: 'cost'
   },
   {
@@ -111,7 +120,7 @@ export const ALL_METRICS: MetricConfig[] = [
     description: 'Número total de resultados obtidos.',
     type: 'number',
     visible: true,
-    order: 13,
+    order: 14,
     category: 'cost'
   },
 

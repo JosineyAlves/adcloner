@@ -158,9 +158,11 @@ export async function GET(request: NextRequest) {
                     cost_per_unique_inline_link_click: 0,
                     cost_per_inline_link_click: 0,
                     cost_per_conversion: 0,
-              conversions: 0,
-              conversion_values: 0,
-              results: 0,
+                    cost_per_initiate_checkout: 0,
+                    cost_per_landing_page_view: 0,
+                    conversions: 0,
+                    conversion_values: 0,
+                    results: 0,
                     
                     // Métricas de engajamento (disponíveis em todos os níveis)
                     inline_link_clicks: 0,
@@ -212,6 +214,8 @@ export async function GET(request: NextRequest) {
                       cost_per_unique_inline_link_click: parseFloat(insight.cost_per_unique_inline_link_click || '0'),
                       cost_per_inline_link_click: parseFloat(insight.cost_per_inline_link_click || '0'),
                       cost_per_conversion: processCostPerActionType(insight.cost_per_action_type, 'purchase'),
+                      cost_per_initiate_checkout: processCostPerActionType(insight.cost_per_action_type, 'initiate_checkout'),
+                      cost_per_landing_page_view: processCostPerActionType(insight.cost_per_action_type, 'landing_page_view'),
                       conversions: processResultsMetric(insight.results),
                       conversion_values: processResultsMetric(insight.results),
                       results: processResultsMetric(insight.results),

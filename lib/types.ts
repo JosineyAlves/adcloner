@@ -172,6 +172,7 @@ export interface MetaAccount {
   
   // Métricas específicas de contas (level=account)
   cost_per_conversion: number
+  cost_per_initiate_checkout: number
   cost_per_action_type: number
   cost_per_inline_link_click: number
   cost_per_landing_page_view: number
@@ -219,6 +220,7 @@ export interface MetaCampaign {
   ctr: number
   cpm: number
   cost_per_conversion: number
+  cost_per_initiate_checkout: number
   cost_per_action_type: number
   cost_per_inline_link_click: number
   cost_per_unique_click: number
@@ -289,6 +291,10 @@ export interface MetaAdSet {
   ctr: number
   cost_per_unique_click: number
   cost_per_unique_inline_link_click: number
+  cost_per_conversion: number
+  cost_per_initiate_checkout: number
+  cost_per_inline_link_click: number
+  cost_per_landing_page_view: number
   
   // Métricas de engajamento
   inline_link_clicks: number
@@ -301,6 +307,8 @@ export interface MetaAdSet {
   unique_inline_link_click_ctr: number
   unique_ctr: number
   results: number
+  conversions: number
+  conversion_values: number
   
   // Métricas de vídeo (apenas as válidas na API de Insights)
   video_play_actions: number
@@ -348,6 +356,10 @@ export interface MetaAd {
   ctr: number
   cost_per_unique_click: number
   cost_per_unique_inline_link_click: number
+  cost_per_conversion: number
+  cost_per_initiate_checkout: number
+  cost_per_inline_link_click: number
+  cost_per_landing_page_view: number
   
   // Métricas de engajamento
   inline_link_clicks: number
@@ -360,6 +372,8 @@ export interface MetaAd {
   unique_inline_link_click_ctr: number
   unique_ctr: number
   results: number
+  conversions: number
+  conversion_values: number
   
   // Métricas de vídeo (apenas as válidas na API de Insights)
   video_play_actions: number

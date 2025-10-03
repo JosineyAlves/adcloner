@@ -182,6 +182,7 @@ export async function GET(request: NextRequest) {
               
               // Métricas específicas de campanhas (não disponíveis em adsets/ads)
               cost_per_conversion: 0,
+              cost_per_initiate_checkout: 0,
               cost_per_action_type: 0,
               cost_per_inline_link_click: 0,
               cost_per_landing_page_view: 0,
@@ -244,6 +245,7 @@ export async function GET(request: NextRequest) {
                 
                 // Métricas específicas de campanhas (não disponíveis em adsets/ads)
                 cost_per_conversion: processCostPerActionType(insight.cost_per_action_type, 'purchase'),
+                cost_per_initiate_checkout: processCostPerActionType(insight.cost_per_action_type, 'initiate_checkout'),
                 cost_per_action_type: processCostPerActionType(insight.cost_per_action_type),
                 cost_per_inline_link_click: parseFloat(insight.cost_per_inline_link_click || '0'),
                 cost_per_landing_page_view: processCostPerActionType(insight.cost_per_action_type, 'landing_page_view'),
@@ -317,6 +319,7 @@ export async function GET(request: NextRequest) {
               
               // Métricas específicas de campanhas (não disponíveis em adsets/ads)
               cost_per_conversion: insights.cost_per_conversion,
+              cost_per_initiate_checkout: insights.cost_per_initiate_checkout,
               cost_per_action_type: insights.cost_per_action_type,
               cost_per_inline_link_click: insights.cost_per_inline_link_click,
               cost_per_landing_page_view: insights.cost_per_landing_page_view,
@@ -388,6 +391,7 @@ export async function GET(request: NextRequest) {
               
               // Métricas específicas de campanhas (não disponíveis em adsets/ads)
               cost_per_conversion: 0,
+              cost_per_initiate_checkout: 0,
               cost_per_action_type: 0,
               cost_per_inline_link_click: 0,
               cost_per_landing_page_view: 0,
