@@ -94,11 +94,28 @@ function processInitiateCheckoutMetric(actionsMetric: any): number {
     )
     
     if (checkoutActions.length > 0) {
-      // Pegar o primeiro valor encontrado (todos os tipos de checkout devem ter o mesmo valor)
-      const firstCheckout = checkoutActions[0]
-      const totalCheckouts = parseInt(firstCheckout.value || '0')
+      // Priorizar por ordem de importância: omni > onsite > offsite > genérico
+      const priorityOrder = [
+        'omni_initiated_checkout',
+        'onsite_web_initiate_checkout', 
+        'offsite_conversion.fb_pixel_initiate_checkout',
+        'initiate_checkout'
+      ]
       
-      console.log(`🛒 Checkouts encontrados: ${totalCheckouts} (tipo: ${firstCheckout.action_type})`)
+      let selectedCheckout = null
+      for (const priorityType of priorityOrder) {
+        selectedCheckout = checkoutActions.find(action => action.action_type === priorityType)
+        if (selectedCheckout) break
+      }
+      
+      // Se não encontrou nenhum prioritário, pegar o primeiro
+      if (!selectedCheckout) {
+        selectedCheckout = checkoutActions[0]
+      }
+      
+      const totalCheckouts = parseInt(selectedCheckout.value || '0')
+      
+      console.log(`🛒 Checkouts encontrados: ${totalCheckouts} (tipo prioritizado: ${selectedCheckout.action_type})`)
       console.log(`📊 Todos os tipos de checkout encontrados:`, checkoutActions.map(a => `${a.action_type}: ${a.value}`).join(', '))
       
       return totalCheckouts
@@ -337,6 +354,9 @@ export async function GET(request: NextRequest) {
                     cost_per_unique_inline_link_click: insights.cost_per_unique_inline_link_click,
                     cost_per_inline_link_click: insights.cost_per_inline_link_click,
                     cost_per_conversion: insights.cost_per_conversion,
+                    cost_per_initiate_checkout: insights.cost_per_initiate_checkout,
+                    initiate_checkout: insights.initiate_checkout,
+                    cost_per_landing_page_view: insights.cost_per_landing_page_view,
                     conversions: insights.conversions,
                     conversion_values: insights.conversion_values,
                     results: insights.results,
@@ -405,6 +425,9 @@ export async function GET(request: NextRequest) {
               cost_per_unique_inline_link_click: 0,
               cost_per_inline_link_click: 0,
               cost_per_conversion: 0,
+              cost_per_initiate_checkout: 0,
+              initiate_checkout: 0,
+              cost_per_landing_page_view: 0,
               conversions: 0,
               conversion_values: 0,
               results: 0,
