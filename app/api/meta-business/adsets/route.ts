@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { checkRateLimit, recordRequestResult } from '@/lib/rate-limiter'
+import { facebookRateLimiter } from '@/lib/rate-limiter'
 import { cache } from '@/lib/cache'
 import { facebookBatchAPI } from '@/lib/facebook-batch-api'
 import { videoMetricsAPI } from '@/lib/video-metrics'
