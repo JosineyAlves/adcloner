@@ -23,29 +23,33 @@ function processVideoMetric(videoMetric: any): number {
   return parseInt(videoMetric.toString() || '0')
 }
 
-// Função auxiliar para processar métricas de conversão (estrutura real da API)
-function processConversionMetric(resultsMetric: any): number {
-  if (!resultsMetric) return 0
+// Função auxiliar para processar cost_per_action_type (AdsActionStats)
+function processCostPerActionType(costPerActionTypeMetric: any, specificActionType?: string): number {
+  if (!costPerActionTypeMetric) return 0
   
-  // Se for um array de resultados, processar cada item
-  if (Array.isArray(resultsMetric)) {
-    console.log(`📊 Processando array de resultados com ${resultsMetric.length} itens:`, resultsMetric)
-    return resultsMetric.reduce((total, result) => {
-      // Estrutura real: { indicator: "actions:offsite_conversion.fb_pixel_purchase", values: [{ value: "1" }] }
-      if (result.values && Array.isArray(result.values)) {
-        const resultValue = result.values.reduce((sum: number, valueObj: any) => {
-          const value = parseFloat(valueObj.value || '0')
-          console.log(`  - Indicator: ${result.indicator}, Value: ${value}`)
-          return sum + value
-        }, 0)
-        return total + resultValue
+  // Se for um array de AdsActionStats, buscar o valor específico
+  if (Array.isArray(costPerActionTypeMetric)) {
+    if (specificActionType) {
+      // Buscar ação específica
+      const action = costPerActionTypeMetric.find((item: any) => item.action_type === specificActionType)
+      if (action) {
+        console.log(`📊 Cost per ${specificActionType}: ${action.value}`)
+        return parseFloat(action.value || '0')
       }
-      return total
-    }, 0)
+      return 0
+    } else {
+      // Retornar o primeiro valor (para compatibilidade)
+      const firstAction = costPerActionTypeMetric[0]
+      if (firstAction) {
+        console.log(`📊 Cost per action type (primeiro): ${firstAction.action_type} = ${firstAction.value}`)
+        return parseFloat(firstAction.value || '0')
+      }
+      return 0
+    }
   }
   
   // Se for um número simples, retornar diretamente
-  return parseFloat(resultsMetric.toString() || '0')
+  return parseFloat(costPerActionTypeMetric.toString() || '0')
 }
 
 // Função auxiliar para processar métricas de resultados (estrutura real da API)
@@ -239,12 +243,12 @@ export async function GET(request: NextRequest) {
                 video_p100_watched_actions: processVideoMetric(insight.video_p100_watched_actions),
                 
                 // Métricas específicas de campanhas (não disponíveis em adsets/ads)
-                cost_per_conversion: parseFloat(insight.cost_per_conversion || '0'),
-                cost_per_action_type: parseFloat(insight.cost_per_action_type || '0'),
+                cost_per_conversion: processCostPerActionType(insight.cost_per_action_type, 'purchase'),
+                cost_per_action_type: processCostPerActionType(insight.cost_per_action_type),
                 cost_per_inline_link_click: parseFloat(insight.cost_per_inline_link_click || '0'),
-                cost_per_landing_page_view: parseFloat(insight.cost_per_landing_page_view || '0'),
-                conversions: processConversionMetric(insight.results),
-                conversion_values: processConversionMetric(insight.results),
+                cost_per_landing_page_view: processCostPerActionType(insight.cost_per_action_type, 'landing_page_view'),
+                conversions: processResultsMetric(insight.results),
+                conversion_values: processResultsMetric(insight.results),
                 results: processResultsMetric(insight.results),
                 conversion_rate_ranking: parseFloat(insight.conversion_rate_ranking || '0'),
                 quality_ranking: parseFloat(insight.quality_ranking || '0'),

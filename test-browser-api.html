@@ -123,10 +123,14 @@
                 return;
             }
             
-            // Campos específicos de conversão (estrutura real da API)
+            // Campos específicos de conversão (todos os campos possíveis da API)
             const fields = [
                 'results',
                 'cost_per_conversion',
+                'conversions',
+                'conversion_values',
+                'cost_per_action_type',
+                'cost_per_landing_page_view',
                 'impressions',
                 'clicks',
                 'spend',
@@ -172,17 +176,63 @@
                     resultHTML += `<p><strong>Gasto:</strong> ${insights.spend || 0}</p>`;
                     
                     // Métricas de conversão
-                    resultHTML += '<h4>🔄 Métricas de Conversão:</h4>';
-                    resultHTML += `<p><strong>Cost per Conversion:</strong> ${JSON.stringify(insights.cost_per_conversion)}</p>`;
-                    resultHTML += `<p><strong>Results:</strong> ${JSON.stringify(insights.results)}</p>`;
+                    resultHTML += '<h4>🔄 Métricas de Conversão (API Direta):</h4>';
+                    resultHTML += `<p><strong>cost_per_conversion:</strong> ${JSON.stringify(insights.cost_per_conversion)}</p>`;
+                    resultHTML += `<p><strong>conversions:</strong> ${JSON.stringify(insights.conversions)}</p>`;
+                    resultHTML += `<p><strong>conversion_values:</strong> ${JSON.stringify(insights.conversion_values)}</p>`;
+                    resultHTML += `<p><strong>cost_per_action_type:</strong> ${JSON.stringify(insights.cost_per_action_type)}</p>`;
+                    resultHTML += `<p><strong>cost_per_landing_page_view:</strong> ${JSON.stringify(insights.cost_per_landing_page_view)}</p>`;
+                    resultHTML += `<p><strong>results:</strong> ${JSON.stringify(insights.results)}</p>`;
                     
                     // Verificar tipos
                     resultHTML += '<h4>🔍 Verificação de Tipos:</h4>';
+                    resultHTML += `<p><strong>conversions é array?</strong> ${Array.isArray(insights.conversions)}</p>`;
+                    resultHTML += `<p><strong>conversion_values é array?</strong> ${Array.isArray(insights.conversion_values)}</p>`;
                     resultHTML += `<p><strong>results é array?</strong> ${Array.isArray(insights.results)}</p>`;
                     
-                    // Se for array, mostrar estrutura real
+                    // Mostrar estrutura de cost_per_action_type (onde estão os dados reais)
+                    if (Array.isArray(insights.cost_per_action_type) && insights.cost_per_action_type.length > 0) {
+                        resultHTML += '<h4>💰 Estrutura de Cost Per Action Type (AdsActionStats):</h4>';
+                        insights.cost_per_action_type.forEach((action, index) => {
+                            resultHTML += `<p><strong>${index + 1}.</strong> Action Type: ${action.action_type}</p>`;
+                            resultHTML += `<p>&nbsp;&nbsp;&nbsp;Value: ${action.value} (tipo: ${typeof action.value})</p>`;
+                            
+                            // Destacar ações importantes
+                            if (action.action_type === 'purchase' || action.action_type.includes('purchase')) {
+                                resultHTML += `<p style="color: green; font-weight: bold;">&nbsp;&nbsp;&nbsp;🎯 ESTE É O COST_PER_CONVERSION!</p>`;
+                            }
+                            if (action.action_type === 'landing_page_view') {
+                                resultHTML += `<p style="color: blue; font-weight: bold;">&nbsp;&nbsp;&nbsp;🌐 ESTE É O COST_PER_LANDING_PAGE_VIEW!</p>`;
+                            }
+                        });
+                    }
+                    
+                    // Se conversions existir (pode não existir na API)
+                    if (Array.isArray(insights.conversions) && insights.conversions.length > 0) {
+                        resultHTML += '<h4>🔄 Estrutura de Conversions (AdsActionStats):</h4>';
+                        insights.conversions.forEach((conv, index) => {
+                            resultHTML += `<p><strong>${index + 1}.</strong> Action Type: ${conv.action_type}</p>`;
+                            resultHTML += `<p>&nbsp;&nbsp;&nbsp;Value: ${conv.value} (tipo: ${typeof conv.value})</p>`;
+                        });
+                    } else {
+                        resultHTML += '<h4>🔄 Conversions:</h4>';
+                        resultHTML += '<p style="color: orange;">❌ Campo "conversions" não existe na API - usando "results" em vez disso</p>';
+                    }
+                    
+                    // Se conversion_values existir (pode não existir na API)
+                    if (Array.isArray(insights.conversion_values) && insights.conversion_values.length > 0) {
+                        resultHTML += '<h4>💰 Estrutura de Conversion Values (AdsActionStats):</h4>';
+                        insights.conversion_values.forEach((conv, index) => {
+                            resultHTML += `<p><strong>${index + 1}.</strong> Action Type: ${conv.action_type}</p>`;
+                            resultHTML += `<p>&nbsp;&nbsp;&nbsp;Value: ${conv.value} (tipo: ${typeof conv.value})</p>`;
+                        });
+                    } else {
+                        resultHTML += '<h4>💰 Conversion Values:</h4>';
+                        resultHTML += '<p style="color: orange;">❌ Campo "conversion_values" não existe na API - usando "results" em vez disso</p>';
+                    }
+                    
                     if (Array.isArray(insights.results) && insights.results.length > 0) {
-                        resultHTML += '<h4>🎯 Estrutura de Results (Real):</h4>';
+                        resultHTML += '<h4>🎯 Estrutura de Results (API):</h4>';
                         insights.results.forEach((result, index) => {
                             resultHTML += `<p><strong>${index + 1}.</strong> Indicator: ${result.indicator}</p>`;
                             if (result.values && Array.isArray(result.values)) {
@@ -193,54 +243,23 @@
                         });
                     }
                     
-                    // Teste de processamento
-                    resultHTML += '<h4>🧪 Teste de Processamento:</h4>';
+                    // Análise dos dados diretos da API
+                    resultHTML += '<h4>📊 Análise dos Dados Diretos da API:</h4>';
                     
-                    function processConversionMetric(resultsMetric) {
-                        if (!resultsMetric) return 0;
-                        
-                        if (Array.isArray(resultsMetric)) {
-                            return resultsMetric.reduce((total, result) => {
-                                if (result.values && Array.isArray(result.values)) {
-                                    const resultValue = result.values.reduce((sum, valueObj) => {
-                                        const value = parseFloat(valueObj.value || '0');
-                                        return sum + value;
-                                    }, 0);
-                                    return total + resultValue;
-                                }
-                                return total;
-                            }, 0);
-                        }
-                        
-                        return parseFloat(resultsMetric.toString() || '0');
-                    }
+                    // Verificar quais campos existem
+                    resultHTML += '<h5>Campos Presentes:</h5>';
+                    const conversionFields = ['cost_per_conversion', 'conversions', 'conversion_values', 'cost_per_action_type', 'cost_per_landing_page_view', 'results'];
+                    conversionFields.forEach(field => {
+                        const exists = insights.hasOwnProperty(field);
+                        const value = insights[field];
+                        const type = typeof value;
+                        resultHTML += `<p><strong>${field}:</strong> ${exists ? '✅ Existe' : '❌ Não existe'} - Valor: ${JSON.stringify(value)} (tipo: ${type})</p>`;
+                    });
                     
-                    function processResultsMetric(resultsMetric) {
-                        if (!resultsMetric) return 0;
-                        
-                        if (Array.isArray(resultsMetric)) {
-                            return resultsMetric.reduce((total, result) => {
-                                if (result.values && Array.isArray(result.values)) {
-                                    const resultValue = result.values.reduce((sum, valueObj) => {
-                                        const value = parseInt(valueObj.value || '0');
-                                        return sum + value;
-                                    }, 0);
-                                    return total + resultValue;
-                                }
-                                return total;
-                            }, 0);
-                        }
-                        
-                        return parseInt(resultsMetric.toString() || '0');
-                    }
-                    
-                    const processedConversions = processConversionMetric(insights.results);
-                    const processedConversionValues = processConversionMetric(insights.results);
-                    const processedResults = processResultsMetric(insights.results);
-                    
-                    resultHTML += `<p><strong>Conversions Processadas:</strong> ${processedConversions}</p>`;
-                    resultHTML += `<p><strong>Conversion Values Processadas:</strong> ${processedConversionValues}</p>`;
-                    resultHTML += `<p><strong>Results Processadas:</strong> ${processedResults}</p>`;
+                    // Resumo
+                    resultHTML += '<h5>📋 Resumo:</h5>';
+                    resultHTML += `<p><strong>Campos com dados:</strong> ${conversionFields.filter(field => insights.hasOwnProperty(field) && insights[field] !== undefined && insights[field] !== null).join(', ')}</p>`;
+                    resultHTML += `<p><strong>Campos vazios/undefined:</strong> ${conversionFields.filter(field => !insights.hasOwnProperty(field) || insights[field] === undefined || insights[field] === null).join(', ')}</p>`;
                     
                     resultHTML += '</div>';
                 }
