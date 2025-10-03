@@ -249,6 +249,9 @@ export class FacebookBatchAPI {
       // Métricas de conversão
       'results',
       'actions',
+      'action_values',
+      'conversion_values',
+      'conversions',
       'conversion_rate_ranking',
       
       // Métricas de vídeo (baseado na documentação oficial do Meta)
@@ -324,6 +327,9 @@ export class FacebookBatchAPI {
       // Métricas de conversão
       'results',
       'actions',
+      'action_values',
+      'conversion_values',
+      'conversions',
       'conversion_rate_ranking',
       
       // Métricas de vídeo (baseado na documentação oficial do Meta)
@@ -420,6 +426,9 @@ export class FacebookBatchAPI {
       // Métricas de conversão
       'results',
       'actions',
+      'action_values',
+      'conversion_values',
+      'conversions',
       'conversion_rate_ranking',
       
       // Métricas de vídeo (baseado na documentação oficial do Meta)
@@ -512,6 +521,9 @@ export class FacebookBatchAPI {
       // Métricas de conversão
       'results',
       'actions',
+      'action_values',
+      'conversion_values',
+      'conversions',
       'conversion_rate_ranking',
       
       // Métricas de vídeo (baseado na documentação oficial do Meta)

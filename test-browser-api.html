@@ -137,7 +137,8 @@
                 'clicks',
                 'spend',
                 'reach',
-                'frequency'
+                'frequency',
+                'action_values'  // Adicionando action_values para investigar valores monetários
             ].join(',');
             
             const url = `https://graph.facebook.com/v23.0/${campaignId}/insights?fields=${fields}&level=campaign&date_preset=${datePreset}&action_breakdowns=action_type&action_attribution_windows=default`;
@@ -187,12 +188,14 @@
                     resultHTML += `<p><strong>cost_per_landing_page_view:</strong> ${JSON.stringify(insights.cost_per_landing_page_view)}</p>`;
                     resultHTML += `<p><strong>results:</strong> ${JSON.stringify(insights.results)}</p>`;
                     resultHTML += `<p><strong>actions:</strong> ${JSON.stringify(insights.actions)}</p>`;
+                    resultHTML += `<p><strong>action_values:</strong> ${JSON.stringify(insights.action_values)}</p>`;
                     
                     // Verificar tipos
                     resultHTML += '<h4>🔍 Verificação de Tipos:</h4>';
                     resultHTML += `<p><strong>conversions é array?</strong> ${Array.isArray(insights.conversions)}</p>`;
                     resultHTML += `<p><strong>conversion_values é array?</strong> ${Array.isArray(insights.conversion_values)}</p>`;
                     resultHTML += `<p><strong>results é array?</strong> ${Array.isArray(insights.results)}</p>`;
+                    resultHTML += `<p><strong>action_values é array?</strong> ${Array.isArray(insights.action_values)}</p>`;
                     
                     // Mostrar estrutura de cost_per_action_type (onde estão os dados reais)
                     if (Array.isArray(insights.cost_per_action_type) && insights.cost_per_action_type.length > 0) {
@@ -232,10 +235,32 @@
                         insights.conversion_values.forEach((conv, index) => {
                             resultHTML += `<p><strong>${index + 1}.</strong> Action Type: ${conv.action_type}</p>`;
                             resultHTML += `<p>&nbsp;&nbsp;&nbsp;Value: ${conv.value} (tipo: ${typeof conv.value})</p>`;
+                            
+                            // Destacar valores monetários
+                            if (conv.action_type === 'purchase' || conv.action_type.includes('purchase')) {
+                                resultHTML += `<p style="color: green; font-weight: bold;">&nbsp;&nbsp;&nbsp;💰 ESTE É O VALOR MONETÁRIO DAS COMPRAS!</p>`;
+                            }
                         });
                     } else {
                         resultHTML += '<h4>💰 Conversion Values:</h4>';
-                        resultHTML += '<p style="color: orange;">❌ Campo "conversion_values" não existe na API - usando "results" em vez disso</p>';
+                        resultHTML += '<p style="color: orange;">❌ Campo "conversion_values" não existe na API</p>';
+                    }
+                    
+                    // Analisar action_values (onde podem estar os valores monetários)
+                    if (Array.isArray(insights.action_values) && insights.action_values.length > 0) {
+                        resultHTML += '<h4>💰💰 Estrutura de Action Values (VALORES MONETÁRIOS):</h4>';
+                        insights.action_values.forEach((action, index) => {
+                            resultHTML += `<p><strong>${index + 1}.</strong> Action Type: ${action.action_type}</p>`;
+                            resultHTML += `<p>&nbsp;&nbsp;&nbsp;Value: ${action.value} (tipo: ${typeof action.value})</p>`;
+                            
+                            // Destacar valores monetários
+                            if (action.action_type === 'purchase' || action.action_type.includes('purchase')) {
+                                resultHTML += `<p style="color: green; font-weight: bold;">&nbsp;&nbsp;&nbsp;💰💰 ESTE É O VALOR MONETÁRIO DAS COMPRAS!</p>`;
+                            }
+                        });
+                    } else {
+                        resultHTML += '<h4>💰💰 Action Values:</h4>';
+                        resultHTML += '<p style="color: red;">❌ Campo "action_values" está vazio ou não existe</p>';
                     }
                     
                     if (Array.isArray(insights.results) && insights.results.length > 0) {
@@ -297,6 +322,45 @@
                         const type = typeof value;
                         resultHTML += `<p><strong>${field}:</strong> ${exists ? '✅ Existe' : '❌ Não existe'} - Valor: ${JSON.stringify(value)} (tipo: ${type})</p>`;
                     });
+                    
+                    // Análise específica de valores monetários
+                    resultHTML += '<h5>💰💰 Análise de Valores Monetários:</h5>';
+                    
+                    // Verificar onde estão os valores monetários
+                    let hasConversionValues = Array.isArray(insights.conversion_values) && insights.conversion_values.length > 0;
+                    let hasActionValues = Array.isArray(insights.action_values) && insights.action_values.length > 0;
+                    
+                    resultHTML += `<p><strong>conversion_values disponível:</strong> ${hasConversionValues ? '✅ Sim' : '❌ Não'}</p>`;
+                    resultHTML += `<p><strong>action_values disponível:</strong> ${hasActionValues ? '✅ Sim' : '❌ Não'}</p>`;
+                    
+                    if (hasConversionValues) {
+                        resultHTML += '<h6>💰 Valores em conversion_values:</h6>';
+                        insights.conversion_values.forEach((conv, index) => {
+                            if (conv.action_type === 'purchase' || conv.action_type.includes('purchase')) {
+                                resultHTML += `<p style="color: green; font-weight: bold;">${conv.action_type}: R$ ${conv.value}</p>`;
+                            }
+                        });
+                    }
+                    
+                    if (hasActionValues) {
+                        resultHTML += '<h6>💰💰 Valores em action_values:</h6>';
+                        insights.action_values.forEach((action, index) => {
+                            if (action.action_type === 'purchase' || action.action_type.includes('purchase')) {
+                                resultHTML += `<p style="color: green; font-weight: bold;">${action.action_type}: R$ ${action.value}</p>`;
+                            }
+                        });
+                    }
+                    
+                    if (!hasConversionValues && !hasActionValues) {
+                        resultHTML += '<p style="color: red; font-weight: bold;">❌ PROBLEMA: Nenhum campo de valores monetários encontrado!</p>';
+                        resultHTML += '<p style="color: orange;">💡 POSSÍVEIS CAUSAS:</p>';
+                        resultHTML += '<ul style="color: orange;">';
+                        resultHTML += '<li>Campanha não configurou valores de conversão</li>';
+                        resultHTML += '<li>Facebook Pixel não está enviando valores</li>';
+                        resultHTML += '<li>Parâmetros da API insuficientes</li>';
+                        resultHTML += '<li>Permissões insuficientes no token</li>';
+                        resultHTML += '</ul>';
+                    }
                     
                     // Análise específica de checkout
                     resultHTML += '<h5>🛒 Análise de Checkout:</h5>';
@@ -452,7 +516,10 @@
                 <p><strong>7.</strong> <strong>IMPORTANTE:</strong> "cost_per_action_type" contém CUSTOS, "actions" contém QUANTIDADES</p>
                 <p><strong>8.</strong> Verifique se "cost_per_initiate_checkout" está sendo extraído do "cost_per_action_type"</p>
                 <p><strong>9.</strong> Verifique se a QUANTIDADE de checkouts está no campo "actions"</p>
-                <p><strong>10.</strong> Se não houver dados de checkout nem em "Results" nem em "Actions", verifique as possíveis causas listadas</p>
+                <p><strong>10.</strong> <strong>NOVO:</strong> Verifique se "conversion_values" ou "action_values" contêm os VALORES MONETÁRIOS das compras</p>
+                <p><strong>11.</strong> <strong>IMPORTANTE:</strong> "conversions" = QUANTIDADE, "conversion_values" = VALOR MONETÁRIO</p>
+                <p><strong>12.</strong> Se não houver dados de checkout nem em "Results" nem em "Actions", verifique as possíveis causas listadas</p>
+                <p><strong>13.</strong> <strong>INVESTIGAÇÃO:</strong> Procure por valores monetários em "action_values" ou "conversion_values"</p>
             `, 'info');
         });
     </script>

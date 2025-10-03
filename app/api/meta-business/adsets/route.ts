@@ -76,6 +76,28 @@ function processResultsMetric(resultsMetric: any): number {
   return parseInt(resultsMetric.toString() || '0')
 }
 
+// Função auxiliar para processar valores monetários (conversion_values e action_values)
+function processConversionValuesMetric(valuesMetric: any): number {
+  if (!valuesMetric) return 0
+  
+  // Se for um array de AdsActionStats, processar cada item
+  if (Array.isArray(valuesMetric)) {
+    console.log(`💰 Processando valores monetários com ${valuesMetric.length} itens:`, valuesMetric)
+    return valuesMetric.reduce((total, action) => {
+      // Estrutura: { action_type: "purchase", value: "150.50" }
+      if (action.value) {
+        const value = parseFloat(action.value || '0')
+        console.log(`  - Action Type: ${action.action_type}, Value: R$ ${value}`)
+        return total + value
+      }
+      return total
+    }, 0)
+  }
+  
+  // Se for um número simples, retornar diretamente
+  return parseFloat(valuesMetric.toString() || '0')
+}
+
 // Função auxiliar para processar inícios de checkout específicos
 function processInitiateCheckoutMetric(actionsMetric: any): number {
   if (!actionsMetric) return 0
@@ -273,7 +295,7 @@ export async function GET(request: NextRequest) {
                   initiate_checkout: processInitiateCheckoutMetric(insight.actions),
                   cost_per_landing_page_view: processCostPerActionType(insight.cost_per_action_type, 'landing_page_view'),
                   conversions: processResultsMetric(insight.results),
-                  conversion_values: processResultsMetric(insight.results),
+                  conversion_values: processConversionValuesMetric(insight.action_values || insight.conversion_values),
                   results: processResultsMetric(insight.results),
                   
                   // Métricas de engajamento (disponíveis em todos os níveis)
