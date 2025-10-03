@@ -96,14 +96,30 @@ function processInitiateCheckoutMetric(actionsMetric: any): number {
     )
     
     if (checkoutActions.length > 0) {
-      // Somar todas as ações de checkout encontradas
-      const totalCheckouts = checkoutActions.reduce((total: number, action: any) => {
-        const value = parseInt(action.value || '0')
-        console.log(`  - Action Type: ${action.action_type}, Initiate Checkout: ${value}`)
-        return total + value
-      }, 0)
+      // Priorizar por ordem de importância: omni > onsite > offsite > genérico
+      const priorityOrder = [
+        'omni_initiated_checkout',
+        'onsite_web_initiate_checkout', 
+        'offsite_conversion.fb_pixel_initiate_checkout',
+        'initiate_checkout'
+      ]
       
-      console.log(`🛒 Total de checkouts encontrados: ${totalCheckouts}`)
+      let selectedCheckout = null
+      for (const priorityType of priorityOrder) {
+        selectedCheckout = checkoutActions.find(action => action.action_type === priorityType)
+        if (selectedCheckout) break
+      }
+      
+      // Se não encontrou nenhum prioritário, pegar o primeiro
+      if (!selectedCheckout) {
+        selectedCheckout = checkoutActions[0]
+      }
+      
+      const totalCheckouts = parseInt(selectedCheckout.value || '0')
+      
+      console.log(`🛒 Checkouts encontrados: ${totalCheckouts} (tipo prioritizado: ${selectedCheckout.action_type})`)
+      console.log(`📊 Todos os tipos de checkout encontrados:`, checkoutActions.map(a => `${a.action_type}: ${a.value}`).join(', '))
+      
       return totalCheckouts
     }
   }

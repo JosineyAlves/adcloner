@@ -95,14 +95,13 @@ function processInitiateCheckoutMetric(actionsMetric: any): number {
     )
     
     if (checkoutActions.length > 0) {
-      // Somar todas as ações de checkout encontradas
-      const totalCheckouts = checkoutActions.reduce((total: number, action: any) => {
-        const value = parseInt(action.value || '0')
-        console.log(`  - Action Type: ${action.action_type}, Initiate Checkout: ${value}`)
-        return total + value
-      }, 0)
+      // Pegar o primeiro valor encontrado (todos os tipos de checkout devem ter o mesmo valor)
+      const firstCheckout = checkoutActions[0]
+      const totalCheckouts = parseInt(firstCheckout.value || '0')
       
-      console.log(`🛒 Total de checkouts encontrados: ${totalCheckouts}`)
+      console.log(`🛒 Checkouts encontrados: ${totalCheckouts} (tipo: ${firstCheckout.action_type})`)
+      console.log(`📊 Todos os tipos de checkout encontrados:`, checkoutActions.map(a => `${a.action_type}: ${a.value}`).join(', '))
+      
       return totalCheckouts
     }
   }
