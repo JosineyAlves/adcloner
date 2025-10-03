@@ -278,7 +278,7 @@ export class FacebookBatchAPI {
     
     return campaignIds.map(campaignId => ({
       method: 'GET',
-      relative_url: `${campaignId}/insights?fields=${fields}&level=campaign&date_preset=${datePreset}${timeRange}`
+      relative_url: `${campaignId}/insights?fields=${fields}&level=campaign&date_preset=${datePreset}&action_breakdowns=action_type${timeRange}`
     }))
   }
 
@@ -360,7 +360,7 @@ export class FacebookBatchAPI {
     
     return [{
       method: 'GET',
-      relative_url: `${accountId}/insights?fields=${fields}&level=account&date_preset=${datePreset}${timeRange}`
+      relative_url: `${accountId}/insights?fields=${fields}&level=account&date_preset=${datePreset}&action_breakdowns=action_type${timeRange}`
     }]
   }
 
@@ -455,7 +455,7 @@ export class FacebookBatchAPI {
     
     return adSetIds.map(adSetId => ({
       method: 'GET',
-      relative_url: `${adSetId}/insights?fields=${fields}&level=adset&date_preset=${datePreset}${timeRange}`
+      relative_url: `${adSetId}/insights?fields=${fields}&level=adset&date_preset=${datePreset}&action_breakdowns=action_type${timeRange}`
     }))
   }
 
@@ -550,7 +550,7 @@ export class FacebookBatchAPI {
     
     return adIds.map(adId => ({
       method: 'GET',
-      relative_url: `${adId}/insights?fields=${fields}&level=ad&date_preset=${datePreset}${timeRange}`
+      relative_url: `${adId}/insights?fields=${fields}&level=ad&date_preset=${datePreset}&action_breakdowns=action_type${timeRange}`
     }))
   }
 }
