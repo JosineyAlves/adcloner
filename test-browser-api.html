@@ -126,10 +126,12 @@
             // Campos específicos de conversão (todos os campos possíveis da API)
             const fields = [
                 'results',
+                'actions',
                 'cost_per_conversion',
                 'conversions',
                 'conversion_values',
                 'cost_per_action_type',
+                'cost_per_initiate_checkout',
                 'cost_per_landing_page_view',
                 'impressions',
                 'clicks',
@@ -138,7 +140,7 @@
                 'frequency'
             ].join(',');
             
-            const url = `https://graph.facebook.com/v23.0/${campaignId}/insights?fields=${fields}&level=campaign&date_preset=${datePreset}`;
+            const url = `https://graph.facebook.com/v23.0/${campaignId}/insights?fields=${fields}&level=campaign&date_preset=${datePreset}&action_breakdowns=action_type&action_attribution_windows=default`;
             
             showResult('🔄 Fazendo requisição para a API do Meta...', 'info');
             
@@ -178,11 +180,13 @@
                     // Métricas de conversão
                     resultHTML += '<h4>🔄 Métricas de Conversão (API Direta):</h4>';
                     resultHTML += `<p><strong>cost_per_conversion:</strong> ${JSON.stringify(insights.cost_per_conversion)}</p>`;
+                    resultHTML += `<p><strong>cost_per_initiate_checkout:</strong> ${JSON.stringify(insights.cost_per_initiate_checkout)}</p>`;
                     resultHTML += `<p><strong>conversions:</strong> ${JSON.stringify(insights.conversions)}</p>`;
                     resultHTML += `<p><strong>conversion_values:</strong> ${JSON.stringify(insights.conversion_values)}</p>`;
                     resultHTML += `<p><strong>cost_per_action_type:</strong> ${JSON.stringify(insights.cost_per_action_type)}</p>`;
                     resultHTML += `<p><strong>cost_per_landing_page_view:</strong> ${JSON.stringify(insights.cost_per_landing_page_view)}</p>`;
                     resultHTML += `<p><strong>results:</strong> ${JSON.stringify(insights.results)}</p>`;
+                    resultHTML += `<p><strong>actions:</strong> ${JSON.stringify(insights.actions)}</p>`;
                     
                     // Verificar tipos
                     resultHTML += '<h4>🔍 Verificação de Tipos:</h4>';
@@ -200,6 +204,9 @@
                             // Destacar ações importantes
                             if (action.action_type === 'purchase' || action.action_type.includes('purchase')) {
                                 resultHTML += `<p style="color: green; font-weight: bold;">&nbsp;&nbsp;&nbsp;🎯 ESTE É O COST_PER_CONVERSION!</p>`;
+                            }
+                            if (action.action_type === 'initiate_checkout' || action.action_type.includes('initiate_checkout')) {
+                                resultHTML += `<p style="color: orange; font-weight: bold;">&nbsp;&nbsp;&nbsp;🛒 ESTE É O COST_PER_INITIATE_CHECKOUT!</p>`;
                             }
                             if (action.action_type === 'landing_page_view') {
                                 resultHTML += `<p style="color: blue; font-weight: bold;">&nbsp;&nbsp;&nbsp;🌐 ESTE É O COST_PER_LANDING_PAGE_VIEW!</p>`;
@@ -235,6 +242,17 @@
                         resultHTML += '<h4>🎯 Estrutura de Results (API):</h4>';
                         insights.results.forEach((result, index) => {
                             resultHTML += `<p><strong>${index + 1}.</strong> Indicator: ${result.indicator}</p>`;
+                            
+                            // Destacar indicadores de checkout
+                            if (result.indicator && (
+                                result.indicator.includes('offsite_conversion.fb_pixel_initiate_checkout') ||
+                                result.indicator.includes('omni_initiated_checkout') ||
+                                result.indicator.includes('initiate_checkout') ||
+                                result.indicator.includes('onsite_web_initiate_checkout')
+                            )) {
+                                resultHTML += `<p style="color: orange; font-weight: bold;">&nbsp;&nbsp;&nbsp;🛒 ESTE É UM INÍCIO DE CHECKOUT!</p>`;
+                            }
+                            
                             if (result.values && Array.isArray(result.values)) {
                                 result.values.forEach((value, valueIndex) => {
                                     resultHTML += `<p>&nbsp;&nbsp;&nbsp;${valueIndex + 1}. Value: ${value.value} (tipo: ${typeof value.value})</p>`;
@@ -243,18 +261,158 @@
                         });
                     }
                     
+                    // Analisar campo actions (onde podem estar os dados de checkout)
+                    if (Array.isArray(insights.actions) && insights.actions.length > 0) {
+                        resultHTML += '<h4>🎬 Estrutura de Actions (API):</h4>';
+                        insights.actions.forEach((action, index) => {
+                            resultHTML += `<p><strong>${index + 1}.</strong> Action Type: ${action.action_type}</p>`;
+                            
+                            // Destacar ações de checkout
+                            if (action.action_type && (
+                                action.action_type.includes('initiate_checkout') ||
+                                action.action_type.includes('omni_initiated_checkout') ||
+                                action.action_type.includes('offsite_conversion.fb_pixel_initiate_checkout')
+                            )) {
+                                resultHTML += `<p style="color: orange; font-weight: bold;">&nbsp;&nbsp;&nbsp;🛒 ESTE É UM INÍCIO DE CHECKOUT!</p>`;
+                            }
+                            
+                            if (action.value) {
+                                resultHTML += `<p>&nbsp;&nbsp;&nbsp;Value: ${action.value} (tipo: ${typeof action.value})</p>`;
+                            }
+                        });
+                    } else {
+                        resultHTML += '<h4>🎬 Estrutura de Actions (API):</h4>';
+                        resultHTML += '<p style="color: red;">❌ Campo "actions" está vazio ou não existe</p>';
+                    }
+                    
                     // Análise dos dados diretos da API
                     resultHTML += '<h4>📊 Análise dos Dados Diretos da API:</h4>';
                     
                     // Verificar quais campos existem
                     resultHTML += '<h5>Campos Presentes:</h5>';
-                    const conversionFields = ['cost_per_conversion', 'conversions', 'conversion_values', 'cost_per_action_type', 'cost_per_landing_page_view', 'results'];
+                    const conversionFields = ['cost_per_conversion', 'cost_per_initiate_checkout', 'conversions', 'conversion_values', 'cost_per_action_type', 'cost_per_landing_page_view', 'results'];
                     conversionFields.forEach(field => {
                         const exists = insights.hasOwnProperty(field);
                         const value = insights[field];
                         const type = typeof value;
                         resultHTML += `<p><strong>${field}:</strong> ${exists ? '✅ Existe' : '❌ Não existe'} - Valor: ${JSON.stringify(value)} (tipo: ${type})</p>`;
                     });
+                    
+                    // Análise específica de checkout
+                    resultHTML += '<h5>🛒 Análise de Checkout:</h5>';
+                    
+                    // Mostrar action_types de checkout esperados
+                    resultHTML += '<h6>📋 Action Types de Checkout Esperados:</h6>';
+                    resultHTML += '<ul>';
+                    resultHTML += '<li><strong>offsite_conversion.fb_pixel_initiate_checkout</strong> - Initiates Checkout (Facebook Pixel)</li>';
+                    resultHTML += '<li><strong>omni_initiated_checkout</strong> - Checkouts Initiated (Grouped)</li>';
+                    resultHTML += '<li><strong>app_custom_event.fb_mobile_initiated_checkout</strong> - Mobile App Checkouts</li>';
+                    resultHTML += '</ul>';
+                    
+                    resultHTML += '<h6>💡 DIFERENÇA IMPORTANTE:</h6>';
+                    resultHTML += '<ul>';
+                    resultHTML += '<li><strong>cost_per_action_type</strong> = CUSTO por ação (ex: R$ 117.152)</li>';
+                    resultHTML += '<li><strong>actions</strong> = QUANTIDADE de ações (ex: 5 checkouts)</li>';
+                    resultHTML += '</ul>';
+                    
+                    // Buscar custo de checkout no cost_per_action_type
+                    let checkoutCost = 0;
+                    let costPerCheckout = 0;
+                    if (Array.isArray(insights.cost_per_action_type)) {
+                        const checkoutActions = insights.cost_per_action_type.filter(action => 
+                            action.action_type === 'initiate_checkout' || 
+                            action.action_type.includes('initiate_checkout')
+                        );
+                        
+                        if (checkoutActions.length > 0) {
+                            checkoutCost = parseFloat(checkoutActions[0].value || '0');
+                            costPerCheckout = parseFloat(checkoutActions[0].value || '0');
+                        }
+                    }
+                    
+                    resultHTML += `<p><strong>💰 CUSTO de Checkout (cost_per_action_type):</strong> R$ ${checkoutCost.toFixed(2)}</p>`;
+                    resultHTML += `<p><strong>💰 CUSTO por Checkout:</strong> R$ ${costPerCheckout.toFixed(2)}</p>`;
+                    
+                    // Buscar quantidade de checkout no campo actions
+                    let checkoutCount = 0;
+                    if (Array.isArray(insights.actions)) {
+                        const checkoutActions = insights.actions.filter(action => 
+                            action.action_type === 'initiate_checkout' || 
+                            action.action_type.includes('initiate_checkout')
+                        );
+                        
+                        if (checkoutActions.length > 0) {
+                            checkoutCount = parseInt(checkoutActions[0].value || '0');
+                        }
+                    }
+                    
+                    resultHTML += `<p><strong>🔢 QUANTIDADE de Checkouts (actions):</strong> ${checkoutCount}</p>`;
+                    
+                    if (checkoutCost > 0 && checkoutCount === 0) {
+                        resultHTML += '<p style="color: red; font-weight: bold;">⚠️ PROBLEMA: Temos o CUSTO mas não temos a QUANTIDADE!</p>';
+                        resultHTML += '<p style="color: orange;">💡 O campo "actions" deveria conter a quantidade de checkouts iniciados</p>';
+                    }
+                    
+                    // Verificar se há indicadores de checkout nos results
+                    let hasCheckoutIndicators = false;
+                    let checkoutIndicators = [];
+                    if (Array.isArray(insights.results)) {
+                        checkoutIndicators = insights.results.filter(result => 
+                            result.indicator && (
+                                result.indicator.includes('offsite_conversion.fb_pixel_initiate_checkout') ||
+                                result.indicator.includes('omni_initiated_checkout') ||
+                                result.indicator.includes('app_custom_event.fb_mobile_initiated_checkout')
+                            )
+                        );
+                        hasCheckoutIndicators = checkoutIndicators.length > 0;
+                    }
+                    
+                    // Verificar se há ações de checkout no campo actions
+                    let hasCheckoutActions = false;
+                    let checkoutActions = [];
+                    if (Array.isArray(insights.actions)) {
+                        checkoutActions = insights.actions.filter(action => 
+                            action.action_type && (
+                                action.action_type.includes('initiate_checkout') ||
+                                action.action_type.includes('omni_initiated_checkout') ||
+                                action.action_type.includes('offsite_conversion.fb_pixel_initiate_checkout')
+                            )
+                        );
+                        hasCheckoutActions = checkoutActions.length > 0;
+                    }
+                    
+                    resultHTML += `<p><strong>Indicadores de Checkout nos Results:</strong> ${hasCheckoutIndicators ? '✅ Encontrados' : '❌ Não encontrados'}</p>`;
+                    resultHTML += `<p><strong>Ações de Checkout no Actions:</strong> ${hasCheckoutActions ? '✅ Encontradas' : '❌ Não encontradas'}</p>`;
+                    
+                    if (hasCheckoutIndicators) {
+                        resultHTML += '<h6>🎯 Indicadores Encontrados nos Results:</h6>';
+                        checkoutIndicators.forEach((indicator, index) => {
+                            resultHTML += `<p><strong>${index + 1}.</strong> ${indicator.indicator}</p>`;
+                            if (indicator.values && Array.isArray(indicator.values)) {
+                                indicator.values.forEach((value, valueIndex) => {
+                                    resultHTML += `<p>&nbsp;&nbsp;&nbsp;Value: ${value.value}</p>`;
+                                });
+                            }
+                        });
+                    }
+                    
+                    if (hasCheckoutActions) {
+                        resultHTML += '<h6>🎬 Ações de Checkout Encontradas no Actions:</h6>';
+                        checkoutActions.forEach((action, index) => {
+                            resultHTML += `<p><strong>${index + 1}.</strong> ${action.action_type} - Value: ${action.value}</p>`;
+                        });
+                    }
+                    
+                    if (!hasCheckoutIndicators && !hasCheckoutActions) {
+                        resultHTML += '<p style="color: red; font-weight: bold;">❌ PROBLEMA: API não está retornando os dados de checkout nem em "results" nem em "actions"!</p>';
+                        resultHTML += '<p style="color: orange;">💡 POSSÍVEIS CAUSAS:</p>';
+                        resultHTML += '<ul style="color: orange;">';
+                        resultHTML += '<li>Campanha não teve checkouts no período</li>';
+                        resultHTML += '<li>Facebook Pixel não configurado corretamente</li>';
+                        resultHTML += '<li>Parâmetros da API insuficientes</li>';
+                        resultHTML += '<li>Permissões insuficientes no token</li>';
+                        resultHTML += '</ul>';
+                    }
                     
                     // Resumo
                     resultHTML += '<h5>📋 Resumo:</h5>';
@@ -289,6 +447,12 @@
                 <p><strong>2.</strong> Cole o token no campo "Token de Acesso"</p>
                 <p><strong>3.</strong> Clique em "Testar API"</p>
                 <p><strong>4.</strong> Analise os resultados para verificar se as métricas de conversão estão sendo retornadas</p>
+                <p><strong>5.</strong> Procure por indicadores de checkout em "Results" (offsite_conversion.fb_pixel_initiate_checkout, omni_initiated_checkout, etc.)</p>
+                <p><strong>6.</strong> <strong>NOVO:</strong> Verifique também o campo "Actions" - os dados de checkout podem estar lá!</p>
+                <p><strong>7.</strong> <strong>IMPORTANTE:</strong> "cost_per_action_type" contém CUSTOS, "actions" contém QUANTIDADES</p>
+                <p><strong>8.</strong> Verifique se "cost_per_initiate_checkout" está sendo extraído do "cost_per_action_type"</p>
+                <p><strong>9.</strong> Verifique se a QUANTIDADE de checkouts está no campo "actions"</p>
+                <p><strong>10.</strong> Se não houver dados de checkout nem em "Results" nem em "Actions", verifique as possíveis causas listadas</p>
             `, 'info');
         });
     </script>

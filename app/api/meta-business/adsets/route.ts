@@ -76,6 +76,41 @@ function processResultsMetric(resultsMetric: any): number {
   return parseInt(resultsMetric.toString() || '0')
 }
 
+// Função auxiliar para processar inícios de checkout específicos
+function processInitiateCheckoutMetric(actionsMetric: any): number {
+  if (!actionsMetric) return 0
+  
+  // Se for um array de ações, processar cada item
+  if (Array.isArray(actionsMetric)) {
+    console.log(`📊 Processando inícios de checkout com ${actionsMetric.length} ações:`, actionsMetric)
+    
+    // Buscar ações relacionadas a checkout
+    const checkoutActions = actionsMetric.filter((action: any) => 
+      action.action_type && (
+        action.action_type === 'initiate_checkout' ||
+        action.action_type === 'omni_initiated_checkout' ||
+        action.action_type === 'offsite_conversion.fb_pixel_initiate_checkout' ||
+        action.action_type === 'onsite_web_initiate_checkout'
+      )
+    )
+    
+    if (checkoutActions.length > 0) {
+      // Somar todas as ações de checkout encontradas
+      const totalCheckouts = checkoutActions.reduce((total: number, action: any) => {
+        const value = parseInt(action.value || '0')
+        console.log(`  - Action Type: ${action.action_type}, Initiate Checkout: ${value}`)
+        return total + value
+      }, 0)
+      
+      console.log(`🛒 Total de checkouts encontrados: ${totalCheckouts}`)
+      return totalCheckouts
+    }
+  }
+  
+  // Se for um número simples, retornar diretamente
+  return parseInt(actionsMetric.toString() || '0')
+}
+
 export async function GET(request: NextRequest) {
   try {
     const accessToken = request.cookies.get('fb_access_token')?.value
@@ -160,6 +195,7 @@ export async function GET(request: NextRequest) {
               cost_per_inline_link_click: 0,
               cost_per_conversion: 0,
               cost_per_initiate_checkout: 0,
+              initiate_checkout: 0,
               cost_per_landing_page_view: 0,
               conversions: 0,
               conversion_values: 0,
@@ -218,6 +254,7 @@ export async function GET(request: NextRequest) {
                   cost_per_inline_link_click: parseFloat(insight.cost_per_inline_link_click || '0'),
                   cost_per_conversion: processCostPerActionType(insight.cost_per_action_type, 'purchase'),
                   cost_per_initiate_checkout: processCostPerActionType(insight.cost_per_action_type, 'initiate_checkout'),
+                  initiate_checkout: processInitiateCheckoutMetric(insight.actions),
                   cost_per_landing_page_view: processCostPerActionType(insight.cost_per_action_type, 'landing_page_view'),
                   conversions: processResultsMetric(insight.results),
                   conversion_values: processResultsMetric(insight.results),
@@ -363,6 +400,7 @@ export async function GET(request: NextRequest) {
               cost_per_inline_link_click: 0,
               cost_per_conversion: 0,
               cost_per_initiate_checkout: 0,
+              initiate_checkout: 0,
               cost_per_landing_page_view: 0,
               conversions: 0,
               conversion_values: 0,

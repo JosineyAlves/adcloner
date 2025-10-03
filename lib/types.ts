@@ -173,6 +173,7 @@ export interface MetaAccount {
   // Métricas específicas de contas (level=account)
   cost_per_conversion: number
   cost_per_initiate_checkout: number
+  initiate_checkout: number
   cost_per_action_type: number
   cost_per_inline_link_click: number
   cost_per_landing_page_view: number
@@ -221,6 +222,7 @@ export interface MetaCampaign {
   cpm: number
   cost_per_conversion: number
   cost_per_initiate_checkout: number
+  initiate_checkout: number
   cost_per_action_type: number
   cost_per_inline_link_click: number
   cost_per_unique_click: number
@@ -293,6 +295,7 @@ export interface MetaAdSet {
   cost_per_unique_inline_link_click: number
   cost_per_conversion: number
   cost_per_initiate_checkout: number
+  initiate_checkout: number
   cost_per_inline_link_click: number
   cost_per_landing_page_view: number
   
@@ -358,6 +361,7 @@ export interface MetaAd {
   cost_per_unique_inline_link_click: number
   cost_per_conversion: number
   cost_per_initiate_checkout: number
+  initiate_checkout: number
   cost_per_inline_link_click: number
   cost_per_landing_page_view: number
   
