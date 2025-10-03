@@ -265,8 +265,6 @@ export class FacebookBatchAPI {
       'quality_ranking',
       'engagement_rate_ranking',
       
-      // Métricas de ações (apenas as válidas)
-      'actions',
       
       // Métricas de alcance e frequência (apenas as válidas)
       'unique_clicks',
@@ -342,8 +340,6 @@ export class FacebookBatchAPI {
       'quality_ranking',
       'engagement_rate_ranking',
       
-      // Métricas de ações (apenas as válidas)
-      'actions',
       
       // Métricas de alcance e frequência (apenas as válidas)
       'unique_clicks',
@@ -440,8 +436,6 @@ export class FacebookBatchAPI {
       'quality_ranking',
       'engagement_rate_ranking',
       
-      // Métricas de ações (apenas as válidas)
-      'actions',
       
       // Métricas de alcance e frequência (apenas as válidas)
       'unique_clicks',
@@ -534,8 +528,6 @@ export class FacebookBatchAPI {
       'quality_ranking',
       'engagement_rate_ranking',
       
-      // Métricas de ações (apenas as válidas)
-      'actions',
       
       // Métricas de alcance e frequência (apenas as válidas)
       'unique_clicks',
