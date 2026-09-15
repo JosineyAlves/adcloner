@@ -176,7 +176,27 @@ export default function DashboardPage() {
     if (accounts.length > 0) {
       // Usar ref para evitar dependência circular
       fetchDashboardDataRef.current()
+      return
     }
+    // Nenhuma conta conectada (ex.: usuário removeu todos os perfis em Integrações) — zera as
+    // métricas em vez de deixar os últimos valores buscados nesta mesma sessão presos na tela.
+    // Mesmo bug de interferência já corrigido na tela Meta Business (ver seção 41 do doc do
+    // projeto), aplicado aqui por consistência.
+    setMetrics({
+      totalSpend: 0,
+      revenue: 0,
+      roas: null,
+      profit: 0,
+      roi: null,
+      margin: null,
+      averageTicket: null,
+      totalCampaigns: 0,
+      activeCampaigns: 0,
+      pausedCampaigns: 0,
+      totalImpressions: 0,
+      totalClicks: 0,
+      totalConversions: 0
+    })
   }, [accounts, datePreset, customRange])
 
   const handleRefresh = useDebounce('dashboard-refresh', async () => {

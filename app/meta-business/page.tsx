@@ -415,7 +415,30 @@ export default function MetaBusinessPage() {
   // Meta, igual ao comportamento observado em ferramentas de tracking de terceiros (ex.
   // ratoeiraads.com.br), que buscam e mostram um spinner por aba, sob demanda.
   useEffect(() => {
-    if (facebookAccounts.length === 0) return
+    if (facebookAccounts.length === 0) {
+      // Nenhuma conta conectada no AppContext. Enquanto ele ainda está carregando a lista real
+      // (accountsLoading), não mexe em nada — evita apagar dados válidos por causa de uma
+      // janela inicial vazia antes da primeira resposta chegar. Só limpa quando o AppContext já
+      // confirmou definitivamente "zero contas": sem isso, o cache local desta tela
+      // (`metaBusinessData`, hidratado direto do localStorage na montagem) continuava mostrando
+      // contas/campanhas/conjuntos/anúncios de uma conexão já removida em Integrações para
+      // sempre — esta tela nunca tinha motivo pra rebuscar e sobrescrever esse cache, porque o
+      // efeito abaixo simplesmente não fazia nada com 0 contas. Ver seção 41 do doc do projeto.
+      if (!accountsLoading && (accountsRef.current.length > 0 || campaignsRef.current.length > 0 || adSetsRef.current.length > 0 || adsRef.current.length > 0)) {
+        accountsLoadedKeyRef.current = null
+        campaignsLoadedKeyRef.current = null
+        adSetsLoadedKeyRef.current = null
+        adsLoadedKeyRef.current = null
+        setAccounts([])
+        setCampaigns([])
+        setAdSets([])
+        setAds([])
+        const emptyStats = calculateStats([], [], [], [])
+        setStats(emptyStats)
+        persistCache({ accounts: [], campaigns: [], adSets: [], ads: [], stats: emptyStats })
+      }
+      return
+    }
     // Não dispara enquanto bloqueados por rate limit; quando o bloqueio acabar, o usuário pode
     // trocar de aba de novo ou clicar em Atualizar para tentar de fato.
     if (isRateLimited) return
@@ -434,7 +457,7 @@ export default function MetaBusinessPage() {
       fetchAds()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, facebookAccounts, currentDataKey, isRateLimited])
+  }, [activeTab, facebookAccounts, currentDataKey, isRateLimited, accountsLoading, persistCache])
 
   // Mantém o filtro de contas em sincronia sempre que os dados de campanhas/adsets/ads
   // (que carregam accountIds reais) mudarem.
