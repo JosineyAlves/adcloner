@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft, Loader2, Building2, Search, RefreshCw } from 'lucide-react'
+import { Loader2, Building2, Search, RefreshCw } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Sidebar from '@/components/layout/Sidebar'
+import PageHeader from '@/components/layout/PageHeader'
 import ToggleSwitch from '@/components/ui/ToggleSwitch'
 
 interface ConnectionSummary {
@@ -164,19 +164,12 @@ export default function BusinessAccountsPage() {
       <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-          <Link
-            href={`/meta-accounts/${connectionId}`}
-            className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 mb-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Voltar para {connection ? connection.fbUserName || connection.fbUserId : 'Perfil'}
-          </Link>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{businessName}</h1>
-          {accounts.length > 0 && (
-            <p className="text-gray-500 dark:text-gray-400 mt-1">{accounts.length} conta(s) de anúncio</p>
-          )}
-        </header>
+        <PageHeader
+          backHref={`/meta-accounts/${connectionId}`}
+          backLabel={`Voltar para ${connection ? connection.fbUserName || connection.fbUserId : 'Perfil'}`}
+          title={businessName}
+          subtitle={accounts.length > 0 ? `${accounts.length} conta(s) de anúncio` : undefined}
+        />
 
         <main className="flex-1 overflow-y-auto p-6">
           {loading ? (

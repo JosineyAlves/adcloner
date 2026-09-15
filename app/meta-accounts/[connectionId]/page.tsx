@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
-import Link from 'next/link'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowLeft, Loader2, Building2, Plus, ChevronRight, Search } from 'lucide-react'
+import { Loader2, Building2, Plus, ChevronRight, Search } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Sidebar from '@/components/layout/Sidebar'
+import PageHeader from '@/components/layout/PageHeader'
 import ToggleSwitch from '@/components/ui/ToggleSwitch'
 import ConnectFacebookModal from '@/components/accounts/ConnectFacebookModal'
 
@@ -192,23 +192,16 @@ export default function ConnectionBusinessesPage() {
       <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-          <Link
-            href="/meta-accounts"
-            className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 mb-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Voltar para Integrações
-          </Link>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {connection ? connection.fbUserName || connection.fbUserId : 'Perfil'}
-          </h1>
-          {connection && (
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
+        <PageHeader
+          backHref="/meta-accounts"
+          backLabel="Voltar para Integrações"
+          title={connection ? connection.fbUserName || connection.fbUserId : 'Perfil'}
+          subtitle={connection && (
+            <>
               Conectado em {new Date(connection.createdAt).toLocaleString('pt-BR')} · {accounts.length} conta(s) de anúncio · {businessGroups.filter(g => g.businessId !== 'personal').length} Business Manager(s)
-            </p>
+            </>
           )}
-        </header>
+        />
 
         <main className="flex-1 overflow-y-auto p-6">
           {loading ? (

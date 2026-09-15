@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Search, Trash2, Loader2, Facebook, User } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Sidebar from '@/components/layout/Sidebar'
+import PageHeader from '@/components/layout/PageHeader'
 import ConnectFacebookModal from '@/components/accounts/ConnectFacebookModal'
 
 interface ConnectionSummary {
@@ -93,9 +94,7 @@ export default function MetaAccountsPage() {
       <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Integrações</h1>
-        </header>
+        <PageHeader title="Integrações" />
 
         <main className="flex-1 overflow-y-auto p-6">
           {/* Abas — hoje só "Anúncios" está implementada de fato */}

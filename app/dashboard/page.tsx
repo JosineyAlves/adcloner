@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { RefreshCw } from 'lucide-react'
 import Sidebar from '@/components/layout/Sidebar'
+import PageHeader from '@/components/layout/PageHeader'
 import StatsCard from '@/components/dashboard/StatsCard'
 import DateSelector, { DateRange } from '@/components/dashboard/DateSelector'
 import { useApp } from '@/contexts/AppContext'
@@ -260,31 +261,27 @@ export default function DashboardPage() {
       <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Dashboard Financeiro
-              </h1>
-            </div>
-            <div className="flex items-center space-x-3">
-                <DateSelector
-                  datePreset={datePreset}
-                  customRange={customRange}
-                  onDatePresetChange={handleDatePresetChange}
-                  onCustomRangeChange={handleCustomRangeChange}
-                />
-                <button
-                  onClick={handleRefresh}
-                  disabled={isRefreshing}
+        <PageHeader
+          title="Dashboard Financeiro"
+          actions={
+            <>
+              <DateSelector
+                datePreset={datePreset}
+                customRange={customRange}
+                onDatePresetChange={handleDatePresetChange}
+                onCustomRangeChange={handleCustomRangeChange}
+              />
+              <button
+                onClick={handleRefresh}
+                disabled={isRefreshing}
                 className="btn-primary flex items-center space-x-2"
-                >
-                  <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              >
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                 <span>Atualizar</span>
-                </button>
-            </div>
-          </div>
-        </header>
+              </button>
+            </>
+          }
+        />
 
         <main className="flex-1 overflow-y-auto p-6">
           <motion.div
