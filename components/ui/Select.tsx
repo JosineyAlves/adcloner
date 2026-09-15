@@ -58,7 +58,7 @@ export default function Select({ value, onChange, options, placeholder = 'Seleci
         ref={triggerRef}
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`flex items-center justify-between px-3 py-2 border rounded-ds-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors w-full min-w-0 ${
+        className={`flex items-center justify-between px-3 py-1.5 border rounded-ds-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors w-full min-w-0 ${
           isOpen
             ? 'border-brand-500 ring-2 ring-brand-500'
             : 'border-gray-300 dark:border-gray-600 hover:border-brand-400'

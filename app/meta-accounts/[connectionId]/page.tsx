@@ -192,18 +192,20 @@ export default function ConnectionBusinessesPage() {
       <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <PageHeader
-          backHref="/meta-accounts"
-          backLabel="Voltar para Integrações"
-          title={connection ? connection.fbUserName || connection.fbUserId : 'Perfil'}
-          subtitle={connection && (
-            <>
-              Conectado em {new Date(connection.createdAt).toLocaleString('pt-BR')} · {accounts.length} conta(s) de anúncio · {businessGroups.filter(g => g.businessId !== 'personal').length} Business Manager(s)
-            </>
-          )}
-        />
-
         <main className="flex-1 overflow-y-auto p-6">
+          <div className="mb-6">
+            <PageHeader
+              backHref="/meta-accounts"
+              backLabel="Voltar para Integrações"
+              title={connection ? connection.fbUserName || connection.fbUserId : 'Perfil'}
+              subtitle={connection && (
+                <>
+                  Conectado em {new Date(connection.createdAt).toLocaleString('pt-BR')} · {accounts.length} conta(s) de anúncio · {businessGroups.filter(g => g.businessId !== 'personal').length} Business Manager(s)
+                </>
+              )}
+            />
+          </div>
+
           {loading ? (
             <div className="flex items-center justify-center py-24 text-gray-400">
               <Loader2 className="w-6 h-6 animate-spin mr-2" />

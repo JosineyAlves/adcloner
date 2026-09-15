@@ -94,9 +94,11 @@ export default function MetaAccountsPage() {
       <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <PageHeader title="Integrações" />
-
         <main className="flex-1 overflow-y-auto p-6">
+          <div className="mb-6">
+            <PageHeader title="Integrações" />
+          </div>
+
           {/* Abas — hoje só "Anúncios" está implementada de fato */}
           <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
             <nav className="flex gap-6">

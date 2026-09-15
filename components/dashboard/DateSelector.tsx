@@ -263,7 +263,7 @@ export default function DateSelector({
     <div className="relative" ref={containerRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 px-3 py-2 sm:px-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors w-full sm:w-auto min-w-0"
+        className="flex items-center space-x-2 px-3 py-1.5 sm:px-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors w-full sm:w-auto min-w-0"
       >
         <span className="text-sm font-medium text-gray-900 dark:text-white truncate min-w-0">
           {selectedPreset?.label || 'Selecionar período'}

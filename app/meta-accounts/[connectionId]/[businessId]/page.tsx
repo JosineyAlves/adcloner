@@ -164,14 +164,16 @@ export default function BusinessAccountsPage() {
       <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <PageHeader
-          backHref={`/meta-accounts/${connectionId}`}
-          backLabel={`Voltar para ${connection ? connection.fbUserName || connection.fbUserId : 'Perfil'}`}
-          title={businessName}
-          subtitle={accounts.length > 0 ? `${accounts.length} conta(s) de anúncio` : undefined}
-        />
-
         <main className="flex-1 overflow-y-auto p-6">
+          <div className="mb-6">
+            <PageHeader
+              backHref={`/meta-accounts/${connectionId}`}
+              backLabel={`Voltar para ${connection ? connection.fbUserName || connection.fbUserId : 'Perfil'}`}
+              title={businessName}
+              subtitle={accounts.length > 0 ? `${accounts.length} conta(s) de anúncio` : undefined}
+            />
+          </div>
+
           {loading ? (
             <div className="flex items-center justify-center py-24 text-gray-400">
               <Loader2 className="w-6 h-6 animate-spin mr-2" />

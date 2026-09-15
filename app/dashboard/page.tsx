@@ -261,8 +261,6 @@ export default function DashboardPage() {
       <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <PageHeader title="Dashboard Financeiro" />
-
         <main className="flex-1 overflow-y-auto p-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -270,10 +268,12 @@ export default function DashboardPage() {
             transition={{ duration: 0.5 }}
             className="space-y-8"
           >
+            <PageHeader title="Dashboard Financeiro" />
+
             {/* Período + Atualizar — ficam junto do conteúdo que afetam, num card, em vez de
                 isolados no cabeçalho da página (ver PageHeader e o mesmo padrão no Meta Ads),
                 seguindo a referência da UTMify. */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700 flex flex-wrap items-center justify-between gap-3">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700 flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
                   Período
@@ -288,7 +288,7 @@ export default function DashboardPage() {
               <button
                 onClick={handleRefresh}
                 disabled={isRefreshing}
-                className="btn-primary flex items-center space-x-2"
+                className="btn-primary flex items-center space-x-2 px-3 py-1.5"
               >
                 <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                 <span>Atualizar</span>
