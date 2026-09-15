@@ -2,17 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
-import {
-  DollarSign,
-  TrendingUp,
-  Percent,
-  ShoppingCart,
-  RefreshCw,
-  CheckCircle,
-  Calculator,
-  Receipt,
-  BarChart3
-} from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import Sidebar from '@/components/layout/Sidebar'
 import StatsCard from '@/components/dashboard/StatsCard'
 import DateSelector, { DateRange } from '@/components/dashboard/DateSelector'
@@ -312,29 +302,21 @@ export default function DashboardPage() {
                 <StatsCard
                   title="Gastos com Anúncios"
                   value={formatCurrency(metrics.totalSpend)}
-                  icon={DollarSign}
-                  tone="red"
                   trend={metrics.totalSpend > 0 ? 'up' : 'neutral'}
                 />
                 <StatsCard
                   title="Vendas (Receita)"
                   value={formatCurrency(metrics.revenue)}
-                  icon={ShoppingCart}
-                  tone="green"
                   trend={metrics.revenue > 0 ? 'up' : 'neutral'}
                 />
                 <StatsCard
                   title="ROAS"
                   value={formatPercentage(metrics.roas)}
-                  icon={TrendingUp}
-                  tone="emerald"
                   trend={metrics.roas && metrics.roas > 3 ? 'up' : 'neutral'}
                 />
                 <StatsCard
                   title="Lucro"
                   value={formatCurrency(metrics.profit)}
-                  icon={CheckCircle}
-                  tone="blue"
                   trend={metrics.profit > 0 ? 'up' : 'down'}
                 />
               </div>
@@ -349,32 +331,24 @@ export default function DashboardPage() {
                 <StatsCard
                   title="ROI"
                   value={formatPercentage(metrics.roi)}
-                  icon={Percent}
-                  tone="blue"
                   size="secondary"
                   trend={metrics.roi && metrics.roi > 0 ? 'up' : 'down'}
                 />
                 <StatsCard
                   title="Margem"
                   value={formatPercentage(metrics.margin)}
-                  icon={Calculator}
-                  tone="indigo"
                   size="secondary"
                   trend={metrics.margin && metrics.margin > 20 ? 'up' : 'neutral'}
                 />
                 <StatsCard
                   title="Conversões (Vendas)"
                   value={metrics.totalConversions.toLocaleString()}
-                  icon={Receipt}
-                  tone="purple"
                   size="secondary"
                   trend={metrics.totalConversions > 0 ? 'up' : 'neutral'}
                 />
                 <StatsCard
                   title="Ticket Médio"
                   value={metrics.averageTicket !== null ? formatCurrency(metrics.averageTicket) : 'N/A'}
-                  icon={BarChart3}
-                  tone="gray"
                   size="secondary"
                   trend="neutral"
                 />

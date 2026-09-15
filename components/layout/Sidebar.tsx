@@ -91,9 +91,9 @@ export default function Sidebar() {
           servidos de /public. */}
       <div className={`flex h-14 items-center border-b border-black/10 ${collapsed ? 'justify-center px-0' : 'px-4'}`}>
         {collapsed ? (
-          <img src="/icon-logo.svg" alt="AdCloner Pro" className="w-8 h-8 flex-shrink-0" />
+          <img src="/icon-logo.svg" alt="vmetrics" className="w-8 h-8 flex-shrink-0" />
         ) : (
-          <img src="/logo.svg" alt="AdCloner Pro" className="h-6 w-auto max-w-[160px]" />
+          <img src="/logo.svg" alt="vmetrics" className="h-6 w-auto max-w-[160px]" />
         )}
       </div>
 

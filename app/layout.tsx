@@ -11,8 +11,8 @@ import { DateProvider } from '@/contexts/DateContext'
 const jura = Jura({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'] })
 
 export const metadata: Metadata = {
-  title: 'AdCloner Pro - Clone Facebook Ads Campaigns',
-  description: 'Clone and manage Facebook Ads campaigns across multiple ad accounts and Business Managers',
+  title: 'vmetrics',
+  description: 'Gerencie e clone campanhas do Meta Ads em múltiplas contas e Business Managers',
 }
 
 export default function RootLayout({
