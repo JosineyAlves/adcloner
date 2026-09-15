@@ -21,17 +21,46 @@ function processVideoMetric(videoMetric: any): number {
   return parseInt(videoMetric.toString() || '0')
 }
 
+// Prioridades de action_type conhecidas pela API de Insights do Meta para cada evento
+// (mesmas variantes já tratadas em processConversionValuesMetric/processInitiateCheckoutMetric).
+// O Meta reporta o mesmo evento com nomes diferentes dependendo da origem do sinal
+// (pixel, App Events, Conversions API, agregado "omni"), então buscar só um nome
+// literal (ex.: 'purchase') praticamente nunca bate com o que a API realmente retorna.
+const ACTION_TYPE_PRIORITY: Record<string, string[]> = {
+  purchase: [
+    'omni_purchase',
+    'onsite_web_purchase',
+    'onsite_web_app_purchase',
+    'offsite_conversion.fb_pixel_purchase',
+    'web_in_store_purchase',
+    'web_app_in_store_purchase',
+    'purchase',
+  ],
+  initiate_checkout: [
+    'omni_initiated_checkout',
+    'onsite_web_initiate_checkout',
+    'offsite_conversion.fb_pixel_initiate_checkout',
+    'initiate_checkout',
+  ],
+}
+
 // Função auxiliar para processar cost_per_action_type (AdsActionStats)
 function processCostPerActionType(costPerActionTypeMetric: any, specificActionType?: string): number {
   if (!costPerActionTypeMetric) return 0
-  
+
   // Se for um array de AdsActionStats, buscar o valor específico
   if (Array.isArray(costPerActionTypeMetric)) {
     if (specificActionType) {
-      // Buscar ação específica
-      const action = costPerActionTypeMetric.find((item: any) => item.action_type === specificActionType)
+      // Buscar por todas as variantes conhecidas do evento (omni/onsite/offsite/genérico),
+      // não só pelo nome literal — evita retornar R$ 0,00 quando o Meta usa outra variante.
+      const candidates = ACTION_TYPE_PRIORITY[specificActionType] || [specificActionType]
+      let action: any = null
+      for (const candidateType of candidates) {
+        action = costPerActionTypeMetric.find((item: any) => item.action_type === candidateType)
+        if (action) break
+      }
       if (action) {
-        console.log(`📊 Cost per ${specificActionType}: ${action.value}`)
+        console.log(`📊 Cost per ${specificActionType} (via ${action.action_type}): ${action.value}`)
         return parseFloat(action.value || '0')
       }
       return 0
