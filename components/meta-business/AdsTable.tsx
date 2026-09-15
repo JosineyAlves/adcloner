@@ -60,13 +60,17 @@ export default function AdsTable({
     return `${value.toFixed(2)}%`
   }
 
-  const formatMetricValue = (value: any, type: 'number' | 'currency' | 'percentage') => {
+  const formatMetricValue = (value: any, type: 'number' | 'currency' | 'percentage', metricId?: string) => {
     if (value === null || value === undefined) return '-'
-    
+
     const numValue = typeof value === 'number' ? value : parseFloat(value)
-    
+
     if (isNaN(numValue)) return '-'
-    
+
+    // Frequência: arredonda pra 2 casas decimais (ex.: 1.185 -> "1.19"), igual ao Gerenciador de
+    // Anúncios nativo — o formatNumber genérico abaixo deixava até 3 casas por padrão.
+    if (metricId === 'frequency') return numValue.toFixed(2)
+
     switch (type) {
       case 'currency':
         return formatCurrency(numValue)
@@ -157,7 +161,7 @@ export default function AdsTable({
         {/* Cabeçalho da tabela mesmo sem dados */}
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-700">
+            <thead className="sticky top-0 z-30 bg-gray-50 dark:bg-gray-700">
               <tr>
                 <th className="sticky left-0 z-20 w-12 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left">
                   <input
@@ -210,7 +214,7 @@ export default function AdsTable({
           de totais no rodapé possa ficar fixa (sticky) enquanto as linhas passam por baixo dela. */}
       <div className="overflow-x-auto overflow-y-auto max-h-[65vh]">
         <table className="w-full">
-          <thead className="bg-gray-50 dark:bg-gray-700">
+          <thead className="sticky top-0 z-30 bg-gray-50 dark:bg-gray-700">
             <tr>
               <th className="sticky left-0 z-20 w-12 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left">
                 <input
@@ -272,7 +276,7 @@ export default function AdsTable({
                 </td>
                 {showMetrics && metrics.filter(m => m.visible).map((metric) => {
                   const value = (ad as any)[metric.id]
-                  const formattedValue = formatMetricValue(value, metric.type)
+                  const formattedValue = formatMetricValue(value, metric.type, metric.id)
                   return (
                     <td key={metric.id} className="px-6 py-4 text-sm text-gray-900 dark:text-white whitespace-nowrap">
                       {formattedValue}
@@ -292,7 +296,7 @@ export default function AdsTable({
               <td className="sticky bottom-0 z-10 bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">-</td>
               {showMetrics && visibleMetrics.map((metric, index) => (
                 <td key={metric.id} className="sticky bottom-0 z-10 bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
-                  {metricTotals[index] === null ? '-' : formatMetricValue(metricTotals[index], metric.type)}
+                  {metricTotals[index] === null ? '-' : formatMetricValue(metricTotals[index], metric.type, metric.id)}
                 </td>
               ))}
             </tr>

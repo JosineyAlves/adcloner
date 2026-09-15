@@ -738,6 +738,10 @@ export default function MetaBusinessPage() {
     if (filters.search && !adSet.name.toLowerCase().includes(filters.search.toLowerCase())) return false
     if (filters.status.length > 0 && !filters.status.includes(adSet.status)) return false
     if (filters.accountIds.length > 0 && !filters.accountIds.includes(adSet.account_id)) return false
+    // Drill-down: campanhas marcadas na aba Campanhas escopam os Conjuntos exibidos aqui, igual
+    // ao Gerenciador de Anúncios nativo (selecionar campanha(s) e abrir "Conjuntos de anúncios
+    // para N Campanha(s)"). Ver selectedCampaigns/selectedAdSets mais acima.
+    if (selectedCampaigns.size > 0 && !selectedCampaigns.has(adSet.campaign_id)) return false
     return true
   })
 
@@ -745,6 +749,13 @@ export default function MetaBusinessPage() {
     if (filters.search && !ad.name.toLowerCase().includes(filters.search.toLowerCase())) return false
     if (filters.status.length > 0 && !filters.status.includes(ad.status)) return false
     if (filters.accountIds.length > 0 && !filters.accountIds.includes(ad.account_id)) return false
+    // Drill-down: prioriza o escopo de Conjuntos selecionados; sem isso, cai pro escopo de
+    // Campanhas selecionadas — mesma hierarquia Campanha > Conjunto > Anúncio do painel nativo.
+    if (selectedAdSets.size > 0) {
+      if (!selectedAdSets.has(ad.adset_id)) return false
+    } else if (selectedCampaigns.size > 0 && !selectedCampaigns.has(ad.campaign_id)) {
+      return false
+    }
     return true
   })
 
@@ -874,15 +885,33 @@ export default function MetaBusinessPage() {
               </div>
             </div>
 
-            {/* Abas */}
+            {/* Abas — os rótulos de Conjuntos/Anúncios mudam pra "... para N Campanha(s)/Conjunto(s)"
+                quando há uma seleção ativa vinda da aba anterior, igual ao Gerenciador de Anúncios
+                nativo (ver campanhaScopeLabel/adSetScopeLabel e o filtro em filteredAdSets/filteredAds). */}
             <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="border-b border-gray-200 dark:border-gray-700">
                 <nav className="flex space-x-8 px-6">
                   {[
                     { id: 'accounts', label: 'Contas', icon: AccountsIcon, count: accounts.length },
                     { id: 'campaigns', label: 'Campanhas', icon: CampaignsIcon, count: filteredCampaigns.length },
-                    { id: 'adsets', label: 'Conjuntos', icon: AdSetsIcon, count: filteredAdSets.length },
-                    { id: 'ads', label: 'Anúncios', icon: AdsIcon, count: filteredAds.length }
+                    {
+                      id: 'adsets',
+                      label: selectedCampaigns.size > 0
+                        ? `Conjuntos de anúncios para ${selectedCampaigns.size} Campanha${selectedCampaigns.size === 1 ? '' : 's'}`
+                        : 'Conjuntos',
+                      icon: AdSetsIcon,
+                      count: filteredAdSets.length
+                    },
+                    {
+                      id: 'ads',
+                      label: selectedAdSets.size > 0
+                        ? `Anúncios para ${selectedAdSets.size} Conjunto${selectedAdSets.size === 1 ? '' : 's'}`
+                        : selectedCampaigns.size > 0
+                          ? `Anúncios para ${selectedCampaigns.size} Campanha${selectedCampaigns.size === 1 ? '' : 's'}`
+                          : 'Anúncios',
+                      icon: AdsIcon,
+                      count: filteredAds.length
+                    }
                   ].map((tab) => {
                     const Icon = tab.icon
                     return (
@@ -949,6 +978,21 @@ export default function MetaBusinessPage() {
                       <p className="text-gray-500 dark:text-gray-400 text-sm">Carregando conjuntos de anúncios...</p>
                     </div>
                   ) : (
+                    <>
+                    {selectedCampaigns.size > 0 && (
+                      <div className="mb-4 flex items-center justify-between gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-3 py-2 text-sm text-blue-800 dark:text-blue-300">
+                        <span>
+                          Mostrando conjuntos de {selectedCampaigns.size} campanha{selectedCampaigns.size === 1 ? '' : 's'} selecionada{selectedCampaigns.size === 1 ? '' : 's'}.
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCampaigns(new Set())}
+                          className="font-medium hover:underline flex-shrink-0"
+                        >
+                          Limpar seleção
+                        </button>
+                      </div>
+                    )}
                     <AdSetsTable
                       adSets={filteredAdSets}
                       selectedAdSets={selectedAdSets}
@@ -959,6 +1003,7 @@ export default function MetaBusinessPage() {
                       metrics={metrics}
                       showMetrics={true}
                     />
+                    </>
                   )
                 )}
 
@@ -969,6 +1014,23 @@ export default function MetaBusinessPage() {
                       <p className="text-gray-500 dark:text-gray-400 text-sm">Carregando anúncios...</p>
                     </div>
                   ) : (
+                    <>
+                    {(selectedAdSets.size > 0 || selectedCampaigns.size > 0) && (
+                      <div className="mb-4 flex items-center justify-between gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-3 py-2 text-sm text-blue-800 dark:text-blue-300">
+                        <span>
+                          {selectedAdSets.size > 0
+                            ? `Mostrando anúncios de ${selectedAdSets.size} conjunto${selectedAdSets.size === 1 ? '' : 's'} selecionado${selectedAdSets.size === 1 ? '' : 's'}.`
+                            : `Mostrando anúncios de ${selectedCampaigns.size} campanha${selectedCampaigns.size === 1 ? '' : 's'} selecionada${selectedCampaigns.size === 1 ? '' : 's'}.`}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => { setSelectedAdSets(new Set()); setSelectedCampaigns(new Set()) }}
+                          className="font-medium hover:underline flex-shrink-0"
+                        >
+                          Limpar seleção
+                        </button>
+                      </div>
+                    )}
                     <AdsTable
                       ads={filteredAds}
                       selectedAds={selectedAds}
@@ -978,6 +1040,7 @@ export default function MetaBusinessPage() {
                       metrics={metrics}
                       showMetrics={true}
                     />
+                    </>
                   )
                 )}
               </div>
