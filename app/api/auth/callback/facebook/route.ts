@@ -76,48 +76,56 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Obter Client Business ID (para token do sistema)
-    console.log('🔍 Obtendo Client Business ID...')
-    const businessResponse = await fetch(
-      `https://graph.facebook.com/v23.0/me?fields=client_business_id&access_token=${tokenData.access_token}`
+    // OAuth clássico (perfil base, ver seção 38) — token é de USUÁRIO pessoal, não de
+    // sistema. Buscamos id/nome/e-mail reais via /me em vez de client_business_id (campo
+    // que só existe pra token de system user). discoverBusinessStructure não depende de
+    // qual tipo de token é — ela já usa /me/businesses, que funciona igual pros dois casos.
+    console.log('🔍 Obtendo dados do usuário conectado...')
+    const meResponse = await fetch(
+      `https://graph.facebook.com/v23.0/me?fields=id,name,email&access_token=${tokenData.access_token}`
     )
-    
-    const businessData = await businessResponse.json()
-    console.log('📊 Dados do negócio:', businessData)
 
-    if (businessData.error) {
-      console.error('❌ Erro ao obter Client Business ID:', businessData.error)
-      return NextResponse.json({ 
-        success: false, 
-        error: `Erro ao obter dados do negócio: ${businessData.error.message || 'Erro desconhecido'}` 
+    const meData = await meResponse.json()
+    console.log('📊 Dados do usuário:', meData)
+
+    if (meData.error) {
+      console.error('❌ Erro ao obter dados do usuário:', meData.error)
+      return NextResponse.json({
+        success: false,
+        error: `Erro ao obter dados do usuário: ${meData.error.message || 'Erro desconhecido'}`
       }, { status: 400 })
     }
 
-    // Retornar dados do token do sistema
+    // Retornar dados do token de usuário
     const responseData = {
       success: true,
       access_token: tokenData.access_token,
-      client_business_id: businessData.client_business_id,
-      system_user_id: businessData.id,
-      token_type: 'system_user_token',
+      fb_user_id: meData.id,
+      fb_user_name: meData.name || null,
+      fb_user_email: meData.email || null,
+      token_type: 'user_token',
       expires_in: tokenData.expires_in || null
     }
 
-    console.log('✅ Token do sistema obtido com sucesso')
+    console.log('✅ Token de usuário obtido com sucesso')
     console.log('📋 Dados retornados:', {
       hasToken: !!responseData.access_token,
-      hasBusinessId: !!responseData.client_business_id,
-      hasSystemUserId: !!responseData.system_user_id,
+      hasUserId: !!responseData.fb_user_id,
+      userName: responseData.fb_user_name,
       tokenType: responseData.token_type
     })
 
     // Persistir a conexão no Supabase e descobrir a estrutura de Business Manager/contas.
-    // Best-effort: se isso falhar, não deve quebrar o fluxo de login existente (cookies acima).
+    // Best-effort: se isso falhar, não deve quebrar o fluxo de login existente (cookies abaixo).
     try {
       const connectionId = await saveConnection({
-        fbUser: { id: responseData.system_user_id || responseData.client_business_id },
+        fbUser: {
+          id: responseData.fb_user_id,
+          name: responseData.fb_user_name ?? undefined,
+          email: responseData.fb_user_email ?? undefined,
+        },
         accessToken: responseData.access_token,
-        tokenType: 'system_user',
+        tokenType: 'user',
       })
       const discovery = await discoverBusinessStructure(connectionId, responseData.access_token)
       console.log('💾 Conexão salva no Supabase:', { connectionId, ...discovery })
@@ -145,14 +153,10 @@ export async function POST(request: NextRequest) {
       path: '/'
     })
 
-    // Salvar dados do negócio em cookie
-    response.cookies.set('fb_business_id', responseData.client_business_id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30, // 30 dias
-      path: '/'
-    })
+    // Nota: cookie fb_business_id não é mais setado aqui — client_business_id só existe pra
+    // token de system user, e o fluxo agora é OAuth clássico (token de usuário pessoal, ver
+    // seção 38). app/api/facebook/accounts/route.ts (fallback legado) já trata a ausência
+    // desse cookie normalmente, só deixa de mostrar o nome do Business Manager no fallback.
 
     return response
 

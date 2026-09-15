@@ -51,21 +51,30 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
     }
   }
 
-  // Fazer login com Facebook usando Login para Empresas
+  // Fazer login com Facebook usando OAuth clássico (scope), NÃO "Login para Empresas".
+  //
+  // Por quê: "Login para Empresas" (window.FB.login com config_id) força uma tela de
+  // seleção de "ativos" configurada previamente no App Dashboard da Meta — se essa config
+  // exige Página/Pixel (como a antiga, ver NEXT_PUBLIC_FACEBOOK_CONFIG_ID_CLONE), contas
+  // restritas sem Página/Pixel disponível ficam travadas mesmo só querendo ler a conta no
+  // Meta Business. O OAuth clássico (scope de permissões, sem config_id) não tem essa tela
+  // de ativos — é exatamente o que ferramentas de tracker de terceiros (ex.: a que o usuário
+  // já usa) usam pra conectar perfil/Business Manager sem esse atrito. Ver seção 38 do doc
+  // do projeto.
   const handleConnectFacebook = async () => {
     try {
     setIsConnecting(true)
     setConnectionStatus('connecting')
     setErrorMessage('')
 
-      console.log('🔗 Iniciando login com Facebook SDK (Login para Empresas)...')
-      
+      console.log('🔗 Iniciando login com Facebook SDK (OAuth clássico, perfil base)...')
+
       // Verificar se SDK está pronto
       if (!isSDKReady()) {
         console.log('⚠️ SDK não está pronto, tentando carregar...')
         // Aguardar um pouco e tentar novamente
         await new Promise(resolve => setTimeout(resolve, 2000))
-        
+
         if (!isSDKReady()) {
           setErrorMessage('SDK do Facebook não está carregado. Recarregue a página.')
           setConnectionStatus('error')
@@ -74,10 +83,13 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
         }
       }
 
-      // Usar config_id para Login para Empresas (Nova configuração)
-      const configId = '757815830318736' // Nova configuração correta
-      
-      console.log('🔧 Usando Config ID:', configId)
+      // Sem config_id: window.FB.login usa o fluxo OAuth clássico quando recebe `scope` em
+      // vez de `config_id`. Permissões mínimas pra ler estrutura de negócio/contas e editar
+      // status/orçamento — nada de pages_show_list/pixel, que só fariam sentido pra "Clonar
+      // Campanhas" (não implementada ainda, ver seção 37).
+      const scope = 'ads_management,ads_read,business_management,public_profile'
+
+      console.log('🔧 Usando scope (perfil base, sem config_id):', scope)
 
       window.FB.login((response: any) => {
         try {
@@ -99,7 +111,7 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
           setErrorMessage('Erro interno no login. Tente novamente.')
         }
       }, {
-        config_id: configId,
+        scope,
         response_type: 'code',
         override_default_response_type: true
       })
@@ -143,15 +155,15 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
         setConnectionStatus('success')
         toast.success('Conta do Facebook conectada com sucesso!')
         
-        // Chamar callback de sucesso com dados do sistema
+        // Chamar callback de sucesso com dados do usuário conectado (OAuth clássico —
+        // token pessoal, não mais token de sistema; ver seção 38 do doc do projeto)
         if (onSuccess) {
-          const systemUserInfo = {
+          onSuccess({
             accessToken: data.access_token,
-            clientBusinessId: data.client_business_id,
-            systemUserId: data.system_user_id,
-            type: 'system_user_token'
-          }
-          onSuccess(systemUserInfo)
+            userId: data.fb_user_id,
+            userName: data.fb_user_name,
+            type: 'user_token'
+          })
         }
         
         // Fechar modal após delay
