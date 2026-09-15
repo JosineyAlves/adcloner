@@ -167,7 +167,7 @@ export default function AdsTable({
                   <input
                     type="checkbox"
                     disabled
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-gray-300 text-brand-500 focus:ring-brand-500"
                   />
                 </th>
                 <th className="sticky will-change-transform left-12 z-20 w-24 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
@@ -221,7 +221,7 @@ export default function AdsTable({
                   type="checkbox"
                   checked={selectedAds.size === ads.length && ads.length > 0}
                   onChange={handleSelectAll}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-gray-300 text-brand-500 focus:ring-brand-500"
                 />
               </th>
               <th className="sticky will-change-transform left-12 z-20 w-24 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
@@ -248,7 +248,7 @@ export default function AdsTable({
                     type="checkbox"
                     checked={selectedAds.has(ad.id)}
                     onChange={() => handleSelectAd(ad.id)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-gray-300 text-brand-500 focus:ring-brand-500"
                   />
                 </td>
                 <td className="sticky will-change-transform left-12 z-10 w-24 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-4">

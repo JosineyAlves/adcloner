@@ -50,7 +50,7 @@ export default function StatusToggle({
 
   const getStatusColor = () => {
     if (isActive) {
-      return 'bg-[#035C8E]'
+      return 'bg-brand-500'
     }
     if (effectiveStatus === 'CAMPAIGN_PAUSED' || effectiveStatus === 'CAMPAIGN_ARCHIVED') {
       return 'bg-orange-500'
@@ -91,7 +91,7 @@ export default function StatusToggle({
           ${sizeClasses[size]}
           ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:opacity-80'}
           ${getStatusColor()}
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+          focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2
         `}
         title={getTooltipText()}
         aria-label={`${isActive ? 'Desativar' : 'Ativar'} item`}

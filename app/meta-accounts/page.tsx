@@ -101,7 +101,7 @@ export default function MetaAccountsPage() {
           {/* Abas — hoje só "Anúncios" está implementada de fato */}
           <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
             <nav className="flex gap-6">
-              <button className="pb-3 px-1 border-b-2 border-primary-600 text-primary-600 dark:text-primary-400 text-sm font-medium">
+              <button className="pb-3 px-1 border-b-2 border-brand-500 text-gray-900 dark:text-white text-sm font-medium">
                 Anúncios
               </button>
             </nav>
@@ -144,7 +144,7 @@ export default function MetaAccountsPage() {
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       placeholder="Localizar Perfil"
-                      className="w-full pl-9 pr-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900/40 text-sm text-gray-700 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full pl-9 pr-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900/40 text-sm text-gray-700 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
                     />
                   </div>
 
@@ -166,7 +166,7 @@ export default function MetaAccountsPage() {
                               <User className="w-5 h-5 text-green-600 dark:text-green-400" />
                             </div>
                             <div className="min-w-0">
-                              <p className="text-xs text-primary-600 dark:text-primary-400">
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
                                 {new Date(conn.createdAt).toLocaleString('pt-BR')}
                               </p>
                               <p className="text-sm font-medium text-gray-900 dark:text-white truncate">

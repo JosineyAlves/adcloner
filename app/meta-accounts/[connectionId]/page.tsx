@@ -275,7 +275,7 @@ export default function ConnectionBusinessesPage() {
                         >
                           <Building2
                             className={`w-4.5 h-4.5 ${
-                              isPersonal ? 'text-gray-500 dark:text-gray-400' : 'text-blue-600 dark:text-blue-400'
+                              isPersonal ? 'text-gray-500 dark:text-gray-400' : 'text-gray-700 dark:text-gray-300'
                             }`}
                           />
                         </div>
@@ -318,7 +318,7 @@ export default function ConnectionBusinessesPage() {
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     placeholder="Localizar Conta de Anúncio"
-                                    className="w-full pl-9 pr-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                    className="w-full pl-9 pr-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500"
                                   />
                                 </div>
                                 <div className="flex items-center gap-2 flex-shrink-0">

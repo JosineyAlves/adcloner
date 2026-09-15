@@ -37,7 +37,7 @@ export default function MetaBusinessMetricsSelector({
         onClick={openModal}
         title="Personalizar Colunas"
         aria-label="Personalizar Colunas"
-        className="flex items-center justify-center p-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+        className="flex items-center justify-center p-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors"
       >
         <Settings className="w-4 h-4" />
       </button>

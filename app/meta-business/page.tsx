@@ -769,7 +769,7 @@ export default function MetaBusinessPage() {
         <Sidebar />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <RefreshCw className="w-8 h-8 animate-spin text-primary-600 mx-auto mb-4" />
+            <RefreshCw className="w-8 h-8 animate-spin text-brand-600 mx-auto mb-4" />
             <p className="text-gray-600 dark:text-gray-400">Carregando Meta Business...</p>
           </div>
         </div>
@@ -816,7 +816,7 @@ export default function MetaBusinessPage() {
                     placeholder="Filtrar por nome"
                     value={filters.search}
                     onChange={(e) => handleSearchChange(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
                   />
                 </div>
 
@@ -827,7 +827,7 @@ export default function MetaBusinessPage() {
                   <select
                     value={filters.status.join(',')}
                     onChange={(e) => handleStatusFilter(e.target.value ? e.target.value.split(',') : [])}
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
                   >
                     <option value="">Qualquer</option>
                     <option value="ACTIVE">Ativo</option>
@@ -842,7 +842,7 @@ export default function MetaBusinessPage() {
                   <select
                     value={filters.accountIds.length === 1 ? filters.accountIds[0] : ''}
                     onChange={(e) => handleAccountFilter(e.target.value ? [e.target.value] : [])}
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
                   >
                     <option value="">Todas as Contas</option>
                     {accounts.map((account) => (
@@ -920,13 +920,17 @@ export default function MetaBusinessPage() {
                         onClick={() => setActiveTab(tab.id as any)}
                         className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
                           activeTab === tab.id
-                            ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                            ? 'border-brand-500 text-gray-900 dark:text-white'
                             : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                         }`}
                       >
                         <Icon className="w-4 h-4" />
                         <span>{tab.label}</span>
-                        <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full text-xs">
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          activeTab === tab.id
+                            ? 'bg-black text-brand-400'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                        }`}>
                           {tab.count}
                         </span>
                       </button>
@@ -939,7 +943,7 @@ export default function MetaBusinessPage() {
                 {activeTab === 'accounts' && (
                   isLoadingAccounts && accounts.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16">
-                      <RefreshCw className="w-6 h-6 animate-spin text-primary-600 mb-3" />
+                      <RefreshCw className="w-6 h-6 animate-spin text-brand-600 mb-3" />
                       <p className="text-gray-500 dark:text-gray-400 text-sm">Carregando contas...</p>
                     </div>
                   ) : (
@@ -954,7 +958,7 @@ export default function MetaBusinessPage() {
                 {activeTab === 'campaigns' && (
                   isLoadingCampaigns && filteredCampaigns.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16">
-                      <RefreshCw className="w-6 h-6 animate-spin text-primary-600 mb-3" />
+                      <RefreshCw className="w-6 h-6 animate-spin text-brand-600 mb-3" />
                       <p className="text-gray-500 dark:text-gray-400 text-sm">Carregando campanhas...</p>
                     </div>
                   ) : (
@@ -974,7 +978,7 @@ export default function MetaBusinessPage() {
                 {activeTab === 'adsets' && (
                   isLoadingAdSets && filteredAdSets.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16">
-                      <RefreshCw className="w-6 h-6 animate-spin text-primary-600 mb-3" />
+                      <RefreshCw className="w-6 h-6 animate-spin text-brand-600 mb-3" />
                       <p className="text-gray-500 dark:text-gray-400 text-sm">Carregando conjuntos de anúncios...</p>
                     </div>
                   ) : (
@@ -1010,7 +1014,7 @@ export default function MetaBusinessPage() {
                 {activeTab === 'ads' && (
                   isLoadingAds && filteredAds.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16">
-                      <RefreshCw className="w-6 h-6 animate-spin text-primary-600 mb-3" />
+                      <RefreshCw className="w-6 h-6 animate-spin text-brand-600 mb-3" />
                       <p className="text-gray-500 dark:text-gray-400 text-sm">Carregando anúncios...</p>
                     </div>
                   ) : (
