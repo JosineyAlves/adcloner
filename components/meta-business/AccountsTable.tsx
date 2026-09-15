@@ -149,7 +149,7 @@ export default function AccountsTable({
               <th className="sticky left-0 z-20 w-24 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
                 Status
               </th>
-              <th className="sticky left-24 z-20 w-[240px] bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+              <th className="sticky left-24 z-20 w-[240px] bg-gray-50 dark:bg-gray-700 border-r-2 border-gray-300 dark:border-gray-600 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
                 Conta
               </th>
               {showMetrics && metrics.filter(m => m.visible).map((metric) => (
@@ -172,7 +172,7 @@ export default function AccountsTable({
                 <td className="sticky left-0 z-10 w-24 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-4">
                   {getAccountStatusBadge(account.account_status)}
                 </td>
-                <td className="sticky left-24 z-10 w-[240px] bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-4">
+                <td className="sticky left-24 z-10 w-[240px] bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 border-r-2 border-gray-200 dark:border-gray-600 px-6 py-4">
                   <div className="text-sm font-medium text-gray-900 dark:text-white truncate" title={account.name}>
                     {account.name}
                   </div>
@@ -195,7 +195,7 @@ export default function AccountsTable({
           <tfoot>
             <tr>
               <td className="sticky left-0 bottom-0 z-20 w-24 bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 px-6 py-3"></td>
-              <td className="sticky left-24 bottom-0 z-20 w-[240px] bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">
+              <td className="sticky left-24 bottom-0 z-20 w-[240px] bg-gray-50 dark:bg-gray-700 border-t-2 border-r-2 border-gray-200 dark:border-gray-600 px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">
                 {accounts.length} {accounts.length === 1 ? 'CONTA' : 'CONTAS'}
               </td>
               {showMetrics && visibleMetrics.map((metric, index) => (
