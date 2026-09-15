@@ -50,19 +50,19 @@ export default function Sidebar() {
   }
 
   return (
-    <div className="flex h-full w-64 flex-col bg-[#12141c] border-r border-white/5">
-      <div className="flex h-16 items-center px-6 border-b border-white/5">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-            <span className="text-white text-sm font-bold">AC</span>
+    <div className="flex h-full w-52 flex-col bg-[#12141c] border-r border-white/5">
+      <div className="flex h-14 items-center px-4 border-b border-white/5">
+        <div className="flex items-center space-x-2 min-w-0">
+          <div className="w-7 h-7 bg-primary-600 rounded-lg flex items-center justify-center flex-shrink-0">
+            <span className="text-white text-xs font-bold">AC</span>
           </div>
-          <span className="text-xl font-bold text-white">
+          <span className="text-base font-bold text-white truncate">
             AdCloner Pro
           </span>
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1 px-3 py-4">
+      <nav className="flex-1 space-y-1 px-2 py-4">
         {navigation.map((item) => {
           const isActive = pathname === item.href
           return (
@@ -75,19 +75,19 @@ export default function Sidebar() {
                   : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
               }`}
             >
-              <item.icon className="w-5 h-5 mr-3" />
-              {item.name}
+              <item.icon className="w-5 h-5 mr-2.5 flex-shrink-0" />
+              <span className="truncate">{item.name}</span>
             </Link>
           )
         })}
       </nav>
 
-      <div className="border-t border-white/5 p-4">
+      <div className="border-t border-white/5 p-3">
         <button
           onClick={handleLogout}
           className="flex items-center w-full text-left px-3 py-2 text-sm font-medium rounded-lg text-gray-400 hover:bg-white/5 hover:text-gray-200 transition-colors duration-200"
         >
-          <LogOut className="w-5 h-5 mr-3" />
+          <LogOut className="w-5 h-5 mr-2.5 flex-shrink-0" />
           Sair
         </button>
       </div>
