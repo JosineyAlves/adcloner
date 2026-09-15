@@ -1,6 +1,12 @@
 // Sistema de Batch Requests do Meta API
 // Baseado na documentação oficial: https://developers.facebook.com/docs/graph-api/making-multiple-requests
 
+import {
+  CAMPAIGN_ALWAYS_FIELDS,
+  ADSET_OR_AD_ALWAYS_FIELDS,
+  resolveOptionalInsightFields
+} from './insights-fields'
+
 interface BatchRequest {
   method: string
   relative_url: string
@@ -216,80 +222,20 @@ export class FacebookBatchAPI {
   }
 
   /**
-   * Cria batch de requisições para insights de campanhas
+   * Cria batch de requisições para insights de campanhas.
+   * `metricIdsParam` vem do seletor de colunas do painel (ids de lib/metrics-config.ts, ex.:
+   * "cpc,reach,conversions") — quando informado, só os campos que essas colunas realmente
+   * precisam são pedidos à Meta, além dos campos sempre incluídos (identificação + básicos).
+   * Ver lib/insights-fields.ts para o motivo disso reduzir a chance de bater no rate limit.
    */
-  createCampaignInsightsBatch(campaignIds: string[], datePreset: string, since?: string, until?: string): BatchRequest[] {
+  createCampaignInsightsBatch(campaignIds: string[], datePreset: string, since?: string, until?: string, metricIdsParam?: string | null): BatchRequest[] {
     const timeRange = since && until ? `&time_range=${JSON.stringify({since, until})}` : ''
-    
-    // Campos válidos na API de Insights do Facebook (apenas os suportados oficialmente)
+
     const fields = [
-      // Identificação básica
-      'campaign_id',
-      'campaign_name',
-      'adset_id',
-      'adset_name',
-      'ad_id',
-      'ad_name',
-      
-      // Métricas básicas
-      'impressions',
-      'clicks',
-      'spend',
-      'reach',
-      'frequency',
-      
-      // Métricas de custo (baseado na documentação oficial do Meta)
-      'cpm',
-      'cpc',
-      'ctr',
-      'cost_per_conversion',
-      'cost_per_action_type',
-      'cost_per_inline_link_click',
-      'cost_per_unique_click',
-      'cost_per_unique_inline_link_click',
-      'cost_per_landing_page_view',
-      'cost_per_ad_click',
-      'cost_per_outbound_click',
-      'cost_per_unique_outbound_click',
-      'cost_per_thruplay',
-      'cost_per_15_sec_video_view',
-      'cost_per_2_sec_continuous_video_view',
-      
-      // Métricas de engajamento (apenas as válidas)
-      'inline_link_clicks',
-      'inline_link_click_ctr',
-      'inline_post_engagement',
-      
-      // Métricas de conversão
-      'results',
-      'actions',
-      'action_values',
-      'conversion_values',
-      'conversions',
-      'conversion_rate_ranking',
-      
-      // Métricas de vídeo (baseado na documentação oficial do Meta)
-      'video_play_actions',
-      'video_p25_watched_actions',
-      'video_p50_watched_actions',
-      'video_p75_watched_actions',
-      'video_p95_watched_actions',
-      'video_p100_watched_actions',
-      'video_continuous_2_sec_watched_actions',
-      'video_time_watched_actions',
-      
-      // Métricas de qualidade
-      'quality_ranking',
-      'engagement_rate_ranking',
-      
-      
-      // Métricas de alcance e frequência (apenas as válidas)
-      'unique_clicks',
-      'unique_inline_link_clicks',
-      'unique_inline_link_click_ctr',
-      'unique_ctr'
+      ...CAMPAIGN_ALWAYS_FIELDS,
+      ...resolveOptionalInsightFields(metricIdsParam ?? null)
     ].join(',')
-    
+
     return campaignIds.map(campaignId => ({
       method: 'GET',
       relative_url: `${campaignId}/insights?fields=${fields}&level=campaign&date_preset=${datePreset}${timeRange}`
@@ -393,80 +339,17 @@ export class FacebookBatchAPI {
   }
 
   /**
-   * Cria batch de requisições para insights de ad sets
+   * Cria batch de requisições para insights de ad sets.
+   * `metricIdsParam`: ver comentário em createCampaignInsightsBatch.
    */
-  createAdSetInsightsBatch(adSetIds: string[], datePreset: string, since?: string, until?: string): BatchRequest[] {
+  createAdSetInsightsBatch(adSetIds: string[], datePreset: string, since?: string, until?: string, metricIdsParam?: string | null): BatchRequest[] {
     const timeRange = since && until ? `&time_range=${JSON.stringify({since, until})}` : ''
-    
-    // Campos válidos na API de Insights do Facebook (apenas os suportados oficialmente)
+
     const fields = [
-      // Identificação básica
-      'campaign_id',
-      'campaign_name',
-      'adset_id',
-      'adset_name',
-      'ad_id',
-      'ad_name',
-      
-      // Métricas básicas
-      'impressions',
-      'clicks',
-      'spend',
-      'reach',
-      'frequency',
-      
-      // Métricas de custo (baseado na documentação oficial do Meta)
-      'cpm',
-      'cpc',
-      'ctr',
-      'cost_per_conversion',
-      'cost_per_action_type',
-      'cost_per_inline_link_click',
-      'cost_per_unique_click',
-      'cost_per_unique_inline_link_click',
-      'cost_per_landing_page_view',
-      'cost_per_ad_click',
-      'cost_per_outbound_click',
-      'cost_per_unique_outbound_click',
-      'cost_per_thruplay',
-      'cost_per_15_sec_video_view',
-      'cost_per_2_sec_continuous_video_view',
-      
-      // Métricas de engajamento (apenas as válidas)
-      'inline_link_clicks',
-      'inline_link_click_ctr',
-      'inline_post_engagement',
-      
-      // Métricas de conversão
-      'results',
-      'actions',
-      'action_values',
-      'conversion_values',
-      'conversions',
-      'conversion_rate_ranking',
-      
-      // Métricas de vídeo (baseado na documentação oficial do Meta)
-      'video_play_actions',
-      'video_p25_watched_actions',
-      'video_p50_watched_actions',
-      'video_p75_watched_actions',
-      'video_p95_watched_actions',
-      'video_p100_watched_actions',
-      'video_continuous_2_sec_watched_actions',
-      'video_time_watched_actions',
-      
-      // Métricas de qualidade
-      'quality_ranking',
-      'engagement_rate_ranking',
-      
-      
-      // Métricas de alcance e frequência (apenas as válidas)
-      'unique_clicks',
-      'unique_inline_link_clicks',
-      'unique_inline_link_click_ctr',
-      'unique_ctr'
+      ...ADSET_OR_AD_ALWAYS_FIELDS,
+      ...resolveOptionalInsightFields(metricIdsParam ?? null)
     ].join(',')
-    
+
     return adSetIds.map(adSetId => ({
       method: 'GET',
       relative_url: `${adSetId}/insights?fields=${fields}&level=adset&date_preset=${datePreset}${timeRange}`
@@ -488,80 +371,17 @@ export class FacebookBatchAPI {
   }
 
   /**
-   * Cria batch de requisições para insights de ads
+   * Cria batch de requisições para insights de ads.
+   * `metricIdsParam`: ver comentário em createCampaignInsightsBatch.
    */
-  createAdInsightsBatch(adIds: string[], datePreset: string, since?: string, until?: string): BatchRequest[] {
+  createAdInsightsBatch(adIds: string[], datePreset: string, since?: string, until?: string, metricIdsParam?: string | null): BatchRequest[] {
     const timeRange = since && until ? `&time_range=${JSON.stringify({since, until})}` : ''
-    
-    // Campos válidos na API de Insights do Facebook (apenas os suportados oficialmente)
+
     const fields = [
-      // Identificação básica
-      'campaign_id',
-      'campaign_name',
-      'adset_id',
-      'adset_name',
-      'ad_id',
-      'ad_name',
-      
-      // Métricas básicas
-      'impressions',
-      'clicks',
-      'spend',
-      'reach',
-      'frequency',
-      
-      // Métricas de custo (baseado na documentação oficial do Meta)
-      'cpm',
-      'cpc',
-      'ctr',
-      'cost_per_conversion',
-      'cost_per_action_type',
-      'cost_per_inline_link_click',
-      'cost_per_unique_click',
-      'cost_per_unique_inline_link_click',
-      'cost_per_landing_page_view',
-      'cost_per_ad_click',
-      'cost_per_outbound_click',
-      'cost_per_unique_outbound_click',
-      'cost_per_thruplay',
-      'cost_per_15_sec_video_view',
-      'cost_per_2_sec_continuous_video_view',
-      
-      // Métricas de engajamento (apenas as válidas)
-      'inline_link_clicks',
-      'inline_link_click_ctr',
-      'inline_post_engagement',
-      
-      // Métricas de conversão
-      'results',
-      'actions',
-      'action_values',
-      'conversion_values',
-      'conversions',
-      'conversion_rate_ranking',
-      
-      // Métricas de vídeo (baseado na documentação oficial do Meta)
-      'video_play_actions',
-      'video_p25_watched_actions',
-      'video_p50_watched_actions',
-      'video_p75_watched_actions',
-      'video_p95_watched_actions',
-      'video_p100_watched_actions',
-      'video_continuous_2_sec_watched_actions',
-      'video_time_watched_actions',
-      
-      // Métricas de qualidade
-      'quality_ranking',
-      'engagement_rate_ranking',
-      
-      
-      // Métricas de alcance e frequência (apenas as válidas)
-      'unique_clicks',
-      'unique_inline_link_clicks',
-      'unique_inline_link_click_ctr',
-      'unique_ctr'
+      ...ADSET_OR_AD_ALWAYS_FIELDS,
+      ...resolveOptionalInsightFields(metricIdsParam ?? null)
     ].join(',')
-    
+
     return adIds.map(adId => ({
       method: 'GET',
       relative_url: `${adId}/insights?fields=${fields}&level=ad&date_preset=${datePreset}${timeRange}`

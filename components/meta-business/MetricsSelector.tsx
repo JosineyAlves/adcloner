@@ -1,28 +1,34 @@
 'use client'
 
+import { useState } from 'react'
 import { Settings } from 'lucide-react'
-import { useSelectedMetrics } from '@/hooks/useSelectedMetrics'
 import { ALL_METRICS } from '@/lib/metrics-config'
 import ColumnsCustomizationModal from './ColumnsCustomizationModal'
 
 interface MetaBusinessMetricsSelectorProps {
-  onMetricsChange: (metrics: string[]) => void
+  // Componente controlado: a lista de métricas selecionadas (ordenada) e o que fazer quando o
+  // usuário salvar uma nova seleção vêm do componente pai (app/meta-business/page.tsx), que é a
+  // única fonte de verdade para essa seleção (persistida via hooks/useColumnPreferences.ts).
+  // Antes esse componente tinha seu próprio estado (via hooks/useSelectedMetrics.ts, que salvava
+  // e lia do localStorage em useEffects na ordem errada), desconectado do estado real que
+  // controlava o que era buscado/renderizado na página — o que fazia a seleção salva parecer
+  // "perdida" ao recarregar a página.
+  selectedMetricIds: string[]
+  onSave: (metricIds: string[]) => void
 }
 
 export default function MetaBusinessMetricsSelector({
-  onMetricsChange
+  selectedMetricIds,
+  onSave
 }: MetaBusinessMetricsSelectorProps) {
-  const {
-    selectedMetrics,
-    isModalOpen,
-    openModal,
-    closeModal,
-    saveMetrics
-  } = useSelectedMetrics()
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const handleSave = (metrics: string[]) => {
-    saveMetrics(metrics)
-    onMetricsChange(metrics)
+  const openModal = () => setIsModalOpen(true)
+  const closeModal = () => setIsModalOpen(false)
+
+  const handleSave = (metricIds: string[]) => {
+    onSave(metricIds)
+    closeModal()
   }
 
   return (
@@ -38,7 +44,7 @@ export default function MetaBusinessMetricsSelector({
       <ColumnsCustomizationModal
         isOpen={isModalOpen}
         onClose={closeModal}
-        selectedMetrics={selectedMetrics}
+        selectedMetrics={selectedMetricIds}
         onSave={handleSave}
         availableMetrics={ALL_METRICS}
       />

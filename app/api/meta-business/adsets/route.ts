@@ -209,6 +209,8 @@ export async function GET(request: NextRequest) {
     const datePreset = searchParams.get('datePreset') || 'today'
     const since = searchParams.get('since')
     const until = searchParams.get('until')
+    // Ver comentário equivalente em campaigns/route.ts.
+    const metricIds = searchParams.get('metricIds')
 
     if (!accessToken) {
       return NextResponse.json(
@@ -225,7 +227,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Verificar cache primeiro com TTL inteligente
-    const cacheKey = cache.generateKey('adsets', { accountId, datePreset, since, until })
+    const cacheKey = cache.generateKey('adsets', { accountId, datePreset, since, until, metricIds })
     const cachedData = cache.get(cacheKey)
     
     if (cachedData) {
@@ -287,7 +289,7 @@ export async function GET(request: NextRequest) {
 
         // PASSO 2: Buscar insights em batch (até 50 por vez)
         const adSetIds = adSetsData.data.map((ads: any) => ads.id)
-        const insightsBatch = facebookBatchAPI.createAdSetInsightsBatch(adSetIds, datePreset, since || undefined, until || undefined)
+        const insightsBatch = facebookBatchAPI.createAdSetInsightsBatch(adSetIds, datePreset, since || undefined, until || undefined, metricIds)
         const { responses: insightsResponses } = await facebookBatchAPI.makeBatchRequest(insightsBatch, accessToken)
         
         console.log(`📈 Buscando insights para ${adSetIds.length} ad sets em ${Math.ceil(insightsBatch.length / 50)} lotes`)

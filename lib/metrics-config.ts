@@ -27,7 +27,7 @@ export const ALL_METRICS: MetricConfig[] = [
     label: 'Cliques (todos)',
     description: 'Número de cliques no anúncio',
     type: 'number',
-    visible: true,
+    visible: false,
     order: 2,
     category: 'basic'
   },
@@ -37,7 +37,7 @@ export const ALL_METRICS: MetricConfig[] = [
     description: 'Valor total gasto no anúncio',
     type: 'currency',
     visible: true,
-    order: 3,
+    order: 2,
     category: 'basic'
   },
 
@@ -47,7 +47,7 @@ export const ALL_METRICS: MetricConfig[] = [
     label: 'CPC (todos)',
     description: 'Custo por clique',
     type: 'currency',
-    visible: true,
+    visible: false,
     order: 4,
     category: 'cost'
   },
@@ -56,7 +56,7 @@ export const ALL_METRICS: MetricConfig[] = [
     label: 'CTR (todos)',
     description: 'Taxa de cliques',
     type: 'percentage',
-    visible: true,
+    visible: false,
     order: 5,
     category: 'cost'
   },
@@ -66,7 +66,7 @@ export const ALL_METRICS: MetricConfig[] = [
     description: 'Custo por mil impressões',
     type: 'currency',
     visible: true,
-    order: 6,
+    order: 10,
     category: 'cost'
   },
   {
@@ -84,7 +84,7 @@ export const ALL_METRICS: MetricConfig[] = [
     description: 'O custo médio para cada conversão.',
     type: 'currency',
     visible: true,
-    order: 10,
+    order: 4,
     category: 'cost'
   },
   {
@@ -93,7 +93,7 @@ export const ALL_METRICS: MetricConfig[] = [
     description: 'O custo médio para cada início de checkout.',
     type: 'currency',
     visible: true,
-    order: 11,
+    order: 7,
     category: 'cost'
   },
   {
@@ -102,7 +102,7 @@ export const ALL_METRICS: MetricConfig[] = [
     description: 'Número total de inícios de checkout realizados.',
     type: 'number',
     visible: true,
-    order: 12,
+    order: 6,
     category: 'cost'
   },
   {
@@ -111,7 +111,7 @@ export const ALL_METRICS: MetricConfig[] = [
     description: 'Número total de conversões.',
     type: 'number',
     visible: true,
-    order: 13,
+    order: 3,
     category: 'cost'
   },
   {
@@ -120,7 +120,7 @@ export const ALL_METRICS: MetricConfig[] = [
     description: 'Valor total das conversões.',
     type: 'currency',
     visible: true,
-    order: 14,
+    order: 5,
     category: 'cost'
   },
   {
@@ -128,7 +128,7 @@ export const ALL_METRICS: MetricConfig[] = [
     label: 'Resultados',
     description: 'Número total de resultados obtidos.',
     type: 'number',
-    visible: true,
+    visible: false,
     order: 15,
     category: 'cost'
   },
@@ -148,8 +148,8 @@ export const ALL_METRICS: MetricConfig[] = [
     label: 'Frequência',
     description: 'Número médio de vezes que cada pessoa viu o anúncio',
     type: 'number',
-    visible: false,
-    order: 13,
+    visible: true,
+    order: 12,
     category: 'frequency'
   },
   {
@@ -166,8 +166,8 @@ export const ALL_METRICS: MetricConfig[] = [
     label: 'Cliques no Link',
     description: 'Cliques em links dentro do anúncio',
     type: 'number',
-    visible: false,
-    order: 15,
+    visible: true,
+    order: 8,
     category: 'engagement'
   },
   {
@@ -184,8 +184,8 @@ export const ALL_METRICS: MetricConfig[] = [
     label: 'CTR (taxa de cliques no link)',
     description: 'Taxa de cliques no links',
     type: 'percentage',
-    visible: false,
-    order: 17,
+    visible: true,
+    order: 11,
     category: 'engagement'
   },
   {
@@ -275,6 +275,44 @@ export const ALL_METRICS: MetricConfig[] = [
 
 // Métricas principais para o dashboard (as mais importantes)
 export const MAIN_METRICS: MetricConfig[] = ALL_METRICS.filter(metric => metric.visible)
+
+// Ordem/seleção padrão de colunas (base "estilo Meta Ads Manager" definida pelo usuário) usada
+// quando ainda não existe nenhuma preferência salva (ver lib/column-preferences.ts). É uma lista
+// explícita de ids, na ordem exata desejada — não depende da ordem física de ALL_METRICS nem do
+// campo `order` de cada métrica (que hoje não é usado para renderização, só como metadado).
+export const DEFAULT_METRIC_IDS: string[] = [
+  'impressions',
+  'spend',
+  'conversions',
+  'cost_per_conversion',
+  'conversion_values',
+  'initiate_checkout',
+  'cost_per_initiate_checkout',
+  'inline_link_clicks',
+  'cost_per_inline_link_click',
+  'cpm',
+  'inline_link_click_ctr',
+  'frequency',
+]
+
+/**
+ * Monta o array de MetricConfig (na ordem de `metricIds`, com o restante das métricas
+ * disponíveis marcadas como não visíveis) a partir de uma lista ordenada de ids — a mesma
+ * transformação usada tanto para o estado inicial quanto para quando o usuário salva uma nova
+ * seleção no modal de personalização de colunas.
+ */
+export function buildMetricsFromIds(metricIds: string[]): MetricConfig[] {
+  const visibleMetrics = metricIds
+    .map(id => ALL_METRICS.find(metric => metric.id === id))
+    .filter(Boolean)
+    .map(metric => ({ ...(metric as MetricConfig), visible: true }))
+
+  const hiddenMetrics = ALL_METRICS
+    .filter(metric => !metricIds.includes(metric.id))
+    .map(metric => ({ ...metric, visible: false }))
+
+  return [...visibleMetrics, ...hiddenMetrics]
+}
 
 // Categorização das métricas para filtros
 export const METRICS_BY_CATEGORY = {

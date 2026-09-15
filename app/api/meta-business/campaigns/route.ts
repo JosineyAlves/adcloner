@@ -210,6 +210,11 @@ export async function GET(request: NextRequest) {
     const datePreset = searchParams.get('datePreset') || 'today'
     const since = searchParams.get('since')
     const until = searchParams.get('until')
+    // Ids das colunas/métricas ativas no seletor do painel (lib/metrics-config.ts). Quando
+    // presente, só os campos que essas colunas precisam são pedidos à Meta — ver
+    // lib/insights-fields.ts. Entra na chave de cache pra evitar servir, depois de trocar as
+    // colunas visíveis, um resultado em cache que foi buscado com um conjunto de campos menor.
+    const metricIds = searchParams.get('metricIds')
 
     if (!accessToken) {
       return NextResponse.json(
@@ -226,9 +231,9 @@ export async function GET(request: NextRequest) {
     }
 
     const facebookAPI = new FacebookAPI()
-    
+
     // Verificar cache primeiro com TTL inteligente
-    const cacheKey = cache.generateKey('campaigns', { accountId, datePreset, since, until })
+    const cacheKey = cache.generateKey('campaigns', { accountId, datePreset, since, until, metricIds })
     const cachedData = cache.get(cacheKey)
     
     if (cachedData) {
@@ -290,7 +295,7 @@ export async function GET(request: NextRequest) {
 
         // PASSO 2: Buscar insights em batch (até 50 por vez)
         const campaignIds = campaignsData.data.map((c: any) => c.id)
-        const insightsBatch = facebookBatchAPI.createCampaignInsightsBatch(campaignIds, datePreset, since || undefined, until || undefined)
+        const insightsBatch = facebookBatchAPI.createCampaignInsightsBatch(campaignIds, datePreset, since || undefined, until || undefined, metricIds)
         const { responses: insightsResponses } = await facebookBatchAPI.makeBatchRequest(insightsBatch, accessToken)
         
         console.log(`📈 Buscando insights para ${campaignIds.length} campanhas em ${Math.ceil(insightsBatch.length / 50)} lotes`)

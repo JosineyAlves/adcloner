@@ -20,7 +20,8 @@ import {
   Layers,
   Megaphone
 } from 'lucide-react'
-import { ALL_METRICS, MAIN_METRICS, MetricConfig } from '@/lib/metrics-config'
+import { DEFAULT_METRIC_IDS, buildMetricsFromIds, MetricConfig } from '@/lib/metrics-config'
+import { useColumnPreferences } from '@/hooks/useColumnPreferences'
 import AccountsIcon from '@/components/meta-business/icons/AccountsIcon'
 import CampaignsIcon from '@/components/meta-business/icons/CampaignsIcon'
 import AdSetsIcon from '@/components/meta-business/icons/AdSetsIcon'
@@ -119,14 +120,20 @@ export default function MetaBusinessPage() {
   const [selectedAdSets, setSelectedAdSets] = useState<Set<string>>(new Set())
   const [selectedAds, setSelectedAds] = useState<Set<string>>(new Set())
 
-  // Estados para métricas avançadas
-  const [metrics, setMetrics] = useState<MetricConfig[]>(() => {
-    // Inicializar com métricas principais visíveis
-    return ALL_METRICS.map(metric => ({
-      ...metric,
-      visible: MAIN_METRICS.some(m => m.id === metric.id)
-    }))
-  })
+  // Estados para métricas avançadas — a seleção/ordem de colunas é persistida por usuário no
+  // Supabase (ver hooks/useColumnPreferences.ts e lib/column-preferences.ts), com fallback para
+  // o padrão "estilo Meta" (lib/metrics-config.ts -> DEFAULT_METRIC_IDS) enquanto nada foi salvo
+  // ainda. `metrics` é sempre derivado de `selectedMetricIds` — única fonte de verdade — em vez
+  // de manter um segundo estado independente (o que antes causava a seleção salva "sumir" ao
+  // recarregar a página).
+  const { metricIds: selectedMetricIds, saveMetricIds } = useColumnPreferences(
+    'meta_business_metrics',
+    DEFAULT_METRIC_IDS
+  )
+  const metrics = useMemo<MetricConfig[]>(
+    () => buildMetricsFromIds(selectedMetricIds),
+    [selectedMetricIds]
+  )
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
 
   // Refs sempre sincronizados com o estado mais recente (atualizados a cada render, antes de
@@ -156,13 +163,18 @@ export default function MetaBusinessPage() {
     if (activeAccounts.length === 0) return { items: [], rateLimitedUntil: null }
 
     const dateQuery = customRange ? `&since=${customRange.since}&until=${customRange.until}` : ''
+    // Só pede à Meta os campos das colunas que o usuário deixou visíveis no seletor de métricas
+    // (ver lib/insights-fields.ts no servidor) — reduz o "peso" de cada consulta de insights.
+    // A rota de accounts ignora esse parâmetro (mantida como estava); as outras três o usam.
+    const visibleMetricIds = metrics.filter(m => m.visible).map(m => m.id).join(',')
+    const metricsQuery = visibleMetricIds ? `&metricIds=${encodeURIComponent(visibleMetricIds)}` : ''
     let maxRetryAfterSeconds = 0
 
     const results = await Promise.all(
       activeAccounts.map(async (account) => {
         try {
           const response = await fetch(
-            `/api/meta-business/${endpoint}?accountId=${account.id}&datePreset=${datePreset}${dateQuery}`,
+            `/api/meta-business/${endpoint}?accountId=${account.id}&datePreset=${datePreset}${dateQuery}${metricsQuery}`,
             { credentials: 'include' }
           )
           // Sempre tentamos ler o corpo, mesmo em respostas não-ok (429 de rate limit vem com
@@ -190,7 +202,7 @@ export default function MetaBusinessPage() {
       items: results.flat(),
       rateLimitedUntil: maxRetryAfterSeconds > 0 ? Date.now() + maxRetryAfterSeconds * 1000 : null
     }
-  }, [facebookAccounts, datePreset, customRange])
+  }, [facebookAccounts, datePreset, customRange, metrics])
 
   const persistCache = useCallback((overrides: Partial<MetaBusinessCachedData>) => {
     const merged: MetaBusinessCachedData = {
@@ -212,12 +224,17 @@ export default function MetaBusinessPage() {
   const fetchAccountsAndCampaigns = useCallback(async () => {
     try {
       setIsRefreshing(true)
-      const [accountsResult, campaignsResult] = await Promise.all([
-        fetchEndpointForActiveAccounts<MetaAccount>('accounts', 'accounts'),
-        fetchEndpointForActiveAccounts<MetaCampaign>('campaigns', 'campaigns')
-      ])
-
+      // Sequencial (contas, depois campanhas) em vez de Promise.all: como as duas chamadas
+      // consomem a MESMA cota de rate limit da conta (use case "ads_insights"), buscá-las ao
+      // mesmo tempo dobra o pico de chamadas simultâneas por conta à toa — a Meta pune picos,
+      // não só o volume total (ver Seção 8 do doc de referência do projeto). De quebra, se a
+      // busca de contas já ativar o bloqueio de rate limit para uma conta (lib/meta-rate-limit.ts
+      // no servidor), a busca de campanhas logo em seguida detecta esse bloqueio já ativo e nem
+      // chega a chamar a Meta de novo para aquela conta.
+      const accountsResult = await fetchEndpointForActiveAccounts<MetaAccount>('accounts', 'accounts')
       setAccounts(accountsResult.items)
+
+      const campaignsResult = await fetchEndpointForActiveAccounts<MetaCampaign>('campaigns', 'campaigns')
       setCampaigns(campaignsResult.items)
 
       const combinedRateLimitedUntil = Math.max(
@@ -439,25 +456,11 @@ export default function MetaBusinessPage() {
     }))
   }
 
-  // Funções para gerenciar métricas
+  // Chamado quando o usuário salva uma nova seleção/ordem no modal de colunas — persiste no
+  // Supabase (por usuário) via useColumnPreferences, o que atualiza `metrics` automaticamente
+  // (derivado de selectedMetricIds acima).
   const handleMetricsChange = (metricIds: string[]) => {
-    console.log('🔄 Atualizando métricas:', metricIds)
-    
-    // Manter a ordem das métricas selecionadas
-    const newMetrics = metricIds.map(id => {
-      const metric = ALL_METRICS.find(m => m.id === id)
-      return metric ? { ...metric, visible: true } : null
-    }).filter(Boolean) as MetricConfig[]
-    
-    // Adicionar métricas não selecionadas como invisíveis
-    const hiddenMetrics = ALL_METRICS.filter(metric => 
-      !metricIds.includes(metric.id)
-    ).map(metric => ({ ...metric, visible: false }))
-    
-    const finalMetrics = [...newMetrics, ...hiddenMetrics]
-    console.log('📊 Métricas finais:', finalMetrics.filter(m => m.visible).map(m => m.label))
-    
-    setMetrics(finalMetrics)
+    saveMetricIds(metricIds)
   }
 
   const handleCategoryChange = (category: string) => {
@@ -648,7 +651,8 @@ export default function MetaBusinessPage() {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
                 <MetaBusinessMetricsSelector
-                  onMetricsChange={handleMetricsChange}
+                  selectedMetricIds={selectedMetricIds}
+                  onSave={handleMetricsChange}
                 />
                 <DateSelector
                   datePreset={datePreset}

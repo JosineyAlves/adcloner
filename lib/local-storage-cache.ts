@@ -58,6 +58,9 @@ export function isCacheFresh(savedAt: number, maxAgeMs: number): boolean {
 export const LOCAL_CACHE_KEYS = {
   facebookAccounts: 'adcloner:facebook-accounts:v1',
   metaBusinessData: 'adcloner:meta-business-data:v1',
+  // Prefixo — a chave real inclui o viewKey (ex.: "adcloner:column-preferences:v1:meta_business_metrics"),
+  // ver hooks/useColumnPreferences.ts. Isso permite mais de uma tela com seletor de colunas própria.
+  columnPreferencesPrefix: 'adcloner:column-preferences:v1:',
 } as const
 
 // Quanto tempo o dado salvo é considerado "fresco" antes de forçar um refetch em primeiro plano.
