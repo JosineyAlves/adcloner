@@ -295,6 +295,25 @@ export async function GET(request: NextRequest) {
 
         console.log('User info:', userData)
 
+        // Persistir a conexão no Supabase e descobrir a estrutura de Business Manager/contas.
+        // Best-effort: mesma lógica do handler POST (ver seção 38/39 do doc do projeto) —
+        // se falhar, não deve quebrar a tela de sucesso do popup.
+        try {
+          const connectionId = await saveConnection({
+            fbUser: {
+              id: userData.id,
+              name: userData.name ?? undefined,
+              email: userData.email ?? undefined,
+            },
+            accessToken: tokenData.access_token,
+            tokenType: 'user',
+          })
+          const discovery = await discoverBusinessStructure(connectionId, tokenData.access_token)
+          console.log('💾 Conexão salva no Supabase (GET/redirect flow):', { connectionId, ...discovery })
+        } catch (persistError) {
+          console.error('⚠️ Falha ao persistir conexão no Supabase (login continua normalmente):', persistError)
+        }
+
         // Retornar página de sucesso
         const successHtml = `
           <!DOCTYPE html>
@@ -334,7 +353,8 @@ export async function GET(request: NextRequest) {
                 if (window.opener) {
                   window.opener.postMessage({
                     type: 'FACEBOOK_SUCCESS',
-                    userInfo: ${JSON.stringify(userData)}
+                    userInfo: ${JSON.stringify(userData)},
+                    accessToken: ${JSON.stringify(tokenData.access_token)}
                   }, '*');
                 }
                 setTimeout(() => {
@@ -346,9 +366,22 @@ export async function GET(request: NextRequest) {
           </html>
         `
         
-        return new NextResponse(successHtml, {
+        const successResponse = new NextResponse(successHtml, {
           headers: { 'Content-Type': 'text/html' }
         })
+
+        // Salvar token em cookie seguro (httpOnly) — mesmo cookie que o handler POST seta,
+        // agora também setado aqui pois este é o fluxo (redirect_uri explícito) usado pelo
+        // "Conectar Perfil" desde a seção 39.
+        successResponse.cookies.set('fb_access_token', tokenData.access_token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 60 * 60 * 24 * 30, // 30 dias
+          path: '/'
+        })
+
+        return successResponse
 
       } catch (tokenError) {
         console.error('Error exchanging code for token:', tokenError)

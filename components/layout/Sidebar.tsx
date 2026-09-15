@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
-  Users,
   Link2,
   LogOut
 } from 'lucide-react'
@@ -21,11 +20,17 @@ import toast from 'react-hot-toast'
 // (/templates, /settings) tem uma página implementada; eram links mortos caindo na página de
 // erro 404 padrão do Next.js (sem sidebar/padding do projeto). Ver seção 36 do doc do projeto.
 // Reintroduzir aqui quando essas telas existirem de fato.
+//
+// "Contas" (/accounts) removida do menu (set/2026) — duplicava a listagem de contas de anúncio
+// já disponível em "Integrações" (perfis → drill-down por perfil em /meta-accounts/[connectionId]),
+// causando duas fontes de verdade da mesma informação. "Contas" não tinha nenhuma ação de
+// remover conta/perfil própria — só herdava (via AppContext) um bug de fallback que fazia contas
+// já desconectadas em Integrações continuarem aparecendo ali, sem forma de limpá-las. Ver
+// seção 40 do doc do projeto.
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Meta Business', href: '/meta-business', icon: MetaIcon },
   { name: 'Integrações', href: '/meta-accounts', icon: Link2 },
-  { name: 'Contas', href: '/accounts', icon: Users },
 ]
 
 export default function Sidebar() {

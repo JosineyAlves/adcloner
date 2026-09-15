@@ -16,105 +16,95 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'connecting' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState<string>('')
 
-  // Verificar se SDK está carregado
-  const isSDKReady = () => {
+  // Fazer login com Facebook usando OAuth clássico (redirect_uri explícito), NÃO o SDK JS
+  // e NÃO "Login para Empresas".
+  //
+  // Por quê (ver seções 38 e 39 do doc do projeto):
+  // - "Login para Empresas" (window.FB.login com config_id) força uma tela de seleção de
+  //   "ativos" configurada previamente no App Dashboard da Meta — se essa config exige
+  //   Página/Pixel (como a antiga, ver NEXT_PUBLIC_FACEBOOK_CONFIG_ID_CLONE), contas
+  //   restritas sem Página/Pixel disponível ficam travadas.
+  // - window.FB.login com `scope` (sem config_id) evita a tela de ativos, mas o código de
+  //   autorização gerado pelo SDK JS fica amarrado a um redirect_uri interno que o SDK
+  //   escolhe sozinho — o backend não consegue reproduzir esse redirect_uri na troca do
+  //   código por token, e a Meta rejeita com "Error validating verification code".
+  // - A correção (seção 39): navegar manualmente pra /dialog/oauth com um redirect_uri
+  //   explícito e controlado por nós (mesmo endpoint do handler GET desta rota), abrindo
+  //   em popup e recebendo o resultado via postMessage — exatamente o padrão usado pelo
+  //   tracker de terceiros do usuário, que também não usa o SDK JS do Facebook.
+  const handleConnectFacebook = async () => {
     try {
-      const isReady = typeof window !== 'undefined' && window.FB
-      console.log('🔍 SDK Status:', isReady ? 'Pronto' : 'Não carregado')
-      return isReady
-    } catch (error) {
-      console.error('❌ Erro ao verificar SDK:', error)
-      return false
-    }
-  }
+      setIsConnecting(true)
+      setConnectionStatus('connecting')
+      setErrorMessage('')
 
-  // Verificar status de login
-  const checkLoginStatus = () => {
-    try {
-      if (!isSDKReady()) {
-        console.log('SDK não está pronto')
+      const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL
+
+      if (!appId || !appUrl) {
+        setErrorMessage('Configuração do Facebook incompleta (App ID ou URL ausente).')
+        setConnectionStatus('error')
+        setIsConnecting(false)
         return
       }
 
-      window.FB.getLoginStatus((response: any) => {
-        console.log('Status de login:', response)
-        
-        // Para Login para Empresas, não processar automaticamente
-        // O usuário deve clicar no botão para iniciar o fluxo
-        if (response.status === 'connected') {
-          console.log('Usuário já está conectado, mas não processando automaticamente')
-          // Não chamar handleLoginSuccess aqui
+      // Permissões mínimas pra ler estrutura de negócio/contas e editar status/orçamento —
+      // nada de pages_show_list/pixel, que só fariam sentido pra "Clonar Campanhas" (não
+      // implementada ainda, ver seção 37).
+      const scope = 'ads_management,ads_read,business_management,public_profile'
+      const redirectUri = `${appUrl}/api/auth/callback/facebook`
+
+      const oauthUrl =
+        `https://www.facebook.com/v23.0/dialog/oauth` +
+        `?client_id=${encodeURIComponent(appId)}` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+        `&scope=${encodeURIComponent(scope)}` +
+        `&response_type=code` +
+        `&display=popup`
+
+      console.log('🔗 Abrindo popup OAuth clássico (redirect_uri explícito):', oauthUrl)
+
+      const popup = window.open(oauthUrl, 'facebook-login', 'width=600,height=700')
+
+      if (!popup) {
+        setErrorMessage('O popup foi bloqueado pelo navegador. Permita popups para este site e tente novamente.')
+        setConnectionStatus('error')
+        setIsConnecting(false)
+        return
+      }
+
+      // Detectar se o usuário fechou o popup manualmente sem concluir o login
+      const popupCheckInterval = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(popupCheckInterval)
+          window.removeEventListener('message', handleMessage)
+          setIsConnecting(current => {
+            if (current) {
+              setConnectionStatus('error')
+              setErrorMessage('Login cancelado: o popup foi fechado antes de concluir a conexão.')
+            }
+            return false
+          })
         }
-      })
-    } catch (error) {
-      console.error('Erro ao verificar status de login:', error)
-    }
-  }
+      }, 500)
 
-  // Fazer login com Facebook usando OAuth clássico (scope), NÃO "Login para Empresas".
-  //
-  // Por quê: "Login para Empresas" (window.FB.login com config_id) força uma tela de
-  // seleção de "ativos" configurada previamente no App Dashboard da Meta — se essa config
-  // exige Página/Pixel (como a antiga, ver NEXT_PUBLIC_FACEBOOK_CONFIG_ID_CLONE), contas
-  // restritas sem Página/Pixel disponível ficam travadas mesmo só querendo ler a conta no
-  // Meta Business. O OAuth clássico (scope de permissões, sem config_id) não tem essa tela
-  // de ativos — é exatamente o que ferramentas de tracker de terceiros (ex.: a que o usuário
-  // já usa) usam pra conectar perfil/Business Manager sem esse atrito. Ver seção 38 do doc
-  // do projeto.
-  const handleConnectFacebook = async () => {
-    try {
-    setIsConnecting(true)
-    setConnectionStatus('connecting')
-    setErrorMessage('')
+      function handleMessage(event: MessageEvent) {
+        if (!event.data || typeof event.data !== 'object') return
 
-      console.log('🔗 Iniciando login com Facebook SDK (OAuth clássico, perfil base)...')
-
-      // Verificar se SDK está pronto
-      if (!isSDKReady()) {
-        console.log('⚠️ SDK não está pronto, tentando carregar...')
-        // Aguardar um pouco e tentar novamente
-        await new Promise(resolve => setTimeout(resolve, 2000))
-
-        if (!isSDKReady()) {
-          setErrorMessage('SDK do Facebook não está carregado. Recarregue a página.')
-          setConnectionStatus('error')
+        if (event.data.type === 'FACEBOOK_SUCCESS') {
+          clearInterval(popupCheckInterval)
+          window.removeEventListener('message', handleMessage)
+          handleLoginSuccess(event.data)
+        } else if (event.data.type === 'FACEBOOK_ERROR') {
+          clearInterval(popupCheckInterval)
+          window.removeEventListener('message', handleMessage)
           setIsConnecting(false)
-          return
+          setConnectionStatus('error')
+          setErrorMessage(event.data.message || 'Erro ao conectar com Facebook.')
         }
       }
 
-      // Sem config_id: window.FB.login usa o fluxo OAuth clássico quando recebe `scope` em
-      // vez de `config_id`. Permissões mínimas pra ler estrutura de negócio/contas e editar
-      // status/orçamento — nada de pages_show_list/pixel, que só fariam sentido pra "Clonar
-      // Campanhas" (não implementada ainda, ver seção 37).
-      const scope = 'ads_management,ads_read,business_management,public_profile'
-
-      console.log('🔧 Usando scope (perfil base, sem config_id):', scope)
-
-      window.FB.login((response: any) => {
-        try {
-          console.log('Resposta do login:', response)
-
-          if (response.authResponse && response.authResponse.code) {
-            console.log('✅ Login bem-sucedido! Código recebido:', response.authResponse.code)
-            handleLoginSuccess(response.authResponse)
-          } else {
-            console.log('❌ Login cancelado ou falhou')
-          setIsConnecting(false)
-            setConnectionStatus('error')
-            setErrorMessage('Login cancelado ou falhou. Tente novamente.')
-          }
-        } catch (error) {
-          console.error('Erro no callback do login:', error)
-          setIsConnecting(false)
-          setConnectionStatus('error')
-          setErrorMessage('Erro interno no login. Tente novamente.')
-        }
-      }, {
-        scope,
-        response_type: 'code',
-        override_default_response_type: true
-      })
+      window.addEventListener('message', handleMessage)
 
     } catch (error) {
       console.error('❌ Erro ao conectar com Facebook:', error)
@@ -124,56 +114,31 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
     }
   }
 
-  // Processar sucesso do login
-  const handleLoginSuccess = async (authResponse: any) => {
+  // Processar sucesso do login — recebido via postMessage do popup (handler GET da rota de
+  // callback, que já trocou o code por token, persistiu a conexão no Supabase e setou o
+  // cookie httpOnly; ver seção 39 do doc do projeto). Diferente do fluxo antigo (SDK JS +
+  // POST), aqui não fazemos mais uma segunda troca de código no client.
+  const handleLoginSuccess = (data: { userInfo?: any; accessToken?: string }) => {
     try {
-      console.log('🎉 Processando sucesso do login...')
-      console.log('Auth Response:', authResponse)
-      
-      // Verificar se temos o código de autorização
-      if (!authResponse || !authResponse.code) {
-        throw new Error('Código de autorização não recebido')
+      console.log('🎉 Processando sucesso do login (via postMessage):', data)
+
+      setIsConnecting(false)
+      setConnectionStatus('success')
+      toast.success('Conta do Facebook conectada com sucesso!')
+
+      if (onSuccess) {
+        onSuccess({
+          accessToken: data.accessToken,
+          userId: data.userInfo?.id,
+          userName: data.userInfo?.name,
+          type: 'user_token'
+        })
       }
-      
-      console.log('📤 Enviando código para servidor...')
-      
-      // Enviar código para servidor para trocar por token
-      const response = await fetch('/api/auth/callback/facebook', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: authResponse.code })
-      })
-      
-      console.log('📊 Status da resposta:', response.status, response.statusText)
-      console.log('📊 Headers da resposta:', Object.fromEntries(response.headers.entries()))
-      
-      const data = await response.json()
-      console.log('✅ Resposta do servidor:', data)
-      
-      if (response.ok && data.success) {
-        setIsConnecting(false)
-        setConnectionStatus('success')
-        toast.success('Conta do Facebook conectada com sucesso!')
-        
-        // Chamar callback de sucesso com dados do usuário conectado (OAuth clássico —
-        // token pessoal, não mais token de sistema; ver seção 38 do doc do projeto)
-        if (onSuccess) {
-          onSuccess({
-            accessToken: data.access_token,
-            userId: data.fb_user_id,
-            userName: data.fb_user_name,
-            type: 'user_token'
-          })
-        }
-        
-        // Fechar modal após delay
-        setTimeout(() => {
-          onClose()
-        }, 2000)
-      } else {
-        console.error('❌ Erro na resposta do servidor:', data)
-        throw new Error(data.error || 'Erro desconhecido no servidor')
-      }
+
+      // Fechar modal após delay
+      setTimeout(() => {
+        onClose()
+      }, 2000)
 
     } catch (error) {
       console.error('❌ Erro ao processar login:', error)
@@ -182,17 +147,6 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
       setErrorMessage(error instanceof Error ? error.message : 'Erro ao processar login')
     }
   }
-
-  // Verificar status quando modal abrir
-  useEffect(() => {
-    try {
-      if (isOpen && isSDKReady()) {
-        checkLoginStatus()
-      }
-    } catch (error) {
-      console.error('Erro ao verificar status de login:', error)
-    }
-  }, [isOpen, checkLoginStatus])
 
   const getStatusIcon = () => {
     switch (connectionStatus) {

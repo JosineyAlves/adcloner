@@ -67,7 +67,13 @@ export function AppProvider({ children }: AppProviderProps) {
 
       if (response.ok) {
         const data = await response.json()
-        if (data.success && Array.isArray(data.accounts) && data.accounts.length > 0) {
+        // Importante: `data.accounts.length === 0` é uma resposta válida e definitiva (usuário
+        // desconectou todos os perfis em Integrações) — não deve cair no fallback legado abaixo,
+        // que buscaria ao vivo pelo cookie fb_access_token (que pode estar obsoleto/apontando
+        // pra uma conexão já removida) e faria uma conta "removida" reaparecer na tela Contas,
+        // que nem tem como removê-la de volta. Só cai pro fallback se a resposta não veio no
+        // formato esperado (data.success ausente/false ou accounts não é array).
+        if (data.success && Array.isArray(data.accounts)) {
           const nextAccounts: FacebookAccount[] = data.accounts.map((acc: any) => {
             const rawId: string = acc.metaAccountId || acc.id
             return {
