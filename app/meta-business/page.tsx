@@ -83,11 +83,14 @@ export default function MetaBusinessPage() {
   const [adSets, setAdSets] = useState<MetaAdSet[]>(() => cachedMetaBusiness?.data.adSets || [])
   const [ads, setAds] = useState<MetaAd[]>(() => cachedMetaBusiness?.data.ads || [])
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
-  // Loading específico das abas "sob demanda" (conjuntos/anúncios) — carregadas só quando o
-  // usuário realmente clica na aba, em vez de sempre junto com contas/campanhas. Isso evita
-  // disparar 4 chamadas à Graph API de uma vez por conta (o que estourava o rate limit do
-  // tier "Limited Access" da Meta) quando só 2 (contas/campanhas) eram realmente necessárias
-  // de imediato — igual ao comportamento de outras ferramentas de tracking (RAADS, etc.).
+  // Loading independente por aba — cada uma (Contas/Campanhas/Conjuntos/Anúncios) só busca seus
+  // próprios dados na Graph API quando o usuário realmente abre aquela aba pela primeira vez,
+  // nunca junto com as demais. Isso evita disparar várias chamadas de uma vez por conta (o que
+  // estourava o rate limit do tier "Limited Access" da Meta) — igual ao comportamento observado
+  // em ferramentas de tracking de terceiros (ex. ratoeiraads.com.br), que mostram um spinner por
+  // aba enquanto buscam só o que aquela aba precisa.
+  const [isLoadingAccounts, setIsLoadingAccounts] = useState<boolean>(false)
+  const [isLoadingCampaigns, setIsLoadingCampaigns] = useState<boolean>(false)
   const [isLoadingAdSets, setIsLoadingAdSets] = useState<boolean>(false)
   const [isLoadingAds, setIsLoadingAds] = useState<boolean>(false)
   // Quando alguma conta bate no limite de requisições da Meta, as rotas de API retornam
@@ -230,44 +233,52 @@ export default function MetaBusinessPage() {
     writeLocalCache<MetaBusinessCachedData>(LOCAL_CACHE_KEYS.metaBusinessData, merged)
   }, [stats, datePreset, customRange])
 
-  // Busca EAGER (dispara sozinha ao carregar a página / trocar de data): apenas contas e
-  // campanhas — o que o usuário vê primeiro e o que outras ferramentas de tracking também
-  // carregam de cara. Conjuntos e anúncios ficam para fetchAdSets/fetchAds, sob demanda.
-  const fetchAccountsAndCampaigns = useCallback(async () => {
+  // Busca SOB DEMANDA: só roda quando o usuário efetivamente abre a aba "Contas" (ou clica em
+  // Atualizar estando nela). Cada aba tem sua própria busca independente agora — nenhuma delas
+  // dispara sozinha ao carregar a página, e nenhuma sai "de carona" junto com outra, para nunca
+  // gastar cota de rate limit de uma conta com dados que o usuário ainda nem foi olhar.
+  const fetchAccounts = useCallback(async () => {
     try {
-      setIsRefreshing(true)
-      // Sequencial (contas, depois campanhas) em vez de Promise.all: como as duas chamadas
-      // consomem a MESMA cota de rate limit da conta (use case "ads_insights"), buscá-las ao
-      // mesmo tempo dobra o pico de chamadas simultâneas por conta à toa — a Meta pune picos,
-      // não só o volume total (ver Seção 8 do doc de referência do projeto). De quebra, se a
-      // busca de contas já ativar o bloqueio de rate limit para uma conta (lib/meta-rate-limit.ts
-      // no servidor), a busca de campanhas logo em seguida detecta esse bloqueio já ativo e nem
-      // chega a chamar a Meta de novo para aquela conta.
+      setIsLoadingAccounts(true)
       const accountsResult = await fetchEndpointForActiveAccounts<MetaAccount>('accounts', 'accounts')
       const resolvedAccounts = resolveFetchedItems(accountsRef.current, accountsResult)
       setAccounts(resolvedAccounts)
+      if (accountsResult.rateLimitedUntil) {
+        setRateLimitedUntil(prev => Math.max(prev || 0, accountsResult.rateLimitedUntil!))
+        toast.error('Limite de requisições da Meta atingido ao buscar contas. Aguarde antes de tentar de novo.')
+      }
+      const newStats = calculateStats(resolvedAccounts, campaignsRef.current, adSetsRef.current, adsRef.current)
+      persistCache({ accounts: resolvedAccounts, stats: newStats })
+      setHasLoadedOnce(true)
+    } catch (error) {
+      console.error('Error fetching accounts:', error)
+      toast.error('Erro ao carregar contas')
+    } finally {
+      setIsLoadingAccounts(false)
+    }
+  }, [fetchEndpointForActiveAccounts, persistCache])
 
+  // Busca SOB DEMANDA: mesma lógica de fetchAccounts, para a aba "Campanhas". Antes essa busca
+  // saía sempre junto com a de contas (mesmo useCallback); separar as duas faz cada aba consumir
+  // só a sua própria fatia de rate limit, e só quando o usuário efetivamente abre aquela aba.
+  const fetchCampaigns = useCallback(async () => {
+    try {
+      setIsLoadingCampaigns(true)
       const campaignsResult = await fetchEndpointForActiveAccounts<MetaCampaign>('campaigns', 'campaigns')
       const resolvedCampaigns = resolveFetchedItems(campaignsRef.current, campaignsResult)
       setCampaigns(resolvedCampaigns)
-
-      const combinedRateLimitedUntil = Math.max(
-        accountsResult.rateLimitedUntil || 0,
-        campaignsResult.rateLimitedUntil || 0
-      )
-      if (combinedRateLimitedUntil > 0) {
-        setRateLimitedUntil(prev => Math.max(prev || 0, combinedRateLimitedUntil))
-        toast.error('Limite de requisições da Meta atingido. Aguarde antes de atualizar de novo.')
+      if (campaignsResult.rateLimitedUntil) {
+        setRateLimitedUntil(prev => Math.max(prev || 0, campaignsResult.rateLimitedUntil!))
+        toast.error('Limite de requisições da Meta atingido ao buscar campanhas. Aguarde antes de tentar de novo.')
       }
-
-      const newStats = calculateStats(resolvedAccounts, resolvedCampaigns, adSetsRef.current, adsRef.current)
-      persistCache({ accounts: resolvedAccounts, campaigns: resolvedCampaigns, stats: newStats })
+      const newStats = calculateStats(accountsRef.current, resolvedCampaigns, adSetsRef.current, adsRef.current)
+      persistCache({ campaigns: resolvedCampaigns, stats: newStats })
       setHasLoadedOnce(true)
     } catch (error) {
-      console.error('Error fetching accounts/campaigns:', error)
-      toast.error('Erro ao carregar contas e campanhas')
+      console.error('Error fetching campaigns:', error)
+      toast.error('Erro ao carregar campanhas')
     } finally {
-      setIsRefreshing(false)
+      setIsLoadingCampaigns(false)
     }
   }, [fetchEndpointForActiveAccounts, persistCache])
 
@@ -341,13 +352,6 @@ export default function MetaBusinessPage() {
     return newStats
   }
 
-  // Ref para evitar dependências desnecessárias
-  const fetchAccountsAndCampaignsRef = useRef(fetchAccountsAndCampaigns)
-  fetchAccountsAndCampaignsRef.current = fetchAccountsAndCampaigns
-
-  // Debounce da busca eager para evitar múltiplos refreshs em sequência
-  const debouncedFetchAccountsAndCampaigns = useDebounce('meta-business-fetch', fetchAccountsAndCampaigns, 3000)
-
   // Enquanto bloqueados por rate limit, atualiza a contagem regressiva mostrada no botão
   // "Atualizar" a cada segundo, e libera automaticamente assim que o tempo passar.
   useEffect(() => {
@@ -365,37 +369,36 @@ export default function MetaBusinessPage() {
   const isRateLimited = !!rateLimitedUntil && nowTick < rateLimitedUntil
   const rateLimitCountdownSeconds = isRateLimited ? Math.max(Math.ceil((rateLimitedUntil! - nowTick) / 1000), 0) : 0
 
-  useEffect(() => {
-    // Bug corrigido: antes checava `accounts.length` (o estado de contas do Meta Business,
-    // que só é preenchido DEPOIS dessa busca rodar) em vez de `facebookAccounts.length` (a
-    // lista de contas do Facebook vinda do AppContext, que é o que precisa estar pronto ANTES
-    // de buscar). Isso fazia essa busca automática nunca disparar sozinha na prática.
-    // Também não dispara sozinha enquanto estivermos bloqueados por rate limit — insistir só
-    // aumenta o tempo de bloqueio, conforme a própria recomendação da Meta.
-    if (facebookAccounts.length > 0 && !isRateLimited) {
-      fetchAccountsAndCampaignsRef.current()
-    }
-  }, [facebookAccounts, datePreset, customRange, isRateLimited])
-
   // Chave que identifica o "recorte" atual de dados (período de data selecionado). Usada para
-  // saber se os conjuntos/anúncios já carregados na aba ainda são válidos para o filtro atual,
-  // ou se precisam ser buscados de novo quando o usuário voltar a essa aba.
+  // saber se os dados já carregados numa aba ainda são válidos para o filtro atual, ou se
+  // precisam ser buscados de novo quando o usuário voltar a essa aba (ex.: trocou o período).
   const currentDataKey = `${datePreset}|${customRange?.since || ''}|${customRange?.until || ''}`
+  const accountsLoadedKeyRef = useRef<string | null>(null)
+  const campaignsLoadedKeyRef = useRef<string | null>(null)
   const adSetsLoadedKeyRef = useRef<string | null>(null)
   const adsLoadedKeyRef = useRef<string | null>(null)
 
-  // Busca SOB DEMANDA: conjuntos e anúncios só são buscados na Graph API quando o usuário
-  // efetivamente abre a aba correspondente pela primeira vez (ou quando o período de data
-  // muda e ele volta a essa aba) — igual ao comportamento observado em outras ferramentas de
-  // tracking. Isso reduz de 4 para 2 o número de chamadas simultâneas por conta na carga
-  // inicial, o que ajuda bastante a não estourar o rate limit "Limited Access" da Meta.
+  // Busca SOB DEMANDA para as 4 abas (Contas/Campanhas/Conjuntos/Anúncios): cada uma só é
+  // buscada na Graph API quando o usuário efetivamente abre aquela aba pela primeira vez (ou
+  // quando o período de data muda e ele volta a essa aba) — nenhuma busca dispara sozinha ao
+  // carregar a página, e nenhuma sai junto com outra aba. Isso garante no máximo 1 chamada por
+  // conta de cada vez (a da aba que o usuário está realmente olhando), em vez de várias
+  // simultâneas — o padrão que efetivamente evita estourar o rate limit "Limited Access" da
+  // Meta, igual ao comportamento observado em ferramentas de tracking de terceiros (ex.
+  // ratoeiraads.com.br), que buscam e mostram um spinner por aba, sob demanda.
   useEffect(() => {
     if (facebookAccounts.length === 0) return
     // Não dispara enquanto bloqueados por rate limit; quando o bloqueio acabar, o usuário pode
     // trocar de aba de novo ou clicar em Atualizar para tentar de fato.
     if (isRateLimited) return
 
-    if (activeTab === 'adsets' && adSetsLoadedKeyRef.current !== currentDataKey) {
+    if (activeTab === 'accounts' && accountsLoadedKeyRef.current !== currentDataKey) {
+      accountsLoadedKeyRef.current = currentDataKey
+      fetchAccounts()
+    } else if (activeTab === 'campaigns' && campaignsLoadedKeyRef.current !== currentDataKey) {
+      campaignsLoadedKeyRef.current = currentDataKey
+      fetchCampaigns()
+    } else if (activeTab === 'adsets' && adSetsLoadedKeyRef.current !== currentDataKey) {
       adSetsLoadedKeyRef.current = currentDataKey
       fetchAdSets()
     } else if (activeTab === 'ads' && adsLoadedKeyRef.current !== currentDataKey) {
@@ -425,17 +428,25 @@ export default function MetaBusinessPage() {
       return
     }
 
-    await refreshAccounts()
-    await debouncedFetchAccountsAndCampaigns()
-    // Atualiza também a aba de conjuntos/anúncios se for a que está aberta no momento —
-    // um refresh manual deve atualizar o que o usuário está de fato olhando.
-    if (activeTab === 'adsets') {
-      await fetchAdSets()
-    } else if (activeTab === 'ads') {
-      await fetchAds()
-    }
-    if (!isRateLimited) {
-      toast.success('Dados atualizados!')
+    try {
+      setIsRefreshing(true)
+      await refreshAccounts()
+      // Atualiza só a aba que está aberta no momento — um refresh manual não precisa (e não deve)
+      // gastar rate limit buscando as outras 3 abas que o usuário nem está olhando agora.
+      if (activeTab === 'accounts') {
+        await fetchAccounts()
+      } else if (activeTab === 'campaigns') {
+        await fetchCampaigns()
+      } else if (activeTab === 'adsets') {
+        await fetchAdSets()
+      } else if (activeTab === 'ads') {
+        await fetchAds()
+      }
+      if (!isRateLimited) {
+        toast.success('Dados atualizados!')
+      }
+    } finally {
+      setIsRefreshing(false)
     }
   }, 2000)
 
@@ -534,7 +545,7 @@ export default function MetaBusinessPage() {
         // se ela caísse num bloqueio de rate limit ativo, a rota devolve o último dado bom
         // (lastGood, no servidor), que ainda reflete o status de ANTES do toggle, sobrescrevendo
         // a mudança real que acabou de acontecer na Meta. `resolveFetchedItems` (usado dentro de
-        // fetchAccountsAndCampaigns/fetchAdSets/fetchAds) protege essa atualização otimista de
+        // fetchCampaigns/fetchAdSets/fetchAds) protege essa atualização otimista de
         // ser revertida por essa busca seguinte.
         const applyOptimisticStatus = <T extends { id: string; status: string; effective_status?: string }>(item: T): T =>
           item.id === id ? { ...item, status: newStatus, effective_status: newStatus } : item
@@ -543,8 +554,10 @@ export default function MetaBusinessPage() {
         else setAds(prev => prev.map(applyOptimisticStatus))
 
         // Recarregar só os dados do tipo alterado (campanhas/conjuntos/anúncios), não tudo —
-        // mantém tudo em sincronia com a Meta em segundo plano, sem bloquear a UI.
-        if (type === 'campaigns') await fetchAccountsAndCampaigns()
+        // mantém tudo em sincronia com a Meta em segundo plano, sem bloquear a UI. Não recarrega
+        // contas aqui: um toggle de status de campanha não muda nada na aba Contas, então
+        // refazer aquela busca só gastaria rate limit à toa.
+        if (type === 'campaigns') await fetchCampaigns()
         else if (type === 'adsets') await fetchAdSets()
         else await fetchAds()
       } else {
@@ -597,7 +610,7 @@ export default function MetaBusinessPage() {
         else setAds(prev => prev.map(applyOptimisticStatus))
 
         // Recarregar só os dados do tipo alterado (campanhas/conjuntos/anúncios), não tudo.
-        if (type === 'campaigns') await fetchAccountsAndCampaigns()
+        if (type === 'campaigns') await fetchCampaigns()
         else if (type === 'adsets') await fetchAdSets()
         else await fetchAds()
         // Limpar seleção
@@ -640,11 +653,11 @@ export default function MetaBusinessPage() {
       }
 
       // Recarregar dados em background para sincronizar com o servidor. Se essa busca cair num
-      // bloqueio de rate limit ativo, `resolveFetchedItems` (dentro de fetchAccountsAndCampaigns/
-      // fetchAdSets) mantém o valor otimista acima em vez de deixar o fallback do servidor
-      // (lastGood, potencialmente com o orçamento antigo) sobrescrevê-lo.
+      // bloqueio de rate limit ativo, `resolveFetchedItems` (dentro de fetchCampaigns/fetchAdSets)
+      // mantém o valor otimista acima em vez de deixar o fallback do servidor (lastGood,
+      // potencialmente com o orçamento antigo) sobrescrevê-lo.
       setTimeout(() => {
-        if (type === 'campaigns') fetchAccountsAndCampaigns()
+        if (type === 'campaigns') fetchCampaigns()
         else fetchAdSets()
       }, 1000)
     } catch (error) {
@@ -842,24 +855,38 @@ export default function MetaBusinessPage() {
 
               <div className="p-6">
                 {activeTab === 'accounts' && (
-                  <AccountsTable
-                    accounts={accounts}
-                    metrics={metrics}
-                    showMetrics={true}
-                  />
+                  isLoadingAccounts && accounts.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16">
+                      <RefreshCw className="w-6 h-6 animate-spin text-primary-600 mb-3" />
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">Carregando contas...</p>
+                    </div>
+                  ) : (
+                    <AccountsTable
+                      accounts={accounts}
+                      metrics={metrics}
+                      showMetrics={true}
+                    />
+                  )
                 )}
-                
+
                 {activeTab === 'campaigns' && (
-                  <CampaignsTable
-                    campaigns={filteredCampaigns}
-                    selectedCampaigns={selectedCampaigns}
-                    onSelectionChange={setSelectedCampaigns}
-                    onStatusToggle={handleToggleStatus}
-                    onBudgetUpdate={handleBudgetUpdate}
-                    onBulkStatusUpdate={handleBulkStatusUpdate}
-                    metrics={metrics}
-                    showMetrics={true}
-                  />
+                  isLoadingCampaigns && filteredCampaigns.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16">
+                      <RefreshCw className="w-6 h-6 animate-spin text-primary-600 mb-3" />
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">Carregando campanhas...</p>
+                    </div>
+                  ) : (
+                    <CampaignsTable
+                      campaigns={filteredCampaigns}
+                      selectedCampaigns={selectedCampaigns}
+                      onSelectionChange={setSelectedCampaigns}
+                      onStatusToggle={handleToggleStatus}
+                      onBudgetUpdate={handleBudgetUpdate}
+                      onBulkStatusUpdate={handleBulkStatusUpdate}
+                      metrics={metrics}
+                      showMetrics={true}
+                    />
+                  )
                 )}
                 
                 {activeTab === 'adsets' && (
