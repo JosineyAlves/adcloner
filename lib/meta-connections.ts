@@ -374,3 +374,25 @@ export async function removeConnection(connectionId: string): Promise<void> {
   const { error } = await supabase.from('meta_connections').delete().eq('id', connectionId)
   if (error) throw new Error(`Falha ao remover conexão: ${error.message}`)
 }
+
+/**
+ * Liga/desliga a sincronização de UMA conta de anúncio (linha de `meta_ad_accounts`, pelo `id`
+ * interno — não o `meta_account_id`). Usado pela tela de Integrações (checkbox por conta).
+ */
+export async function setAdAccountSyncEnabled(id: string, syncEnabled: boolean): Promise<void> {
+  const supabase = getSupabaseAdmin()
+  const { error } = await supabase.from('meta_ad_accounts').update({ sync_enabled: syncEnabled }).eq('id', id)
+  if (error) throw new Error(`Falha ao atualizar sincronização da conta: ${error.message}`)
+}
+
+/** Liga/desliga a sincronização de TODAS as contas de anúncio de uma vez ("Ativar todas"). */
+export async function setAllAdAccountsSyncEnabled(syncEnabled: boolean): Promise<void> {
+  const supabase = getSupabaseAdmin()
+  // Supabase/PostgREST exige pelo menos um filtro em updates em massa — usamos um que sempre
+  // bate (todo id de UUID é diferente do UUID zerado) para atualizar a tabela inteira.
+  const { error } = await supabase
+    .from('meta_ad_accounts')
+    .update({ sync_enabled: syncEnabled })
+    .neq('id', '00000000-0000-0000-0000-000000000000')
+  if (error) throw new Error(`Falha ao atualizar sincronização das contas: ${error.message}`)
+}

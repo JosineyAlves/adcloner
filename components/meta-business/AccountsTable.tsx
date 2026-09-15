@@ -8,8 +8,6 @@ import {
   X,
   AlertCircle,
   Eye,
-  TrendingUp,
-  TrendingDown,
   Target
 } from 'lucide-react'
 import { MetaAccount } from '@/lib/types'
@@ -47,15 +45,6 @@ export default function AccountsTable({
 
   const formatPercentage = (value: number) => {
     return `${value.toFixed(2)}%`
-  }
-
-  // Função para determinar se a métrica está melhorando
-  const getTrendIcon = (value: number, type: 'cost' | 'performance') => {
-    if (type === 'cost') {
-      return value < 1 ? <TrendingDown className="w-4 h-4 text-green-500" /> : <TrendingUp className="w-4 h-4 text-red-500" />
-    } else {
-      return value > 1 ? <TrendingUp className="w-4 h-4 text-green-500" /> : <TrendingDown className="w-4 h-4 text-red-500" />
-    }
   }
 
   if (!accounts || accounts.length === 0) {
@@ -200,42 +189,30 @@ export default function AccountsTable({
 
                 {/* Frequência */}
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center space-x-1">
-                    <span className="text-sm font-medium text-gray-900">
-                      {account.frequency.toFixed(2)}
-                    </span>
-                    {getTrendIcon(account.frequency, 'performance')}
-                  </div>
+                  <span className="text-sm font-medium text-gray-900">
+                    {account.frequency.toFixed(2)}
+                  </span>
                 </td>
 
                 {/* CPC */}
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center space-x-1">
-                    <span className="text-sm font-medium text-gray-900">
-                      {formatCurrency(account.cpc)}
-                    </span>
-                    {getTrendIcon(account.cpc, 'cost')}
-                  </div>
+                  <span className="text-sm font-medium text-gray-900">
+                    {formatCurrency(account.cpc)}
+                  </span>
                 </td>
 
                 {/* CTR */}
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center space-x-1">
-                    <span className="text-sm font-medium text-gray-900">
-                      {formatPercentage(account.ctr)}
-                    </span>
-                    {getTrendIcon(account.ctr, 'performance')}
-                  </div>
+                  <span className="text-sm font-medium text-gray-900">
+                    {formatPercentage(account.ctr)}
+                  </span>
                 </td>
 
                 {/* CPM */}
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center space-x-1">
-                    <span className="text-sm font-medium text-gray-900">
-                      {formatCurrency(account.cpm)}
-                    </span>
-                    {getTrendIcon(account.cpm, 'cost')}
-                  </div>
+                  <span className="text-sm font-medium text-gray-900">
+                    {formatCurrency(account.cpm)}
+                  </span>
                 </td>
 
                 {/* Colunas dinâmicas de métricas */}
