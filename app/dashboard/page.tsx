@@ -7,6 +7,7 @@ import Sidebar from '@/components/layout/Sidebar'
 import PageHeader from '@/components/layout/PageHeader'
 import StatsCard from '@/components/dashboard/StatsCard'
 import DateSelector, { DateRange } from '@/components/dashboard/DateSelector'
+import Select from '@/components/ui/Select'
 import { useApp } from '@/contexts/AppContext'
 import { useDebounce } from '@/lib/debounce'
 import {
@@ -72,14 +73,22 @@ export default function DashboardPage() {
     sharedDateFilter?.data.datePreset ? sharedDateFilter.data.customRange : undefined
   )
 
+  // Filtro por Conta de Anúncio — mesmo campo e mesmas opções ("Todas as Contas" + uma por
+  // conta) usados no Meta Ads, pra padronizar. Vazio = agrega todas as contas habilitadas
+  // (comportamento de antes, quando esse filtro não existia).
+  const [selectedAccountId, setSelectedAccountId] = useState<string>('')
+
   const fetchDashboardData = useCallback(async () => {
     try {
       setIsRefreshing(true)
       // Não filtra mais por account_status (status real da conta perante a Meta, ex.: "Restrita")
       // — só o toggle habilitar/desabilitar de Integrações (sync_enabled) decide quais contas
       // entram aqui, e isso já foi aplicado no AppContext (enabledOnly=true). Ver mesmo ajuste em
-      // app/meta-business/page.tsx.
-      const activeAccounts = accounts
+      // app/meta-business/page.tsx. Além disso, se o usuário escolheu uma conta específica no
+      // filtro "Conta de Anúncio", as métricas passam a considerar só ela.
+      const activeAccounts = selectedAccountId
+        ? accounts.filter((account) => account.id === selectedAccountId)
+        : accounts
 
       if (activeAccounts.length === 0) {
         toast.error('Nenhuma conta habilitada encontrada')
@@ -158,7 +167,7 @@ export default function DashboardPage() {
     } finally {
       setIsRefreshing(false)
     }
-  }, [accounts, datePreset, customRange])
+  }, [accounts, datePreset, customRange, selectedAccountId])
 
   // Ref para evitar dependências desnecessárias
   const fetchDashboardDataRef = useRef(fetchDashboardData)
@@ -192,7 +201,7 @@ export default function DashboardPage() {
       totalClicks: 0,
       totalConversions: 0
     })
-  }, [accounts, datePreset, customRange])
+  }, [accounts, datePreset, customRange, selectedAccountId])
 
   const handleRefresh = useDebounce('dashboard-refresh', async () => {
     await refreshAccounts()
@@ -270,21 +279,39 @@ export default function DashboardPage() {
           >
             <PageHeader title="Dashboard Financeiro" />
 
-            {/* Período + Atualizar — ficam junto do conteúdo que afetam, num card, em vez de
-                isolados no cabeçalho da página (ver PageHeader e o mesmo padrão no Meta Ads),
-                seguindo a referência da UTMify. */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                  Período
-                </label>
-                <DateSelector
-                  datePreset={datePreset}
-                  customRange={customRange}
-                  onDatePresetChange={handleDatePresetChange}
-                  onCustomRangeChange={handleCustomRangeChange}
-                />
+            {/* Filtros + Atualizar — mesmo padrão de card e mesmos rótulos/ordem usados no
+                Meta Ads (Conta de Anúncio, Data), pra ficar consistente entre as duas telas. As
+                ferramentas de dados ficam junto do conteúdo que afetam, não no cabeçalho da
+                página (ver PageHeader), seguindo a referência da UTMify. */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700 flex flex-wrap items-end justify-between gap-3">
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    Conta de Anúncio
+                  </label>
+                  <Select
+                    value={selectedAccountId}
+                    onChange={setSelectedAccountId}
+                    options={[
+                      { value: '', label: 'Todas as Contas' },
+                      ...accounts.map((account) => ({ value: account.id, label: account.name }))
+                    ]}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    Data
+                  </label>
+                  <DateSelector
+                    datePreset={datePreset}
+                    customRange={customRange}
+                    onDatePresetChange={handleDatePresetChange}
+                    onCustomRangeChange={handleCustomRangeChange}
+                  />
+                </div>
               </div>
+
               <button
                 onClick={handleRefresh}
                 disabled={isRefreshing}

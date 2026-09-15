@@ -815,7 +815,7 @@ export default function MetaBusinessPage() {
                     placeholder="Filtrar por nome"
                     value={filters.search}
                     onChange={(e) => handleSearchChange(e.target.value)}
-                    className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-ds-md focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
+                    className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-ds-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
                   />
                 </div>
 
