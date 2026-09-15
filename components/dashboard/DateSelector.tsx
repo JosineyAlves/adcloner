@@ -284,11 +284,6 @@ export default function DateSelector({
                     }`}
                   >
                     <div className="font-medium">{preset.label}</div>
-                    {preset.description && (
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {preset.description}
-                      </div>
-                    )}
                   </button>
                 ))}
               </div>

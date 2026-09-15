@@ -118,8 +118,9 @@ export default function MetaBusinessPage() {
   // Filtros globais (removido datePreset e customRange). Por padrão só "Ativo" fica marcado — o
   // usuário decidiu manter a busca trazendo todos os status da Meta (não vale a pena economizar
   // chamada filtrando na origem, ver discussão no doc do projeto), mas a tela deve abrir já
-  // mostrando só as campanhas ativas por padrão; o usuário pode trocar pra "Todos os Status",
-  // "Pausado" ou "Arquivado" a qualquer momento no filtro existente.
+  // mostrando só as campanhas ativas por padrão; o usuário pode trocar pra "Qualquer" ou
+  // "Pausado" a qualquer momento no filtro existente ("Arquivado" foi removido do dropdown —
+  // ver seção 27 do doc do projeto).
   const [filters, setFilters] = useState({
     status: ['ACTIVE'] as string[],
     search: '',
@@ -751,10 +752,9 @@ export default function MetaBusinessPage() {
                     onChange={(e) => handleStatusFilter(e.target.value ? e.target.value.split(',') : [])}
                     className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
                   >
-                    <option value="">Todos os Status</option>
+                    <option value="">Qualquer</option>
                     <option value="ACTIVE">Ativo</option>
                     <option value="PAUSED">Pausado</option>
-                    <option value="ARCHIVED">Arquivado</option>
                   </select>
                 </div>
 

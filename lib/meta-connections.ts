@@ -263,10 +263,27 @@ export async function listConnections(): Promise<ConnectionSummary[]> {
       .select('id', { count: 'exact', head: true })
       .eq('connection_id', conn.id)
 
+    // O fluxo de "Login para Empresas" (Business Login for System Users, usado por
+    // ConnectFacebookModal) não devolve um nome de usuário de verdade — a conexão fica salva só
+    // com o ID numérico do system user. Nesses casos, usa o nome do Business Manager associado
+    // (já salvo em meta_businesses.name por discoverBusinessStructure) como nome de exibição, em
+    // vez de mostrar o ID cru pro usuário.
+    let displayName = conn.fb_user_name
+    if (!displayName) {
+      const { data: businessRow } = await supabase
+        .from('meta_businesses')
+        .select('name')
+        .eq('connection_id', conn.id)
+        .not('name', 'is', null)
+        .limit(1)
+        .maybeSingle()
+      displayName = businessRow?.name ?? null
+    }
+
     results.push({
       id: conn.id,
       fbUserId: conn.fb_user_id,
-      fbUserName: conn.fb_user_name,
+      fbUserName: displayName,
       fbUserEmail: conn.fb_user_email,
       tokenType: conn.token_type,
       status: conn.status,
