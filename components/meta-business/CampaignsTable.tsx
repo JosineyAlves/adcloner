@@ -71,14 +71,14 @@ export default function CampaignsTable({
 
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'BRL'
+      currency: 'USD'
     }).format(value)
   }
 
   const formatNumber = (value: number) => {
-    return new Intl.NumberFormat('pt-BR').format(value)
+    return new Intl.NumberFormat('en-US').format(value)
   }
 
   const formatPercentage = (value: number) => {

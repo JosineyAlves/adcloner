@@ -283,7 +283,7 @@ export class FacebookAPI {
             },
             budget: {
               amount: 100,
-              currency: 'BRL',
+              currency: 'USD',
               type: 'daily'
             },
             scheduling: {

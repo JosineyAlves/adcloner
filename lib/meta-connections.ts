@@ -37,6 +37,7 @@ export interface ConnectionSummary {
 
 export interface AdAccountSummary {
   id: string
+  connectionId: string
   metaAccountId: string
   name: string | null
   currency: string | null
@@ -284,7 +285,7 @@ export async function listAdAccounts(): Promise<AdAccountSummary[]> {
   const { data, error } = await supabase
     .from('meta_ad_accounts')
     .select(
-      `id, meta_account_id, name, currency, account_status, relationship, sync_enabled, last_synced_at,
+      `id, connection_id, meta_account_id, name, currency, account_status, relationship, sync_enabled, last_synced_at,
        meta_businesses ( name ),
        meta_connections ( fb_user_name )`
     )
@@ -294,6 +295,7 @@ export async function listAdAccounts(): Promise<AdAccountSummary[]> {
 
   return (data ?? []).map((row: any) => ({
     id: row.id,
+    connectionId: row.connection_id,
     metaAccountId: row.meta_account_id,
     name: row.name,
     currency: row.currency,
@@ -368,6 +370,7 @@ export async function resolveMetaAccessToken(
   }
   return cookieToken ?? null
 }
+
 
 export async function removeConnection(connectionId: string): Promise<void> {
   const supabase = getSupabaseAdmin()
