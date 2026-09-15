@@ -91,12 +91,13 @@ export default function MetaAccountsPage() {
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto p-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Integrações</h1>
-          </div>
 
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Integrações</h1>
+        </header>
+
+        <main className="flex-1 overflow-y-auto p-6">
           {/* Abas — hoje só "Anúncios" está implementada de fato */}
           <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
             <nav className="flex gap-6">
@@ -197,14 +198,14 @@ export default function MetaAccountsPage() {
               </section>
             </>
           )}
-        </div>
-      </main>
+        </main>
 
-      <ConnectFacebookModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={handleConnectSuccess}
-      />
+        <ConnectFacebookModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSuccess={handleConnectSuccess}
+        />
+      </div>
     </div>
   )
 }

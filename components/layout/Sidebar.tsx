@@ -4,8 +4,6 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
-  Copy,
-  Settings,
   Users,
   Link2,
   LogOut
@@ -18,13 +16,16 @@ import toast from 'react-hot-toast'
 // replicar a estrutura de menu da UTMify (Google, UTMs, Regras, Taxas, Despesas, Assinatura,
 // Indique e Ganhe etc.), que não têm equivalente aqui. "Contas Conectadas" virou "Integrações"
 // (mesma rota /meta-accounts) para casar com o nome usado pela UTMify pra essa tela.
+//
+// "Templates" e "Configurações" removidos do menu (set/2026) — nenhuma das duas rotas
+// (/templates, /settings) tem uma página implementada; eram links mortos caindo na página de
+// erro 404 padrão do Next.js (sem sidebar/padding do projeto). Ver seção 36 do doc do projeto.
+// Reintroduzir aqui quando essas telas existirem de fato.
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Meta Business', href: '/meta-business', icon: MetaIcon },
   { name: 'Integrações', href: '/meta-accounts', icon: Link2 },
-  { name: 'Templates', href: '/templates', icon: Copy },
   { name: 'Contas', href: '/accounts', icon: Users },
-  { name: 'Configurações', href: '/settings', icon: Settings },
 ]
 
 export default function Sidebar() {

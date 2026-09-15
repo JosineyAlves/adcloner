@@ -137,16 +137,27 @@ export default function ConnectionAccountsPage() {
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto p-8">
-        <div className="max-w-6xl mx-auto">
+
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
           <Link
             href="/meta-accounts"
-            className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 mb-4"
+            className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 mb-2"
           >
             <ArrowLeft className="w-4 h-4" />
             Voltar para Integrações
           </Link>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {connection ? connection.fbUserName || connection.fbUserId : 'Perfil'}
+          </h1>
+          {connection && (
+            <p className="text-gray-500 dark:text-gray-400 mt-1">
+              Conectado em {new Date(connection.createdAt).toLocaleString('pt-BR')} · {accounts.length} conta(s) de anúncio
+            </p>
+          )}
+        </header>
 
+        <main className="flex-1 overflow-y-auto p-6">
           {loading ? (
             <div className="flex items-center justify-center py-24 text-gray-400">
               <Loader2 className="w-6 h-6 animate-spin mr-2" />
@@ -160,15 +171,6 @@ export default function ConnectionAccountsPage() {
             </div>
           ) : (
             <>
-              <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {connection.fbUserName || connection.fbUserId}
-                </h1>
-                <p className="text-gray-500 dark:text-gray-400 mt-1">
-                  Conectado em {new Date(connection.createdAt).toLocaleString('pt-BR')} · {accounts.length} conta(s) de anúncio
-                </p>
-              </div>
-
               <section>
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
@@ -253,18 +255,18 @@ export default function ConnectionAccountsPage() {
               </section>
             </>
           )}
-        </div>
-      </main>
+        </main>
 
-      <ConnectFacebookModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={() => {
-          toast.success('Buscando estrutura de Business Manager...')
-          setIsModalOpen(false)
-          setTimeout(loadData, 3000)
-        }}
-      />
+        <ConnectFacebookModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSuccess={() => {
+            toast.success('Buscando estrutura de Business Manager...')
+            setIsModalOpen(false)
+            setTimeout(loadData, 3000)
+          }}
+        />
+      </div>
     </div>
   )
 }
