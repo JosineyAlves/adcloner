@@ -134,13 +134,13 @@ export default function ColumnsCustomizationModal({
           <div className="flex items-center gap-3">
             <button
               onClick={handleSelectAll}
-              className="px-3 py-1.5 text-sm bg-blue-500 text-white rounded-ds-md hover:bg-blue-600 transition-colors"
+              className="px-3 py-1.5 text-sm bg-transparent text-gray-700 border border-gray-300 rounded-ds-md hover:bg-gray-50 transition-colors"
             >
               Selecionar Todas
             </button>
             <button
               onClick={handleDeselectAll}
-              className="px-3 py-1.5 text-sm bg-gray-500 text-white rounded-ds-md hover:bg-gray-600 transition-colors"
+              className="px-3 py-1.5 text-sm bg-transparent text-gray-700 border border-gray-300 rounded-ds-md hover:bg-gray-50 transition-colors"
             >
               Desmarcar Todas
             </button>
@@ -180,11 +180,11 @@ export default function ColumnsCustomizationModal({
                   >
                     <div className="flex items-center justify-center w-5 h-5 mr-3">
                       {selected.includes(metric.id) ? (
-                        <div className="w-5 h-5 bg-blue-600 rounded flex items-center justify-center transition-all duration-200 scale-110">
-                          <Check className="w-3 h-3 text-white" />
+                        <div className="w-5 h-5 bg-brand-500 rounded flex items-center justify-center transition-all duration-200 scale-110">
+                          <Check className="w-3 h-3 text-black" />
                         </div>
                       ) : (
-                        <div className="w-5 h-5 border-2 border-gray-300 rounded transition-all duration-200 hover:border-blue-400"></div>
+                        <div className="w-5 h-5 border-2 border-gray-300 rounded transition-all duration-200 hover:border-brand-400"></div>
                       )}
                     </div>
                     <div className="flex-1">
@@ -222,9 +222,9 @@ export default function ColumnsCustomizationModal({
                     className={`
                       flex items-center p-3 rounded-lg cursor-move transition-all duration-300 ease-in-out
                       ${draggedItem === metric.id 
-                        ? 'bg-blue-100 border-2 border-blue-400 shadow-xl transform scale-105 rotate-1' 
+                        ? 'bg-brand-100 border-2 border-brand-400 shadow-xl transform scale-105 rotate-1' 
                         : dragOverItem === metric.id
-                        ? 'bg-blue-50 border-2 border-blue-300 shadow-lg transform scale-102'
+                        ? 'bg-brand-50 border-2 border-brand-300 shadow-lg transform scale-102'
                         : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent hover:border-gray-200'
                       }
                       ${isDragging && draggedItem !== metric.id ? 'opacity-50' : 'opacity-100'}
@@ -240,7 +240,7 @@ export default function ColumnsCustomizationModal({
                   >
                     <div className="flex items-center justify-center w-5 h-5 mr-3">
                       <GripVertical className={`w-4 h-4 transition-colors duration-200 ${
-                        draggedItem === metric.id ? 'text-blue-600' : 'text-gray-400'
+                        draggedItem === metric.id ? 'text-brand-600' : 'text-gray-400'
                       }`} />
                     </div>
                     <div className="flex items-center flex-1">
@@ -276,7 +276,7 @@ export default function ColumnsCustomizationModal({
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 bg-blue-600 text-white rounded-ds-md hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-brand-500 text-black rounded-ds-md hover:bg-brand-400 transition-colors"
           >
             Salvar
           </button>
