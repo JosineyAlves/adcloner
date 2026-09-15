@@ -269,7 +269,14 @@ export async function GET(request: NextRequest) {
       }
 
       // Plataforma/Posicionamento/Idade — mesmo princípio de País: uma linha por valor de
-      // breakdown, já agregada no período inteiro pela própria Meta.
+      // breakdown, já agregada no período inteiro pela própria Meta. Loga o corpo do erro (em
+      // vez de só cair silenciosamente pra lista vazia) pra facilitar diagnosticar uma próxima
+      // dimensão que a Meta rejeitar/mudar de comportamento — foi assim que percebemos que
+      // platform_position sozinho vinha vazio.
+      if (platformRes.code !== 200) console.error('❌ Erro no breakdown de plataforma:', platformRes.body)
+      if (placementRes.code !== 200) console.error('❌ Erro no breakdown de posicionamento:', placementRes.body)
+      if (ageRes.code !== 200) console.error('❌ Erro no breakdown de idade:', ageRes.body)
+
       const platform = platformRes.code === 200
         ? aggregateByField(platformRes.body, 'publisher_platform', PLATFORM_LABELS)
         : []

@@ -399,9 +399,14 @@ export class FacebookBatchAPI {
         method: 'GET',
         relative_url: `${accountId}/insights?fields=${fields}&level=account&limit=300&breakdowns=publisher_platform${dateParam}`
       },
+      // platform_position sozinho não é uma combinação suportada pela Meta (não aparece na
+      // tabela de "Permutations" da doc oficial) e retorna lista vazia — precisa vir combinado
+      // com publisher_platform na mesma sub-requisição para a API realmente segmentar por
+      // posicionamento. A rota (insights-breakdown) usa só o campo platform_position da linha,
+      // mesclando os valores entre as plataformas.
       {
         method: 'GET',
-        relative_url: `${accountId}/insights?fields=${fields}&level=account&limit=300&breakdowns=platform_position${dateParam}`
+        relative_url: `${accountId}/insights?fields=${fields}&level=account&limit=300&breakdowns=publisher_platform,platform_position${dateParam}`
       },
       {
         method: 'GET',
