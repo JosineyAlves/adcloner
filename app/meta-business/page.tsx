@@ -75,6 +75,13 @@ export default function MetaBusinessPage() {
   const [adSets, setAdSets] = useState<MetaAdSet[]>(() => cachedMetaBusiness?.data.adSets || [])
   const [ads, setAds] = useState<MetaAd[]>(() => cachedMetaBusiness?.data.ads || [])
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
+  // Loading específico das abas "sob demanda" (conjuntos/anúncios) — carregadas só quando o
+  // usuário realmente clica na aba, em vez de sempre junto com contas/campanhas. Isso evita
+  // disparar 4 chamadas à Graph API de uma vez por conta (o que estourava o rate limit do
+  // tier "Limited Access" da Meta) quando só 2 (contas/campanhas) eram realmente necessárias
+  // de imediato — igual ao comportamento de outras ferramentas de tracking (RAADS, etc.).
+  const [isLoadingAdSets, setIsLoadingAdSets] = useState<boolean>(false)
+  const [isLoadingAds, setIsLoadingAds] = useState<boolean>(false)
   // true só na primeiríssima carga real (sem nada em cache ainda) — usado para não mostrar
   // "Carregando Meta Business..." em cima de dados que já estão na tela vindos do cache.
   const [hasLoadedOnce, setHasLoadedOnce] = useState<boolean>(!!cachedMetaBusiness)
@@ -114,86 +121,123 @@ export default function MetaBusinessPage() {
   })
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
 
-  const fetchData = useCallback(async () => {
+  // Refs sempre sincronizados com o estado mais recente (atualizados a cada render, antes de
+  // qualquer efeito), para as funções de busca abaixo poderem montar o objeto de cache local
+  // completo sem depender de closures potencialmente desatualizadas (ex.: fetchAdSets só
+  // busca conjuntos, mas precisa "lembrar" das campanhas/anúncios já carregados para não
+  // sobrescrever o cache local com dados vazios).
+  const accountsRef = useRef(accounts)
+  accountsRef.current = accounts
+  const campaignsRef = useRef(campaigns)
+  campaignsRef.current = campaigns
+  const adSetsRef = useRef(adSets)
+  adSetsRef.current = adSets
+  const adsRef = useRef(ads)
+  adsRef.current = ads
+
+  // Buscar dados de uma lista de contas ativas para UM endpoint específico, em paralelo entre
+  // as contas (mas um endpoint por vez no total) — usado pelas 3 funções de busca abaixo.
+  const fetchEndpointForActiveAccounts = useCallback(async <T,>(
+    endpoint: 'accounts' | 'campaigns' | 'adsets' | 'ads',
+    listKey: 'accounts' | 'campaigns' | 'adSets' | 'ads'
+  ): Promise<T[]> => {
+    const activeAccounts = facebookAccounts.filter(a => a.status === 'active')
+    if (activeAccounts.length === 0) return []
+
+    const dateQuery = customRange ? `&since=${customRange.since}&until=${customRange.until}` : ''
+
+    const results = await Promise.all(
+      activeAccounts.map(async (account) => {
+        try {
+          const response = await fetch(
+            `/api/meta-business/${endpoint}?accountId=${account.id}&datePreset=${datePreset}${dateQuery}`,
+            { credentials: 'include' }
+          )
+          const data = response.ok ? await response.json() : {}
+          return (data[listKey] || []) as T[]
+        } catch (error) {
+          console.error(`Error fetching ${endpoint} for account ${account.id}:`, error)
+          return [] as T[]
+        }
+      })
+    )
+
+    return results.flat()
+  }, [facebookAccounts, datePreset, customRange])
+
+  const persistCache = useCallback((overrides: Partial<MetaBusinessCachedData>) => {
+    const merged: MetaBusinessCachedData = {
+      accounts: accountsRef.current,
+      campaigns: campaignsRef.current,
+      adSets: adSetsRef.current,
+      ads: adsRef.current,
+      stats,
+      datePreset,
+      customRange,
+      ...overrides
+    }
+    writeLocalCache<MetaBusinessCachedData>(LOCAL_CACHE_KEYS.metaBusinessData, merged)
+  }, [stats, datePreset, customRange])
+
+  // Busca EAGER (dispara sozinha ao carregar a página / trocar de data): apenas contas e
+  // campanhas — o que o usuário vê primeiro e o que outras ferramentas de tracking também
+  // carregam de cara. Conjuntos e anúncios ficam para fetchAdSets/fetchAds, sob demanda.
+  const fetchAccountsAndCampaigns = useCallback(async () => {
     try {
       setIsRefreshing(true)
-      const activeAccounts = facebookAccounts.filter(a => a.status === 'active')
-
-      if (activeAccounts.length === 0) {
-        // Silencioso: isso acontece normalmente enquanto a lista de contas ainda está
-        // carregando (ou revalidando em segundo plano) — não é um erro do usuário.
-        return
-      }
-
-      const dateQuery = customRange ? `&since=${customRange.since}&until=${customRange.until}` : ''
-
-      // Buscar dados de todas as contas ativas em paralelo (contas independentes não têm
-      // motivo para esperar umas pelas outras), e dentro de cada conta os 4 endpoints também
-      // em paralelo (accounts/campaigns/adsets/ads não dependem um do outro). Antes disso era
-      // um for-loop 100% sequencial (conta por conta, endpoint por endpoint), o que multiplicava
-      // a latência da Graph API pelo número de contas × 4 chamadas.
-      const perAccountResults = await Promise.all(
-        activeAccounts.map(async (account) => {
-          try {
-            const [accountsResponse, campaignsResponse, adSetsResponse, adsResponse] = await Promise.all([
-              fetch(`/api/meta-business/accounts?accountId=${account.id}&datePreset=${datePreset}${dateQuery}`, { credentials: 'include' }),
-              fetch(`/api/meta-business/campaigns?accountId=${account.id}&datePreset=${datePreset}${dateQuery}`, { credentials: 'include' }),
-              fetch(`/api/meta-business/adsets?accountId=${account.id}&datePreset=${datePreset}${dateQuery}`, { credentials: 'include' }),
-              fetch(`/api/meta-business/ads?accountId=${account.id}&datePreset=${datePreset}${dateQuery}`, { credentials: 'include' })
-            ])
-
-            const [accountsData, campaignsData, adSetsData, adsData] = await Promise.all([
-              accountsResponse.ok ? accountsResponse.json() : Promise.resolve({ accounts: [] }),
-              campaignsResponse.ok ? campaignsResponse.json() : Promise.resolve({ campaigns: [] }),
-              adSetsResponse.ok ? adSetsResponse.json() : Promise.resolve({ adSets: [] }),
-              adsResponse.ok ? adsResponse.json() : Promise.resolve({ ads: [] })
-            ])
-
-            return {
-              accounts: accountsData.accounts || [],
-              campaigns: campaignsData.campaigns || [],
-              adSets: adSetsData.adSets || [],
-              ads: adsData.ads || []
-            }
-          } catch (error) {
-            console.error(`Error fetching data for account ${account.id}:`, error)
-            return { accounts: [], campaigns: [], adSets: [], ads: [] }
-          }
-        })
-      )
-
-      const allAccounts = perAccountResults.flatMap(r => r.accounts)
-      const allCampaigns = perAccountResults.flatMap(r => r.campaigns)
-      const allAdSets = perAccountResults.flatMap(r => r.adSets)
-      const allAds = perAccountResults.flatMap(r => r.ads)
+      const [allAccounts, allCampaigns] = await Promise.all([
+        fetchEndpointForActiveAccounts<MetaAccount>('accounts', 'accounts'),
+        fetchEndpointForActiveAccounts<MetaCampaign>('campaigns', 'campaigns')
+      ])
 
       setAccounts(allAccounts)
       setCampaigns(allCampaigns)
-      setAdSets(allAdSets)
-      setAds(allAds)
 
-      // Calcular estatísticas
-      const newStats = calculateStats(allAccounts, allCampaigns, allAdSets, allAds)
-
-      // Salvar no cache local para a próxima carga da página aparecer instantaneamente
-      writeLocalCache<MetaBusinessCachedData>(LOCAL_CACHE_KEYS.metaBusinessData, {
-        accounts: allAccounts,
-        campaigns: allCampaigns,
-        adSets: allAdSets,
-        ads: allAds,
-        stats: newStats,
-        datePreset,
-        customRange
-      })
-
+      const newStats = calculateStats(allAccounts, allCampaigns, adSetsRef.current, adsRef.current)
+      persistCache({ accounts: allAccounts, campaigns: allCampaigns, stats: newStats })
       setHasLoadedOnce(true)
     } catch (error) {
-      console.error('Error fetching data:', error)
-      toast.error('Erro ao carregar dados')
+      console.error('Error fetching accounts/campaigns:', error)
+      toast.error('Erro ao carregar contas e campanhas')
     } finally {
       setIsRefreshing(false)
     }
-  }, [facebookAccounts, datePreset, customRange])
+  }, [fetchEndpointForActiveAccounts, persistCache])
+
+  // Busca LAZY: só roda quando o usuário efetivamente abre a aba "Conjuntos" (ou clica em
+  // Atualizar estando nela). Antes disso, essa chamada saía sempre junto com contas/campanhas/
+  // anúncios, disparando 4 requisições simultâneas por conta e estourando o rate limit
+  // "Limited Access" da Marketing API do Meta bem mais rápido do que o necessário.
+  const fetchAdSets = useCallback(async () => {
+    try {
+      setIsLoadingAdSets(true)
+      const allAdSets = await fetchEndpointForActiveAccounts<MetaAdSet>('adsets', 'adSets')
+      setAdSets(allAdSets)
+      const newStats = calculateStats(accountsRef.current, campaignsRef.current, allAdSets, adsRef.current)
+      persistCache({ adSets: allAdSets, stats: newStats })
+    } catch (error) {
+      console.error('Error fetching ad sets:', error)
+      toast.error('Erro ao carregar conjuntos de anúncios')
+    } finally {
+      setIsLoadingAdSets(false)
+    }
+  }, [fetchEndpointForActiveAccounts, persistCache])
+
+  // Busca LAZY: mesma lógica de fetchAdSets, para a aba "Anúncios".
+  const fetchAds = useCallback(async () => {
+    try {
+      setIsLoadingAds(true)
+      const allAds = await fetchEndpointForActiveAccounts<MetaAd>('ads', 'ads')
+      setAds(allAds)
+      const newStats = calculateStats(accountsRef.current, campaignsRef.current, adSetsRef.current, allAds)
+      persistCache({ ads: allAds, stats: newStats })
+    } catch (error) {
+      console.error('Error fetching ads:', error)
+      toast.error('Erro ao carregar anúncios')
+    } finally {
+      setIsLoadingAds(false)
+    }
+  }, [fetchEndpointForActiveAccounts, persistCache])
 
   const calculateStats = (accounts: MetaAccount[], campaigns: MetaCampaign[], adSets: MetaAdSet[], ads: MetaAd[]): MetaBusinessStats => {
     // Usar dados das contas se disponíveis, senão usar campanhas
@@ -221,21 +265,46 @@ export default function MetaBusinessPage() {
   }
 
   // Ref para evitar dependências desnecessárias
-  const fetchDataRef = useRef(fetchData)
-  fetchDataRef.current = fetchData
+  const fetchAccountsAndCampaignsRef = useRef(fetchAccountsAndCampaigns)
+  fetchAccountsAndCampaignsRef.current = fetchAccountsAndCampaigns
 
-  // Debounce da função fetchData para evitar múltiplos refreshs
-  const debouncedFetchData = useDebounce('meta-business-fetch', fetchData, 3000)
+  // Debounce da busca eager para evitar múltiplos refreshs em sequência
+  const debouncedFetchAccountsAndCampaigns = useDebounce('meta-business-fetch', fetchAccountsAndCampaigns, 3000)
 
   useEffect(() => {
     // Bug corrigido: antes checava `accounts.length` (o estado de contas do Meta Business,
-    // que só é preenchido DEPOIS que fetchData roda) em vez de `facebookAccounts.length` (a
+    // que só é preenchido DEPOIS dessa busca rodar) em vez de `facebookAccounts.length` (a
     // lista de contas do Facebook vinda do AppContext, que é o que precisa estar pronto ANTES
     // de buscar). Isso fazia essa busca automática nunca disparar sozinha na prática.
     if (facebookAccounts.length > 0) {
-      fetchDataRef.current()
+      fetchAccountsAndCampaignsRef.current()
     }
   }, [facebookAccounts, datePreset, customRange])
+
+  // Chave que identifica o "recorte" atual de dados (período de data selecionado). Usada para
+  // saber se os conjuntos/anúncios já carregados na aba ainda são válidos para o filtro atual,
+  // ou se precisam ser buscados de novo quando o usuário voltar a essa aba.
+  const currentDataKey = `${datePreset}|${customRange?.since || ''}|${customRange?.until || ''}`
+  const adSetsLoadedKeyRef = useRef<string | null>(null)
+  const adsLoadedKeyRef = useRef<string | null>(null)
+
+  // Busca SOB DEMANDA: conjuntos e anúncios só são buscados na Graph API quando o usuário
+  // efetivamente abre a aba correspondente pela primeira vez (ou quando o período de data
+  // muda e ele volta a essa aba) — igual ao comportamento observado em outras ferramentas de
+  // tracking. Isso reduz de 4 para 2 o número de chamadas simultâneas por conta na carga
+  // inicial, o que ajuda bastante a não estourar o rate limit "Limited Access" da Meta.
+  useEffect(() => {
+    if (facebookAccounts.length === 0) return
+
+    if (activeTab === 'adsets' && adSetsLoadedKeyRef.current !== currentDataKey) {
+      adSetsLoadedKeyRef.current = currentDataKey
+      fetchAdSets()
+    } else if (activeTab === 'ads' && adsLoadedKeyRef.current !== currentDataKey) {
+      adsLoadedKeyRef.current = currentDataKey
+      fetchAds()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, facebookAccounts, currentDataKey])
 
   // Mantém o filtro de contas em sincronia sempre que os dados de campanhas/adsets/ads
   // (que carregam accountIds reais) mudarem.
@@ -250,7 +319,14 @@ export default function MetaBusinessPage() {
 
   const handleRefresh = useDebounce('meta-business-refresh', async () => {
     await refreshAccounts()
-    await debouncedFetchData()
+    await debouncedFetchAccountsAndCampaigns()
+    // Atualiza também a aba de conjuntos/anúncios se for a que está aberta no momento —
+    // um refresh manual deve atualizar o que o usuário está de fato olhando.
+    if (activeTab === 'adsets') {
+      await fetchAdSets()
+    } else if (activeTab === 'ads') {
+      await fetchAds()
+    }
     toast.success('Dados atualizados!')
   }, 2000)
 
@@ -349,7 +425,10 @@ export default function MetaBusinessPage() {
 
       if (response.ok) {
         toast.success(`${type === 'campaigns' ? 'Campanha' : type === 'adsets' ? 'Conjunto' : 'Anúncio'} ${newStatus === 'ACTIVE' ? 'ativado' : 'pausado'}!`)
-        await fetchData() // Recarregar dados
+        // Recarregar só os dados do tipo alterado (campanhas/conjuntos/anúncios), não tudo.
+        if (type === 'campaigns') await fetchAccountsAndCampaigns()
+        else if (type === 'adsets') await fetchAdSets()
+        else await fetchAds()
       } else {
         const error = await response.json()
         toast.error(error.message || 'Erro ao alterar status')
@@ -382,7 +461,10 @@ export default function MetaBusinessPage() {
 
       if (response.ok) {
         toast.success(`${selectedIds.length} ${type === 'campaigns' ? 'campanhas' : type === 'adsets' ? 'conjuntos' : 'anúncios'} ${status === 'ACTIVE' ? 'ativados' : 'pausados'}!`)
-        await fetchData() // Recarregar dados
+        // Recarregar só os dados do tipo alterado (campanhas/conjuntos/anúncios), não tudo.
+        if (type === 'campaigns') await fetchAccountsAndCampaigns()
+        else if (type === 'adsets') await fetchAdSets()
+        else await fetchAds()
         // Limpar seleção
         if (type === 'campaigns') setSelectedCampaigns(new Set())
         else if (type === 'adsets') setSelectedAdSets(new Set())
@@ -424,7 +506,8 @@ export default function MetaBusinessPage() {
 
       // Recarregar dados em background para sincronizar com o servidor
       setTimeout(() => {
-        fetchData()
+        if (type === 'campaigns') fetchAccountsAndCampaigns()
+        else fetchAdSets()
       }, 1000)
     } catch (error) {
       console.error('Error updating budget state:', error)
@@ -632,28 +715,42 @@ export default function MetaBusinessPage() {
                 )}
                 
                 {activeTab === 'adsets' && (
-                  <AdSetsTable
-                    adSets={filteredAdSets}
-                    selectedAdSets={selectedAdSets}
-                    onSelectionChange={setSelectedAdSets}
-                    onStatusToggle={handleToggleStatus}
-                    onBudgetUpdate={handleBudgetUpdate}
-                    onBulkStatusUpdate={handleBulkStatusUpdate}
-                    metrics={metrics}
-                    showMetrics={true}
-                  />
+                  isLoadingAdSets && filteredAdSets.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16">
+                      <RefreshCw className="w-6 h-6 animate-spin text-primary-600 mb-3" />
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">Carregando conjuntos de anúncios...</p>
+                    </div>
+                  ) : (
+                    <AdSetsTable
+                      adSets={filteredAdSets}
+                      selectedAdSets={selectedAdSets}
+                      onSelectionChange={setSelectedAdSets}
+                      onStatusToggle={handleToggleStatus}
+                      onBudgetUpdate={handleBudgetUpdate}
+                      onBulkStatusUpdate={handleBulkStatusUpdate}
+                      metrics={metrics}
+                      showMetrics={true}
+                    />
+                  )
                 )}
-                
+
                 {activeTab === 'ads' && (
-                  <AdsTable
-                    ads={filteredAds}
-                    selectedAds={selectedAds}
-                    onSelectionChange={setSelectedAds}
-                    onStatusToggle={handleToggleStatus}
-                    onBulkStatusUpdate={handleBulkStatusUpdate}
-                    metrics={metrics}
-                    showMetrics={true}
-                  />
+                  isLoadingAds && filteredAds.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16">
+                      <RefreshCw className="w-6 h-6 animate-spin text-primary-600 mb-3" />
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">Carregando anúncios...</p>
+                    </div>
+                  ) : (
+                    <AdsTable
+                      ads={filteredAds}
+                      selectedAds={selectedAds}
+                      onSelectionChange={setSelectedAds}
+                      onStatusToggle={handleToggleStatus}
+                      onBulkStatusUpdate={handleBulkStatusUpdate}
+                      metrics={metrics}
+                      showMetrics={true}
+                    />
+                  )
                 )}
               </div>
             </div>
