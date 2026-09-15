@@ -257,7 +257,7 @@ export default function DashboardPage() {
         <Sidebar />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <RefreshCw className="w-8 h-8 animate-spin text-primary-600 mx-auto mb-4" />
+            <RefreshCw className="w-8 h-8 animate-spin text-brand-600 mx-auto mb-4" />
             <p className="text-gray-600 dark:text-gray-400">Carregando dashboard...</p>
           </div>
         </div>
@@ -268,7 +268,7 @@ export default function DashboardPage() {
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar />
-      
+
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
           <div className="flex items-center justify-between">
@@ -276,6 +276,9 @@ export default function DashboardPage() {
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Dashboard Financeiro
               </h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                Visão consolidada de {accounts.length} {accounts.length === 1 ? 'conta habilitada' : 'contas habilitadas'}
+              </p>
             </div>
             <div className="flex items-center space-x-3">
                 <DateSelector
@@ -301,110 +304,124 @@ export default function DashboardPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="space-y-6"
+            className="space-y-8"
           >
-            {/* Métricas Financeiras Principais */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatsCard
-                title="Gastos com Anúncios"
-                value={formatCurrency(metrics.totalSpend)}
-                icon={DollarSign}
-                iconColor="text-red-600"
-                trend={metrics.totalSpend > 0 ? 'up' : 'neutral'}
-              />
-              <StatsCard
-                title="Vendas (Receita)"
-                value={formatCurrency(metrics.revenue)}
-                icon={ShoppingCart}
-                iconColor="text-green-600"
-                trend={metrics.revenue > 0 ? 'up' : 'neutral'}
-              />
-              <StatsCard
-                title="ROAS"
-                value={formatPercentage(metrics.roas)}
-                icon={TrendingUp}
-                iconColor="text-green-600"
-                trend={metrics.roas && metrics.roas > 3 ? 'up' : 'neutral'}
-              />
-              <StatsCard
-                title="Lucro"
-                value={formatCurrency(metrics.profit)}
-                icon={CheckCircle}
-                iconColor="text-emerald-600"
-                trend={metrics.profit > 0 ? 'up' : 'down'}
-              />
-                </div>
+            {/* Resumo — KPIs principais: o que eu preciso saber primeiro */}
+            <section>
+              <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                Resumo
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatsCard
+                  title="Gastos com Anúncios"
+                  value={formatCurrency(metrics.totalSpend)}
+                  icon={DollarSign}
+                  tone="red"
+                  trend={metrics.totalSpend > 0 ? 'up' : 'neutral'}
+                />
+                <StatsCard
+                  title="Vendas (Receita)"
+                  value={formatCurrency(metrics.revenue)}
+                  icon={ShoppingCart}
+                  tone="green"
+                  trend={metrics.revenue > 0 ? 'up' : 'neutral'}
+                />
+                <StatsCard
+                  title="ROAS"
+                  value={formatPercentage(metrics.roas)}
+                  icon={TrendingUp}
+                  tone="emerald"
+                  trend={metrics.roas && metrics.roas > 3 ? 'up' : 'neutral'}
+                />
+                <StatsCard
+                  title="Lucro"
+                  value={formatCurrency(metrics.profit)}
+                  icon={CheckCircle}
+                  tone="blue"
+                  trend={metrics.profit > 0 ? 'up' : 'down'}
+                />
+              </div>
+            </section>
 
-            {/* Métricas Financeiras Derivadas */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatsCard
-                title="ROI"
-                value={formatPercentage(metrics.roi)}
-                icon={Percent}
-                iconColor="text-blue-600"
-                trend={metrics.roi && metrics.roi > 0 ? 'up' : 'down'}
-              />
-              <StatsCard
-                title="Margem"
-                value={formatPercentage(metrics.margin)}
-                icon={Calculator}
-                iconColor="text-indigo-600"
-                trend={metrics.margin && metrics.margin > 20 ? 'up' : 'neutral'}
-              />
-              <StatsCard
-                title="Conversões (Vendas)"
-                value={metrics.totalConversions.toLocaleString()}
-                icon={Receipt}
-                iconColor="text-purple-600"
-                trend={metrics.totalConversions > 0 ? 'up' : 'neutral'}
-              />
-              <StatsCard
-                title="Ticket Médio"
-                value={metrics.averageTicket !== null ? formatCurrency(metrics.averageTicket) : 'N/A'}
-                icon={BarChart3}
-                iconColor="text-gray-600"
-                trend="neutral"
-              />
-            </div>
+            {/* Indicadores derivados — peso visual menor que o Resumo acima */}
+            <section>
+              <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                Indicadores Derivados
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatsCard
+                  title="ROI"
+                  value={formatPercentage(metrics.roi)}
+                  icon={Percent}
+                  tone="blue"
+                  size="secondary"
+                  trend={metrics.roi && metrics.roi > 0 ? 'up' : 'down'}
+                />
+                <StatsCard
+                  title="Margem"
+                  value={formatPercentage(metrics.margin)}
+                  icon={Calculator}
+                  tone="indigo"
+                  size="secondary"
+                  trend={metrics.margin && metrics.margin > 20 ? 'up' : 'neutral'}
+                />
+                <StatsCard
+                  title="Conversões (Vendas)"
+                  value={metrics.totalConversions.toLocaleString()}
+                  icon={Receipt}
+                  tone="purple"
+                  size="secondary"
+                  trend={metrics.totalConversions > 0 ? 'up' : 'neutral'}
+                />
+                <StatsCard
+                  title="Ticket Médio"
+                  value={metrics.averageTicket !== null ? formatCurrency(metrics.averageTicket) : 'N/A'}
+                  icon={BarChart3}
+                  tone="gray"
+                  size="secondary"
+                  trend="neutral"
+                />
+              </div>
+            </section>
 
-            {/* Resumo de Performance */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            {/* Operação — visão rápida de campanhas/impressões/cliques */}
+            <section className="card p-6">
+              <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
                 Resumo de Performance
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 divide-y divide-gray-100 dark:divide-gray-700 md:divide-y-0 md:divide-x">
+                <div className="text-center md:px-4 pb-4 md:pb-0">
+                  <div className="text-3xl font-bold text-gray-900 dark:text-white">
                     {metrics.totalCampaigns}
                   </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                  <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                     Total de Campanhas
                   </div>
                   <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
                     {metrics.activeCampaigns} ativas • {metrics.pausedCampaigns} pausadas
                   </div>
                 </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+                <div className="text-center md:px-4 py-4 md:py-0">
+                  <div className="text-3xl font-bold text-gray-900 dark:text-white">
                     {metrics.totalImpressions.toLocaleString()}
                   </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                  <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                     Total de Impressões
-                      </div>
-                    </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                  </div>
+                </div>
+                <div className="text-center md:px-4 pt-4 md:pt-0">
+                  <div className="text-3xl font-bold text-gray-900 dark:text-white">
                     {metrics.totalClicks.toLocaleString()}
                   </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                  <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                     Total de Cliques
                   </div>
                 </div>
               </div>
-            </div>
+            </section>
           </motion.div>
         </main>
       </div>
     </div>
   )
-} 
+}
