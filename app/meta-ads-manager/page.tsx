@@ -20,6 +20,7 @@ import AdSetsIcon from '@/components/meta-business/icons/AdSetsIcon'
 import AdsIcon from '@/components/meta-business/icons/AdsIcon'
 import Sidebar from '@/components/layout/Sidebar'
 import DateSelector, { DateRange } from '@/components/dashboard/DateSelector'
+import Select from '@/components/ui/Select'
 import AccountsTable from '@/components/meta-business/AccountsTable'
 import CampaignsTable from '@/components/meta-business/CampaignsTable'
 import AdSetsTable from '@/components/meta-business/AdSetsTable'
@@ -824,31 +825,29 @@ export default function MetaBusinessPage() {
                   <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     Status
                   </label>
-                  <select
+                  <Select
                     value={filters.status.join(',')}
-                    onChange={(e) => handleStatusFilter(e.target.value ? e.target.value.split(',') : [])}
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-ds-md focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
-                  >
-                    <option value="">Qualquer</option>
-                    <option value="ACTIVE">Ativo</option>
-                    <option value="PAUSED">Pausado</option>
-                  </select>
+                    onChange={(v) => handleStatusFilter(v ? v.split(',') : [])}
+                    options={[
+                      { value: '', label: 'Qualquer' },
+                      { value: 'ACTIVE', label: 'Ativo' },
+                      { value: 'PAUSED', label: 'Pausado' }
+                    ]}
+                  />
                 </div>
 
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     Conta de Anúncio
                   </label>
-                  <select
+                  <Select
                     value={filters.accountIds.length === 1 ? filters.accountIds[0] : ''}
-                    onChange={(e) => handleAccountFilter(e.target.value ? [e.target.value] : [])}
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-ds-md focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
-                  >
-                    <option value="">Todas as Contas</option>
-                    {accounts.map((account) => (
-                      <option key={account.id} value={account.id}>{account.name}</option>
-                    ))}
-                  </select>
+                    onChange={(v) => handleAccountFilter(v ? [v] : [])}
+                    options={[
+                      { value: '', label: 'Todas as Contas' },
+                      ...accounts.map((account) => ({ value: account.id, label: account.name }))
+                    ]}
+                  />
                 </div>
 
                 <div className="flex flex-col gap-1">

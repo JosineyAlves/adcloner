@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { ChevronDown, X, Calendar as CalendarIcon } from 'lucide-react'
 import { format, parseISO, isValid } from 'date-fns'
 import Calendar from './Calendar'
+import { useFloatingPosition } from '@/components/ui/useFloatingPosition'
 
 export interface DatePreset {
   value: string
@@ -108,15 +110,33 @@ export default function DateSelector({
   })
 
   // Campo de calendário customizado aberto ('since'/'until'/none) — substitui o date picker
-  // nativo do navegador, que não pode ser restilizado com a cor de marca.
+  // nativo do navegador, que não pode ser restilizado com a cor de marca. Os calendários são
+  // renderizados via portal (ver useFloatingPosition) para não serem cortados pelo
+  // overflow-y-auto do dropdown de período nem limitados pela largura de 320px do dropdown —
+  // problema visto quando a implementação inicial usava position:absolute dentro do dropdown.
   const [openField, setOpenField] = useState<'since' | 'until' | null>(null)
+  const [calendarsMounted, setCalendarsMounted] = useState(false)
   const customRangeRef = useRef<HTMLDivElement>(null)
+  const sinceButtonRef = useRef<HTMLButtonElement>(null)
+  const untilButtonRef = useRef<HTMLButtonElement>(null)
+  const sincePopoverRef = useRef<HTMLDivElement>(null)
+  const untilPopoverRef = useRef<HTMLDivElement>(null)
 
-  // Fecha o calendário aberto ao clicar fora dele.
+  useEffect(() => setCalendarsMounted(true), [])
+
+  const sincePosition = useFloatingPosition(sinceButtonRef, openField === 'since', 288, 360)
+  const untilPosition = useFloatingPosition(untilButtonRef, openField === 'until', 288, 360)
+
+  // Fecha o calendário aberto ao clicar fora dele (considerando que o popover em si vive fora
+  // de customRangeRef, pois é renderizado via portal em document.body).
   useEffect(() => {
     if (!openField) return
     const handleClickOutside = (e: MouseEvent) => {
-      if (customRangeRef.current && !customRangeRef.current.contains(e.target as Node)) {
+      const target = e.target as Node
+      const insideContainer = customRangeRef.current?.contains(target)
+      const insideSincePopover = sincePopoverRef.current?.contains(target)
+      const insideUntilPopover = untilPopoverRef.current?.contains(target)
+      if (!insideContainer && !insideSincePopover && !insideUntilPopover) {
         setOpenField(null)
       }
     }
@@ -315,6 +335,7 @@ export default function DateSelector({
                     Data de Início
                   </label>
                   <button
+                    ref={sinceButtonRef}
                     type="button"
                     onClick={() => setOpenField(prev => prev === 'since' ? null : 'since')}
                     className={`w-full flex items-center justify-between px-3 py-2 border rounded-ds-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors ${
@@ -330,8 +351,12 @@ export default function DateSelector({
                     </span>
                     <CalendarIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   </button>
-                  {openField === 'since' && (
-                    <div className="absolute left-0 top-full mt-1 z-50">
+                  {calendarsMounted && openField === 'since' && createPortal(
+                    <div
+                      ref={sincePopoverRef}
+                      style={{ position: 'fixed', top: sincePosition.top, left: sincePosition.left }}
+                      className="z-[100]"
+                    >
                       <Calendar
                         selected={tempCustomRange.since && isValid(parseISO(tempCustomRange.since)) ? parseISO(tempCustomRange.since) : null}
                         onSelect={(date) => {
@@ -339,7 +364,8 @@ export default function DateSelector({
                           setOpenField(null)
                         }}
                       />
-                    </div>
+                    </div>,
+                    document.body
                   )}
                 </div>
                 <div className="relative">
@@ -347,6 +373,7 @@ export default function DateSelector({
                     Data de Fim
                   </label>
                   <button
+                    ref={untilButtonRef}
                     type="button"
                     onClick={() => setOpenField(prev => prev === 'until' ? null : 'until')}
                     className={`w-full flex items-center justify-between px-3 py-2 border rounded-ds-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors ${
@@ -362,8 +389,12 @@ export default function DateSelector({
                     </span>
                     <CalendarIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   </button>
-                  {openField === 'until' && (
-                    <div className="absolute left-0 top-full mt-1 z-50">
+                  {calendarsMounted && openField === 'until' && createPortal(
+                    <div
+                      ref={untilPopoverRef}
+                      style={{ position: 'fixed', top: untilPosition.top, left: untilPosition.left }}
+                      className="z-[100]"
+                    >
                       <Calendar
                         selected={tempCustomRange.until && isValid(parseISO(tempCustomRange.until)) ? parseISO(tempCustomRange.until) : null}
                         minDate={tempCustomRange.since && isValid(parseISO(tempCustomRange.since)) ? parseISO(tempCustomRange.since) : undefined}
@@ -372,7 +403,8 @@ export default function DateSelector({
                           setOpenField(null)
                         }}
                       />
-                    </div>
+                    </div>,
+                    document.body
                   )}
                 </div>
                 <div className="flex space-x-2">
