@@ -206,7 +206,7 @@ export default function CampaignsTable({
                   />
                 </td>
                 <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">
+                  <div className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[280px]" title={campaign.name}>
                     {campaign.name}
                   </div>
                 </td>

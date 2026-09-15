@@ -170,11 +170,11 @@ export default function AccountsTable({
                         <Target className="w-5 h-5 text-blue-600" />
                       </div>
                     </div>
-                    <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">
+                    <div className="ml-4 max-w-[240px]">
+                      <div className="text-sm font-medium text-gray-900 truncate" title={account.name}>
                         {account.name}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-gray-500 whitespace-nowrap">
                         ID: {account.id}
                       </div>
                     </div>

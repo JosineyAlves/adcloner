@@ -60,6 +60,30 @@ interface MetaBusinessCachedData {
   customRange?: DateRange
 }
 
+/**
+ * Decide se um resultado de busca deve substituir o que já está na tela, ou se é mais seguro
+ * manter o que já temos.
+ *
+ * Motivo: quando uma busca é bloqueada por rate limit, a rota de API devolve o "último dado bom"
+ * conhecido no servidor (ver lib/meta-rate-limit.ts) — que pode ser mais VELHO que o que já está
+ * renderizado no cliente. Isso mordia especialmente depois de ativar/pausar uma campanha ou mudar
+ * um orçamento: a ação em si tinha sucesso na Meta, o estado local já era atualizado
+ * otimisticamente com o valor novo, mas a busca de sincronização feita logo em seguida (pra
+ * confirmar com o servidor) podia ser bloqueada por rate limit e devolver o status/orçamento
+ * ANTIGO — sobrescrevendo a mudança correta que acabara de ser aplicada, fazendo parecer que a
+ * ação "não funcionou" mesmo já tendo sido aplicada de verdade no Meta Ads Manager.
+ *
+ * Regra: só aceitamos o fallback do servidor quando a busca foi bloqueada E não temos nada melhor
+ * localmente ainda (ex.: primeiro carregamento da sessão, sem cache nenhum) — nesse caso mostrar
+ * o último dado bom é melhor que mostrar a tela vazia. Fora isso, mantemos o que já está na tela.
+ */
+function resolveFetchedItems<T>(current: T[], result: { items: T[]; rateLimitedUntil: number | null }): T[] {
+  if (result.rateLimitedUntil && current.length > 0) {
+    return current
+  }
+  return result.items
+}
+
 export default function MetaBusinessPage() {
   const { accounts: facebookAccounts, isLoading: accountsLoading, refreshAccounts } = useApp()
   // Hidratar tudo (contas/campanhas/adsets/ads/stats + filtros de data) a partir do cache local,
@@ -239,10 +263,12 @@ export default function MetaBusinessPage() {
       // no servidor), a busca de campanhas logo em seguida detecta esse bloqueio já ativo e nem
       // chega a chamar a Meta de novo para aquela conta.
       const accountsResult = await fetchEndpointForActiveAccounts<MetaAccount>('accounts', 'accounts')
-      setAccounts(accountsResult.items)
+      const resolvedAccounts = resolveFetchedItems(accountsRef.current, accountsResult)
+      setAccounts(resolvedAccounts)
 
       const campaignsResult = await fetchEndpointForActiveAccounts<MetaCampaign>('campaigns', 'campaigns')
-      setCampaigns(campaignsResult.items)
+      const resolvedCampaigns = resolveFetchedItems(campaignsRef.current, campaignsResult)
+      setCampaigns(resolvedCampaigns)
 
       const combinedRateLimitedUntil = Math.max(
         accountsResult.rateLimitedUntil || 0,
@@ -253,8 +279,8 @@ export default function MetaBusinessPage() {
         toast.error('Limite de requisições da Meta atingido. Aguarde antes de atualizar de novo.')
       }
 
-      const newStats = calculateStats(accountsResult.items, campaignsResult.items, adSetsRef.current, adsRef.current)
-      persistCache({ accounts: accountsResult.items, campaigns: campaignsResult.items, stats: newStats })
+      const newStats = calculateStats(resolvedAccounts, resolvedCampaigns, adSetsRef.current, adsRef.current)
+      persistCache({ accounts: resolvedAccounts, campaigns: resolvedCampaigns, stats: newStats })
       setHasLoadedOnce(true)
     } catch (error) {
       console.error('Error fetching accounts/campaigns:', error)
@@ -271,14 +297,15 @@ export default function MetaBusinessPage() {
   const fetchAdSets = useCallback(async () => {
     try {
       setIsLoadingAdSets(true)
-      const { items: allAdSets, rateLimitedUntil: limitedUntil } = await fetchEndpointForActiveAccounts<MetaAdSet>('adsets', 'adSets')
-      setAdSets(allAdSets)
-      if (limitedUntil) {
-        setRateLimitedUntil(prev => Math.max(prev || 0, limitedUntil))
+      const adSetsResult = await fetchEndpointForActiveAccounts<MetaAdSet>('adsets', 'adSets')
+      const resolvedAdSets = resolveFetchedItems(adSetsRef.current, adSetsResult)
+      setAdSets(resolvedAdSets)
+      if (adSetsResult.rateLimitedUntil) {
+        setRateLimitedUntil(prev => Math.max(prev || 0, adSetsResult.rateLimitedUntil!))
         toast.error('Limite de requisições da Meta atingido ao buscar conjuntos. Aguarde antes de tentar de novo.')
       }
-      const newStats = calculateStats(accountsRef.current, campaignsRef.current, allAdSets, adsRef.current)
-      persistCache({ adSets: allAdSets, stats: newStats })
+      const newStats = calculateStats(accountsRef.current, campaignsRef.current, resolvedAdSets, adsRef.current)
+      persistCache({ adSets: resolvedAdSets, stats: newStats })
     } catch (error) {
       console.error('Error fetching ad sets:', error)
       toast.error('Erro ao carregar conjuntos de anúncios')
@@ -291,14 +318,15 @@ export default function MetaBusinessPage() {
   const fetchAds = useCallback(async () => {
     try {
       setIsLoadingAds(true)
-      const { items: allAds, rateLimitedUntil: limitedUntil } = await fetchEndpointForActiveAccounts<MetaAd>('ads', 'ads')
-      setAds(allAds)
-      if (limitedUntil) {
-        setRateLimitedUntil(prev => Math.max(prev || 0, limitedUntil))
+      const adsResult = await fetchEndpointForActiveAccounts<MetaAd>('ads', 'ads')
+      const resolvedAds = resolveFetchedItems(adsRef.current, adsResult)
+      setAds(resolvedAds)
+      if (adsResult.rateLimitedUntil) {
+        setRateLimitedUntil(prev => Math.max(prev || 0, adsResult.rateLimitedUntil!))
         toast.error('Limite de requisições da Meta atingido ao buscar anúncios. Aguarde antes de tentar de novo.')
       }
-      const newStats = calculateStats(accountsRef.current, campaignsRef.current, adSetsRef.current, allAds)
-      persistCache({ ads: allAds, stats: newStats })
+      const newStats = calculateStats(accountsRef.current, campaignsRef.current, adSetsRef.current, resolvedAds)
+      persistCache({ ads: resolvedAds, stats: newStats })
     } catch (error) {
       console.error('Error fetching ads:', error)
       toast.error('Erro ao carregar anúncios')
@@ -498,7 +526,7 @@ export default function MetaBusinessPage() {
 
   const handleToggleStatus = async (type: 'campaigns' | 'adsets' | 'ads', id: string, currentStatus: string) => {
     const newStatus = currentStatus === 'ACTIVE' ? 'PAUSED' : 'ACTIVE'
-    
+
     try {
       const response = await fetch(`/api/meta-business/${type}/${id}/status`, {
         method: 'PATCH',
@@ -511,7 +539,22 @@ export default function MetaBusinessPage() {
 
       if (response.ok) {
         toast.success(`${type === 'campaigns' ? 'Campanha' : type === 'adsets' ? 'Conjunto' : 'Anúncio'} ${newStatus === 'ACTIVE' ? 'ativado' : 'pausado'}!`)
-        // Recarregar só os dados do tipo alterado (campanhas/conjuntos/anúncios), não tudo.
+
+        // Atualiza o estado local IMEDIATAMENTE — a Meta já confirmou a mudança (response.ok),
+        // então não faz sentido a tela continuar mostrando o status antigo enquanto espera uma
+        // busca de sincronização que pode nem rodar tão cedo (rate limit). Sem isso, se a busca
+        // de sincronização logo abaixo for bloqueada, `resolveFetchedItems` mantém o estado atual
+        // — mas sem essa atualização otimista, o "estado atual" ainda seria o status antigo.
+        const applyOptimisticStatus = (item: { id: string; status: string; effective_status?: string }) =>
+          item.id === id ? { ...item, status: newStatus, effective_status: newStatus } : item
+        if (type === 'campaigns') setCampaigns(prev => prev.map(applyOptimisticStatus as any))
+        else if (type === 'adsets') setAdSets(prev => prev.map(applyOptimisticStatus as any))
+        else setAds(prev => prev.map(applyOptimisticStatus as any))
+
+        // Sincroniza em segundo plano com o servidor (pode trazer outros campos atualizados,
+        // como insights) — mas se essa busca for bloqueada por rate limit, `resolveFetchedItems`
+        // (dentro de fetchAccountsAndCampaigns/fetchAdSets/fetchAds) evita que o "último dado bom"
+        // do servidor (que ainda reflete o status ANTIGO) sobrescreva a mudança acima.
         if (type === 'campaigns') await fetchAccountsAndCampaigns()
         else if (type === 'adsets') await fetchAdSets()
         else await fetchAds()
@@ -547,6 +590,15 @@ export default function MetaBusinessPage() {
 
       if (response.ok) {
         toast.success(`${selectedIds.length} ${type === 'campaigns' ? 'campanhas' : type === 'adsets' ? 'conjuntos' : 'anúncios'} ${status === 'ACTIVE' ? 'ativados' : 'pausados'}!`)
+
+        // Mesmo raciocínio de handleToggleStatus: atualiza local antes de depender de uma busca
+        // de sincronização que pode ser bloqueada por rate limit.
+        const applyOptimisticBulkStatus = (item: { id: string; status: string; effective_status?: string }) =>
+          selectedIds.includes(item.id) ? { ...item, status, effective_status: status } : item
+        if (type === 'campaigns') setCampaigns(prev => prev.map(applyOptimisticBulkStatus as any))
+        else if (type === 'adsets') setAdSets(prev => prev.map(applyOptimisticBulkStatus as any))
+        else setAds(prev => prev.map(applyOptimisticBulkStatus as any))
+
         // Recarregar só os dados do tipo alterado (campanhas/conjuntos/anúncios), não tudo.
         if (type === 'campaigns') await fetchAccountsAndCampaigns()
         else if (type === 'adsets') await fetchAdSets()
@@ -590,7 +642,10 @@ export default function MetaBusinessPage() {
         ))
       }
 
-      // Recarregar dados em background para sincronizar com o servidor
+      // Recarregar dados em background para sincronizar com o servidor. Se essa busca for
+      // bloqueada por rate limit, `resolveFetchedItems` (dentro de fetchAccountsAndCampaigns/
+      // fetchAdSets) mantém o orçamento novo aplicado acima em vez de sobrescrevê-lo com o
+      // "último dado bom" do servidor, que ainda teria o orçamento ANTIGO.
       setTimeout(() => {
         if (type === 'campaigns') fetchAccountsAndCampaigns()
         else fetchAdSets()

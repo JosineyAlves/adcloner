@@ -221,7 +221,7 @@ export default function AdSetsTable({
                   />
                 </td>
                 <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">
+                  <div className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[280px]" title={adSet.name}>
                     {adSet.name}
                   </div>
                 </td>
