@@ -92,11 +92,16 @@ export default function ConnectionBusinessesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connectionId])
 
+  // Nome de exibição do grupo "personal" (contas ligadas direto ao perfil, sem Business Manager
+  // por trás) — usa o nome do próprio perfil em vez de um rótulo genérico, pra ficar claro de
+  // onde a conta veio, principalmente com vários perfis conectados.
+  const profileLabel = connection?.fbUserName || connection?.fbUserId || 'Perfil'
+
   const businessGroups = useMemo<BusinessGroup[]>(() => {
     const groups = new Map<string, BusinessGroup>()
     for (const acc of accounts) {
       const key = acc.businessId || 'personal'
-      const name = acc.businessId ? (acc.businessName || 'Business Manager sem nome') : 'Contas sem Business Manager'
+      const name = acc.businessId ? (acc.businessName || 'Business Manager sem nome') : `Conta pessoal de ${profileLabel}`
       if (!groups.has(key)) {
         groups.set(key, { businessId: key, businessName: name, accounts: [] })
       }
@@ -109,7 +114,7 @@ export default function ConnectionBusinessesPage() {
       if (b.businessId === 'personal') return -1
       return a.businessName.localeCompare(b.businessName)
     })
-  }, [accounts])
+  }, [accounts, profileLabel])
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
@@ -165,25 +170,43 @@ export default function ConnectionBusinessesPage() {
               <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">
                 Business Managers
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Lista (em vez do grid de cards anterior) — escala melhor quando o perfil tem muitos
+                  Business Managers, e deixa nome/contagem alinhados numa coluna só de ler, mais fácil
+                  de comparar entre os grupos. "Conta pessoal de {perfil}" sempre por último (ver sort
+                  acima), já vem com um ícone diferente pra se distinguir visualmente de um BM real. */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
                 {businessGroups.map((group) => {
                   const enabledCount = group.accounts.filter((a) => a.syncEnabled).length
+                  const isPersonal = group.businessId === 'personal'
                   return (
                     <Link
                       key={group.businessId}
                       href={`/meta-accounts/${connectionId}/${group.businessId}`}
-                      className="flex items-center gap-3 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-sm transition-all"
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-900/40 transition-colors"
                     >
-                      <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-                        <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      <div
+                        className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                          isPersonal
+                            ? 'bg-gray-100 dark:bg-gray-700'
+                            : 'bg-blue-100 dark:bg-blue-900/30'
+                        }`}
+                      >
+                        <Building2
+                          className={`w-4.5 h-4.5 ${
+                            isPersonal ? 'text-gray-500 dark:text-gray-400' : 'text-blue-600 dark:text-blue-400'
+                          }`}
+                        />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
                           {group.businessName}
                         </div>
                         <div className="text-xs text-gray-400">
-                          {group.accounts.length} conta(s) · {enabledCount} habilitada(s)
+                          {group.accounts.length} conta{group.accounts.length === 1 ? '' : 's'} de anúncio
                         </div>
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 hidden sm:block">
+                        <span className="text-green-600 dark:text-green-400 font-medium">{enabledCount}</span> habilitada{enabledCount === 1 ? '' : 's'}
                       </div>
                       <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" />
                     </Link>

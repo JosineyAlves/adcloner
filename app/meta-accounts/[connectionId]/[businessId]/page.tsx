@@ -96,7 +96,13 @@ export default function BusinessAccountsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connectionId, businessId])
 
-  const businessName = accounts[0]?.businessName || (businessId === 'personal' ? 'Contas sem Business Manager' : 'Business Manager')
+  // "personal" = contas de anúncio ligadas diretamente ao perfil (via /me/adaccounts da Graph
+  // API), sem nenhum Business Manager por trás. Nomeando com o nome do perfil em vez de um
+  // rótulo genérico ("Contas sem Business Manager") deixa claro de onde essa conta veio,
+  // principalmente quando o usuário tem vários perfis conectados.
+  const profileLabel = connection?.fbUserName || connection?.fbUserId || 'Perfil'
+  const businessName =
+    accounts[0]?.businessName || (businessId === 'personal' ? `Conta pessoal de ${profileLabel}` : 'Business Manager')
 
   const filteredAccounts = useMemo(() => {
     const term = search.trim().toLowerCase()
@@ -255,18 +261,9 @@ export default function BusinessAccountsPage() {
                             <span className={`font-medium ${metaStatus.className}`}>{metaStatus.label}</span>
                           </div>
                         </div>
-                        <span
-                          className={`text-xs px-2 py-1 rounded-full flex-shrink-0 hidden sm:inline-block ${
-                            acc.relationship === 'owned'
-                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
-                              : 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
-                          }`}
-                        >
-                          {acc.relationship === 'owned' ? 'Própria' : 'Cliente'}
-                        </span>
-                        <span className="text-xs text-gray-400 whitespace-nowrap hidden md:inline">
-                          {acc.lastSyncedAt ? new Date(acc.lastSyncedAt).toLocaleString('pt-BR') : 'Ainda não sincronizada'}
-                        </span>
+                        {/* Badge "Própria/Cliente" (relationship) e a data de última sincronização (ou "Ainda
+                            não sincronizada") foram removidos daqui a pedido do usuário — eram informações
+                            de baixo valor pro dia a dia da tela, o que importa é nome/ID/status/habilitada. */}
                         <label className="flex items-center gap-2 flex-shrink-0 cursor-pointer select-none">
                           <span
                             className={`text-xs font-semibold whitespace-nowrap ${
