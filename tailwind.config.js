@@ -9,6 +9,23 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Cor de marca do AdCloner Pro (#CEFF00) — usada com equilíbrio: sidebar, estados
+        // ativos, botões primários, highlights e detalhes de branding. Nunca em grandes áreas
+        // de conteúdo. Escala gerada a partir do tom base para permitir variações de
+        // hover/active/disabled sem sair da identidade.
+        brand: {
+          50: '#fbffe6',
+          100: '#f5ffc2',
+          200: '#ecff8f',
+          300: '#dfff4d',
+          400: '#d6fc26',
+          500: '#CEFF00',
+          600: '#a8d400',
+          700: '#7fa300',
+          800: '#5c7600',
+          900: '#3d4f00',
+          DEFAULT: '#CEFF00',
+        },
         primary: {
           50: '#eff6ff',
           100: '#dbeafe',
@@ -35,7 +52,19 @@ module.exports = {
         }
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        // Jura é a fonte principal de toda a interface (títulos, menus, botões, cards,
+        // métricas, tabelas, formulários e modais) — ver design system em globals.css.
+        sans: ['Jura', 'sans-serif'],
+        jura: ['Jura', 'sans-serif'],
+      },
+      borderRadius: {
+        // Escala de radius do design system — cantos levemente arredondados, consistentes
+        // entre cards, botões, inputs, badges e modais.
+        DEFAULT: '0.5rem',
+        'ds-sm': '0.375rem',
+        'ds-md': '0.5rem',
+        'ds-lg': '0.75rem',
+        'ds-xl': '1rem',
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',

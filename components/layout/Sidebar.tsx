@@ -1,40 +1,64 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { motion } from 'framer-motion'
 import {
   LayoutDashboard,
   Link2,
-  LogOut
+  LogOut,
+  ChevronsLeft,
+  ChevronsRight
 } from 'lucide-react'
 import MetaIcon from '@/components/meta-business/icons/MetaIcon'
 import toast from 'react-hot-toast'
 
-// Estilo visual inspirado na sidebar da UTMify (fundo escuro, ícone + label, item ativo
-// destacado com fundo e texto em azul) — mantém só os itens que já existem no AdCloner, sem
-// replicar a estrutura de menu da UTMify (Google, UTMs, Regras, Taxas, Despesas, Assinatura,
-// Indique e Ganhe etc.), que não têm equivalente aqui. "Contas Conectadas" virou "Integrações"
-// (mesma rota /meta-accounts) para casar com o nome usado pela UTMify pra essa tela.
+// Sidebar — elemento mais forte da identidade visual do AdCloner Pro: fundo na cor de marca
+// (#CEFF00) com texto/ícones em preto para contraste máximo (ver app/globals.css e
+// tailwind.config.js para os tokens de design). Suporta collapse (ícone-only, com tooltip)
+// persistido em localStorage, sem alterar nenhuma rota existente.
 //
-// "Templates" e "Configurações" removidos do menu (set/2026) — nenhuma das duas rotas
-// (/templates, /settings) tem uma página implementada; eram links mortos caindo na página de
-// erro 404 padrão do Next.js (sem sidebar/padding do projeto). Ver seção 36 do doc do projeto.
-// Reintroduzir aqui quando essas telas existirem de fato.
+// "Templates" e "Configurações" seguem fora do menu (set/2026) — nenhuma das duas rotas tem
+// uma página totalmente integrada ao fluxo atual; ver seção 36 do doc do projeto. Reintroduzir
+// aqui quando essas telas existirem de fato.
 //
-// "Contas" (/accounts) removida do menu (set/2026) — duplicava a listagem de contas de anúncio
-// já disponível em "Integrações" (perfis → drill-down por perfil em /meta-accounts/[connectionId]),
-// causando duas fontes de verdade da mesma informação. "Contas" não tinha nenhuma ação de
-// remover conta/perfil própria — só herdava (via AppContext) um bug de fallback que fazia contas
-// já desconectadas em Integrações continuarem aparecendo ali, sem forma de limpá-las. Ver
-// seção 40 do doc do projeto.
+// "Contas" (/accounts) segue fora do menu (set/2026) — duplicava a listagem de contas de
+// anúncio já disponível em "Integrações". Ver seção 40 do doc do projeto.
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Meta Business', href: '/meta-business', icon: MetaIcon },
   { name: 'Integrações', href: '/meta-accounts', icon: Link2 },
 ]
 
+const COLLAPSE_STORAGE_KEY = 'adcloner:sidebar-collapsed'
+
 export default function Sidebar() {
   const pathname = usePathname()
+  const [collapsed, setCollapsed] = useState(false)
+  const [hydrated, setHydrated] = useState(false)
+
+  // Lê a preferência salva só no client (evita mismatch de hidratação do Next).
+  useEffect(() => {
+    try {
+      setCollapsed(window.localStorage.getItem(COLLAPSE_STORAGE_KEY) === '1')
+    } catch {
+      // localStorage indisponível (ex.: modo privado) — segue expandida por padrão.
+    }
+    setHydrated(true)
+  }, [])
+
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => {
+      const next = !prev
+      try {
+        window.localStorage.setItem(COLLAPSE_STORAGE_KEY, next ? '1' : '0')
+      } catch {
+        // Sem persistência — a sessão atual ainda reflete a escolha do usuário.
+      }
+      return next
+    })
+  }
 
   const handleLogout = async () => {
     try {
@@ -56,47 +80,93 @@ export default function Sidebar() {
   }
 
   return (
-    <div className="flex h-full w-52 flex-col bg-[#12141c] border-r border-white/5">
-      <div className="flex h-14 items-center px-4 border-b border-white/5">
+    <motion.div
+      initial={false}
+      animate={{ width: collapsed ? 72 : 224 }}
+      transition={{ duration: hydrated ? 0.2 : 0, ease: 'easeInOut' }}
+      className="relative flex h-full flex-col bg-brand-500 flex-shrink-0 overflow-hidden"
+    >
+      {/* Logo/Brand */}
+      <div className={`flex h-14 items-center border-b border-black/10 ${collapsed ? 'justify-center px-0' : 'px-4'}`}>
         <div className="flex items-center space-x-2 min-w-0">
-          <div className="w-7 h-7 bg-primary-600 rounded-lg flex items-center justify-center flex-shrink-0">
-            <span className="text-white text-xs font-bold">AC</span>
+          <div className="w-7 h-7 bg-black rounded-ds-sm flex items-center justify-center flex-shrink-0">
+            <span className="text-brand-500 text-xs font-bold">AC</span>
           </div>
-          <span className="text-base font-bold text-white truncate">
-            AdCloner Pro
-          </span>
+          {!collapsed && (
+            <span className="text-base font-bold text-black truncate">
+              AdCloner Pro
+            </span>
+          )}
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1 px-2 py-4">
+      {/* Navegação principal */}
+      <nav className="flex-1 space-y-1 px-2.5 py-4">
         {navigation.map((item) => {
           const isActive = pathname === item.href
           return (
             <Link
               key={item.name}
               href={item.href}
-              className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
+              title={collapsed ? item.name : undefined}
+              className={`group relative flex items-center rounded-ds-md text-sm font-medium transition-colors duration-150 ${
+                collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'
+              } ${
                 isActive
-                  ? 'bg-primary-600/15 text-primary-400'
-                  : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                  ? 'bg-black text-brand-500'
+                  : 'text-black/70 hover:bg-black/10 hover:text-black'
               }`}
             >
-              <item.icon className="w-5 h-5 mr-2.5 flex-shrink-0" />
-              <span className="truncate">{item.name}</span>
+              <item.icon className={`w-5 h-5 flex-shrink-0 ${collapsed ? '' : 'mr-2.5'}`} />
+              {!collapsed && <span className="truncate">{item.name}</span>}
+
+              {/* Tooltip no modo collapsed */}
+              {collapsed && (
+                <span className="pointer-events-none absolute left-full ml-2 whitespace-nowrap rounded-ds-sm bg-black px-2 py-1 text-xs font-medium text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 z-50">
+                  {item.name}
+                </span>
+              )}
             </Link>
           )
         })}
       </nav>
 
-      <div className="border-t border-white/5 p-3">
+      {/* Área inferior: collapse + perfil/logout */}
+      <div className="border-t border-black/10 p-2.5 space-y-1">
+        <button
+          onClick={toggleCollapsed}
+          title={collapsed ? 'Expandir menu' : 'Recolher menu'}
+          className={`group relative flex items-center w-full text-left rounded-ds-md text-sm font-medium text-black/70 hover:bg-black/10 hover:text-black transition-colors duration-150 ${
+            collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'
+          }`}
+        >
+          {collapsed ? (
+            <ChevronsRight className="w-5 h-5 flex-shrink-0" />
+          ) : (
+            <>
+              <ChevronsLeft className="w-5 h-5 mr-2.5 flex-shrink-0" />
+              <span className="truncate">Recolher</span>
+            </>
+          )}
+        </button>
+
         <button
           onClick={handleLogout}
-          className="flex items-center w-full text-left px-3 py-2 text-sm font-medium rounded-lg text-gray-400 hover:bg-white/5 hover:text-gray-200 transition-colors duration-200"
+          title={collapsed ? 'Sair' : undefined}
+          className={`group relative flex items-center w-full text-left rounded-ds-md text-sm font-medium text-black/70 hover:bg-black/10 hover:text-black transition-colors duration-150 ${
+            collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'
+          }`}
         >
-          <LogOut className="w-5 h-5 mr-2.5 flex-shrink-0" />
-          Sair
+          <LogOut className={`w-5 h-5 flex-shrink-0 ${collapsed ? '' : 'mr-2.5'}`} />
+          {!collapsed && 'Sair'}
+
+          {collapsed && (
+            <span className="pointer-events-none absolute left-full ml-2 whitespace-nowrap rounded-ds-sm bg-black px-2 py-1 text-xs font-medium text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 z-50">
+              Sair
+            </span>
+          )}
         </button>
       </div>
-    </div>
+    </motion.div>
   )
 }
