@@ -72,7 +72,10 @@ export default function DashboardPage() {
   })
   
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
-  const [datePreset, setDatePreset] = useState('last_30d')
+  // Padrão pedido pelo usuário: abrir sempre com "Hoje" (mesma decisão já tomada para a tela
+  // Meta Business — ver seção 12 do doc do projeto), em vez de "Últimos 30 dias" — período mais
+  // pesado, que junto com a busca eager abaixo contribuía mais pro rate limit da Meta.
+  const [datePreset, setDatePreset] = useState('today')
   const [customRange, setCustomRange] = useState<DateRange | undefined>(undefined)
 
   const fetchDashboardData = useCallback(async () => {
