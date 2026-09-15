@@ -27,7 +27,7 @@ import toast from 'react-hot-toast'
 // anúncio já disponível em "Integrações". Ver seção 40 do doc do projeto.
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Meta Business', href: '/meta-business', icon: Facebook },
+  { name: 'Meta Ads', href: '/meta-ads-manager', icon: Facebook },
   { name: 'Integrações', href: '/meta-accounts', icon: Link2 },
 ]
 
@@ -110,7 +110,7 @@ export default function Sidebar() {
                 collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'
               } ${
                 isActive
-                  ? 'bg-black text-brand-500'
+                  ? 'bg-black/10 text-black font-semibold'
                   : 'text-black/70 hover:bg-black/10 hover:text-black'
               }`}
             >
