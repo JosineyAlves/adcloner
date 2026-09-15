@@ -103,6 +103,21 @@ function processConversionsMetric(conversionsMetric: any): number {
   return parseInt(conversionsMetric.toString() || '0')
 }
 
+// Busca o valor de um action_type específico (ex.: "purchase") dentro de uma lista
+// AdsActionStats (`actions`/`action_values`), testando as variantes de nome conhecidas do Meta
+// pra esse evento (mesmo mapa de ACTION_TYPE_PRIORITY usado em processCostPerActionType) — em vez
+// de somar a lista inteira, que mistura eventos de topo/meio de funil (ex.: initiate_checkout,
+// add_to_cart, view_content) junto com a conversão de verdade.
+function extractActionTypeValue(actionsMetric: any, actionTypeKey: string): number {
+  if (!actionsMetric || !Array.isArray(actionsMetric)) return 0
+  const candidates = ACTION_TYPE_PRIORITY[actionTypeKey] || [actionTypeKey]
+  for (const candidateType of candidates) {
+    const action = actionsMetric.find((item: any) => item.action_type === candidateType)
+    if (action) return parseFloat(action.value || '0')
+  }
+  return 0
+}
+
 // Função auxiliar para processar métricas de resultados (estrutura real da API)
 function processResultsMetric(resultsMetric: any): number {
   if (!resultsMetric) return 0
@@ -415,8 +430,17 @@ export async function GET(request: NextRequest) {
                 cost_per_action_type: processCostPerActionType(insight.cost_per_action_type),
                 cost_per_inline_link_click: parseFloat(insight.cost_per_inline_link_click || '0'),
                 cost_per_landing_page_view: processCostPerActionType(insight.cost_per_action_type, 'landing_page_view'),
-                  conversions: processConversionsMetric(insight.conversions),
-                  conversion_values: processConversionValuesMetric(insight.conversion_values || insight.action_values),
+                  // `conversions`/`conversion_values` (campos nativos da API) só vêm preenchidos
+                  // quando a conta tem uma Conversão Personalizada configurada — na maioria das
+                  // contas (só com eventos padrão de Pixel/CAPI) eles voltam vazios, e por isso
+                  // "Conversões" não atribuía nada. O fallback antes caía pra somar `actions`/
+                  // `action_values` INTEIROS, o que incluía eventos de funil como
+                  // initiate_checkout, add_to_cart, view_content etc. no "Valor das Conversões" —
+                  // agora o fallback busca só o action_type de compra (mesmas variantes
+                  // omni/onsite/offsite de ACTION_TYPE_PRIORITY.purchase), igual ao que
+                  // cost_per_conversion já faz.
+                  conversions: processConversionsMetric(insight.conversions) || extractActionTypeValue(insight.actions, 'purchase'),
+                  conversion_values: processConversionValuesMetric(insight.conversion_values) || extractActionTypeValue(insight.action_values, 'purchase'),
                   results: processResultsMetric(insight.results),
                 conversion_rate_ranking: insight.conversion_rate_ranking ?? null,
                 quality_ranking: insight.quality_ranking ?? null,

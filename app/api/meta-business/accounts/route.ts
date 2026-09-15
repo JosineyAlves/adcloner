@@ -188,12 +188,18 @@ export async function GET(request: NextRequest) {
         cost_per_thruplay: parseFloat(insights.cost_per_thruplay || '0'),
         cost_per_15_sec_video_view: parseFloat(insights.cost_per_15_sec_video_view || '0'),
         cost_per_2_sec_continuous_video_view: parseFloat(insights.cost_per_2_sec_continuous_video_view || '0'),
-        conversions: parseInt(insights.conversions || '0'),
-        conversion_values: parseFloat(insights.conversion_values || '0'),
+        // `conversions`/`conversion_values` são list<AdsActionStats> na API, não valores
+        // escalares — `parseInt`/`parseFloat` direto num array sempre resultava em 0/NaN, e por
+        // isso "Conversões"/"Valor das Conversões" nunca apareciam certos na aba Contas. Corrigido
+        // pra somar a lista quando presente (só vem preenchida com Conversão Personalizada
+        // configurada), com fallback pro action_type de compra em actions/action_values — ver
+        // mesmo raciocínio em app/api/meta-business/campaigns/route.ts.
+        conversions: sumActionStats(insights.conversions) || extractAccountActionTypeValue(insights.actions, 'purchase'),
+        conversion_values: sumActionStats(insights.conversion_values) || extractAccountActionTypeValue(insights.action_values, 'purchase'),
         conversion_rate_ranking: parseFloat(insights.conversion_rate_ranking || '0'),
         quality_ranking: parseFloat(insights.quality_ranking || '0'),
         engagement_rate_ranking: parseFloat(insights.engagement_rate_ranking || '0'),
-        actions: parseInt(insights.actions || '0'),
+        actions: Array.isArray(insights.actions) ? insights.actions.length : parseInt(insights.actions || '0'),
         
         // Informações da conta
         account_currency: insights.account_currency || 'USD',
@@ -250,10 +256,49 @@ export async function GET(request: NextRequest) {
 // Função para processar métricas de vídeo
 function processVideoMetric(videoMetric: any): number {
   if (!videoMetric) return 0
-  
+
   if (Array.isArray(videoMetric) && videoMetric.length > 0) {
     return parseInt(videoMetric[0].value || '0')
   }
-  
+
   return parseInt(videoMetric || '0')
+}
+
+// Mesmas variantes de nome que o Meta usa pra reportar o mesmo evento de conversão dependendo
+// da origem do sinal (pixel, App Events, Conversions API, agregado "omni") — ver comentário
+// equivalente em app/api/meta-business/campaigns/route.ts.
+const ACCOUNT_ACTION_TYPE_PRIORITY: Record<string, string[]> = {
+  purchase: [
+    'omni_purchase',
+    'onsite_web_purchase',
+    'onsite_web_app_purchase',
+    'offsite_conversion.fb_pixel_purchase',
+    'web_in_store_purchase',
+    'web_app_in_store_purchase',
+    'purchase',
+  ],
+}
+
+// Soma todos os itens de uma lista AdsActionStats (`conversions`/`conversion_values`) — usado só
+// quando o campo nativo realmente veio como array (ele só é populado quando a conta tem uma
+// Conversão Personalizada configurada).
+function sumActionStats(metric: any): number {
+  if (!metric) return 0
+  if (Array.isArray(metric)) {
+    return metric.reduce((total, action) => total + parseFloat(action.value || '0'), 0)
+  }
+  return parseFloat(metric.toString() || '0')
+}
+
+// Busca o valor de um action_type específico (ex.: "purchase") dentro de `actions`/`action_values`
+// — usado como fallback quando `conversions`/`conversion_values` vêm vazios, em vez de somar a
+// lista inteira (que misturaria eventos de funil como initiate_checkout, add_to_cart etc.).
+function extractAccountActionTypeValue(actionsMetric: any, actionTypeKey: string): number {
+  if (!actionsMetric || !Array.isArray(actionsMetric)) return 0
+  const candidates = ACCOUNT_ACTION_TYPE_PRIORITY[actionTypeKey] || [actionTypeKey]
+  for (const candidateType of candidates) {
+    const action = actionsMetric.find((item: any) => item.action_type === candidateType)
+    if (action) return parseFloat(action.value || '0')
+  }
+  return 0
 }

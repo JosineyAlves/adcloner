@@ -102,6 +102,21 @@ function processConversionsMetric(conversionsMetric: any): number {
   return parseInt(conversionsMetric.toString() || '0')
 }
 
+// Busca o valor de um action_type específico (ex.: "purchase") dentro de uma lista
+// AdsActionStats (`actions`/`action_values`), testando as variantes de nome conhecidas do Meta
+// pra esse evento (mesmo mapa de ACTION_TYPE_PRIORITY usado em processCostPerActionType) — em vez
+// de somar a lista inteira, que mistura eventos de topo/meio de funil (ex.: initiate_checkout,
+// add_to_cart, view_content) junto com a conversão de verdade.
+function extractActionTypeValue(actionsMetric: any, actionTypeKey: string): number {
+  if (!actionsMetric || !Array.isArray(actionsMetric)) return 0
+  const candidates = ACTION_TYPE_PRIORITY[actionTypeKey] || [actionTypeKey]
+  for (const candidateType of candidates) {
+    const action = actionsMetric.find((item: any) => item.action_type === candidateType)
+    if (action) return parseFloat(action.value || '0')
+  }
+  return 0
+}
+
 // Função auxiliar para processar métricas de resultados (estrutura real da API)
 function processResultsMetric(resultsMetric: any): number {
   if (!resultsMetric) return 0
@@ -380,8 +395,11 @@ export async function GET(request: NextRequest) {
                   cost_per_initiate_checkout: processCostPerActionType(insight.cost_per_action_type, 'initiate_checkout'),
                   initiate_checkout: processInitiateCheckoutMetric(insight.actions),
                   cost_per_landing_page_view: processCostPerActionType(insight.cost_per_action_type, 'landing_page_view'),
-                  conversions: processConversionsMetric(insight.conversions),
-                  conversion_values: processConversionValuesMetric(insight.conversion_values || insight.action_values),
+                  // Ver comentário equivalente em app/api/meta-business/campaigns/route.ts —
+                  // fallback pro action_type de compra em vez de somar `actions`/`action_values`
+                  // inteiros (que misturava initiate_checkout etc. no "Valor das Conversões").
+                  conversions: processConversionsMetric(insight.conversions) || extractActionTypeValue(insight.actions, 'purchase'),
+                  conversion_values: processConversionValuesMetric(insight.conversion_values) || extractActionTypeValue(insight.action_values, 'purchase'),
                   results: processResultsMetric(insight.results),
                   
                   // Métricas de engajamento (disponíveis em todos os níveis)
