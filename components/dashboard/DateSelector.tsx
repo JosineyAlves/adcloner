@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Calendar, ChevronDown, X } from 'lucide-react'
+import { ChevronDown, X } from 'lucide-react'
 
 export interface DatePreset {
   value: string
@@ -224,7 +224,6 @@ export default function DateSelector({
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center space-x-2 px-3 py-2 sm:px-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors w-full sm:w-auto min-w-0"
       >
-        <Calendar className="w-4 h-4 text-gray-500 flex-shrink-0" />
         <span className="text-sm font-medium text-gray-900 dark:text-white truncate min-w-0">
           {selectedPreset?.label || 'Selecionar período'}
         </span>

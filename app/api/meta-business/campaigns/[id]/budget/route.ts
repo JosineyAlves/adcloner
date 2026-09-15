@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { resolveMetaAccessToken } from '@/lib/meta-connections'
 
 export const dynamic = 'force-dynamic'
 
@@ -7,9 +8,10 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { budget, budgetType } = await request.json()
+    const { budget, budgetType, accountId } = await request.json()
     const campaignId = params.id
-    const accessToken = request.cookies.get('fb_access_token')?.value
+    // Ver comentário completo em app/api/meta-business/campaigns/[id]/status/route.ts.
+    const accessToken = await resolveMetaAccessToken(request.cookies.get('fb_access_token')?.value, accountId)
 
     if (!accessToken) {
       return NextResponse.json({ 

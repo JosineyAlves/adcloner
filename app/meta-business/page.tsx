@@ -9,10 +9,6 @@ import {
   Play,
   Pause,
   Archive,
-  Search,
-  Filter,
-  Calendar,
-  Users,
   Layers,
   Megaphone
 } from 'lucide-react'
@@ -510,14 +506,22 @@ export default function MetaBusinessPage() {
 
   const handleToggleStatus = async (type: 'campaigns' | 'adsets' | 'ads', id: string, currentStatus: string) => {
     const newStatus = currentStatus === 'ACTIVE' ? 'PAUSED' : 'ACTIVE'
-    
+
+    // Descobre a conta dona desse item para o servidor resolver o token certo — necessário desde
+    // que o painel passou a mostrar contas de conexões/logins diferentes ao mesmo tempo (ver
+    // resolveMetaAccessToken em lib/meta-connections.ts e a seção correspondente do doc do
+    // projeto). Sem isso, o servidor caía sempre no cookie único, que só tem o token da última
+    // conta conectada.
+    const sourceItems = type === 'campaigns' ? campaigns : type === 'adsets' ? adSets : ads
+    const accountId = sourceItems.find(item => item.id === id)?.account_id
+
     try {
       const response = await fetch(`/api/meta-business/${type}/${id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ status: newStatus, accountId }),
         credentials: 'include'
       })
 
@@ -562,13 +566,22 @@ export default function MetaBusinessPage() {
       return
     }
 
+    // Ver comentário equivalente em handleToggleStatus — cada item selecionado leva sua própria
+    // account_id para o servidor poder resolver o token certo por item (podem vir de conexões
+    // diferentes).
+    const sourceItems = type === 'campaigns' ? campaigns : type === 'adsets' ? adSets : ads
+    const items = selectedIds.map(id => ({
+      id,
+      accountId: sourceItems.find(item => item.id === id)?.account_id
+    }))
+
     try {
       const response = await fetch(`/api/meta-business/${type}/bulk-status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ids: selectedIds, status }),
+        body: JSON.stringify({ items, status }),
         credentials: 'include'
       })
 
@@ -720,54 +733,45 @@ export default function MetaBusinessPage() {
                   <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     Nome da {activeTab === 'campaigns' ? 'Campanha' : activeTab === 'adsets' ? 'Conjunto' : activeTab === 'ads' ? 'Anúncio' : 'Conta'}
                   </label>
-                  <div className="flex items-center space-x-2">
-                    <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                    <input
-                      type="text"
-                      placeholder="Filtrar por nome"
-                      value={filters.search}
-                      onChange={(e) => handleSearchChange(e.target.value)}
-                      className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    placeholder="Filtrar por nome"
+                    value={filters.search}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
+                  />
                 </div>
 
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     Status
                   </label>
-                  <div className="flex items-center space-x-2">
-                    <Filter className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                    <select
-                      value={filters.status.join(',')}
-                      onChange={(e) => handleStatusFilter(e.target.value ? e.target.value.split(',') : [])}
-                      className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
-                    >
-                      <option value="">Todos os Status</option>
-                      <option value="ACTIVE">Ativo</option>
-                      <option value="PAUSED">Pausado</option>
-                      <option value="ARCHIVED">Arquivado</option>
-                    </select>
-                  </div>
+                  <select
+                    value={filters.status.join(',')}
+                    onChange={(e) => handleStatusFilter(e.target.value ? e.target.value.split(',') : [])}
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
+                  >
+                    <option value="">Todos os Status</option>
+                    <option value="ACTIVE">Ativo</option>
+                    <option value="PAUSED">Pausado</option>
+                    <option value="ARCHIVED">Arquivado</option>
+                  </select>
                 </div>
 
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     Conta de Anúncio
                   </label>
-                  <div className="flex items-center space-x-2">
-                    <Users className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                    <select
-                      value={filters.accountIds.length === 1 ? filters.accountIds[0] : ''}
-                      onChange={(e) => handleAccountFilter(e.target.value ? [e.target.value] : [])}
-                      className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
-                    >
-                      <option value="">Todas as Contas</option>
-                      {accounts.map((account) => (
-                        <option key={account.id} value={account.id}>{account.name}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <select
+                    value={filters.accountIds.length === 1 ? filters.accountIds[0] : ''}
+                    onChange={(e) => handleAccountFilter(e.target.value ? [e.target.value] : [])}
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
+                  >
+                    <option value="">Todas as Contas</option>
+                    {accounts.map((account) => (
+                      <option key={account.id} value={account.id}>{account.name}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="flex flex-col gap-1">

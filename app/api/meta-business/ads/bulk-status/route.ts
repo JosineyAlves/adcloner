@@ -1,21 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { resolveMetaAccessToken } from '@/lib/meta-connections'
 
 export const dynamic = 'force-dynamic'
 
 export async function PATCH(request: NextRequest) {
   try {
-    const accessToken = request.cookies.get('fb_access_token')?.value
     const body = await request.json()
-    const { ids, status } = body
+    const { ids, items, status } = body
+    // Ver comentário completo em app/api/meta-business/campaigns/bulk-status/route.ts.
+    const targets: { id: string; accountId?: string }[] = Array.isArray(items)
+      ? items
+      : Array.isArray(ids) ? ids.map((id: string) => ({ id })) : []
+    const cookieToken = request.cookies.get('fb_access_token')?.value
 
-    if (!accessToken) {
-      return NextResponse.json(
-        { error: 'Access token not found' },
-        { status: 401 }
-      )
-    }
-
-    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    if (targets.length === 0) {
       return NextResponse.json(
         { error: 'IDs array is required' },
         { status: 400 }
@@ -34,9 +32,24 @@ export async function PATCH(request: NextRequest) {
       failed: [] as { id: string; error: string }[]
     }
 
+    const tokenCache = new Map<string, string | null>()
+    const resolveToken = async (accountId?: string): Promise<string | null> => {
+      if (!accountId) return cookieToken ?? null
+      if (tokenCache.has(accountId)) return tokenCache.get(accountId) ?? null
+      const token = await resolveMetaAccessToken(cookieToken, accountId)
+      tokenCache.set(accountId, token)
+      return token
+    }
+
     // Processar cada Ad individualmente para evitar rate limits
-    for (const adId of ids) {
+    for (const { id: adId, accountId } of targets) {
       try {
+        const accessToken = await resolveToken(accountId)
+        if (!accessToken) {
+          results.failed.push({ id: adId, error: 'Access token not found' })
+          continue
+        }
+
         const response = await fetch(
           `https://graph.facebook.com/v23.0/${adId}`,
           {

@@ -37,22 +37,75 @@ export function AppProvider({ children }: AppProviderProps) {
   // Indica uma busca em segundo plano (revalidação) sem esconder os dados já exibidos.
   const [isRevalidating, setIsRevalidating] = useState<boolean>(false)
 
+  // Mesmo mapeamento de status numérico da Graph API usado em lib/facebook-api.ts
+  // (FacebookAPI.mapAccountStatus, privado naquela classe — duplicado aqui porque
+  // /api/meta/accounts devolve o account_status bruto salvo no Supabase).
+  const mapAccountStatus = (status: number | null): 'active' | 'disabled' | 'pending' => {
+    switch (status) {
+      case 1: return 'active'
+      case 2: return 'disabled'
+      case 3: return 'pending'
+      default: return 'pending'
+    }
+  }
+
   const fetchAccounts = async (isBackground: boolean) => {
     if (isBackground) {
       setIsRevalidating(true)
     }
 
     try {
-      const response = await fetch('/api/facebook/accounts', {
+      // Fonte principal: TODAS as contas de anúncio de TODAS as conexões já descobertas e
+      // salvas no Supabase (/api/meta/accounts, ver lib/meta-connections.ts) — ao contrário de
+      // /api/facebook/accounts, que busca ao vivo na Graph API usando só o cookie fb_access_token
+      // da ÚLTIMA conta conectada. Era exatamente esse o motivo do bug "ao adicionar outra conta,
+      // a anterior sumia do painel": o cookie é sobrescrito a cada novo login, então a busca ao
+      // vivo só enxergava a conta mais recente.
+      const response = await fetch('/api/meta/accounts', {
         credentials: 'include'
       })
 
       if (response.ok) {
         const data = await response.json()
-        const nextAccounts = data.accounts || []
+        if (data.success && Array.isArray(data.accounts) && data.accounts.length > 0) {
+          const nextAccounts: FacebookAccount[] = data.accounts.map((acc: any) => {
+            const rawId: string = acc.metaAccountId || acc.id
+            return {
+              id: rawId.startsWith('act_') ? rawId : `act_${rawId}`,
+              name: acc.name || rawId,
+              businessManagerId: acc.businessName || 'Unknown',
+              businessManagerName: acc.businessName || 'Unknown',
+              status: mapAccountStatus(acc.accountStatus),
+              tokenStatus: 'valid',
+              pages: [],
+              pixels: [],
+              profileName: acc.connectionFbUserName || undefined,
+              createdAt: acc.lastSyncedAt || new Date().toISOString(),
+              updatedAt: acc.lastSyncedAt || new Date().toISOString()
+            }
+          })
+          setAccounts(nextAccounts)
+          writeLocalCache(LOCAL_CACHE_KEYS.facebookAccounts, nextAccounts)
+          setIsLoading(false)
+          setIsRevalidating(false)
+          return
+        }
+      }
+
+      // Rede de segurança: se /api/meta/accounts falhou, ou não retornou nenhuma conta ainda
+      // (ex.: Supabase indisponível, ou conta conectada antes dessa migração), cai para a busca
+      // antiga ao vivo via cookie — pior do que a fonte principal (só vê a última conta
+      // conectada), mas melhor do que a tela ficar vazia.
+      const legacyResponse = await fetch('/api/facebook/accounts', {
+        credentials: 'include'
+      })
+
+      if (legacyResponse.ok) {
+        const legacyData = await legacyResponse.json()
+        const nextAccounts = legacyData.accounts || []
         setAccounts(nextAccounts)
         writeLocalCache(LOCAL_CACHE_KEYS.facebookAccounts, nextAccounts)
-      } else if (response.status === 401) {
+      } else if (legacyResponse.status === 401) {
         window.location.href = '/login'
         return
       } else {

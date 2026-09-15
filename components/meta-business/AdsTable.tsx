@@ -206,8 +206,9 @@ export default function AdsTable({
   return (
     <div className="space-y-4">
 
-      {/* Tabela */}
-      <div className="overflow-x-auto">
+      {/* Tabela — altura limitada com rolagem própria (max-h + overflow-y-auto) para que a linha
+          de totais no rodapé possa ficar fixa (sticky) enquanto as linhas passam por baixo dela. */}
+      <div className="overflow-x-auto overflow-y-auto max-h-[65vh]">
         <table className="w-full">
           <thead className="bg-gray-50 dark:bg-gray-700">
             <tr>
@@ -281,16 +282,16 @@ export default function AdsTable({
               </tr>
             ))}
           </tbody>
-          <tfoot className="bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600">
+          <tfoot>
             <tr>
-              <td className="px-6 py-3"></td>
-              <td className="px-6 py-3"></td>
-              <td className="px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">
+              <td className="sticky bottom-0 z-10 bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 px-6 py-3"></td>
+              <td className="sticky bottom-0 z-10 bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 px-6 py-3"></td>
+              <td className="sticky bottom-0 z-10 bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">
                 {ads.length} {ads.length === 1 ? 'ANÚNCIO' : 'ANÚNCIOS'}
               </td>
-              <td className="px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">-</td>
+              <td className="sticky bottom-0 z-10 bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">-</td>
               {showMetrics && visibleMetrics.map((metric, index) => (
-                <td key={metric.id} className="px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                <td key={metric.id} className="sticky bottom-0 z-10 bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
                   {metricTotals[index] === null ? '-' : formatMetricValue(metricTotals[index], metric.type)}
                 </td>
               ))}

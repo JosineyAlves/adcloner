@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { resolveMetaAccessToken } from '@/lib/meta-connections'
 
 export const dynamic = 'force-dynamic'
 
@@ -7,10 +8,13 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const accessToken = request.cookies.get('fb_access_token')?.value
     const campaignId = params.id
     const body = await request.json()
-    const { status } = body
+    const { status, accountId } = body
+    // Resolve o token pela conexão dona da conta dessa campanha (enviado pelo cliente, que já
+    // conhece o account_id de cada item) em vez de só o cookie único — ver comentário completo
+    // em app/api/meta-business/campaigns/route.ts.
+    const accessToken = await resolveMetaAccessToken(request.cookies.get('fb_access_token')?.value, accountId)
 
     if (!accessToken) {
       return NextResponse.json(

@@ -11,6 +11,7 @@ import {
   getLastGood,
   retryAfterSecondsFor
 } from '@/lib/meta-rate-limit'
+import { resolveMetaAccessToken } from '@/lib/meta-connections'
 
 export const dynamic = 'force-dynamic'
 
@@ -203,9 +204,10 @@ function processInitiateCheckoutMetric(actionsMetric: any): number {
 
 export async function GET(request: NextRequest) {
   try {
-    const accessToken = request.cookies.get('fb_access_token')?.value
     const { searchParams } = new URL(request.url)
     const accountId = searchParams.get('accountId')
+    // Ver comentário equivalente em campaigns/route.ts.
+    const accessToken = await resolveMetaAccessToken(request.cookies.get('fb_access_token')?.value, accountId)
     const datePreset = searchParams.get('datePreset') || 'today'
     const since = searchParams.get('since')
     const until = searchParams.get('until')

@@ -12,6 +12,7 @@ import {
   getLastGood,
   retryAfterSecondsFor
 } from '@/lib/meta-rate-limit'
+import { resolveMetaAccessToken } from '@/lib/meta-connections'
 
 export const dynamic = 'force-dynamic'
 
@@ -204,9 +205,12 @@ function processInitiateCheckoutMetric(actionsMetric: any): number {
 
 export async function GET(request: NextRequest) {
   try {
-    const accessToken = request.cookies.get('fb_access_token')?.value
     const { searchParams } = new URL(request.url)
     const accountId = searchParams.get('accountId')
+    // Resolve o token pela conexão dona dessa conta (Supabase) em vez de só o cookie único —
+    // necessário porque cada conta pode ter sido conectada com um login/token diferente (ver
+    // lib/meta-connections.ts::resolveMetaAccessToken e a seção correspondente do doc do projeto).
+    const accessToken = await resolveMetaAccessToken(request.cookies.get('fb_access_token')?.value, accountId)
     const datePreset = searchParams.get('datePreset') || 'today'
     const since = searchParams.get('since')
     const until = searchParams.get('until')

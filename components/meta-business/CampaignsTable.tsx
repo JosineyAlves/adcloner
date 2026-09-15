@@ -173,8 +173,10 @@ export default function CampaignsTable({
   return (
     <div className="space-y-4">
 
-      {/* Tabela */}
-      <div className="overflow-x-auto">
+      {/* Tabela — altura limitada com rolagem própria (max-h + overflow-y-auto) para que a linha
+          de totais no rodapé possa ficar fixa (sticky) enquanto as linhas de campanha passam por
+          baixo dela, sem precisar rolar a página inteira até o fim para ver os totais. */}
+      <div className="overflow-x-auto overflow-y-auto max-h-[65vh]">
         <table className="w-full">
           <thead className="bg-gray-50 dark:bg-gray-700">
             <tr>
@@ -240,7 +242,10 @@ export default function CampaignsTable({
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({
                             budget: budget, // Já está em reais
-                            budgetType
+                            budgetType,
+                            // Deixa o servidor resolver o token da conexão dona dessa conta em
+                            // vez de só o cookie único — ver lib/meta-connections.ts.
+                            accountId: campaign.account_id
                           })
                         })
 
@@ -277,18 +282,21 @@ export default function CampaignsTable({
               </tr>
             ))}
           </tbody>
-          <tfoot className="bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600">
+          <tfoot>
+            {/* sticky aplicado em cada <td> (não no <tr>/<tfoot>) — é a forma mais confiável entre
+                navegadores de fixar uma linha de rodapé de tabela dentro de um contêiner com
+                rolagem própria. */}
             <tr>
-              <td className="px-6 py-3"></td>
-              <td className="px-6 py-3"></td>
-              <td className="px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">
+              <td className="sticky bottom-0 z-10 bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 px-6 py-3"></td>
+              <td className="sticky bottom-0 z-10 bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 px-6 py-3"></td>
+              <td className="sticky bottom-0 z-10 bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">
                 {campaigns.length} {campaigns.length === 1 ? 'CAMPANHA' : 'CAMPANHAS'}
               </td>
-              <td className="px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+              <td className="sticky bottom-0 z-10 bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
                 {totalBudget > 0 ? formatCurrency(totalBudget) : '-'}
               </td>
               {showMetrics && visibleMetrics.map((metric, index) => (
-                <td key={metric.id} className="px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                <td key={metric.id} className="sticky bottom-0 z-10 bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
                   {metricTotals[index] === null ? '-' : formatMetricValue(metricTotals[index], metric.type)}
                 </td>
               ))}

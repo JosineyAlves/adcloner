@@ -2,17 +2,14 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { 
-  Settings, 
-  Check, 
+import {
+  Settings,
+  Check,
   X,
   AlertCircle,
   Eye,
   TrendingUp,
   TrendingDown,
-  DollarSign,
-  Users,
-  MousePointer,
   Target
 } from 'lucide-react'
 import { MetaAccount } from '@/lib/types'
@@ -105,34 +102,19 @@ export default function AccountsTable({
                 Conta
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                <div className="flex items-center space-x-1">
-                  <DollarSign className="w-4 h-4" />
-                  <span>Gasto</span>
-                </div>
+                Gasto
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                <div className="flex items-center space-x-1">
-                  <Eye className="w-4 h-4" />
-                  <span>Impressões</span>
-                </div>
+                Impressões
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                <div className="flex items-center space-x-1">
-                  <MousePointer className="w-4 h-4" />
-                  <span>Cliques</span>
-                </div>
+                Cliques
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                <div className="flex items-center space-x-1">
-                  <Users className="w-4 h-4" />
-                  <span>Alcance</span>
-                </div>
+                Alcance
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                <div className="flex items-center space-x-1">
-                  <TrendingUp className="w-4 h-4" />
-                  <span>Frequência</span>
-                </div>
+                Frequência
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                 CPC

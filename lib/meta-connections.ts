@@ -319,6 +319,56 @@ export async function getDecryptedAccessToken(connectionId: string): Promise<str
   return decryptSecret(data.access_token_encrypted)
 }
 
+/**
+ * Resolve o token de acesso correto para UMA conta de anúncio específica, usando as conexões
+ * persistidas no Supabase — em vez do cookie único `fb_access_token`, que só guarda o token da
+ * ÚLTIMA conta conectada. Cada conexão feita via "Login para Empresas" gera um token de sistema
+ * escopado a um cliente/Business Manager específico: usar o token errado para uma conta de outro
+ * cliente falha (permissão) mesmo que a conta apareça corretamente na listagem.
+ *
+ * Normaliza o `accountId` removendo o prefixo "act_" (formato usado pela Graph API em endpoints
+ * como /me/adaccounts e em todo o restante do app) para comparar com
+ * `meta_ad_accounts.meta_account_id`, que é gravado sem o prefixo (vem do campo `account_id` das
+ * edges owned_ad_accounts/client_ad_accounts — ver upsertAdAccounts acima).
+ */
+export async function getAccessTokenForAdAccount(accountId: string): Promise<string | null> {
+  if (!accountId) return null
+  const supabase = getSupabaseAdmin()
+  const normalizedId = accountId.replace(/^act_/, '')
+
+  const { data, error } = await supabase
+    .from('meta_ad_accounts')
+    .select('connection_id')
+    .eq('meta_account_id', normalizedId)
+    .limit(1)
+    .maybeSingle()
+
+  if (error || !data?.connection_id) return null
+
+  try {
+    return await getDecryptedAccessToken(data.connection_id)
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Wrapper usado por todas as rotas de API do Meta Business: tenta resolver o token pela conexão
+ * dona da `accountId` informada (ver getAccessTokenForAdAccount) e só cai para o cookie único
+ * `fb_access_token` se não achar (conta não descoberta ainda, accountId não informado, ou erro no
+ * Supabase) — preserva o comportamento antigo como rede de segurança em vez de quebrar tudo.
+ */
+export async function resolveMetaAccessToken(
+  cookieToken: string | undefined | null,
+  accountId?: string | null
+): Promise<string | null> {
+  if (accountId) {
+    const tokenFromConnection = await getAccessTokenForAdAccount(accountId)
+    if (tokenFromConnection) return tokenFromConnection
+  }
+  return cookieToken ?? null
+}
+
 export async function removeConnection(connectionId: string): Promise<void> {
   const supabase = getSupabaseAdmin()
   const { error } = await supabase.from('meta_connections').delete().eq('id', connectionId)

@@ -9,6 +9,7 @@ import {
   getLastGood,
   retryAfterSecondsFor
 } from '@/lib/meta-rate-limit'
+import { resolveMetaAccessToken } from '@/lib/meta-connections'
 
 const facebookBatchAPI = new FacebookBatchAPI()
 
@@ -19,7 +20,8 @@ export async function GET(request: NextRequest) {
     const datePreset = searchParams.get('datePreset') || searchParams.get('date_preset') || 'last_7d'
     const since = searchParams.get('since')
     const until = searchParams.get('until')
-    const accessToken = request.cookies.get('fb_access_token')?.value
+    // Ver comentário equivalente em app/api/meta-business/campaigns/route.ts.
+    const accessToken = await resolveMetaAccessToken(request.cookies.get('fb_access_token')?.value, accountId)
 
     if (!accessToken) {
       return NextResponse.json(
