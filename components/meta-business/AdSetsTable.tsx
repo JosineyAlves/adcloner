@@ -79,6 +79,22 @@ export default function AdSetsTable({
     }
   }
 
+  // Linha de totais no rodapé — mesmo padrão de CampaignsTable.tsx.
+  const visibleMetrics = metrics.filter(m => m.visible)
+  const totalBudget = adSets.reduce(
+    (sum, a) => sum + (a.daily_budget || a.lifetime_budget || 0),
+    0
+  )
+  const metricTotals = visibleMetrics.map((metric) => {
+    const values = adSets
+      .map((a) => (a as any)[metric.id])
+      .map((v) => (typeof v === 'number' ? v : parseFloat(v)))
+      .filter((v) => !isNaN(v))
+    if (values.length === 0) return null
+    const sum = values.reduce((s, v) => s + v, 0)
+    return metric.type === 'percentage' ? sum / values.length : sum
+  })
+
   const handleSelectAll = () => {
     if (selectedAdSets.size === adSets.length) {
       onSelectionChange(new Set())
@@ -274,6 +290,23 @@ export default function AdSetsTable({
               </tr>
             ))}
           </tbody>
+          <tfoot className="bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600">
+            <tr>
+              <td className="px-6 py-3"></td>
+              <td className="px-6 py-3"></td>
+              <td className="px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">
+                {adSets.length} {adSets.length === 1 ? 'CONJUNTO' : 'CONJUNTOS'}
+              </td>
+              <td className="px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                {totalBudget > 0 ? formatCurrency(totalBudget) : '-'}
+              </td>
+              {showMetrics && visibleMetrics.map((metric, index) => (
+                <td key={metric.id} className="px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                  {metricTotals[index] === null ? '-' : formatMetricValue(metricTotals[index], metric.type)}
+                </td>
+              ))}
+            </tr>
+          </tfoot>
         </table>
       </div>
     </div>

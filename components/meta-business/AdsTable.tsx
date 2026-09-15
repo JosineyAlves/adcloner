@@ -76,6 +76,20 @@ export default function AdsTable({
         return formatNumber(numValue)
     }
   }
+
+  // Linha de totais no rodapé — mesmo padrão de CampaignsTable.tsx. Anúncios não têm orçamento
+  // próprio (é definido no conjunto), então essa coluna fica "-" no total.
+  const visibleMetrics = metrics.filter(m => m.visible)
+  const metricTotals = visibleMetrics.map((metric) => {
+    const values = ads
+      .map((a) => (a as any)[metric.id])
+      .map((v) => (typeof v === 'number' ? v : parseFloat(v)))
+      .filter((v) => !isNaN(v))
+    if (values.length === 0) return null
+    const sum = values.reduce((s, v) => s + v, 0)
+    return metric.type === 'percentage' ? sum / values.length : sum
+  })
+
   const handleSelectAll = () => {
     if (selectedAds.size === ads.length) {
       onSelectionChange(new Set())
@@ -267,6 +281,21 @@ export default function AdsTable({
               </tr>
             ))}
           </tbody>
+          <tfoot className="bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600">
+            <tr>
+              <td className="px-6 py-3"></td>
+              <td className="px-6 py-3"></td>
+              <td className="px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">
+                {ads.length} {ads.length === 1 ? 'ANÚNCIO' : 'ANÚNCIOS'}
+              </td>
+              <td className="px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">-</td>
+              {showMetrics && visibleMetrics.map((metric, index) => (
+                <td key={metric.id} className="px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                  {metricTotals[index] === null ? '-' : formatMetricValue(metricTotals[index], metric.type)}
+                </td>
+              ))}
+            </tr>
+          </tfoot>
         </table>
       </div>
     </div>

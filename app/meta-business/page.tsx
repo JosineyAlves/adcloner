@@ -2,16 +2,12 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { 
-  Eye, 
-  DollarSign, 
-  MousePointer, 
-  Target,
-  TrendingUp, 
-  RefreshCw, 
-  Settings, 
-  Play, 
-  Pause, 
+import {
+  TrendingUp,
+  RefreshCw,
+  Settings,
+  Play,
+  Pause,
   Archive,
   Search,
   Filter,
@@ -27,7 +23,6 @@ import CampaignsIcon from '@/components/meta-business/icons/CampaignsIcon'
 import AdSetsIcon from '@/components/meta-business/icons/AdSetsIcon'
 import AdsIcon from '@/components/meta-business/icons/AdsIcon'
 import Sidebar from '@/components/layout/Sidebar'
-import StatsCard from '@/components/dashboard/StatsCard'
 import DateSelector, { DateRange } from '@/components/dashboard/DateSelector'
 import AccountsTable from '@/components/meta-business/AccountsTable'
 import CampaignsTable from '@/components/meta-business/CampaignsTable'
@@ -749,63 +744,64 @@ export default function MetaBusinessPage() {
               </div>
             )}
 
-            {/* Cards de Estatísticas Básicas */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatsCard
-                title="Gasto Total"
-                value={`R$ ${stats.totalSpend.toFixed(2)}`}
-                icon={DollarSign}
-                iconColor="text-red-600"
-              />
-              <StatsCard
-                title="Impressões"
-                value={stats.totalImpressions.toLocaleString()}
-                icon={Eye}
-                iconColor="text-blue-600"
-              />
-              <StatsCard
-                title="Cliques"
-                value={stats.totalClicks.toLocaleString()}
-                icon={MousePointer}
-                iconColor="text-green-600"
-              />
-              <StatsCard
-                title="CPC Médio"
-                value={`R$ ${stats.averageCpc.toFixed(2)}`}
-                icon={Target}
-                iconColor="text-purple-600"
-              />
-            </div>
-
-
-            {/* Filtros */}
+            {/* Filtros — layout em grade com rótulo acima de cada campo (estilo trackers como a
+                UTMify), em vez dos cards de estatísticas + barra de filtros em linha única que
+                existiam antes. */}
             <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
-              <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 sm:gap-4">
-                <div className="flex items-center space-x-2 w-full sm:w-auto sm:min-w-0">
-                  <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <input
-                    type="text"
-                    placeholder="Buscar..."
-                    value={filters.search}
-                    onChange={(e) => handleSearchChange(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white w-full sm:w-64 min-w-0"
-                  />
-                </div>
-                
-                <div className="flex items-center space-x-2 w-full sm:w-auto sm:min-w-0">
-                  <Filter className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <select
-                    value={filters.status.join(',')}
-                    onChange={(e) => handleStatusFilter(e.target.value ? e.target.value.split(',') : [])}
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white w-full sm:w-auto min-w-0"
-                  >
-                    <option value="">Todos os Status</option>
-                    <option value="ACTIVE">Ativo</option>
-                    <option value="PAUSED">Pausado</option>
-                    <option value="ARCHIVED">Arquivado</option>
-                  </select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    Nome da {activeTab === 'campaigns' ? 'Campanha' : activeTab === 'adsets' ? 'Conjunto' : activeTab === 'ads' ? 'Anúncio' : 'Conta'}
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <input
+                      type="text"
+                      placeholder="Filtrar por nome"
+                      value={filters.search}
+                      onChange={(e) => handleSearchChange(e.target.value)}
+                      className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
+                    />
+                  </div>
                 </div>
 
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    Status
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <Filter className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <select
+                      value={filters.status.join(',')}
+                      onChange={(e) => handleStatusFilter(e.target.value ? e.target.value.split(',') : [])}
+                      className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
+                    >
+                      <option value="">Todos os Status</option>
+                      <option value="ACTIVE">Ativo</option>
+                      <option value="PAUSED">Pausado</option>
+                      <option value="ARCHIVED">Arquivado</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    Conta de Anúncio
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <Users className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <select
+                      value={filters.accountIds.length === 1 ? filters.accountIds[0] : ''}
+                      onChange={(e) => handleAccountFilter(e.target.value ? [e.target.value] : [])}
+                      className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
+                    >
+                      <option value="">Todas as Contas</option>
+                      {accounts.map((account) => (
+                        <option key={account.id} value={account.id}>{account.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
 

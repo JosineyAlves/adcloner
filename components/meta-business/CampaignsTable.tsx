@@ -87,11 +87,11 @@ export default function CampaignsTable({
 
   const formatMetricValue = (value: any, type: 'number' | 'currency' | 'percentage') => {
     if (value === null || value === undefined) return '-'
-    
+
     const numValue = typeof value === 'number' ? value : parseFloat(value)
-    
+
     if (isNaN(numValue)) return '-'
-    
+
     switch (type) {
       case 'currency':
         return formatCurrency(numValue)
@@ -101,6 +101,24 @@ export default function CampaignsTable({
         return formatNumber(numValue)
     }
   }
+
+  // Linha de totais no rodapé (estilo "N CAMPAIGNS" + somas por coluna, inspirado no layout de
+  // trackers como a UTMify). Colunas do tipo 'number'/'currency' são somadas; 'percentage' usa a
+  // média simples entre os valores disponíveis — somar percentuais não faz sentido (ex.: CTR).
+  const visibleMetrics = metrics.filter(m => m.visible)
+  const totalBudget = campaigns.reduce(
+    (sum, c) => sum + (c.daily_budget || c.lifetime_budget || 0),
+    0
+  )
+  const metricTotals = visibleMetrics.map((metric) => {
+    const values = campaigns
+      .map((c) => (c as any)[metric.id])
+      .map((v) => (typeof v === 'number' ? v : parseFloat(v)))
+      .filter((v) => !isNaN(v))
+    if (values.length === 0) return null
+    const sum = values.reduce((s, v) => s + v, 0)
+    return metric.type === 'percentage' ? sum / values.length : sum
+  })
 
           if (campaigns.length === 0) {
             return (
@@ -259,6 +277,23 @@ export default function CampaignsTable({
               </tr>
             ))}
           </tbody>
+          <tfoot className="bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600">
+            <tr>
+              <td className="px-6 py-3"></td>
+              <td className="px-6 py-3"></td>
+              <td className="px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">
+                {campaigns.length} {campaigns.length === 1 ? 'CAMPANHA' : 'CAMPANHAS'}
+              </td>
+              <td className="px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                {totalBudget > 0 ? formatCurrency(totalBudget) : '-'}
+              </td>
+              {showMetrics && visibleMetrics.map((metric, index) => (
+                <td key={metric.id} className="px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                  {metricTotals[index] === null ? '-' : formatMetricValue(metricTotals[index], metric.type)}
+                </td>
+              ))}
+            </tr>
+          </tfoot>
         </table>
       </div>
     </div>
