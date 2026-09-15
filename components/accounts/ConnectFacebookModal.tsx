@@ -73,22 +73,7 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
         return
       }
 
-      // Detectar se o usuário fechou o popup manualmente sem concluir o login
-      const popupCheckInterval = setInterval(() => {
-        if (popup.closed) {
-          clearInterval(popupCheckInterval)
-          window.removeEventListener('message', handleMessage)
-          setIsConnecting(current => {
-            if (current) {
-              setConnectionStatus('error')
-              setErrorMessage('Login cancelado: o popup foi fechado antes de concluir a conexão.')
-            }
-            return false
-          })
-        }
-      }, 500)
-
-      function handleMessage(event: MessageEvent) {
+      const handleMessage = (event: MessageEvent) => {
         if (!event.data || typeof event.data !== 'object') return
 
         if (event.data.type === 'FACEBOOK_SUCCESS') {
@@ -103,6 +88,21 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
           setErrorMessage(event.data.message || 'Erro ao conectar com Facebook.')
         }
       }
+
+      // Detectar se o usuário fechou o popup manualmente sem concluir o login
+      const popupCheckInterval = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(popupCheckInterval)
+          window.removeEventListener('message', handleMessage)
+          setIsConnecting(current => {
+            if (current) {
+              setConnectionStatus('error')
+              setErrorMessage('Login cancelado: o popup foi fechado antes de concluir a conexão.')
+            }
+            return false
+          })
+        }
+      }, 500)
 
       window.addEventListener('message', handleMessage)
 
