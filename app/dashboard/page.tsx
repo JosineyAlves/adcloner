@@ -261,27 +261,7 @@ export default function DashboardPage() {
       <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <PageHeader
-          title="Dashboard Financeiro"
-          actions={
-            <>
-              <DateSelector
-                datePreset={datePreset}
-                customRange={customRange}
-                onDatePresetChange={handleDatePresetChange}
-                onCustomRangeChange={handleCustomRangeChange}
-              />
-              <button
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-                className="btn-primary flex items-center space-x-2"
-              >
-                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                <span>Atualizar</span>
-              </button>
-            </>
-          }
-        />
+        <PageHeader title="Dashboard Financeiro" />
 
         <main className="flex-1 overflow-y-auto p-6">
           <motion.div
@@ -290,6 +270,31 @@ export default function DashboardPage() {
             transition={{ duration: 0.5 }}
             className="space-y-8"
           >
+            {/* Período + Atualizar — ficam junto do conteúdo que afetam, num card, em vez de
+                isolados no cabeçalho da página (ver PageHeader e o mesmo padrão no Meta Ads),
+                seguindo a referência da UTMify. */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  Período
+                </label>
+                <DateSelector
+                  datePreset={datePreset}
+                  customRange={customRange}
+                  onDatePresetChange={handleDatePresetChange}
+                  onCustomRangeChange={handleCustomRangeChange}
+                />
+              </div>
+              <button
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="btn-primary flex items-center space-x-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span>Atualizar</span>
+              </button>
+            </div>
+
             {/* Resumo — KPIs principais: o que eu preciso saber primeiro */}
             <section>
               <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">

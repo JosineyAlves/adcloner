@@ -784,28 +784,7 @@ export default function MetaBusinessPage() {
       <Sidebar />
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        <PageHeader
-          title="Meta Ads"
-          actions={
-            <>
-              <DateSelector
-                datePreset={datePreset}
-                customRange={customRange}
-                onDatePresetChange={handleDatePresetChange}
-                onCustomRangeChange={handleCustomRangeChange}
-              />
-              <button
-                onClick={handleRefresh}
-                disabled={isRefreshing || isRateLimited}
-                title={isRateLimited ? `Limite de requisições da Meta atingido. Tente novamente em ${rateLimitCountdownSeconds}s.` : 'Atualizar'}
-                className="btn-primary flex items-center space-x-2 disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                <span>{isRateLimited ? `Aguarde ${rateLimitCountdownSeconds}s` : 'Atualizar'}</span>
-              </button>
-            </>
-          }
-        />
+        <PageHeader title="Meta Ads" />
 
         <main className="flex-1 overflow-y-auto p-6">
           <motion.div
@@ -826,7 +805,7 @@ export default function MetaBusinessPage() {
                 UTMify), em vez dos cards de estatísticas + barra de filtros em linha única que
                 existiam antes. */}
             <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 items-end">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 items-end">
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     Nome da {activeTab === 'campaigns' ? 'Campanha' : activeTab === 'adsets' ? 'Conjunto' : activeTab === 'ads' ? 'Anúncio' : 'Conta'}
@@ -869,13 +848,37 @@ export default function MetaBusinessPage() {
                   />
                 </div>
 
-                {/* Data movida para o cabeçalho da página (PageHeader), junto com o botão
-                    Atualizar — mesmo lugar usado no Dashboard, pra ficar consistente entre telas. */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    Data
+                  </label>
+                  <DateSelector
+                    datePreset={datePreset}
+                    customRange={customRange}
+                    onDatePresetChange={handleDatePresetChange}
+                    onCustomRangeChange={handleCustomRangeChange}
+                  />
+                </div>
+
+                {/* Ícone de engrenagem (Personalizar Colunas) + botão Atualizar ficam dentro do
+                    próprio card de filtros, junto dos dados que eles afetam — não no cabeçalho da
+                    página (ver PageHeader), seguindo o padrão da referência da UTMify. */}
                 <div className="flex items-center gap-2 sm:justify-end">
                   <MetaBusinessMetricsSelector
                     selectedMetricIds={selectedMetricIds}
                     onSave={handleMetricsChange}
                   />
+                  <button
+                    onClick={handleRefresh}
+                    disabled={isRefreshing || isRateLimited}
+                    title={isRateLimited ? `Limite de requisições da Meta atingido. Tente novamente em ${rateLimitCountdownSeconds}s.` : 'Atualizar'}
+                    className="btn-secondary flex items-center justify-center space-x-2 px-3 py-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    <span className="hidden sm:inline">
+                      {isRateLimited ? `Aguarde ${rateLimitCountdownSeconds}s` : 'Atualizar'}
+                    </span>
+                  </button>
                 </div>
               </div>
             </div>
