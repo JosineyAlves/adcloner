@@ -928,7 +928,9 @@ export default function MetaBusinessPage() {
                 </nav>
               </div>
 
-              <div className="p-6">
+              {/* Sem padding no topo — o objetivo é a tabela encostar direto na barra de abas,
+                  sem o respiro que existia antes entre elas. */}
+              <div className="px-6 pb-6">
                 {activeTab === 'accounts' && (
                   isLoadingAccounts && accounts.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16">
