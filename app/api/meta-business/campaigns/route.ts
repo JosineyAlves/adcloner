@@ -81,6 +81,20 @@ function processCostPerActionType(costPerActionTypeMetric: any, specificActionTy
   return parseFloat(costPerActionTypeMetric.toString() || '0')
 }
 
+// Função auxiliar para processar o campo `conversions` (list<AdsActionStats>), que é
+// um campo distinto de `results` na API de Insights do Meta e não deve ser confundido com ele.
+function processConversionsMetric(conversionsMetric: any): number {
+  if (!conversionsMetric) return 0
+
+  if (Array.isArray(conversionsMetric)) {
+    return conversionsMetric.reduce((total, action) => {
+      return total + parseInt(action.value || '0')
+    }, 0)
+  }
+
+  return parseInt(conversionsMetric.toString() || '0')
+}
+
 // Função auxiliar para processar métricas de resultados (estrutura real da API)
 function processResultsMetric(resultsMetric: any): number {
   if (!resultsMetric) return 0
@@ -106,69 +120,26 @@ function processResultsMetric(resultsMetric: any): number {
   return parseInt(resultsMetric.toString() || '0')
 }
 
-// Função auxiliar para processar valores monetários (conversion_values e action_values)
+// Função auxiliar para processar valores monetários de conversão (conversion_values / action_values).
+// Conforme a documentação oficial da API de Insights do Meta, o valor de "Valor das Conversões"
+// exibido no Gerenciador de Anúncios é a SOMA de todos os itens do array de AdsActionStats
+// (cada action_type representa um evento de conversão diferente), sem filtrar por um único
+// tipo de ação. Filtrar por "apenas compras" divergia do valor real mostrado no Gerenciador
+// de Anúncios sempre que havia outros eventos de conversão configurados (ex.: leads, registros).
 function processConversionValuesMetric(valuesMetric: any): number {
   if (!valuesMetric) return 0
-  
-  // Se for um array de AdsActionStats, processar cada item
+
+  // Se for um array de AdsActionStats, somar TODOS os itens (igual ao Gerenciador de Anúncios)
   if (Array.isArray(valuesMetric)) {
     console.log(`💰 Processando valores monetários com ${valuesMetric.length} itens:`, valuesMetric)
-    
-    // Buscar ações relacionadas a compras
-    const purchaseActions = valuesMetric.filter((action: any) => 
-      action.action_type && (
-        action.action_type === 'purchase' ||
-        action.action_type === 'omni_purchase' ||
-        action.action_type === 'offsite_conversion.fb_pixel_purchase' ||
-        action.action_type === 'onsite_web_purchase' ||
-        action.action_type === 'web_in_store_purchase' ||
-        action.action_type === 'onsite_web_app_purchase' ||
-        action.action_type === 'web_app_in_store_purchase'
-      )
-    )
-    
-    if (purchaseActions.length > 0) {
-      // Priorizar por ordem de importância: omni > onsite > offsite > genérico
-      const priorityOrder = [
-        'omni_purchase',
-        'onsite_web_purchase',
-        'onsite_web_app_purchase', 
-        'offsite_conversion.fb_pixel_purchase',
-        'web_in_store_purchase',
-        'web_app_in_store_purchase',
-        'purchase'
-      ]
-      
-      let selectedPurchase = null
-      for (const priorityType of priorityOrder) {
-        selectedPurchase = purchaseActions.find(action => action.action_type === priorityType)
-        if (selectedPurchase) break
-      }
-      
-      // Se não encontrou nenhum prioritário, pegar o primeiro
-      if (!selectedPurchase) {
-        selectedPurchase = purchaseActions[0]
-      }
-      
-      const totalValue = parseFloat(selectedPurchase.value || '0')
-      
-      console.log(`💰 Valor de compra encontrado: R$ ${totalValue} (tipo prioritizado: ${selectedPurchase.action_type})`)
-      console.log(`📊 Todos os tipos de compra encontrados:`, purchaseActions.map(a => `${a.action_type}: R$ ${a.value}`).join(', '))
-      
-      return totalValue
-    }
-    
-    // Se não há ações de compra, somar todas (fallback)
+
     return valuesMetric.reduce((total, action) => {
-      if (action.value) {
-        const value = parseFloat(action.value || '0')
-        console.log(`  - Action Type: ${action.action_type}, Value: R$ ${value}`)
-        return total + value
-      }
-      return total
+      const value = parseFloat(action.value || '0')
+      console.log(`  - Action Type: ${action.action_type}, Value: R$ ${value}`)
+      return total + value
     }, 0)
   }
-  
+
   // Se for um número simples, retornar diretamente
   return parseFloat(valuesMetric.toString() || '0')
 }
@@ -337,9 +308,9 @@ export async function GET(request: NextRequest) {
               conversions: 0,
               conversion_values: 0,
               results: 0,
-              conversion_rate_ranking: 0,
-              quality_ranking: 0,
-              engagement_rate_ranking: 0,
+              conversion_rate_ranking: null as string | null,
+              quality_ranking: null as string | null,
+              engagement_rate_ranking: null as string | null,
               actions: 0
             }
 
@@ -398,12 +369,12 @@ export async function GET(request: NextRequest) {
                 cost_per_action_type: processCostPerActionType(insight.cost_per_action_type),
                 cost_per_inline_link_click: parseFloat(insight.cost_per_inline_link_click || '0'),
                 cost_per_landing_page_view: processCostPerActionType(insight.cost_per_action_type, 'landing_page_view'),
-                  conversions: processResultsMetric(insight.results),
-                  conversion_values: processConversionValuesMetric(insight.action_values || insight.conversion_values),
+                  conversions: processConversionsMetric(insight.conversions),
+                  conversion_values: processConversionValuesMetric(insight.conversion_values || insight.action_values),
                   results: processResultsMetric(insight.results),
-                conversion_rate_ranking: parseFloat(insight.conversion_rate_ranking || '0'),
-                quality_ranking: parseFloat(insight.quality_ranking || '0'),
-                engagement_rate_ranking: parseFloat(insight.engagement_rate_ranking || '0'),
+                conversion_rate_ranking: insight.conversion_rate_ranking ?? null,
+                quality_ranking: insight.quality_ranking ?? null,
+                engagement_rate_ranking: insight.engagement_rate_ranking ?? null,
                 actions: parseInt(insight.actions || '0')
               }
               }
@@ -549,9 +520,9 @@ export async function GET(request: NextRequest) {
               conversions: 0,
               conversion_values: 0,
               results: 0,
-              conversion_rate_ranking: 0,
-              quality_ranking: 0,
-              engagement_rate_ranking: 0,
+              conversion_rate_ranking: null,
+              quality_ranking: null,
+              engagement_rate_ranking: null,
               actions: 0
             })
           }

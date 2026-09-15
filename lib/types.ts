@@ -185,11 +185,11 @@ export interface MetaAccount {
   cost_per_2_sec_continuous_video_view: number
   conversions: number
   conversion_values: number
-  conversion_rate_ranking: number
-  quality_ranking: number
-  engagement_rate_ranking: number
+  conversion_rate_ranking: string | null
+  quality_ranking: string | null
+  engagement_rate_ranking: string | null
   actions: number
-  
+
   // Métricas de vídeo detalhadas
   videoMetrics?: VideoMetrics
 }
@@ -238,8 +238,8 @@ export interface MetaCampaign {
   conversions: number
   conversion_values: number
   results: number
-  conversion_rate_ranking: number
-  
+  conversion_rate_ranking: string | null
+
   // Métricas de vídeo (disponíveis em todos os níveis)
   video_play_actions: number
   video_p25_watched_actions: number
@@ -247,10 +247,10 @@ export interface MetaCampaign {
   video_p75_watched_actions: number
   video_p95_watched_actions: number
   video_p100_watched_actions: number
-  
+
   // Métricas de qualidade
-  quality_ranking: number
-  engagement_rate_ranking: number
+  quality_ranking: string | null
+  engagement_rate_ranking: string | null
   
   // Métricas de ações (apenas as válidas)
   actions: number
