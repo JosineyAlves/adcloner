@@ -153,14 +153,14 @@ export default function AdSetsTable({
                 <th className="sticky will-change-transform left-12 z-20 w-24 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
                   Status
                 </th>
-                <th className="sticky will-change-transform left-[144px] z-20 w-[240px] bg-gray-50 dark:bg-gray-700 shadow-[3px_0_6px_-2px_rgba(0,0,0,0.25)] dark:shadow-[3px_0_6px_-2px_rgba(0,0,0,0.7)] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                <th className="sticky will-change-transform left-[144px] z-20 w-[240px] bg-gray-50 dark:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.4)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.4)] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
                   Conjunto
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
                   Orçamento
                 </th>
                 {showMetrics && metrics.filter(m => m.visible).map((metric) => (
-                  <th key={metric.id} className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                  <th key={metric.id} className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider max-w-[130px] leading-tight align-bottom">
                     {metric.label}
                   </th>
                 ))}
@@ -207,14 +207,14 @@ export default function AdSetsTable({
               <th className="sticky will-change-transform left-12 z-20 w-24 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
                 Status
               </th>
-              <th className="sticky will-change-transform left-[144px] z-20 w-[240px] bg-gray-50 dark:bg-gray-700 shadow-[3px_0_6px_-2px_rgba(0,0,0,0.25)] dark:shadow-[3px_0_6px_-2px_rgba(0,0,0,0.7)] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+              <th className="sticky will-change-transform left-[144px] z-20 w-[240px] bg-gray-50 dark:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.4)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.4)] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
                 Conjunto
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
                 Orçamento
               </th>
               {showMetrics && metrics.filter(m => m.visible).map((metric) => (
-                <th key={metric.id} className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                <th key={metric.id} className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider max-w-[130px] leading-tight align-bottom">
                   {metric.label}
                 </th>
               ))}
@@ -241,7 +241,7 @@ export default function AdSetsTable({
                     size="md"
                   />
                 </td>
-                <td className="sticky will-change-transform left-[144px] z-10 w-[240px] bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 shadow-[3px_0_6px_-2px_rgba(0,0,0,0.15)] dark:shadow-[3px_0_6px_-2px_rgba(0,0,0,0.5)] px-6 py-4">
+                <td className="sticky will-change-transform left-[144px] z-10 w-[240px] bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-4">
                   <div className="text-sm font-medium text-gray-900 dark:text-white truncate" title={adSet.name}>
                     {adSet.name}
                   </div>
@@ -302,7 +302,7 @@ export default function AdSetsTable({
                   const value = (adSet as any)[metric.id]
                   const formattedValue = formatMetricValue(value, metric.type, metric.id)
                   return (
-                    <td key={metric.id} className="px-6 py-4 text-sm text-gray-900 dark:text-white whitespace-nowrap">
+                    <td key={metric.id} className="px-4 py-4 text-sm text-gray-900 dark:text-white whitespace-nowrap">
                       {formattedValue}
                     </td>
                   )
@@ -314,14 +314,14 @@ export default function AdSetsTable({
             <tr>
               <td className="sticky will-change-transform left-0 bottom-0 z-20 w-12 bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 px-6 py-3"></td>
               <td className="sticky will-change-transform left-12 bottom-0 z-20 w-24 bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 px-6 py-3"></td>
-              <td className="sticky will-change-transform left-[144px] bottom-0 z-20 w-[240px] bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 shadow-[3px_0_6px_-2px_rgba(0,0,0,0.15)] dark:shadow-[3px_0_6px_-2px_rgba(0,0,0,0.5)] px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">
+              <td className="sticky will-change-transform left-[144px] bottom-0 z-20 w-[240px] bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">
                 {adSets.length} {adSets.length === 1 ? 'CONJUNTO' : 'CONJUNTOS'}
               </td>
               <td className="sticky bottom-0 z-10 bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
                 {totalBudget > 0 ? formatCurrency(totalBudget) : '-'}
               </td>
               {showMetrics && visibleMetrics.map((metric, index) => (
-                <td key={metric.id} className="sticky bottom-0 z-10 bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                <td key={metric.id} className="sticky bottom-0 z-10 bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
                   {metricTotals[index] === null ? '-' : formatMetricValue(metricTotals[index], metric.type, metric.id)}
                 </td>
               ))}
