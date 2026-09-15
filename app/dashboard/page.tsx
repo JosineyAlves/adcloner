@@ -8,6 +8,7 @@ import PageHeader from '@/components/layout/PageHeader'
 import StatsCard from '@/components/dashboard/StatsCard'
 import DateSelector, { DateRange } from '@/components/dashboard/DateSelector'
 import Select from '@/components/ui/Select'
+import BreakdownBarChart from '@/components/dashboard/BreakdownBarChart'
 import { useApp } from '@/contexts/AppContext'
 import { useDebounce } from '@/lib/debounce'
 import {
@@ -16,6 +17,11 @@ import {
   LOCAL_CACHE_KEYS
 } from '@/lib/local-storage-cache'
 import toast from 'react-hot-toast'
+
+interface BreakdownRow {
+  label: string
+  value: number
+}
 
 interface DashboardMetrics {
   // Métricas Financeiras — todas calculadas a partir de dados REAIS vindos da Meta (Graph/Marketing
@@ -31,6 +37,8 @@ interface DashboardMetrics {
   roi: number | null
   margin: number | null
   averageTicket: number | null
+  cpa: number | null
+  epc: number | null
 
   // Métricas de Performance
   totalCampaigns: number
@@ -51,6 +59,8 @@ export default function DashboardPage() {
     roi: null,
     margin: null,
     averageTicket: null,
+    cpa: null,
+    epc: null,
     totalCampaigns: 0,
     activeCampaigns: 0,
     pausedCampaigns: 0,
@@ -77,6 +87,15 @@ export default function DashboardPage() {
   // conta) usados no Meta Ads, pra padronizar. Vazio = agrega todas as contas habilitadas
   // (comportamento de antes, quando esse filtro não existia).
   const [selectedAccountId, setSelectedAccountId] = useState<string>('')
+
+  // Vendas por País/Hora/Dia da Semana — breakdowns nativos da Insights API do Meta (ver
+  // lib/facebook-batch-api.ts:createAccountInsightsBreakdownBatch). O valor exibido é
+  // conversion_values (receita atribuída), a mesma métrica usada em "Vendas (Receita)" acima,
+  // só que segmentada por dimensão.
+  const [countryBreakdown, setCountryBreakdown] = useState<BreakdownRow[]>([])
+  const [hourBreakdown, setHourBreakdown] = useState<BreakdownRow[]>([])
+  const [weekdayBreakdown, setWeekdayBreakdown] = useState<BreakdownRow[]>([])
+  const [breakdownsLoading, setBreakdownsLoading] = useState<boolean>(false)
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -144,6 +163,12 @@ export default function DashboardPage() {
       const roi = totalSpend > 0 ? (profit / totalSpend) * 100 : null
       const margin = revenue > 0 ? (profit / revenue) * 100 : null
       const averageTicket = totalConversions > 0 ? revenue / totalConversions : null
+      // CPA (Custo por Aquisição) — quanto custou, em média, cada conversão. EPC (Earnings per
+      // Click / Receita por Clique) — quanto cada clique gerou de receita em média. Ambos nativos:
+      // só dividem totalSpend/revenue reais já calculados acima, sem nenhuma métrica nova buscada
+      // da Meta.
+      const cpa = totalConversions > 0 ? totalSpend / totalConversions : null
+      const epc = totalClicks > 0 ? revenue / totalClicks : null
 
       setMetrics({
         totalSpend,
@@ -153,6 +178,8 @@ export default function DashboardPage() {
         roi,
         margin,
         averageTicket,
+        cpa,
+        epc,
         totalCampaigns,
         activeCampaigns,
         pausedCampaigns,
@@ -169,19 +196,98 @@ export default function DashboardPage() {
     }
   }, [accounts, datePreset, customRange, selectedAccountId])
 
+  // Busca os 3 breakdowns nativos (País/Hora/Dia da Semana) em paralelo por conta — cada conta
+  // já é 1 única chamada de batch da Meta (3 sub-requisições numa só requisição HTTP, ver a rota),
+  // então N contas = N chamadas extras, não N×3. Mescla os resultados de todas as contas ativas
+  // somando por rótulo (país/hora/dia), igual ao que fetchDashboardData já faz para os totais.
+  const fetchBreakdownData = useCallback(async () => {
+    const activeAccounts = selectedAccountId
+      ? accounts.filter((account) => account.id === selectedAccountId)
+      : accounts
+
+    if (activeAccounts.length === 0) {
+      setCountryBreakdown([])
+      setHourBreakdown([])
+      setWeekdayBreakdown([])
+      return
+    }
+
+    setBreakdownsLoading(true)
+    try {
+      const countryTotals = new Map<string, number>()
+      const hourTotals = new Map<string, number>()
+      const weekdayTotals = new Map<string, number>()
+
+      await Promise.all(
+        activeAccounts.map(async (account) => {
+          try {
+            const response = await fetch(
+              `/api/meta-business/insights-breakdown?accountId=${account.id}&datePreset=${datePreset}${customRange ? `&since=${customRange.since}&until=${customRange.until}` : ''}`,
+              { credentials: 'include' }
+            )
+            if (!response.ok) return
+            const data = await response.json()
+
+            for (const row of data.country || []) {
+              countryTotals.set(row.label, (countryTotals.get(row.label) || 0) + (row.conversionValues || 0))
+            }
+            for (const row of data.hour || []) {
+              hourTotals.set(row.label, (hourTotals.get(row.label) || 0) + (row.conversionValues || 0))
+            }
+            for (const row of data.weekday || []) {
+              weekdayTotals.set(row.label, (weekdayTotals.get(row.label) || 0) + (row.conversionValues || 0))
+            }
+          } catch (error) {
+            console.error(`Error fetching breakdowns for account ${account.id}:`, error)
+          }
+        })
+      )
+
+      setCountryBreakdown(
+        Array.from(countryTotals.entries())
+          .map(([label, value]) => ({ label, value }))
+          .sort((a, b) => b.value - a.value)
+      )
+
+      const hourOrder = (label: string) => parseInt(label, 10)
+      setHourBreakdown(
+        Array.from(hourTotals.entries())
+          .map(([label, value]) => ({ label, value }))
+          .sort((a, b) => hourOrder(a.label) - hourOrder(b.label))
+      )
+
+      const WEEKDAY_ORDER = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+      setWeekdayBreakdown(
+        Array.from(weekdayTotals.entries())
+          .map(([label, value]) => ({ label, value }))
+          .sort((a, b) => WEEKDAY_ORDER.indexOf(a.label) - WEEKDAY_ORDER.indexOf(b.label))
+      )
+    } finally {
+      setBreakdownsLoading(false)
+    }
+  }, [accounts, datePreset, customRange, selectedAccountId])
+
   // Ref para evitar dependências desnecessárias
   const fetchDashboardDataRef = useRef(fetchDashboardData)
   fetchDashboardDataRef.current = fetchDashboardData
 
+  const fetchBreakdownDataRef = useRef(fetchBreakdownData)
+  fetchBreakdownDataRef.current = fetchBreakdownData
+
   // Debounce da função fetchDashboardData para evitar múltiplos refreshs
   const debouncedFetchDashboardData = useDebounce('dashboard-fetch', fetchDashboardData, 3000)
+  const debouncedFetchBreakdownData = useDebounce('dashboard-fetch-breakdowns', fetchBreakdownData, 3000)
 
   useEffect(() => {
     if (accounts.length > 0) {
       // Usar ref para evitar dependência circular
       fetchDashboardDataRef.current()
+      fetchBreakdownDataRef.current()
       return
     }
+    setCountryBreakdown([])
+    setHourBreakdown([])
+    setWeekdayBreakdown([])
     // Nenhuma conta conectada (ex.: usuário removeu todos os perfis em Integrações) — zera as
     // métricas em vez de deixar os últimos valores buscados nesta mesma sessão presos na tela.
     // Mesmo bug de interferência já corrigido na tela Meta Business (ver seção 41 do doc do
@@ -194,6 +300,8 @@ export default function DashboardPage() {
       roi: null,
       margin: null,
       averageTicket: null,
+      cpa: null,
+      epc: null,
       totalCampaigns: 0,
       activeCampaigns: 0,
       pausedCampaigns: 0,
@@ -205,7 +313,7 @@ export default function DashboardPage() {
 
   const handleRefresh = useDebounce('dashboard-refresh', async () => {
     await refreshAccounts()
-    await debouncedFetchDashboardData()
+    await Promise.all([debouncedFetchDashboardData(), debouncedFetchBreakdownData()])
     toast.success('Dados atualizados!')
   }, 2000)
 
@@ -381,6 +489,59 @@ export default function DashboardPage() {
                   size="secondary"
                   trend="neutral"
                 />
+                <StatsCard
+                  title="CPA"
+                  value={metrics.cpa !== null ? formatCurrency(metrics.cpa) : 'N/A'}
+                  size="secondary"
+                  trend="neutral"
+                />
+                <StatsCard
+                  title="EPC"
+                  value={metrics.epc !== null ? formatCurrency(metrics.epc) : 'N/A'}
+                  size="secondary"
+                  trend="neutral"
+                />
+              </div>
+            </section>
+
+            {/* Vendas por Dimensão — breakdowns nativos da Meta Insights API (país/hora/dia da
+                semana), mostrando onde a receita atribuída (conversion_values) se concentra.
+                Ver lib/facebook-batch-api.ts:createAccountInsightsBreakdownBatch. */}
+            <section>
+              <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                Vendas por Dimensão
+              </h2>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="card p-4">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Vendas por País</h3>
+                  {breakdownsLoading ? (
+                    <div className="flex items-center justify-center h-32">
+                      <RefreshCw className="w-5 h-5 animate-spin text-gray-400" />
+                    </div>
+                  ) : (
+                    <BreakdownBarChart data={countryBreakdown} valueFormatter={formatCurrency} maxItems={6} />
+                  )}
+                </div>
+                <div className="card p-4">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Vendas por Hora</h3>
+                  {breakdownsLoading ? (
+                    <div className="flex items-center justify-center h-32">
+                      <RefreshCw className="w-5 h-5 animate-spin text-gray-400" />
+                    </div>
+                  ) : (
+                    <BreakdownBarChart data={hourBreakdown} valueFormatter={formatCurrency} maxItems={6} />
+                  )}
+                </div>
+                <div className="card p-4">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Vendas por Dia da Semana</h3>
+                  {breakdownsLoading ? (
+                    <div className="flex items-center justify-center h-32">
+                      <RefreshCw className="w-5 h-5 animate-spin text-gray-400" />
+                    </div>
+                  ) : (
+                    <BreakdownBarChart data={weekdayBreakdown} valueFormatter={formatCurrency} />
+                  )}
+                </div>
               </div>
             </section>
 

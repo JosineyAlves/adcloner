@@ -350,6 +350,48 @@ export class FacebookBatchAPI {
   }
 
   /**
+   * Cria batch de requisições para insights de conta segmentados por dimensão (breakdown) —
+   * usado pelas visualizações "Vendas por País/Hora/Dia da Semana" do Dashboard. Tudo num único
+   * batch (3 sub-requisições, 1 chamada HTTP só) pra não multiplicar o consumo de rate limit:
+   * [0] breakdowns=country, [1] breakdowns=hourly_stats_aggregated_by_advertiser_time_zone,
+   * [2] time_increment=1 sem breakdown (granularidade diária, usada para agregar por dia da
+   * semana no backend). O parâmetro `breakdowns` da Insights API segmenta TODOS os campos
+   * pedidos na mesma requisição — incluindo actions/action_values/conversions/conversion_values —
+   * então "Vendas por País" reflete o país atribuído à conversão em si, não só a localização de
+   * quem viu o anúncio.
+   */
+  createAccountInsightsBreakdownBatch(accountId: string, datePreset: string, since?: string, until?: string): BatchRequest[] {
+    const dateParam = this.buildDateQueryParam(datePreset, since, until)
+
+    const fields = [
+      'spend',
+      'impressions',
+      'clicks',
+      'actions',
+      'action_values',
+      'conversions',
+      'conversion_values',
+      'date_start',
+      'date_stop'
+    ].join(',')
+
+    return [
+      {
+        method: 'GET',
+        relative_url: `${accountId}/insights?fields=${fields}&level=account&limit=300&breakdowns=country${dateParam}`
+      },
+      {
+        method: 'GET',
+        relative_url: `${accountId}/insights?fields=${fields}&level=account&limit=300&breakdowns=hourly_stats_aggregated_by_advertiser_time_zone${dateParam}`
+      },
+      {
+        method: 'GET',
+        relative_url: `${accountId}/insights?fields=${fields}&level=account&limit=300&time_increment=1${dateParam}`
+      }
+    ]
+  }
+
+  /**
    * Cria batch de requisições para ad sets
    */
   createAdSetsBatch(accountId: string, datePreset: string, since?: string, until?: string): BatchRequest[] {
