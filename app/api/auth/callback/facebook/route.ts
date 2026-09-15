@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { saveConnection, discoverBusinessStructure } from '@/lib/meta-connections'
 
 // Função POST para processar código do Login para Empresas
 export async function POST(request: NextRequest) {
@@ -109,6 +110,20 @@ export async function POST(request: NextRequest) {
       hasSystemUserId: !!responseData.system_user_id,
       tokenType: responseData.token_type
     })
+
+    // Persistir a conexão no Supabase e descobrir a estrutura de Business Manager/contas.
+    // Best-effort: se isso falhar, não deve quebrar o fluxo de login existente (cookies acima).
+    try {
+      const connectionId = await saveConnection({
+        fbUser: { id: responseData.system_user_id || responseData.client_business_id },
+        accessToken: responseData.access_token,
+        tokenType: 'system_user',
+      })
+      const discovery = await discoverBusinessStructure(connectionId, responseData.access_token)
+      console.log('💾 Conexão salva no Supabase:', { connectionId, ...discovery })
+    } catch (persistError) {
+      console.error('⚠️ Falha ao persistir conexão no Supabase (login continua normalmente):', persistError)
+    }
 
     // Criar resposta com cookie para salvar o token
     const response = NextResponse.json(responseData, { 

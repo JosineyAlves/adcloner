@@ -2,12 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { 
-  LayoutDashboard, 
-  BarChart3, 
-  Copy, 
-  Settings, 
+import {
+  LayoutDashboard,
+  BarChart3,
+  Copy,
+  Settings,
   Users,
+  Network,
   LogOut
 } from 'lucide-react'
 import MetaIcon from '@/components/meta-business/icons/MetaIcon'
@@ -16,6 +17,7 @@ import toast from 'react-hot-toast'
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Meta Business', href: '/meta-business', icon: MetaIcon },
+  { name: 'Contas Conectadas', href: '/meta-accounts', icon: Network },
   { name: 'Templates', href: '/templates', icon: Copy },
   { name: 'Contas', href: '/accounts', icon: Users },
   { name: 'Configurações', href: '/settings', icon: Settings },

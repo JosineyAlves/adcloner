@@ -37,18 +37,20 @@
     <div class="header">
         <h1>Política de Privacidade</h1>
         <p><strong>AdCloner Pro</strong></p>
-        <p>Última atualização: Janeiro 2025</p>
+        <p>Última atualização: Setembro 2026</p>
     </div>
 
     <div class="section">
         <h2>1. Informações que Coletamos</h2>
-        <p>O AdCloner Pro coleta as seguintes informações através da integração com o Facebook:</p>
+        <p>O AdCloner Pro coleta as seguintes informações através da integração com o Facebook/Meta:</p>
         <ul>
             <li><strong>Informações do Perfil:</strong> Nome, email e ID do usuário do Facebook</li>
-            <li><strong>Contas de Anúncios:</strong> IDs e informações básicas das contas de anúncios do Facebook</li>
+            <li><strong>Contas de Anúncios:</strong> IDs, nomes, moeda, status e demais informações básicas das contas de anúncios do Facebook conectadas</li>
+            <li><strong>Business Managers:</strong> IDs, nomes e status de verificação dos Business Managers conectados</li>
             <li><strong>Páginas do Facebook:</strong> IDs e nomes das páginas conectadas</li>
-            <li><strong>Pixels da Meta:</strong> IDs dos pixels de rastreamento</li>
-            <li><strong>Dados de Campanhas:</strong> Informações sobre campanhas de anúncios para clonagem</li>
+            <li><strong>Pixels da Meta:</strong> IDs e nomes dos pixels de rastreamento associados às contas conectadas</li>
+            <li><strong>Dados de Campanhas:</strong> Informações sobre campanhas, conjuntos de anúncios e anúncios para clonagem e análise</li>
+            <li><strong>Tokens de Acesso:</strong> Tokens de autorização (de usuário ou de sistema) necessários para consultar a API do Facebook em seu nome</li>
         </ul>
     </div>
 
@@ -57,48 +59,60 @@
         <p>Utilizamos as informações coletadas para:</p>
         <ul>
             <li>Autenticar usuários através do Facebook</li>
-            <li>Exibir contas de anúncios e páginas conectadas</li>
+            <li>Exibir contas de anúncios, Business Managers, páginas e pixels conectados</li>
             <li>Permitir a clonagem de campanhas entre contas</li>
+            <li>Sincronizar e exibir dados de desempenho (insights) das campanhas conectadas para fins de análise</li>
             <li>Melhorar a funcionalidade do aplicativo</li>
             <li>Fornecer suporte técnico</li>
         </ul>
     </div>
 
     <div class="section">
-        <h2>3. Compartilhamento de Dados</h2>
+        <h2>3. Compartilhamento de Dados e Operadores</h2>
         <p>Não vendemos, alugamos ou compartilhamos suas informações pessoais com terceiros, exceto:</p>
         <ul>
             <li>Quando exigido por lei</li>
             <li>Para proteger nossos direitos legais</li>
-            <li>Com provedores de serviços que nos ajudam a operar o aplicativo</li>
+            <li>Com os operadores de dados/provedores de infraestrutura abaixo, que processam dados em nosso nome exclusivamente para operar o aplicativo:
+                <ul>
+                    <li><strong>Supabase, Inc.</strong> — banco de dados (PostgreSQL) onde os tokens de acesso (criptografados) e a estrutura de contas/Business Manager são armazenados</li>
+                    <li><strong>Vercel Inc.</strong> — hospedagem da aplicação web</li>
+                </ul>
+            </li>
         </ul>
+        <p>Nenhum desses operadores tem permissão para usar os dados para finalidades próprias.</p>
     </div>
 
     <div class="section">
         <h2>4. Segurança dos Dados</h2>
         <p>Implementamos medidas de segurança adequadas para proteger suas informações:</p>
         <ul>
-            <li>Criptografia de dados em trânsito</li>
-            <li>Armazenamento seguro de tokens de acesso</li>
-            <li>Controle de acesso restrito aos dados</li>
+            <li>Criptografia de dados em trânsito (HTTPS/TLS)</li>
+            <li>Tokens de acesso armazenados de forma criptografada em repouso (AES-256-GCM) no banco de dados</li>
+            <li>Controle de acesso restrito aos dados (acesso apenas por processos internos do servidor, nunca exposto ao navegador)</li>
             <li>Monitoramento regular de segurança</li>
         </ul>
     </div>
 
     <div class="section">
-        <h2>5. Seus Direitos</h2>
+        <h2>5. Retenção de Dados</h2>
+        <p>Os Dados da Plataforma (tokens de acesso, estrutura de contas, páginas e pixels) são mantidos enquanto a conexão com sua conta do Facebook permanecer ativa no AdCloner Pro. Ao desconectar uma conta (removendo a conexão pelo painel do aplicativo) ou ao solicitar exclusão via contato abaixo, os dados correspondentes são apagados permanentemente do banco de dados.</p>
+    </div>
+
+    <div class="section">
+        <h2>6. Seus Direitos</h2>
         <p>Você tem o direito de:</p>
         <ul>
             <li>Acessar suas informações pessoais</li>
             <li>Corrigir dados imprecisos</li>
             <li>Solicitar a exclusão de seus dados</li>
-            <li>Revogar o acesso do aplicativo às suas contas do Facebook</li>
+            <li>Revogar o acesso do aplicativo às suas contas do Facebook, e/ou remover a conexão diretamente pelo painel do AdCloner Pro</li>
             <li>Exportar seus dados</li>
         </ul>
     </div>
 
     <div class="section">
-        <h2>6. Cookies e Tecnologias Similares</h2>
+        <h2>7. Cookies e Tecnologias Similares</h2>
         <p>Utilizamos cookies e tecnologias similares para:</p>
         <ul>
             <li>Manter sua sessão ativa</li>
@@ -108,7 +122,7 @@
     </div>
 
     <div class="section">
-        <h2>7. Integração com Facebook</h2>
+        <h2>8. Integração com Facebook</h2>
         <p>O AdCloner Pro utiliza a API do Facebook e está sujeito à:</p>
         <ul>
             <li><a href="https://www.facebook.com/policy.php" target="_blank">Política de Dados do Facebook</a></li>
@@ -118,28 +132,28 @@
     </div>
 
     <div class="section">
-        <h2>8. Alterações na Política</h2>
+        <h2>9. Alterações na Política</h2>
         <p>Podemos atualizar esta política de privacidade periodicamente. Notificaremos sobre mudanças significativas através do aplicativo ou por email.</p>
     </div>
 
     <div class="section">
-        <h2>9. Jurisdição</h2>
+        <h2>10. Jurisdição</h2>
         <p>Esta política está sujeita às leis de proteção de dados aplicáveis, incluindo o LGPD (Lei Geral de Proteção de Dados) no Brasil.</p>
     </div>
 
     <div class="contact">
-        <h2>10. Contato</h2>
+        <h2>11. Contato</h2>
         <p>Se você tiver dúvidas sobre esta política de privacidade, entre em contato conosco:</p>
         <ul>
             <li><strong>Email:</strong> privacy@adclonerpro.com</li>
-            <li><strong>Website:</strong> https://adclonerpro.com</li>
+            <li><strong>Website:</strong> https://adcloner.vercel.app</li>
             <li><strong>Endereço:</strong> [Seu endereço comercial]</li>
         </ul>
     </div>
 
     <div class="section">
-        <h2>11. Consentimento</h2>
+        <h2>12. Consentimento</h2>
         <p>Ao usar o AdCloner Pro, você concorda com esta política de privacidade e com o processamento de suas informações conforme descrito.</p>
     </div>
 </body>
-</html> 
+</html>
