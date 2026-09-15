@@ -101,6 +101,10 @@ export default function DashboardPage() {
   const [platformBreakdown, setPlatformBreakdown] = useState<BreakdownRow[]>([])
   const [placementBreakdown, setPlacementBreakdown] = useState<BreakdownRow[]>([])
   const [ageBreakdown, setAgeBreakdown] = useState<BreakdownRow[]>([])
+  // Mobile vs. Desktop — device_platform, único breakdown de dispositivo que a Meta suporta
+  // sozinho (impression_device precisaria combinar com publisher_platform, mas o pedido aqui foi
+  // especificamente a visão simples Mobile/Desktop).
+  const [deviceBreakdown, setDeviceBreakdown] = useState<BreakdownRow[]>([])
   const [breakdownsLoading, setBreakdownsLoading] = useState<boolean>(false)
 
   const fetchDashboardData = useCallback(async () => {
@@ -226,6 +230,7 @@ export default function DashboardPage() {
       const platformTotals = new Map<string, number>()
       const placementTotals = new Map<string, number>()
       const ageTotals = new Map<string, number>()
+      const deviceTotals = new Map<string, number>()
 
       await Promise.all(
         activeAccounts.map(async (account) => {
@@ -254,6 +259,9 @@ export default function DashboardPage() {
             }
             for (const row of data.age || []) {
               ageTotals.set(row.label, (ageTotals.get(row.label) || 0) + (row.conversionValues || 0))
+            }
+            for (const row of data.device || []) {
+              deviceTotals.set(row.label, (deviceTotals.get(row.label) || 0) + (row.conversionValues || 0))
             }
           } catch (error) {
             console.error(`Error fetching breakdowns for account ${account.id}:`, error)
@@ -299,6 +307,12 @@ export default function DashboardPage() {
           .map(([label, value]) => ({ label, value }))
           .sort((a, b) => AGE_ORDER.indexOf(a.label) - AGE_ORDER.indexOf(b.label))
       )
+
+      setDeviceBreakdown(
+        Array.from(deviceTotals.entries())
+          .map(([label, value]) => ({ label, value }))
+          .sort((a, b) => b.value - a.value)
+      )
     } finally {
       setBreakdownsLoading(false)
     }
@@ -328,6 +342,7 @@ export default function DashboardPage() {
     setPlatformBreakdown([])
     setPlacementBreakdown([])
     setAgeBreakdown([])
+    setDeviceBreakdown([])
     // Nenhuma conta conectada (ex.: usuário removeu todos os perfis em Integrações) — zera as
     // métricas em vez de deixar os últimos valores buscados nesta mesma sessão presos na tela.
     // Mesmo bug de interferência já corrigido na tela Meta Business (ver seção 41 do doc do
@@ -610,6 +625,16 @@ export default function DashboardPage() {
                     </div>
                   ) : (
                     <BreakdownBarChart data={ageBreakdown} valueFormatter={formatCurrency} />
+                  )}
+                </div>
+                <div className="card p-4">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Vendas por Dispositivo</h3>
+                  {breakdownsLoading ? (
+                    <div className="flex items-center justify-center h-32">
+                      <RefreshCw className="w-5 h-5 animate-spin text-gray-400" />
+                    </div>
+                  ) : (
+                    <BreakdownBarChart data={deviceBreakdown} valueFormatter={formatCurrency} />
                   )}
                 </div>
               </div>

@@ -74,6 +74,14 @@ const PLATFORM_LABELS: Record<string, string> = {
   messenger: 'Messenger'
 }
 
+// Junta mobile_app/mobile_web num único rótulo "Mobile" — o pedido do usuário foi
+// especificamente "Mobile vs. Desktop", não o detalhe de app vs. navegador mobile.
+const DEVICE_LABELS: Record<string, string> = {
+  desktop: 'Desktop',
+  mobile_app: 'Mobile',
+  mobile_web: 'Mobile'
+}
+
 const PLACEMENT_LABELS: Record<string, string> = {
   feed: 'Feed',
   right_hand_column: 'Coluna Direita',
@@ -162,7 +170,7 @@ export async function GET(request: NextRequest) {
       const stale = getLastGood<any>(cacheKey)
       return NextResponse.json(
         {
-          ...(stale?.data || { country: [], hour: [], weekday: [], platform: [], placement: [], age: [] }),
+          ...(stale?.data || { country: [], hour: [], weekday: [], platform: [], placement: [], age: [], device: [] }),
           rateLimited: true,
           retryAfterSeconds: retryAfterSecondsFor(accountId),
           message: 'Limite de requisições da Meta atingido para esta conta. Aguarde antes de tentar novamente.'
@@ -192,7 +200,7 @@ export async function GET(request: NextRequest) {
         const stale = getLastGood<any>(cacheKey)
         return NextResponse.json(
           {
-            ...(stale?.data || { country: [], hour: [], weekday: [], platform: [], placement: [], age: [] }),
+            ...(stale?.data || { country: [], hour: [], weekday: [], platform: [], placement: [], age: [], device: [] }),
             rateLimited: true,
             retryAfterSeconds: retryAfterSecondsFor(accountId),
             message: 'Limite de requisições da Meta atingido para esta conta. Aguarde antes de tentar novamente.'
@@ -201,7 +209,7 @@ export async function GET(request: NextRequest) {
         )
       }
 
-      const [countryRes, hourRes, dailyRes, platformRes, placementRes, ageRes] = responses
+      const [countryRes, hourRes, dailyRes, platformRes, placementRes, ageRes, deviceRes] = responses
 
       // País — uma linha por país já agregada no período inteiro pela própria API.
       const country: BreakdownRow[] = []
@@ -276,6 +284,7 @@ export async function GET(request: NextRequest) {
       if (platformRes.code !== 200) console.error('❌ Erro no breakdown de plataforma:', platformRes.body)
       if (placementRes.code !== 200) console.error('❌ Erro no breakdown de posicionamento:', placementRes.body)
       if (ageRes.code !== 200) console.error('❌ Erro no breakdown de idade:', ageRes.body)
+      if (deviceRes.code !== 200) console.error('❌ Erro no breakdown de dispositivo:', deviceRes.body)
 
       const platform = platformRes.code === 200
         ? aggregateByField(platformRes.body, 'publisher_platform', PLATFORM_LABELS)
@@ -286,8 +295,13 @@ export async function GET(request: NextRequest) {
       const age = ageRes.code === 200
         ? aggregateByField(ageRes.body, 'age')
         : []
+      // device_platform (Mobile vs. Desktop) — suportado sozinho pela Meta, sem precisar
+      // combinar com publisher_platform como aconteceu com posicionamento/dispositivo específico.
+      const device = deviceRes.code === 200
+        ? aggregateByField(deviceRes.body, 'device_platform', DEVICE_LABELS)
+        : []
 
-      const result = { country, hour, weekday: weekdayTotals, platform, placement, age }
+      const result = { country, hour, weekday: weekdayTotals, platform, placement, age, device }
 
       cache.set(cacheKey, result, 300)
       saveLastGood(cacheKey, result)

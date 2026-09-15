@@ -377,7 +377,7 @@ export class FacebookBatchAPI {
 
     // Ordem fixa — o índice de cada item aqui é usado posicionalmente em
     // app/api/meta-business/insights-breakdown/route.ts (responses[0]=country, [1]=hora,
-    // [2]=diário/dia da semana, [3]=plataforma, [4]=posicionamento, [5]=idade). `publisher_platform`
+    // [2]=diário/dia da semana, [3]=plataforma, [4]=posicionamento, [5]=idade, [6]=dispositivo). `publisher_platform`
     // e `platform_position` são combináveis com `age` na mesma tabela de "Permutations" da doc
     // oficial da Meta, mas mantemos cada dimensão em sua própria sub-requisição (sem cruzar) pra
     // manter a leitura de cada gráfico simples — 6 sub-requisições, ainda 1 única chamada HTTP de
@@ -411,6 +411,14 @@ export class FacebookBatchAPI {
       {
         method: 'GET',
         relative_url: `${accountId}/insights?fields=${fields}&level=account&limit=300&breakdowns=age${dateParam}`
+      },
+      // device_platform (Mobile vs. Desktop) — diferente de platform_position/impression_device,
+      // esse breakdown É suportado sozinho pela Meta (confirmado na doc oficial, marcado como
+      // combinável apenas opcionalmente com action_type/action_target_id/action_destination, que
+      // não usamos aqui).
+      {
+        method: 'GET',
+        relative_url: `${accountId}/insights?fields=${fields}&level=account&limit=300&breakdowns=device_platform${dateParam}`
       }
     ]
   }
