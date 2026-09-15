@@ -7,10 +7,17 @@ export const dynamic = 'force-dynamic'
  * Lista todas as contas de anúncio já descobertas e salvas no Supabase,
  * de todas as conexões cadastradas — ao contrário de /api/facebook/accounts
  * (que busca ao vivo na Graph API usando só o cookie da sessão atual).
+ *
+ * `?enabledOnly=true` filtra pra só as contas com sync_enabled=true — usado pelo AppContext
+ * (Meta Business/Dashboard), pra que uma conta desabilitada em Integrações pare de ser buscada/
+ * contabilizada nessas telas. A tela de Integrações chama sem esse parâmetro, pois precisa
+ * listar e reativar contas desabilitadas.
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const accounts = await listAdAccounts()
+    const { searchParams } = new URL(request.url)
+    const enabledOnly = searchParams.get('enabledOnly') === 'true'
+    const accounts = await listAdAccounts({ enabledOnly })
     return NextResponse.json({ success: true, accounts })
   } catch (error) {
     console.error('Erro ao listar contas de anúncio:', error)

@@ -296,10 +296,16 @@ export async function listConnections(): Promise<ConnectionSummary[]> {
   return results
 }
 
-export async function listAdAccounts(): Promise<AdAccountSummary[]> {
+/**
+ * @param options.enabledOnly Quando true, devolve só as contas com `sync_enabled = true`. Usado
+ * pelo Meta Business/Dashboard (via AppContext) — uma conta desabilitada em Integrações não deve
+ * ser buscada nem contabilizada ali. A tela de Integrações (listagem/toggle por conta) continua
+ * chamando sem esse filtro, pois precisa enxergar e reativar contas desabilitadas.
+ */
+export async function listAdAccounts(options?: { enabledOnly?: boolean }): Promise<AdAccountSummary[]> {
   const supabase = getSupabaseAdmin()
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('meta_ad_accounts')
     .select(
       `id, connection_id, meta_account_id, name, currency, account_status, relationship, sync_enabled, last_synced_at,
@@ -307,6 +313,12 @@ export async function listAdAccounts(): Promise<AdAccountSummary[]> {
        meta_connections ( fb_user_name )`
     )
     .order('created_at', { ascending: false })
+
+  if (options?.enabledOnly) {
+    query = query.eq('sync_enabled', true)
+  }
+
+  const { data, error } = await query
 
   if (error) throw new Error(`Falha ao listar contas de anúncio: ${error.message}`)
 

@@ -61,7 +61,9 @@ export function AppProvider({ children }: AppProviderProps) {
       // da ÚLTIMA conta conectada. Era exatamente esse o motivo do bug "ao adicionar outra conta,
       // a anterior sumia do painel": o cookie é sobrescrito a cada novo login, então a busca ao
       // vivo só enxergava a conta mais recente.
-      const response = await fetch('/api/meta/accounts', {
+      // enabledOnly=true: exclui contas desabilitadas (toggle em Integrações) — Meta Business e
+      // Dashboard não devem buscar nem contabilizar dados de uma conta que o usuário desligou.
+      const response = await fetch('/api/meta/accounts?enabledOnly=true', {
         credentials: 'include'
       })
 
