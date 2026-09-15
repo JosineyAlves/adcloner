@@ -6,7 +6,7 @@ import toast from 'react-hot-toast'
 
 interface BudgetEditorProps {
   id: string
-  currentBudget: number // Já vem em reais da API
+  currentBudget: number // Já vem no valor bruto retornado pela Meta (sem conversão — ver seção 25)
   budgetType: 'daily' | 'lifetime'
   onUpdate: (id: string, budget: number, budgetType: 'daily' | 'lifetime') => Promise<void>
   disabled?: boolean
@@ -19,12 +19,12 @@ interface BudgetEditorProps {
 
 export default function BudgetEditor({
   id,
-  currentBudget, // Já em reais
+  currentBudget, // Já no valor bruto, sem conversão
   budgetType,
   onUpdate,
   disabled = false,
-  currency = 'BRL',
-  minValue = 0.01, // R$ 0,01 (1 centavo)
+  currency = 'USD',
+  minValue = 0.01, // $0.01 (1 centavo)
   maxValue = 1000000,
   isCBO = false,
   level = 'campaign'
@@ -34,25 +34,25 @@ export default function BudgetEditor({
   const [isUpdating, setIsUpdating] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Formatar valor para exibição (já está em reais)
+  // Formatar valor para exibição — padrão USD/en-US do app inteiro (ver seção 25), sem conversão.
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,
       minimumFractionDigits: 2
-    }).format(value) // Sem conversão, já está em reais
+    }).format(value)
   }
 
-  // Converter valor de entrada para reais (sem conversão)
+  // Converter valor de entrada (sem conversão de moeda)
   const parseToReais = (value: string) => {
     const cleanValue = value.replace(/[^\d,.-]/g, '')
     const numericValue = parseFloat(cleanValue.replace(',', '.'))
-    return Math.round(numericValue * 100) / 100 // Manter em reais
+    return Math.round(numericValue * 100) / 100
   }
 
-  // Converter reais para valor de entrada
+  // Converter valor bruto para o formato do campo de entrada (padrão americano: ponto decimal)
   const parseFromReais = (reais: number) => {
-    return reais.toFixed(2).replace('.', ',')
+    return reais.toFixed(2)
   }
 
   useEffect(() => {
@@ -161,7 +161,7 @@ export default function BudgetEditor({
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             className="w-full px-3 py-2 text-sm border-0 rounded-lg focus:outline-none focus:ring-0"
-            placeholder="0,00"
+            placeholder="0.00"
             disabled={isUpdating}
           />
         </div>

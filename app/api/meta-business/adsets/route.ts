@@ -408,8 +408,12 @@ export async function GET(request: NextRequest) {
               console.warn(`⚠️ Erro ao buscar insights do ad set ${adSet.id}:`, insightsResponse)
             }
 
-            // Verificar se a campanha pai usa CBO (simplificado)
-            const campaignAdvantageBudget = false // Assumir ABO por padrão para evitar rate limit
+            // Campanha pai usa CBO (Advantage Campaign Budget) quando o ORÇAMENTO está setado no
+            // nível da Campaign, não do Ad Set — a Graph API não expõe um booleano dedicado pra
+            // isso (ver nota em lib/facebook-batch-api.ts). campaign{daily_budget,lifetime_budget}
+            // já vem de graça na mesma chamada que lista os ad sets (field expansion), sem custo
+            // extra de rate limit.
+            const campaignAdvantageBudget = !!(adSet.campaign?.daily_budget || adSet.campaign?.lifetime_budget)
 
             // Buscar métricas de vídeo para o adset
             let videoMetrics: VideoMetrics | undefined = undefined
@@ -498,7 +502,7 @@ export async function GET(request: NextRequest) {
               name: adSet.name,
               campaign_id: adSet.campaign?.id || '',
               campaign_name: adSet.campaign?.name || '',
-              campaign_advantage_budget: false,
+              campaign_advantage_budget: !!(adSet.campaign?.daily_budget || adSet.campaign?.lifetime_budget),
               status: adSet.status,
               effective_status: adSet.effective_status || adSet.status,
               daily_budget: adSet.daily_budget ? Math.round(parseInt(adSet.daily_budget) / 100) : undefined,

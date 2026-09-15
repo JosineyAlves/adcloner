@@ -348,7 +348,12 @@ export class FacebookBatchAPI {
     return [
       {
         method: 'GET',
-        relative_url: `${accountId}/adsets?fields=id,name,campaign_id,campaign{id,name},status,effective_status,daily_budget,lifetime_budget,created_time,updated_time&limit=2500${dateParam}`
+        // campaign{...,daily_budget,lifetime_budget} pede os campos de orçamento da campanha-pai
+        // via field expansion (mesma chamada, sem custo extra de rate limit) — é o único jeito de
+        // saber se aquela campanha usa CBO (Advantage Campaign Budget): a Graph API não expõe um
+        // booleano dedicado para isso, só o fato de o orçamento estar setado na Campaign em vez do
+        // Ad Set. Ver `campaignAdvantageBudget` em app/api/meta-business/adsets/route.ts.
+        relative_url: `${accountId}/adsets?fields=id,name,campaign_id,campaign{id,name,daily_budget,lifetime_budget},status,effective_status,daily_budget,lifetime_budget,created_time,updated_time&limit=2500${dateParam}`
       }
     ]
   }

@@ -243,44 +243,56 @@ export default function AdSetsTable({
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <BudgetEditor
-                    id={adSet.id}
-                    currentBudget={adSet.daily_budget || adSet.lifetime_budget || 0}
-                    budgetType={adSet.budget_type}
-                    onUpdate={async (id, budget, budgetType) => {
-                      try {
-                        const response = await fetch(`/api/meta-business/adsets/${id}/budget`, {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            budget: budget, // Já está em reais
-                            budgetType,
-                            // Deixa o servidor resolver o token da conexão dona dessa conta em
-                            // vez de só o cookie único — ver lib/meta-connections.ts.
-                            accountId: adSet.account_id
+                  {adSet.campaign_advantage_budget ? (
+                    // Campanha-pai usa CBO (Advantage Campaign Budget) — o orçamento vive na
+                    // Campaign, o Ad Set não tem orçamento próprio pra editar (mesmo padrão de
+                    // "Definido no conjunto" usado em AdsTable.tsx para anúncios).
+                    <div>
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">-</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        Definido na campanha
+                      </div>
+                    </div>
+                  ) : (
+                    <BudgetEditor
+                      id={adSet.id}
+                      currentBudget={adSet.daily_budget || adSet.lifetime_budget || 0}
+                      budgetType={adSet.budget_type}
+                      onUpdate={async (id, budget, budgetType) => {
+                        try {
+                          const response = await fetch(`/api/meta-business/adsets/${id}/budget`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              budget: budget,
+                              budgetType,
+                              // Deixa o servidor resolver o token da conexão dona dessa conta em
+                              // vez de só o cookie único — ver lib/meta-connections.ts.
+                              accountId: adSet.account_id
+                            })
                           })
-                        })
 
-                        const result = await response.json()
+                          const result = await response.json()
 
-                        if (result.success) {
-                          onBudgetUpdate('adsets', id, budget, budgetType)
-                        } else {
-                          const error = new Error(result.error || 'Erro ao atualizar orçamento')
-                          ;(error as any).error = result.error
+                          if (result.success) {
+                            onBudgetUpdate('adsets', id, budget, budgetType)
+                          } else {
+                            const error = new Error(result.error || 'Erro ao atualizar orçamento')
+                            ;(error as any).error = result.error
+                            throw error
+                          }
+                        } catch (error) {
+                          console.error('Erro ao atualizar orçamento:', error)
                           throw error
                         }
-                      } catch (error) {
-                        console.error('Erro ao atualizar orçamento:', error)
-                        throw error
-                      }
-                    }}
-                    disabled={false}
-                    minValue={0.01} // R$ 0,01 (valor mínimo)
-                    maxValue={10000000} // R$ 100.000,00 em centavos
-                    isCBO={adSet.campaign_advantage_budget}
-                    level="adset"
-                  />
+                      }}
+                      disabled={false}
+                      minValue={0.01}
+                      maxValue={10000000}
+                      isCBO={adSet.campaign_advantage_budget}
+                      level="adset"
+                    />
+                  )}
                 </td>
                 {showMetrics && metrics.filter(m => m.visible).map((metric) => {
                   const value = (adSet as any)[metric.id]

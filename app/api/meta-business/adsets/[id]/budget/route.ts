@@ -21,11 +21,11 @@ export async function POST(
       )
     }
 
-    // Validar se o orçamento é válido (mínimo R$ 0,01)
+    // Validar se o orçamento é válido (mínimo $0.01)
     const budgetValue = budget || daily_budget || lifetime_budget
     if (!budgetValue || budgetValue < 0.01) {
       return NextResponse.json(
-        { error: 'Orçamento deve ser pelo menos R$ 0,01' },
+        { error: 'Orçamento deve ser pelo menos $0,01' },
         { status: 400 }
       )
     }
@@ -134,7 +134,7 @@ export async function POST(
         adSetId,
         budget: budgetValue,
         budgetType: budgetType || (daily_budget ? 'daily' : 'lifetime'),
-        message: `Orçamento do conjunto atualizado para R$ ${budgetValue.toFixed(2)}`
+        message: `Orçamento do conjunto atualizado para $${budgetValue.toFixed(2)}`
       })
     } catch (error) {
       console.error('Error updating ad set budget:', error)
