@@ -86,18 +86,15 @@ export default function Sidebar() {
       transition={{ duration: hydrated ? 0.2 : 0, ease: 'easeInOut' }}
       className="relative flex h-full flex-col bg-brand-500 flex-shrink-0 overflow-hidden"
     >
-      {/* Logo/Brand */}
+      {/* Logo/Brand — logo.svg (ícone + wordmark) expandida, icon-logo.svg (só o ícone,
+          já com o quadrado na cor de marca) recolhida. Arquivos fornecidos pelo usuário,
+          servidos de /public. */}
       <div className={`flex h-14 items-center border-b border-black/10 ${collapsed ? 'justify-center px-0' : 'px-4'}`}>
-        <div className="flex items-center space-x-2 min-w-0">
-          <div className="w-7 h-7 bg-black rounded-ds-sm flex items-center justify-center flex-shrink-0">
-            <span className="text-brand-500 text-xs font-bold">AC</span>
-          </div>
-          {!collapsed && (
-            <span className="text-base font-bold text-black truncate">
-              AdCloner Pro
-            </span>
-          )}
-        </div>
+        {collapsed ? (
+          <img src="/icon-logo.svg" alt="AdCloner Pro" className="w-8 h-8 flex-shrink-0" />
+        ) : (
+          <img src="/logo.svg" alt="AdCloner Pro" className="h-6 w-auto max-w-[160px]" />
+        )}
       </div>
 
       {/* Navegação principal */}
