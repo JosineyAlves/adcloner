@@ -61,6 +61,11 @@ export const LOCAL_CACHE_KEYS = {
   // Prefixo — a chave real inclui o viewKey (ex.: "adcloner:column-preferences:v1:meta_business_metrics"),
   // ver hooks/useColumnPreferences.ts. Isso permite mais de uma tela com seletor de colunas própria.
   columnPreferencesPrefix: 'adcloner:column-preferences:v1:',
+  // Período de data (datePreset/customRange) compartilhado entre TODAS as telas com seletor de
+  // período (Dashboard Financeiro e Meta Business) — pedido do usuário: selecionar "Últimos 30
+  // dias" numa tela deve valer para as outras também, em vez de cada uma guardar seu próprio
+  // período independente. Ver app/dashboard/page.tsx e app/meta-business/page.tsx.
+  sharedDateFilter: 'adcloner:shared-date-filter:v1',
 } as const
 
 // Quanto tempo o dado salvo é considerado "fresco" antes de forçar um refetch em primeiro plano.

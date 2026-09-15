@@ -22,6 +22,11 @@ import StatsCard from '@/components/dashboard/StatsCard'
 import DateSelector, { DateRange } from '@/components/dashboard/DateSelector'
 import { useApp } from '@/contexts/AppContext'
 import { useDebounce } from '@/lib/debounce'
+import {
+  readLocalCache,
+  writeLocalCache,
+  LOCAL_CACHE_KEYS
+} from '@/lib/local-storage-cache'
 import toast from 'react-hot-toast'
 
 interface DashboardMetrics {
@@ -72,11 +77,18 @@ export default function DashboardPage() {
   })
   
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
-  // Padrão pedido pelo usuário: abrir sempre com "Hoje" (mesma decisão já tomada para a tela
-  // Meta Business — ver seção 12 do doc do projeto), em vez de "Últimos 30 dias" — período mais
-  // pesado, que junto com a busca eager abaixo contribuía mais pro rate limit da Meta.
-  const [datePreset, setDatePreset] = useState('today')
-  const [customRange, setCustomRange] = useState<DateRange | undefined>(undefined)
+  // Período de data COMPARTILHADO com a tela Meta Business (lib/local-storage-cache.ts) —
+  // selecionar um período aqui também vale lá, e vice-versa. Sem nada salvo ainda, abre com
+  // "Hoje" (padrão pedido pelo usuário — ver seção 12 do doc do projeto), em vez de "Últimos 30
+  // dias" — período mais pesado, que junto com a busca eager abaixo contribuía mais pro rate
+  // limit da Meta.
+  const sharedDateFilter = useState(() =>
+    readLocalCache<{ datePreset: string; customRange?: DateRange }>(LOCAL_CACHE_KEYS.sharedDateFilter)
+  )[0]
+  const [datePreset, setDatePreset] = useState(() => sharedDateFilter?.data.datePreset || 'today')
+  const [customRange, setCustomRange] = useState<DateRange | undefined>(() =>
+    sharedDateFilter?.data.datePreset ? sharedDateFilter.data.customRange : undefined
+  )
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -185,12 +197,31 @@ export default function DashboardPage() {
     setDatePreset(preset)
     if (preset !== 'custom') {
       setCustomRange(undefined)
+      writeLocalCache(LOCAL_CACHE_KEYS.sharedDateFilter, { datePreset: preset, customRange: undefined })
     }
   }
 
   const handleCustomRangeChange = (range: DateRange) => {
     setCustomRange(range)
+    writeLocalCache(LOCAL_CACHE_KEYS.sharedDateFilter, { datePreset: 'custom', customRange: range })
   }
+
+  // Sincroniza o período de data em tempo real quando ele é alterado em OUTRA aba/tela
+  // (ex.: Meta Business) — o evento 'storage' só dispara nas abas que NÃO fizeram a escrita.
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== LOCAL_CACHE_KEYS.sharedDateFilter || !event.newValue) return
+      try {
+        const parsed = JSON.parse(event.newValue) as { data: { datePreset: string; customRange?: DateRange } }
+        setDatePreset(parsed.data.datePreset)
+        setCustomRange(parsed.data.customRange)
+      } catch (error) {
+        console.warn('⚠️ Falha ao ler período de data compartilhado:', error)
+      }
+    }
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
+  }, [])
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {

@@ -71,13 +71,21 @@ export default function MetaBusinessPage() {
   const cachedMetaBusiness = useState(() =>
     readLocalCache<MetaBusinessCachedData>(LOCAL_CACHE_KEYS.metaBusinessData)
   )[0]
+  // Período de data COMPARTILHADO entre esta tela e o Dashboard Financeiro (lib/local-storage-cache.ts)
+  // — selecionar um período aqui também vale lá, e vice-versa, em vez de cada tela guardar o seu
+  // independente. Prioridade na primeira carga: período compartilhado > cache antigo desta própria
+  // tela > "Hoje" (padrão pedido pelo usuário).
+  const sharedDateFilter = useState(() =>
+    readLocalCache<{ datePreset: string; customRange?: DateRange }>(LOCAL_CACHE_KEYS.sharedDateFilter)
+  )[0]
 
   const [activeTab, setActiveTab] = useState<'accounts' | 'campaigns' | 'adsets' | 'ads'>('accounts')
-  // Padrão pedido pelo usuário: abrir a tela já com "Hoje" selecionado (em vez de "Últimos 30
-  // dias") — só usado quando não há nada em cache ainda; uma visita anterior mantém o período que
-  // o usuário deixou selecionado.
-  const [datePreset, setDatePreset] = useState(() => cachedMetaBusiness?.data.datePreset || 'today')
-  const [customRange, setCustomRange] = useState<DateRange | undefined>(() => cachedMetaBusiness?.data.customRange)
+  const [datePreset, setDatePreset] = useState(() =>
+    sharedDateFilter?.data.datePreset || cachedMetaBusiness?.data.datePreset || 'today'
+  )
+  const [customRange, setCustomRange] = useState<DateRange | undefined>(() =>
+    sharedDateFilter?.data.datePreset ? sharedDateFilter.data.customRange : cachedMetaBusiness?.data.customRange
+  )
   const [accounts, setAccounts] = useState<MetaAccount[]>(() => cachedMetaBusiness?.data.accounts || [])
   const [campaigns, setCampaigns] = useState<MetaCampaign[]>(() => cachedMetaBusiness?.data.campaigns || [])
   const [adSets, setAdSets] = useState<MetaAdSet[]>(() => cachedMetaBusiness?.data.adSets || [])
@@ -164,6 +172,26 @@ export default function MetaBusinessPage() {
   adSetsRef.current = adSets
   const adsRef = useRef(ads)
   adsRef.current = ads
+
+  // Se o período de data for alterado no Dashboard Financeiro (outra aba/janela do navegador
+  // aberta na mesma sessão), o evento nativo `storage` avisa esta página em tempo real — sem
+  // isso, só veríamos o novo período compartilhado ao recarregar/reabrir esta tela. `storage` só
+  // dispara em OUTRAS abas (nunca na que fez a escrita), então não conflita com o próprio
+  // `setDatePreset`/`setCustomRange` chamado localmente pelo handler desta página.
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== LOCAL_CACHE_KEYS.sharedDateFilter || !event.newValue) return
+      try {
+        const parsed = JSON.parse(event.newValue) as { data: { datePreset: string; customRange?: DateRange } }
+        setDatePreset(parsed.data.datePreset)
+        setCustomRange(parsed.data.customRange)
+      } catch (error) {
+        console.warn('⚠️ Falha ao ler período de data compartilhado:', error)
+      }
+    }
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
+  }, [])
 
   // Buscar dados de uma lista de contas ativas para UM endpoint específico, em paralelo entre
   // as contas (mas um endpoint por vez no total) — usado pelas 3 funções de busca abaixo.
@@ -454,11 +482,15 @@ export default function MetaBusinessPage() {
     setDatePreset(preset)
     if (preset !== 'custom') {
       setCustomRange(undefined)
+      // Propaga o novo período pro Dashboard Financeiro (e qualquer outra aba/tela aberta) via
+      // localStorage compartilhado — ver comentário em lib/local-storage-cache.ts.
+      writeLocalCache(LOCAL_CACHE_KEYS.sharedDateFilter, { datePreset: preset, customRange: undefined })
     }
   }
 
   const handleCustomRangeChange = (range: DateRange) => {
     setCustomRange(range)
+    writeLocalCache(LOCAL_CACHE_KEYS.sharedDateFilter, { datePreset: 'custom', customRange: range })
   }
 
   const handleSearchChange = (search: string) => {
