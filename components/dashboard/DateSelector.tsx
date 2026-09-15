@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { ChevronDown, X } from 'lucide-react'
+import { ChevronDown, X, Calendar as CalendarIcon } from 'lucide-react'
+import { format, parseISO, isValid } from 'date-fns'
+import Calendar from './Calendar'
 
 export interface DatePreset {
   value: string
@@ -105,6 +107,23 @@ export default function DateSelector({
     until: customRange?.until || ''
   })
 
+  // Campo de calendário customizado aberto ('since'/'until'/none) — substitui o date picker
+  // nativo do navegador, que não pode ser restilizado com a cor de marca.
+  const [openField, setOpenField] = useState<'since' | 'until' | null>(null)
+  const customRangeRef = useRef<HTMLDivElement>(null)
+
+  // Fecha o calendário aberto ao clicar fora dele.
+  useEffect(() => {
+    if (!openField) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (customRangeRef.current && !customRangeRef.current.contains(e.target as Node)) {
+        setOpenField(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [openField])
+
   const selectedPreset = FACEBOOK_DATE_PRESETS.find(p => p.value === datePreset)
 
   // Detectar se é mobile e recalcular posição
@@ -204,6 +223,7 @@ export default function DateSelector({
       onDatePresetChange('custom')
       onCustomRangeChange(tempCustomRange)
       setIsOpen(false)
+      setOpenField(null)
     }
   }
 
@@ -213,6 +233,7 @@ export default function DateSelector({
       until: customRange?.until || ''
     })
     setShowCustomRange(false)
+    setOpenField(null)
     // Com o fix acima, abrir o editor de período personalizado não muda mais `datePreset` no
     // componente pai (só muda ao clicar "Aplicar") — então cancelar não precisa mais forçar
     // nenhum período de volta, o que já estava selecionado antes continua ativo.
@@ -288,28 +309,71 @@ export default function DateSelector({
                 ))}
               </div>
             ) : (
-              <div className="space-y-4">
-                <div>
+              <div className="space-y-4" ref={customRangeRef}>
+                <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Data de Início
                   </label>
-                  <input
-                    type="date"
-                    value={tempCustomRange.since}
-                    onChange={(e) => setTempCustomRange(prev => ({ ...prev, since: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-ds-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  />
+                  <button
+                    type="button"
+                    onClick={() => setOpenField(prev => prev === 'since' ? null : 'since')}
+                    className={`w-full flex items-center justify-between px-3 py-2 border rounded-ds-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors ${
+                      openField === 'since'
+                        ? 'border-brand-500 ring-1 ring-brand-500'
+                        : 'border-gray-300 dark:border-gray-600 hover:border-brand-400'
+                    }`}
+                  >
+                    <span className={tempCustomRange.since ? '' : 'text-gray-400'}>
+                      {tempCustomRange.since && isValid(parseISO(tempCustomRange.since))
+                        ? format(parseISO(tempCustomRange.since), 'dd/MM/yyyy')
+                        : 'dd/mm/aaaa'}
+                    </span>
+                    <CalendarIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  </button>
+                  {openField === 'since' && (
+                    <div className="absolute left-0 top-full mt-1 z-50">
+                      <Calendar
+                        selected={tempCustomRange.since && isValid(parseISO(tempCustomRange.since)) ? parseISO(tempCustomRange.since) : null}
+                        onSelect={(date) => {
+                          setTempCustomRange(prev => ({ ...prev, since: format(date, 'yyyy-MM-dd') }))
+                          setOpenField(null)
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
-                <div>
+                <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Data de Fim
                   </label>
-                  <input
-                    type="date"
-                    value={tempCustomRange.until}
-                    onChange={(e) => setTempCustomRange(prev => ({ ...prev, until: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-ds-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  />
+                  <button
+                    type="button"
+                    onClick={() => setOpenField(prev => prev === 'until' ? null : 'until')}
+                    className={`w-full flex items-center justify-between px-3 py-2 border rounded-ds-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors ${
+                      openField === 'until'
+                        ? 'border-brand-500 ring-1 ring-brand-500'
+                        : 'border-gray-300 dark:border-gray-600 hover:border-brand-400'
+                    }`}
+                  >
+                    <span className={tempCustomRange.until ? '' : 'text-gray-400'}>
+                      {tempCustomRange.until && isValid(parseISO(tempCustomRange.until))
+                        ? format(parseISO(tempCustomRange.until), 'dd/MM/yyyy')
+                        : 'dd/mm/aaaa'}
+                    </span>
+                    <CalendarIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  </button>
+                  {openField === 'until' && (
+                    <div className="absolute left-0 top-full mt-1 z-50">
+                      <Calendar
+                        selected={tempCustomRange.until && isValid(parseISO(tempCustomRange.until)) ? parseISO(tempCustomRange.until) : null}
+                        minDate={tempCustomRange.since && isValid(parseISO(tempCustomRange.since)) ? parseISO(tempCustomRange.since) : undefined}
+                        onSelect={(date) => {
+                          setTempCustomRange(prev => ({ ...prev, until: format(date, 'yyyy-MM-dd') }))
+                          setOpenField(null)
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
                 <div className="flex space-x-2">
                   <button
