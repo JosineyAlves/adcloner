@@ -2,19 +2,15 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { 
-  DollarSign, 
-  TrendingUp, 
-  TrendingDown, 
-  Percent, 
-  ShoppingCart, 
+import {
+  DollarSign,
+  TrendingUp,
+  Percent,
+  ShoppingCart,
   RefreshCw,
-  AlertCircle,
   CheckCircle,
-  XCircle,
   Calculator,
   Receipt,
-  CreditCard,
   BarChart3
 } from 'lucide-react'
 import Sidebar from '@/components/layout/Sidebar'
@@ -30,20 +26,20 @@ import {
 import toast from 'react-hot-toast'
 
 interface DashboardMetrics {
-  // Métricas Financeiras
+  // Métricas Financeiras — todas calculadas a partir de dados REAIS vindos da Meta (Graph/Marketing
+  // API), nunca simuladas. "revenue" vem do campo conversion_values das campanhas (valor de compra
+  // rastreado pelo Pixel/API de Conversões da Meta, o mesmo dado já exibido na coluna "Valor das
+  // Conversões" da aba Campanhas) — ver seção 34 do doc do projeto. Não existe fonte de vendas fora
+  // da Meta neste projeto (sem integração de checkout/pagamento), então isso é o dado real mais
+  // próximo de "vendas" disponível hoje.
   totalSpend: number
-  pendingSales: number
+  revenue: number
   roas: number | null
   profit: number
-  refundedSales: number
-  tax: number
   roi: number | null
-  productCosts: number
   margin: number | null
-  chargebackRate: number
-  additionalExpenses: number
-  fees: number
-  
+  averageTicket: number | null
+
   // Métricas de Performance
   totalCampaigns: number
   activeCampaigns: number
@@ -57,17 +53,12 @@ export default function DashboardPage() {
   const { accounts, isLoading: accountsLoading, refreshAccounts } = useApp()
   const [metrics, setMetrics] = useState<DashboardMetrics>({
     totalSpend: 0,
-    pendingSales: 0,
+    revenue: 0,
     roas: null,
     profit: 0,
-    refundedSales: 0,
-    tax: 0,
     roi: null,
-    productCosts: 0,
     margin: null,
-    chargebackRate: 0,
-    additionalExpenses: 0,
-    fees: 0,
+    averageTicket: null,
     totalCampaigns: 0,
     activeCampaigns: 0,
     pausedCampaigns: 0,
@@ -102,6 +93,7 @@ export default function DashboardPage() {
 
       // Buscar dados de todas as contas ativas
       let totalSpend = 0
+      let totalRevenue = 0
       let totalImpressions = 0
       let totalClicks = 0
       let totalConversions = 0
@@ -124,9 +116,12 @@ export default function DashboardPage() {
             activeCampaigns += campaigns.filter((c: any) => c.status === 'ACTIVE').length
             pausedCampaigns += campaigns.filter((c: any) => c.status === 'PAUSED').length
             
-            // Somar métricas
+            // Somar métricas — tudo dado real vindo da Meta, nada calculado/estimado aqui.
+            // "conversion_values" é o valor de compra que o Pixel/API de Conversões da Meta atribuiu
+            // àquela campanha (mesmo campo já exibido em "Valor das Conversões" na aba Campanhas).
             campaigns.forEach((campaign: any) => {
               totalSpend += campaign.spend || 0
+              totalRevenue += campaign.conversion_values || 0
               totalImpressions += campaign.impressions || 0
               totalClicks += campaign.clicks || 0
               totalConversions += campaign.conversions || 0
@@ -137,26 +132,23 @@ export default function DashboardPage() {
         }
       }
 
-      // Calcular métricas derivadas
-      const revenue = totalSpend * 3.5 // Simulação: ROAS médio de 3.5
+      // Métricas derivadas — todas calculadas em cima de totalSpend/totalRevenue/totalConversions
+      // reais, sem nenhum multiplicador fixo (ver seção 34 do doc do projeto).
+      const revenue = totalRevenue
       const profit = revenue - totalSpend
       const roas = totalSpend > 0 ? revenue / totalSpend : null
       const roi = totalSpend > 0 ? (profit / totalSpend) * 100 : null
       const margin = revenue > 0 ? (profit / revenue) * 100 : null
+      const averageTicket = totalConversions > 0 ? revenue / totalConversions : null
 
       setMetrics({
         totalSpend,
-        pendingSales: revenue * 0.1, // 10% das vendas pendentes
+        revenue,
         roas,
         profit,
-        refundedSales: revenue * 0.05, // 5% de reembolsos
-        tax: revenue * 0.1, // 10% de impostos
         roi,
-        productCosts: revenue * 0.3, // 30% custos de produto
         margin,
-        chargebackRate: 0.5, // 0.5% chargeback
-        additionalExpenses: totalSpend * 0.1, // 10% despesas adicionais
-        fees: totalSpend * 0.05, // 5% taxas
+        averageTicket,
         totalCampaigns,
         activeCampaigns,
         pausedCampaigns,
@@ -290,6 +282,16 @@ export default function DashboardPage() {
             transition={{ duration: 0.5 }}
             className="space-y-6"
           >
+            {/* Aviso de fonte de dados — tudo abaixo vem da própria Graph/Marketing API da Meta,
+                nada é estimado. "Vendas (Receita)"/Lucro/ROAS/ROI/Margem/Ticket Médio usam o valor
+                de compra que o Pixel/API de Conversões da Meta atribuiu às campanhas — se o
+                rastreamento de conversão não estiver 100% configurado nas suas campanhas, esses
+                valores refletem essa limitação (não é um problema do AdCloner, é o dado que a
+                própria Meta tem disponível). Ver seção 34 do doc do projeto. */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-3 text-sm text-blue-800 dark:text-blue-300">
+              Todas as métricas abaixo vêm diretamente da Meta (Graph/Marketing API) — nenhum valor é estimado ou simulado. "Vendas (Receita)" e as métricas derivadas dela usam o valor de compra que o Pixel/API de Conversões da Meta atribuiu às suas campanhas.
+            </div>
+
             {/* Métricas Financeiras Principais */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatsCard
@@ -300,11 +302,11 @@ export default function DashboardPage() {
                 trend={metrics.totalSpend > 0 ? 'up' : 'neutral'}
               />
               <StatsCard
-                title="Vendas Pendentes"
-                value={formatCurrency(metrics.pendingSales)}
-                icon={AlertCircle}
-                iconColor="text-yellow-600"
-                trend="neutral"
+                title="Vendas (Receita)"
+                value={formatCurrency(metrics.revenue)}
+                icon={ShoppingCart}
+                iconColor="text-green-600"
+                trend={metrics.revenue > 0 ? 'up' : 'neutral'}
               />
               <StatsCard
                 title="ROAS"
@@ -322,22 +324,8 @@ export default function DashboardPage() {
               />
                 </div>
 
-            {/* Métricas Financeiras Secundárias */}
+            {/* Métricas Financeiras Derivadas */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatsCard
-                title="Vendas Reembolsadas"
-                value={formatCurrency(metrics.refundedSales)}
-                icon={XCircle}
-                iconColor="text-red-500"
-                trend="down"
-              />
-              <StatsCard
-                title="Imposto"
-                value={formatCurrency(metrics.tax)}
-                icon={Receipt}
-                iconColor="text-orange-600"
-                trend="neutral"
-              />
               <StatsCard
                 title="ROI"
                 value={formatPercentage(metrics.roi)}
@@ -346,17 +334,6 @@ export default function DashboardPage() {
                 trend={metrics.roi && metrics.roi > 0 ? 'up' : 'down'}
               />
               <StatsCard
-                title="Custos de Produto"
-                value={formatCurrency(metrics.productCosts)}
-                icon={ShoppingCart}
-                iconColor="text-purple-600"
-                trend="neutral"
-              />
-            </div>
-
-            {/* Métricas de Margem e Taxas */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatsCard
                 title="Margem"
                 value={formatPercentage(metrics.margin)}
                 icon={Calculator}
@@ -364,24 +341,17 @@ export default function DashboardPage() {
                 trend={metrics.margin && metrics.margin > 20 ? 'up' : 'neutral'}
               />
               <StatsCard
-                title="Chargeback"
-                value={`${metrics.chargebackRate}%`}
-                icon={CreditCard}
-                iconColor="text-red-500"
-                trend={metrics.chargebackRate < 1 ? 'up' : 'down'}
+                title="Conversões (Vendas)"
+                value={metrics.totalConversions.toLocaleString()}
+                icon={Receipt}
+                iconColor="text-purple-600"
+                trend={metrics.totalConversions > 0 ? 'up' : 'neutral'}
               />
               <StatsCard
-                title="Despesas Adicionais"
-                value={formatCurrency(metrics.additionalExpenses)}
+                title="Ticket Médio"
+                value={metrics.averageTicket !== null ? formatCurrency(metrics.averageTicket) : 'N/A'}
                 icon={BarChart3}
                 iconColor="text-gray-600"
-                trend="neutral"
-              />
-                          <StatsCard
-                title="Taxas"
-                value={formatCurrency(metrics.fees)}
-                icon={Receipt}
-                iconColor="text-gray-500"
                 trend="neutral"
               />
             </div>
