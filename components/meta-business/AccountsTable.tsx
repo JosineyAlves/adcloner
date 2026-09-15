@@ -64,16 +64,14 @@ export default function AccountsTable({
   // 3=UNSETTLED, 7=PENDING_RISK_REVIEW, 8=PENDING_SETTLEMENT, 9=IN_GRACE_PERIOD,
   // 100=PENDING_CLOSURE, 101=CLOSED) é tratado como "Restrita" — mesmo critério binário já usado
   // em lib/facebook-api.ts (mapAccountStatus).
-  // Badge com "dot" indicador — mesmo vocabulário visual do ToggleSwitch (verde=saudável,
-  // vermelho=bloqueado) só que como selo estático (não clicável): o status da conta perante a
-  // Meta não é algo que o usuário liga/desliga por aqui, então um switch aqui seria enganoso.
-  // Fundo suave + borda fina + ponto colorido, em vez do preenchimento sólido antigo, pra ficar
-  // no mesmo padrão "moderno" já usado no restante do projeto.
+  // Selo sólido (sem dot, sem borda) — pill compacta com preenchimento suave, conforme
+  // referência visual pedida pelo usuário: verde-menta para "Ativa", cinza neutro para
+  // "Restrita". Mantido como texto estático (não clicável), já que o status da conta perante a
+  // Meta não é algo que o usuário liga/desliga por aqui.
   const getAccountStatusBadge = (accountStatus: number | null | undefined) => {
     if (accountStatus === null || accountStatus === undefined) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border border-gray-200 bg-gray-50 text-gray-500 dark:border-gray-600 dark:bg-gray-700/50 dark:text-gray-400">
-          <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400">
           -
         </span>
       )
@@ -81,13 +79,12 @@ export default function AccountsTable({
     const isActive = accountStatus === 1
     return (
       <span
-        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap border ${
+        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
           isActive
-            ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20'
-            : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20'
+            ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
+            : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
         }`}
       >
-        <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'}`} />
         {isActive ? 'Ativa' : 'Restrita'}
       </span>
     )

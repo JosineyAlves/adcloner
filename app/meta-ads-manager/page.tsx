@@ -928,9 +928,10 @@ export default function MetaBusinessPage() {
                 </nav>
               </div>
 
-              {/* Sem padding no topo — o objetivo é a tabela encostar direto na barra de abas,
-                  sem o respiro que existia antes entre elas. */}
-              <div className="px-6 pb-6">
+              {/* Sem padding no topo nem nas laterais — a tabela encosta direto na barra de
+                  abas e nas bordas do card, ganhando mais espaço horizontal pras colunas de
+                  métrica (o scroll horizontal da própria tabela cuida do resto). */}
+              <div className="pb-6">
                 {activeTab === 'accounts' && (
                   isLoadingAccounts && accounts.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16">
