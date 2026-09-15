@@ -112,6 +112,18 @@ export async function discoverBusinessStructure(connectionId: string, accessToke
   let businessCount = 0
   let accountCount = 0
 
+  // Rastreia todo account_id já vinculado a algum Business Manager nesta descoberta — usado
+  // abaixo para NÃO deixar o passo de "contas pessoais" (/me/adaccounts) sobrescrever o
+  // business_id dessas contas com null. `/me/adaccounts` não devolve só contas realmente
+  // pessoais/fora de BM: a Graph API inclui nela QUALQUER conta de anúncio à qual o usuário
+  // tenha uma role atribuída diretamente (o que é comum mesmo em contas de um Business Manager
+  // do qual ele não é apenas admin via BM, mas também tem acesso direto à conta). Como o upsert
+  // é por `connection_id,meta_account_id` e roda depois do loop de BMs, sem esse filtro ele
+  // "roubava" contas de volta pra "sem Business Manager" — foi exatamente o bug relatado pelo
+  // usuário (3 BMs conectados, só 1 aparecia separado; os outros 2 tiveram as contas jogadas em
+  // "Contas sem Business Manager").
+  const accountIdsWithBusiness = new Set<string>()
+
   // 1) Business Managers visíveis a este token
   const businesses = await graphGet('/me/businesses', accessToken, {
     fields: 'id,name,verification_status',
@@ -143,12 +155,14 @@ export async function discoverBusinessStructure(connectionId: string, accessToke
     const owned = await graphGet(`/${biz.id}/owned_ad_accounts`, accessToken, {
       fields: 'account_id,name,currency,timezone_name,account_status,amount_spent,balance,spend_cap',
     })
+    for (const acc of owned.data ?? []) accountIdsWithBusiness.add(acc.account_id ?? acc.id)
     accountCount += await upsertAdAccounts(connectionId, businessRowId, owned.data ?? [], 'owned')
 
     // Contas de clientes que compartilharam acesso com esse BM
     const client = await graphGet(`/${biz.id}/client_ad_accounts`, accessToken, {
       fields: 'account_id,name,currency,timezone_name,account_status,amount_spent,balance,spend_cap',
     })
+    for (const acc of client.data ?? []) accountIdsWithBusiness.add(acc.account_id ?? acc.id)
     accountCount += await upsertAdAccounts(connectionId, businessRowId, client.data ?? [], 'client')
 
     // Páginas próprias
@@ -189,12 +203,17 @@ export async function discoverBusinessStructure(connectionId: string, accessToke
     }
   }
 
-  // 2) Contas de anúncio pessoais do usuário, não vinculadas a nenhum Business Manager
+  // 2) Contas de anúncio pessoais do usuário, não vinculadas a nenhum Business Manager.
+  // Filtra fora qualquer conta que já apareceu em owned_ad_accounts/client_ad_accounts de algum
+  // BM acima (accountIdsWithBusiness) — ver comentário no topo da função.
   try {
     const personalAccounts = await graphGet('/me/adaccounts', accessToken, {
       fields: 'account_id,name,currency,timezone_name,account_status,amount_spent,balance,spend_cap',
     })
-    accountCount += await upsertAdAccounts(connectionId, null, personalAccounts.data ?? [], 'owned')
+    const trulyPersonal = (personalAccounts.data ?? []).filter(
+      (acc: any) => !accountIdsWithBusiness.has(acc.account_id ?? acc.id)
+    )
+    accountCount += await upsertAdAccounts(connectionId, null, trulyPersonal, 'owned')
   } catch (err: any) {
     console.error('Erro ao buscar contas pessoais:', err.message)
   }
