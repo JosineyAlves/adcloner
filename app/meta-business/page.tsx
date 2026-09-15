@@ -60,23 +60,12 @@ interface MetaBusinessCachedData {
   customRange?: DateRange
 }
 
-/**
- * Decide se um resultado de busca deve substituir o que já está na tela, ou se é mais seguro
- * manter o que já temos.
- *
- * Motivo: quando uma busca é bloqueada por rate limit, a rota de API devolve o "último dado bom"
- * conhecido no servidor (ver lib/meta-rate-limit.ts) — que pode ser mais VELHO que o que já está
- * renderizado no cliente. Isso mordia especialmente depois de ativar/pausar uma campanha ou mudar
- * um orçamento: a ação em si tinha sucesso na Meta, o estado local já era atualizado
- * otimisticamente com o valor novo, mas a busca de sincronização feita logo em seguida (pra
- * confirmar com o servidor) podia ser bloqueada por rate limit e devolver o status/orçamento
- * ANTIGO — sobrescrevendo a mudança correta que acabara de ser aplicada, fazendo parecer que a
- * ação "não funcionou" mesmo já tendo sido aplicada de verdade no Meta Ads Manager.
- *
- * Regra: só aceitamos o fallback do servidor quando a busca foi bloqueada E não temos nada melhor
- * localmente ainda (ex.: primeiro carregamento da sessão, sem cache nenhum) — nesse caso mostrar
- * o último dado bom é melhor que mostrar a tela vazia. Fora isso, mantemos o que já está na tela.
- */
+// Decide o que aplicar no estado local depois de uma busca: se essa busca foi bloqueada por
+// rate limit (ver lib/meta-rate-limit.ts no servidor) E já existe algo no estado local, mantém o
+// que já está na tela em vez do fallback do servidor (que pode ser mais velho que o estado atual —
+// seja de uma busca anterior bem-sucedida, seja de uma atualização otimista recente feita por uma
+// ação de escrita). O fallback do servidor só é aceito quando não há nada melhor localmente ainda
+// (primeiro carregamento da sessão, sem cache nenhum).
 function resolveFetchedItems<T>(current: T[], result: { items: T[]; rateLimitedUntil: number | null }): T[] {
   if (result.rateLimitedUntil && current.length > 0) {
     return current
@@ -526,7 +515,7 @@ export default function MetaBusinessPage() {
 
   const handleToggleStatus = async (type: 'campaigns' | 'adsets' | 'ads', id: string, currentStatus: string) => {
     const newStatus = currentStatus === 'ACTIVE' ? 'PAUSED' : 'ACTIVE'
-
+    
     try {
       const response = await fetch(`/api/meta-business/${type}/${id}/status`, {
         method: 'PATCH',
@@ -539,22 +528,22 @@ export default function MetaBusinessPage() {
 
       if (response.ok) {
         toast.success(`${type === 'campaigns' ? 'Campanha' : type === 'adsets' ? 'Conjunto' : 'Anúncio'} ${newStatus === 'ACTIVE' ? 'ativado' : 'pausado'}!`)
-
-        // Atualiza o estado local IMEDIATAMENTE — a Meta já confirmou a mudança (response.ok),
-        // então não faz sentido a tela continuar mostrando o status antigo enquanto espera uma
-        // busca de sincronização que pode nem rodar tão cedo (rate limit). Sem isso, se a busca
-        // de sincronização logo abaixo for bloqueada, `resolveFetchedItems` mantém o estado atual
-        // — mas sem essa atualização otimista, o "estado atual" ainda seria o status antigo.
-        const applyOptimisticStatus = (item: { id: string; status: string; effective_status?: string }) =>
+        // Atualização otimista: a Meta já confirmou a mudança (response.ok), então refletimos
+        // isso no estado local IMEDIATAMENTE, antes da busca de sincronização abaixo rodar. Sem
+        // isso, a tela dependia inteiramente dessa busca pra "trazer de volta" o novo status — e
+        // se ela caísse num bloqueio de rate limit ativo, a rota devolve o último dado bom
+        // (lastGood, no servidor), que ainda reflete o status de ANTES do toggle, sobrescrevendo
+        // a mudança real que acabou de acontecer na Meta. `resolveFetchedItems` (usado dentro de
+        // fetchAccountsAndCampaigns/fetchAdSets/fetchAds) protege essa atualização otimista de
+        // ser revertida por essa busca seguinte.
+        const applyOptimisticStatus = <T extends { id: string; status: string; effective_status?: string }>(item: T): T =>
           item.id === id ? { ...item, status: newStatus, effective_status: newStatus } : item
-        if (type === 'campaigns') setCampaigns(prev => prev.map(applyOptimisticStatus as any))
-        else if (type === 'adsets') setAdSets(prev => prev.map(applyOptimisticStatus as any))
-        else setAds(prev => prev.map(applyOptimisticStatus as any))
+        if (type === 'campaigns') setCampaigns(prev => prev.map(applyOptimisticStatus))
+        else if (type === 'adsets') setAdSets(prev => prev.map(applyOptimisticStatus))
+        else setAds(prev => prev.map(applyOptimisticStatus))
 
-        // Sincroniza em segundo plano com o servidor (pode trazer outros campos atualizados,
-        // como insights) — mas se essa busca for bloqueada por rate limit, `resolveFetchedItems`
-        // (dentro de fetchAccountsAndCampaigns/fetchAdSets/fetchAds) evita que o "último dado bom"
-        // do servidor (que ainda reflete o status ANTIGO) sobrescreva a mudança acima.
+        // Recarregar só os dados do tipo alterado (campanhas/conjuntos/anúncios), não tudo —
+        // mantém tudo em sincronia com a Meta em segundo plano, sem bloquear a UI.
         if (type === 'campaigns') await fetchAccountsAndCampaigns()
         else if (type === 'adsets') await fetchAdSets()
         else await fetchAds()
@@ -590,14 +579,13 @@ export default function MetaBusinessPage() {
 
       if (response.ok) {
         toast.success(`${selectedIds.length} ${type === 'campaigns' ? 'campanhas' : type === 'adsets' ? 'conjuntos' : 'anúncios'} ${status === 'ACTIVE' ? 'ativados' : 'pausados'}!`)
-
-        // Mesmo raciocínio de handleToggleStatus: atualiza local antes de depender de uma busca
-        // de sincronização que pode ser bloqueada por rate limit.
-        const applyOptimisticBulkStatus = (item: { id: string; status: string; effective_status?: string }) =>
+        // Mesma atualização otimista do toggle individual (ver handleToggleStatus) — aplica o
+        // novo status localmente para todos os itens selecionados antes da busca de sincronização.
+        const applyOptimisticStatus = <T extends { id: string; status: string; effective_status?: string }>(item: T): T =>
           selectedIds.includes(item.id) ? { ...item, status, effective_status: status } : item
-        if (type === 'campaigns') setCampaigns(prev => prev.map(applyOptimisticBulkStatus as any))
-        else if (type === 'adsets') setAdSets(prev => prev.map(applyOptimisticBulkStatus as any))
-        else setAds(prev => prev.map(applyOptimisticBulkStatus as any))
+        if (type === 'campaigns') setCampaigns(prev => prev.map(applyOptimisticStatus))
+        else if (type === 'adsets') setAdSets(prev => prev.map(applyOptimisticStatus))
+        else setAds(prev => prev.map(applyOptimisticStatus))
 
         // Recarregar só os dados do tipo alterado (campanhas/conjuntos/anúncios), não tudo.
         if (type === 'campaigns') await fetchAccountsAndCampaigns()
@@ -642,10 +630,10 @@ export default function MetaBusinessPage() {
         ))
       }
 
-      // Recarregar dados em background para sincronizar com o servidor. Se essa busca for
-      // bloqueada por rate limit, `resolveFetchedItems` (dentro de fetchAccountsAndCampaigns/
-      // fetchAdSets) mantém o orçamento novo aplicado acima em vez de sobrescrevê-lo com o
-      // "último dado bom" do servidor, que ainda teria o orçamento ANTIGO.
+      // Recarregar dados em background para sincronizar com o servidor. Se essa busca cair num
+      // bloqueio de rate limit ativo, `resolveFetchedItems` (dentro de fetchAccountsAndCampaigns/
+      // fetchAdSets) mantém o valor otimista acima em vez de deixar o fallback do servidor
+      // (lastGood, potencialmente com o orçamento antigo) sobrescrevê-lo.
       setTimeout(() => {
         if (type === 'campaigns') fetchAccountsAndCampaigns()
         else fetchAdSets()
