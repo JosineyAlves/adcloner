@@ -762,14 +762,6 @@ export default function MetaBusinessPage() {
               </div>
             )}
 
-            {/* Aviso sobre período "Todo o período" — consulta mais pesada, maior chance de bater no limite */}
-            {datePreset === 'maximum' && !isRateLimited && (
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm text-blue-800 dark:text-blue-300">
-                O período "Todo o período" faz uma consulta bem mais pesada na API da Meta e tem mais chance de esbarrar no
-                limite de requisições. Se acontecer, prefira um período menor (últimos 7 ou 30 dias).
-              </div>
-            )}
-
             {/* Filtros — layout em grade com rótulo acima de cada campo (estilo trackers como a
                 UTMify), em vez dos cards de estatísticas + barra de filtros em linha única que
                 existiam antes. */}

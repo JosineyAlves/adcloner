@@ -247,20 +247,13 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                   {getStatusText()}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  {connectionStatus === 'idle' && 
-                    'Conecte sua conta do Facebook para gerenciar campanhas de anúncios.'
-                  }
-                  {connectionStatus === 'connecting' && 
-                    'Aguarde enquanto conectamos sua conta...'
-                  }
-                  {connectionStatus === 'success' && 
-                    'Sua conta foi conectada com sucesso!'
-                  }
-                  {connectionStatus === 'error' && 
-                    errorMessage
-                  }
-                </p>
+                {connectionStatus !== 'idle' && (
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">
+                    {connectionStatus === 'connecting' && 'Aguarde enquanto conectamos sua conta...'}
+                    {connectionStatus === 'success' && 'Sua conta foi conectada com sucesso!'}
+                    {connectionStatus === 'error' && errorMessage}
+                  </p>
+                )}
               </div>
 
               {connectionStatus === 'error' && (

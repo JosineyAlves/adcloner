@@ -95,9 +95,6 @@ export default function MetaAccountsPage() {
         <div className="max-w-6xl mx-auto">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Integrações</h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
-              Conecte perfis de anúncio e escolha quais contas sincronizar com o AdCloner.
-            </p>
           </div>
 
           {/* Abas — hoje só "Anúncios" está implementada de fato */}
@@ -122,8 +119,8 @@ export default function MetaAccountsPage() {
                   <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
                     <Facebook className="w-4 h-4 text-white" />
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    Gerencie seus perfis e contas de anúncio do Meta Ads vinculados ao AdCloner
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                    Meta Ads
                   </p>
                 </div>
                 <button
@@ -137,10 +134,7 @@ export default function MetaAccountsPage() {
               {/* Perfis conectados */}
               <section className="mb-10">
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Perfis</h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-4">
-                    Gerencie seus perfis vinculados ao AdCloner
-                  </p>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Perfis</h2>
 
                   <div className="relative mb-4">
                     <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />

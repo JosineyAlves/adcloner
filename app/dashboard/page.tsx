@@ -252,9 +252,6 @@ export default function DashboardPage() {
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Dashboard Financeiro
               </h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                Visão geral das métricas financeiras e de performance das campanhas
-              </p>
             </div>
             <div className="flex items-center space-x-3">
                 <DateSelector
@@ -282,16 +279,6 @@ export default function DashboardPage() {
             transition={{ duration: 0.5 }}
             className="space-y-6"
           >
-            {/* Aviso de fonte de dados — tudo abaixo vem da própria Graph/Marketing API da Meta,
-                nada é estimado. "Vendas (Receita)"/Lucro/ROAS/ROI/Margem/Ticket Médio usam o valor
-                de compra que o Pixel/API de Conversões da Meta atribuiu às campanhas — se o
-                rastreamento de conversão não estiver 100% configurado nas suas campanhas, esses
-                valores refletem essa limitação (não é um problema do AdCloner, é o dado que a
-                própria Meta tem disponível). Ver seção 34 do doc do projeto. */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-3 text-sm text-blue-800 dark:text-blue-300">
-              Todas as métricas abaixo vêm diretamente da Meta (Graph/Marketing API) — nenhum valor é estimado ou simulado. "Vendas (Receita)" e as métricas derivadas dela usam o valor de compra que o Pixel/API de Conversões da Meta atribuiu às suas campanhas.
-            </div>
-
             {/* Métricas Financeiras Principais */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatsCard

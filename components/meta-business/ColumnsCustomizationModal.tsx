@@ -130,9 +130,6 @@ export default function ColumnsCustomizationModal({
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Colunas</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Escolha como você quer visualizar as colunas na tabela.
-            </p>
           </div>
           <div className="flex items-center gap-3">
             <button
