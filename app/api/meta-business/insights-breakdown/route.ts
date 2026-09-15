@@ -64,6 +64,77 @@ function extractRowMetrics(row: any) {
 
 const WEEKDAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
+// Rótulos amigáveis para os valores brutos que a Meta retorna em publisher_platform/
+// platform_position — qualquer valor não mapeado aqui cai no fallback (capitaliza e troca "_"
+// por espaço), então um novo posicionamento lançado pela Meta nunca quebra, só aparece "cru".
+const PLATFORM_LABELS: Record<string, string> = {
+  facebook: 'Facebook',
+  instagram: 'Instagram',
+  audience_network: 'Audience Network',
+  messenger: 'Messenger'
+}
+
+const PLACEMENT_LABELS: Record<string, string> = {
+  feed: 'Feed',
+  right_hand_column: 'Coluna Direita',
+  instant_article: 'Instant Article',
+  instream_video: 'Vídeo In-Stream',
+  marketplace: 'Marketplace',
+  story: 'Stories',
+  reels: 'Reels',
+  search: 'Busca',
+  video_feeds: 'Feed de Vídeos',
+  suggested_video: 'Vídeo Sugerido',
+  facebook_reels: 'Reels do Facebook',
+  facebook_reels_overlay: 'Overlay de Reels',
+  ig_search: 'Busca do Instagram',
+  explore: 'Explorar',
+  explore_home: 'Explorar (Início)',
+  profile_feed: 'Feed do Perfil',
+  profile_reels: 'Reels do Perfil',
+  rewarded_video: 'Vídeo Recompensado',
+  msg: 'Mensagens',
+  overlay: 'Overlay'
+}
+
+function friendlyLabel(map: Record<string, string>, raw: string): string {
+  if (map[raw]) return map[raw]
+  return raw
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+// Agrega uma lista de linhas já segmentadas pela própria Meta (uma por valor de breakdown,
+// já somada no período inteiro) por um campo de rótulo, aplicando um dicionário de rótulo
+// amigável opcional. Usado por plataforma/posicionamento/idade — mesma lógica de país, só que
+// reaproveitada em 3 lugares.
+function aggregateByField(
+  responseBody: string | undefined,
+  fieldKey: string,
+  labelMap?: Record<string, string>
+): BreakdownRow[] {
+  const totals = new Map<string, BreakdownRow>()
+  const data = JSON.parse(responseBody || '{}').data || []
+  for (const row of data) {
+    const raw = row[fieldKey]
+    if (!raw) continue
+    const label = labelMap ? friendlyLabel(labelMap, raw) : raw
+    const metrics = extractRowMetrics(row)
+    const existing = totals.get(label)
+    if (existing) {
+      existing.spend += metrics.spend
+      existing.impressions += metrics.impressions
+      existing.clicks += metrics.clicks
+      existing.conversions += metrics.conversions
+      existing.conversionValues += metrics.conversionValues
+    } else {
+      totals.set(label, { label, ...metrics })
+    }
+  }
+  return Array.from(totals.values()).sort((a, b) => b.conversionValues - a.conversionValues)
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -91,7 +162,7 @@ export async function GET(request: NextRequest) {
       const stale = getLastGood<any>(cacheKey)
       return NextResponse.json(
         {
-          ...(stale?.data || { country: [], hour: [], weekday: [] }),
+          ...(stale?.data || { country: [], hour: [], weekday: [], platform: [], placement: [], age: [] }),
           rateLimited: true,
           retryAfterSeconds: retryAfterSecondsFor(accountId),
           message: 'Limite de requisições da Meta atingido para esta conta. Aguarde antes de tentar novamente.'
@@ -121,7 +192,7 @@ export async function GET(request: NextRequest) {
         const stale = getLastGood<any>(cacheKey)
         return NextResponse.json(
           {
-            ...(stale?.data || { country: [], hour: [], weekday: [] }),
+            ...(stale?.data || { country: [], hour: [], weekday: [], platform: [], placement: [], age: [] }),
             rateLimited: true,
             retryAfterSeconds: retryAfterSecondsFor(accountId),
             message: 'Limite de requisições da Meta atingido para esta conta. Aguarde antes de tentar novamente.'
@@ -130,7 +201,7 @@ export async function GET(request: NextRequest) {
         )
       }
 
-      const [countryRes, hourRes, dailyRes] = responses
+      const [countryRes, hourRes, dailyRes, platformRes, placementRes, ageRes] = responses
 
       // País — uma linha por país já agregada no período inteiro pela própria API.
       const country: BreakdownRow[] = []
@@ -197,7 +268,19 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      const result = { country, hour, weekday: weekdayTotals }
+      // Plataforma/Posicionamento/Idade — mesmo princípio de País: uma linha por valor de
+      // breakdown, já agregada no período inteiro pela própria Meta.
+      const platform = platformRes.code === 200
+        ? aggregateByField(platformRes.body, 'publisher_platform', PLATFORM_LABELS)
+        : []
+      const placement = placementRes.code === 200
+        ? aggregateByField(placementRes.body, 'platform_position', PLACEMENT_LABELS)
+        : []
+      const age = ageRes.code === 200
+        ? aggregateByField(ageRes.body, 'age')
+        : []
+
+      const result = { country, hour, weekday: weekdayTotals, platform, placement, age }
 
       cache.set(cacheKey, result, 300)
       saveLastGood(cacheKey, result)

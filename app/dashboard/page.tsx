@@ -95,6 +95,12 @@ export default function DashboardPage() {
   const [countryBreakdown, setCountryBreakdown] = useState<BreakdownRow[]>([])
   const [hourBreakdown, setHourBreakdown] = useState<BreakdownRow[]>([])
   const [weekdayBreakdown, setWeekdayBreakdown] = useState<BreakdownRow[]>([])
+  // Plataforma (Facebook/Instagram/Audience Network/Messenger), Posicionamento (Feed/Stories/
+  // Reels/etc.) e Idade — mesmos breakdowns nativos, mesma rota (/insights-breakdown já retorna
+  // os 6 num único fetch por conta).
+  const [platformBreakdown, setPlatformBreakdown] = useState<BreakdownRow[]>([])
+  const [placementBreakdown, setPlacementBreakdown] = useState<BreakdownRow[]>([])
+  const [ageBreakdown, setAgeBreakdown] = useState<BreakdownRow[]>([])
   const [breakdownsLoading, setBreakdownsLoading] = useState<boolean>(false)
 
   const fetchDashboardData = useCallback(async () => {
@@ -217,6 +223,9 @@ export default function DashboardPage() {
       const countryTotals = new Map<string, number>()
       const hourTotals = new Map<string, number>()
       const weekdayTotals = new Map<string, number>()
+      const platformTotals = new Map<string, number>()
+      const placementTotals = new Map<string, number>()
+      const ageTotals = new Map<string, number>()
 
       await Promise.all(
         activeAccounts.map(async (account) => {
@@ -236,6 +245,15 @@ export default function DashboardPage() {
             }
             for (const row of data.weekday || []) {
               weekdayTotals.set(row.label, (weekdayTotals.get(row.label) || 0) + (row.conversionValues || 0))
+            }
+            for (const row of data.platform || []) {
+              platformTotals.set(row.label, (platformTotals.get(row.label) || 0) + (row.conversionValues || 0))
+            }
+            for (const row of data.placement || []) {
+              placementTotals.set(row.label, (placementTotals.get(row.label) || 0) + (row.conversionValues || 0))
+            }
+            for (const row of data.age || []) {
+              ageTotals.set(row.label, (ageTotals.get(row.label) || 0) + (row.conversionValues || 0))
             }
           } catch (error) {
             console.error(`Error fetching breakdowns for account ${account.id}:`, error)
@@ -261,6 +279,25 @@ export default function DashboardPage() {
         Array.from(weekdayTotals.entries())
           .map(([label, value]) => ({ label, value }))
           .sort((a, b) => WEEKDAY_ORDER.indexOf(a.label) - WEEKDAY_ORDER.indexOf(b.label))
+      )
+
+      setPlatformBreakdown(
+        Array.from(platformTotals.entries())
+          .map(([label, value]) => ({ label, value }))
+          .sort((a, b) => b.value - a.value)
+      )
+      setPlacementBreakdown(
+        Array.from(placementTotals.entries())
+          .map(([label, value]) => ({ label, value }))
+          .sort((a, b) => b.value - a.value)
+      )
+      // Idade ordena pela própria faixa (18-24, 25-34, ...) em vez de por valor, senão a leitura
+      // de "qual faixa cresce/qual cai" fica difícil ao trocar o período.
+      const AGE_ORDER = ['13-17', '18-24', '25-34', '35-44', '45-54', '55-64', '65+']
+      setAgeBreakdown(
+        Array.from(ageTotals.entries())
+          .map(([label, value]) => ({ label, value }))
+          .sort((a, b) => AGE_ORDER.indexOf(a.label) - AGE_ORDER.indexOf(b.label))
       )
     } finally {
       setBreakdownsLoading(false)
@@ -288,6 +325,9 @@ export default function DashboardPage() {
     setCountryBreakdown([])
     setHourBreakdown([])
     setWeekdayBreakdown([])
+    setPlatformBreakdown([])
+    setPlacementBreakdown([])
+    setAgeBreakdown([])
     // Nenhuma conta conectada (ex.: usuário removeu todos os perfis em Integrações) — zera as
     // métricas em vez de deixar os últimos valores buscados nesta mesma sessão presos na tela.
     // Mesmo bug de interferência já corrigido na tela Meta Business (ver seção 41 do doc do
@@ -540,6 +580,36 @@ export default function DashboardPage() {
                     </div>
                   ) : (
                     <BreakdownBarChart data={weekdayBreakdown} valueFormatter={formatCurrency} />
+                  )}
+                </div>
+                <div className="card p-4">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Vendas por Plataforma</h3>
+                  {breakdownsLoading ? (
+                    <div className="flex items-center justify-center h-32">
+                      <RefreshCw className="w-5 h-5 animate-spin text-gray-400" />
+                    </div>
+                  ) : (
+                    <BreakdownBarChart data={platformBreakdown} valueFormatter={formatCurrency} />
+                  )}
+                </div>
+                <div className="card p-4">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Vendas por Posicionamento</h3>
+                  {breakdownsLoading ? (
+                    <div className="flex items-center justify-center h-32">
+                      <RefreshCw className="w-5 h-5 animate-spin text-gray-400" />
+                    </div>
+                  ) : (
+                    <BreakdownBarChart data={placementBreakdown} valueFormatter={formatCurrency} maxItems={6} />
+                  )}
+                </div>
+                <div className="card p-4">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Vendas por Idade</h3>
+                  {breakdownsLoading ? (
+                    <div className="flex items-center justify-center h-32">
+                      <RefreshCw className="w-5 h-5 animate-spin text-gray-400" />
+                    </div>
+                  ) : (
+                    <BreakdownBarChart data={ageBreakdown} valueFormatter={formatCurrency} />
                   )}
                 </div>
               </div>

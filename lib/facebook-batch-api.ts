@@ -375,6 +375,13 @@ export class FacebookBatchAPI {
       'date_stop'
     ].join(',')
 
+    // Ordem fixa — o índice de cada item aqui é usado posicionalmente em
+    // app/api/meta-business/insights-breakdown/route.ts (responses[0]=country, [1]=hora,
+    // [2]=diário/dia da semana, [3]=plataforma, [4]=posicionamento, [5]=idade). `publisher_platform`
+    // e `platform_position` são combináveis com `age` na mesma tabela de "Permutations" da doc
+    // oficial da Meta, mas mantemos cada dimensão em sua própria sub-requisição (sem cruzar) pra
+    // manter a leitura de cada gráfico simples — 6 sub-requisições, ainda 1 única chamada HTTP de
+    // batch por conta.
     return [
       {
         method: 'GET',
@@ -387,6 +394,18 @@ export class FacebookBatchAPI {
       {
         method: 'GET',
         relative_url: `${accountId}/insights?fields=${fields}&level=account&limit=300&time_increment=1${dateParam}`
+      },
+      {
+        method: 'GET',
+        relative_url: `${accountId}/insights?fields=${fields}&level=account&limit=300&breakdowns=publisher_platform${dateParam}`
+      },
+      {
+        method: 'GET',
+        relative_url: `${accountId}/insights?fields=${fields}&level=account&limit=300&breakdowns=platform_position${dateParam}`
+      },
+      {
+        method: 'GET',
+        relative_url: `${accountId}/insights?fields=${fields}&level=account&limit=300&breakdowns=age${dateParam}`
       }
     ]
   }
