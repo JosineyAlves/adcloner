@@ -84,10 +84,14 @@ export default function DashboardPage() {
   const fetchDashboardData = useCallback(async () => {
     try {
       setIsRefreshing(true)
-      const activeAccounts = accounts.filter(a => a.status === 'active')
-      
+      // Não filtra mais por account_status (status real da conta perante a Meta, ex.: "Restrita")
+      // — só o toggle habilitar/desabilitar de Integrações (sync_enabled) decide quais contas
+      // entram aqui, e isso já foi aplicado no AppContext (enabledOnly=true). Ver mesmo ajuste em
+      // app/meta-business/page.tsx.
+      const activeAccounts = accounts
+
       if (activeAccounts.length === 0) {
-        toast.error('Nenhuma conta ativa encontrada')
+        toast.error('Nenhuma conta habilitada encontrada')
         return
       }
 

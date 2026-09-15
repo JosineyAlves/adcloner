@@ -202,7 +202,13 @@ export default function MetaBusinessPage() {
     endpoint: 'accounts' | 'campaigns' | 'adsets' | 'ads',
     listKey: 'accounts' | 'campaigns' | 'adSets' | 'ads'
   ): Promise<{ items: T[]; rateLimitedUntil: number | null }> => {
-    const activeAccounts = facebookAccounts.filter(a => a.status === 'active')
+    // Não filtra mais por account_status (status real da conta perante a Meta, ex.: "Restrita").
+    // O único controle de quais contas entram aqui é o toggle habilitar/desabilitar da tela de
+    // Integrações (sync_enabled) — já aplicado antes disso, no AppContext (fetchAccounts usa
+    // /api/meta/accounts?enabledOnly=true). Antes, contas com status "Restrita" eram excluídas
+    // daqui mesmo estando habilitadas em Integrações, causando divergência de contagem entre as
+    // duas telas (ex.: 15 habilitadas em Integrações, só 7 aparecendo aqui).
+    const activeAccounts = facebookAccounts
     if (activeAccounts.length === 0) return { items: [], rateLimitedUntil: null }
 
     const dateQuery = customRange ? `&since=${customRange.since}&until=${customRange.until}` : ''
