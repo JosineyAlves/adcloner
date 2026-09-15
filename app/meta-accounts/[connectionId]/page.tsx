@@ -270,7 +270,7 @@ export default function ConnectionBusinessesPage() {
                           className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
                             isPersonal
                               ? 'bg-gray-100 dark:bg-gray-700'
-                              : 'bg-blue-100 dark:bg-blue-900/30'
+                              : 'bg-brand-100 dark:bg-brand-500/10'
                           }`}
                         >
                           <Building2
