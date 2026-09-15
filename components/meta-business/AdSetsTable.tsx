@@ -160,7 +160,7 @@ export default function AdSetsTable({
                   Orçamento
                 </th>
                 {showMetrics && metrics.filter(m => m.visible).map((metric) => (
-                  <th key={metric.id} className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider max-w-[160px] leading-tight align-bottom">
+                  <th key={metric.id} className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-normal max-w-[190px] leading-tight align-bottom">
                     <span className="line-clamp-2" title={metric.label}>{metric.label}</span>
                   </th>
                 ))}
@@ -214,7 +214,7 @@ export default function AdSetsTable({
                 Orçamento
               </th>
               {showMetrics && metrics.filter(m => m.visible).map((metric) => (
-                <th key={metric.id} className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider max-w-[160px] leading-tight align-bottom">
+                <th key={metric.id} className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-normal max-w-[190px] leading-tight align-bottom">
                   <span className="line-clamp-2" title={metric.label}>{metric.label}</span>
                 </th>
               ))}
