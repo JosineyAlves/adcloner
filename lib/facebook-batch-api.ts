@@ -35,10 +35,14 @@ export class FacebookBatchAPI {
   async makeBatchRequest(
     requests: BatchRequest[],
     accessToken: string
-  ): Promise<BatchResponse[]> {
+  ): Promise<{ responses: BatchResponse[]; estimatedWaitMinutes: number | null }> {
     // Dividir em lotes de até 50 requisições
     const batches = this.chunkArray(requests, this.maxBatchSize)
     const allResponses: BatchResponse[] = []
+    // Maior "estimated_time_to_regain_access" visto nos headers de uso ao longo de todos os
+    // lotes desta chamada — repassado pra quem chamou poder decidir bloquear novas tentativas
+    // (ver lib/meta-rate-limit.ts), em vez desse dado só ser logado e descartado como antes.
+    let estimatedWaitMinutes: number | null = null
 
     console.log(`🔄 Processando ${requests.length} requisições em ${batches.length} lotes`)
 
@@ -60,10 +64,13 @@ export class FacebookBatchAPI {
         })
 
         // Verificar rate limit headers
-        this.checkRateLimitHeaders(response)
+        const waitMinutesFromThisBatch = this.checkRateLimitHeaders(response)
+        if (waitMinutesFromThisBatch !== null) {
+          estimatedWaitMinutes = Math.max(estimatedWaitMinutes ?? 0, waitMinutesFromThisBatch)
+        }
 
         const data = await response.json()
-        
+
         if (Array.isArray(data)) {
           allResponses.push(...data)
         } else {
@@ -86,48 +93,55 @@ export class FacebookBatchAPI {
     }
 
     console.log(`✅ Processamento concluído: ${allResponses.length} respostas`)
-    return allResponses
+    return { responses: allResponses, estimatedWaitMinutes }
   }
 
   /**
    * Verifica headers de rate limit conforme recomendação oficial do Meta
+   * (https://developers.facebook.com/docs/graph-api/overview/rate-limiting/) e retorna o maior
+   * "estimated_time_to_regain_access" (em minutos) encontrado, ou null se o header não veio ou
+   * nenhum limite estava próximo do teto.
    */
-  private checkRateLimitHeaders(response: Response): void {
+  private checkRateLimitHeaders(response: Response): number | null {
     const usage = response.headers.get('x-business-use-case-usage')
-    if (usage) {
-      try {
-        const parsed = JSON.parse(usage)
-        
-        // Verificar cada business ID
-        Object.entries(parsed).forEach(([businessId, limits]) => {
-          if (Array.isArray(limits)) {
-            limits.forEach((limit: RateLimitInfo) => {
-              const callCount = limit.call_count || 0
-              
-              if (callCount > this.criticalThreshold) {
-                console.error(`🚨 RATE LIMIT CRÍTICO (${businessId}): ${callCount}% - PAUSANDO REQUISIÇÕES`)
-                // Aqui poderia implementar um sistema de pausa global
-              } else if (callCount > this.rateLimitThreshold) {
-                console.warn(`⚠️ Rate limit próximo (${businessId}): ${callCount}%`)
-              } else {
-                console.log(`✅ Rate limit OK (${businessId}): ${callCount}%`)
-              }
+    if (!usage) return null
 
-              // Log de informações adicionais
-              if (limit.estimated_time_to_regain_access) {
-                console.log(`⏰ Tempo estimado para recuperar acesso: ${limit.estimated_time_to_regain_access} minutos`)
-              }
-              
-              if (limit.ads_api_access_tier) {
-                console.log(`🎯 Nível de acesso: ${limit.ads_api_access_tier}`)
-              }
-            })
-          }
-        })
-      } catch (error) {
-        console.error('❌ Erro ao analisar headers de rate limit:', error)
-      }
+    let estimatedWaitMinutes: number | null = null
+
+    try {
+      const parsed = JSON.parse(usage)
+
+      // Verificar cada business ID
+      Object.entries(parsed).forEach(([businessId, limits]) => {
+        if (Array.isArray(limits)) {
+          limits.forEach((limit: RateLimitInfo) => {
+            const callCount = limit.call_count || 0
+
+            if (callCount > this.criticalThreshold) {
+              console.error(`🚨 RATE LIMIT CRÍTICO (${businessId}): ${callCount}% - PAUSANDO REQUISIÇÕES`)
+            } else if (callCount > this.rateLimitThreshold) {
+              console.warn(`⚠️ Rate limit próximo (${businessId}): ${callCount}%`)
+            } else {
+              console.log(`✅ Rate limit OK (${businessId}): ${callCount}%`)
+            }
+
+            // Log de informações adicionais
+            if (limit.estimated_time_to_regain_access) {
+              console.log(`⏰ Tempo estimado para recuperar acesso: ${limit.estimated_time_to_regain_access} minutos`)
+              estimatedWaitMinutes = Math.max(estimatedWaitMinutes ?? 0, limit.estimated_time_to_regain_access)
+            }
+
+            if (limit.ads_api_access_tier) {
+              console.log(`🎯 Nível de acesso: ${limit.ads_api_access_tier}`)
+            }
+          })
+        }
+      })
+    } catch (error) {
+      console.error('❌ Erro ao analisar headers de rate limit:', error)
     }
+
+    return estimatedWaitMinutes
   }
 
   /**

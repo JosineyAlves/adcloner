@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { FacebookAPI } from '@/lib/facebook-api'
 import { MetaCampaign, VideoMetrics } from '@/lib/types'
-import { facebookRateLimiter } from '@/lib/rate-limiter'
 import { cache } from '@/lib/cache'
 import { facebookBatchAPI } from '@/lib/facebook-batch-api'
 import { videoMetricsAPI } from '@/lib/video-metrics'
+import {
+  getRateLimitBlock,
+  setRateLimitBlock,
+  isRateLimitErrorBody,
+  saveLastGood,
+  getLastGood,
+  retryAfterSecondsFor
+} from '@/lib/meta-rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -228,17 +235,47 @@ export async function GET(request: NextRequest) {
       console.log('📦 Retornando campanhas do cache (TTL inteligente)')
       return NextResponse.json(cachedData)
     }
-    
+
+    // Se essa conta acabou de bater no limite de requisições da Meta, não tentar de novo agora.
+    const existingBlock = getRateLimitBlock(accountId)
+    if (existingBlock) {
+      const stale = getLastGood<any>(cacheKey)
+      return NextResponse.json(
+        {
+          ...(stale?.data || { campaigns: [] }),
+          rateLimited: true,
+          retryAfterSeconds: retryAfterSecondsFor(accountId),
+          message: 'Limite de requisições da Meta atingido para esta conta. Aguarde antes de tentar novamente.'
+        },
+        { status: 429 }
+      )
+    }
+
     try {
       console.log('🚀 Iniciando busca de campanhas com Batch Requests')
-      
+
       // PASSO 1: Buscar campanhas usando batch request
       const campaignsBatch = facebookBatchAPI.createCampaignsBatch(accountId, datePreset, since || undefined, until || undefined)
-      const campaignsResponses = await facebookBatchAPI.makeBatchRequest(campaignsBatch, accessToken)
-      
+      const { responses: campaignsResponses, estimatedWaitMinutes } = await facebookBatchAPI.makeBatchRequest(campaignsBatch, accessToken)
+
       if (campaignsResponses[0].code !== 200) {
         const errorData = JSON.parse(campaignsResponses[0].body || '{}')
         console.error('❌ Erro ao buscar campanhas:', errorData)
+
+        if (isRateLimitErrorBody(errorData)) {
+          setRateLimitBlock(accountId, estimatedWaitMinutes, errorData.error?.message || 'Rate limit da Meta')
+          const stale = getLastGood<any>(cacheKey)
+          return NextResponse.json(
+            {
+              ...(stale?.data || { campaigns: [] }),
+              rateLimited: true,
+              retryAfterSeconds: retryAfterSecondsFor(accountId),
+              message: 'Limite de requisições da Meta atingido para esta conta. Aguarde antes de tentar novamente.'
+            },
+            { status: 429 }
+          )
+        }
+
         return NextResponse.json(
           { error: errorData.error?.message || 'Failed to fetch campaigns' },
           { status: 400 }
@@ -247,14 +284,14 @@ export async function GET(request: NextRequest) {
 
       const campaignsData = JSON.parse(campaignsResponses[0].body || '{}')
       const campaigns: MetaCampaign[] = []
-      
+
       if (campaignsData.data && campaignsData.data.length > 0) {
         console.log(`📊 Encontradas ${campaignsData.data.length} campanhas`)
-        
+
         // PASSO 2: Buscar insights em batch (até 50 por vez)
         const campaignIds = campaignsData.data.map((c: any) => c.id)
         const insightsBatch = facebookBatchAPI.createCampaignInsightsBatch(campaignIds, datePreset, since || undefined, until || undefined)
-        const insightsResponses = await facebookBatchAPI.makeBatchRequest(insightsBatch, accessToken)
+        const { responses: insightsResponses } = await facebookBatchAPI.makeBatchRequest(insightsBatch, accessToken)
         
         console.log(`📈 Buscando insights para ${campaignIds.length} campanhas em ${Math.ceil(insightsBatch.length / 50)} lotes`)
         
@@ -540,7 +577,8 @@ export async function GET(request: NextRequest) {
       
       // Salvar no cache com TTL inteligente (15 minutos para campanhas)
       cache.setWithIntelligentTTL(cacheKey, result, 'campaigns')
-      
+      saveLastGood(cacheKey, result)
+
       console.log(`✅ Campanhas processadas com sucesso: ${campaigns.length} itens`)
       return NextResponse.json(result)
     } catch (error) {

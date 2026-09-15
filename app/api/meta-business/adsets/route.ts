@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { facebookRateLimiter } from '@/lib/rate-limiter'
 import { cache } from '@/lib/cache'
 import { facebookBatchAPI } from '@/lib/facebook-batch-api'
 import { videoMetricsAPI } from '@/lib/video-metrics'
 import { VideoMetrics } from '@/lib/types'
+import {
+  getRateLimitBlock,
+  setRateLimitBlock,
+  isRateLimitErrorBody,
+  saveLastGood,
+  getLastGood,
+  retryAfterSecondsFor
+} from '@/lib/meta-rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -226,16 +233,46 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(cachedData)
     }
 
+    // Se essa conta acabou de bater no limite de requisições da Meta, não tentar de novo agora.
+    const existingBlock = getRateLimitBlock(accountId)
+    if (existingBlock) {
+      const stale = getLastGood<any>(cacheKey)
+      return NextResponse.json(
+        {
+          ...(stale?.data || { adSets: [] }),
+          rateLimited: true,
+          retryAfterSeconds: retryAfterSecondsFor(accountId),
+          message: 'Limite de requisições da Meta atingido para esta conta. Aguarde antes de tentar novamente.'
+        },
+        { status: 429 }
+      )
+    }
+
     try {
       console.log('🚀 Iniciando busca de ad sets com Batch Requests')
-      
+
       // PASSO 1: Buscar ad sets usando batch request
       const adSetsBatch = facebookBatchAPI.createAdSetsBatch(accountId, datePreset, since || undefined, until || undefined)
-      const adSetsResponses = await facebookBatchAPI.makeBatchRequest(adSetsBatch, accessToken)
-      
+      const { responses: adSetsResponses, estimatedWaitMinutes } = await facebookBatchAPI.makeBatchRequest(adSetsBatch, accessToken)
+
       if (adSetsResponses[0].code !== 200) {
         const errorData = JSON.parse(adSetsResponses[0].body || '{}')
         console.error('❌ Erro ao buscar ad sets:', errorData)
+
+        if (isRateLimitErrorBody(errorData)) {
+          setRateLimitBlock(accountId, estimatedWaitMinutes, errorData.error?.message || 'Rate limit da Meta')
+          const stale = getLastGood<any>(cacheKey)
+          return NextResponse.json(
+            {
+              ...(stale?.data || { adSets: [] }),
+              rateLimited: true,
+              retryAfterSeconds: retryAfterSecondsFor(accountId),
+              message: 'Limite de requisições da Meta atingido para esta conta. Aguarde antes de tentar novamente.'
+            },
+            { status: 429 }
+          )
+        }
+
         return NextResponse.json(
           { error: errorData.error?.message || 'Failed to fetch ad sets' },
           { status: 400 }
@@ -244,14 +281,14 @@ export async function GET(request: NextRequest) {
 
       const adSetsData = JSON.parse(adSetsResponses[0].body || '{}')
       const adSets: any[] = []
-      
+
       if (adSetsData.data && adSetsData.data.length > 0) {
         console.log(`📊 Encontrados ${adSetsData.data.length} ad sets`)
-        
+
         // PASSO 2: Buscar insights em batch (até 50 por vez)
         const adSetIds = adSetsData.data.map((ads: any) => ads.id)
         const insightsBatch = facebookBatchAPI.createAdSetInsightsBatch(adSetIds, datePreset, since || undefined, until || undefined)
-        const insightsResponses = await facebookBatchAPI.makeBatchRequest(insightsBatch, accessToken)
+        const { responses: insightsResponses } = await facebookBatchAPI.makeBatchRequest(insightsBatch, accessToken)
         
         console.log(`📈 Buscando insights para ${adSetIds.length} ad sets em ${Math.ceil(insightsBatch.length / 50)} lotes`)
         
@@ -531,7 +568,8 @@ export async function GET(request: NextRequest) {
       
       // Salvar no cache com TTL inteligente (10 minutos para ad sets)
       cache.setWithIntelligentTTL(cacheKey, result, 'adsets')
-      
+      saveLastGood(cacheKey, result)
+
       console.log(`✅ Ad sets processados com sucesso: ${adSets.length} itens`)
       return NextResponse.json(result)
     } catch (error) {

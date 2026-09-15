@@ -82,6 +82,14 @@ export default function MetaBusinessPage() {
   // de imediato — igual ao comportamento de outras ferramentas de tracking (RAADS, etc.).
   const [isLoadingAdSets, setIsLoadingAdSets] = useState<boolean>(false)
   const [isLoadingAds, setIsLoadingAds] = useState<boolean>(false)
+  // Quando alguma conta bate no limite de requisições da Meta, as rotas de API retornam
+  // { rateLimited: true, retryAfterSeconds } (ver lib/meta-rate-limit.ts) em vez de tentar de
+  // novo às cegas. Guardamos até quando devemos evitar novas chamadas — usado para desabilitar
+  // o botão "Atualizar" e pausar o carregamento automático das abas enquanto isso durar, em vez
+  // de deixar o usuário reforçar o próprio bloqueio clicando em Atualizar repetidamente.
+  const [rateLimitedUntil, setRateLimitedUntil] = useState<number | null>(null)
+  // Só usado para o texto da contagem regressiva atualizar a cada segundo enquanto bloqueado.
+  const [nowTick, setNowTick] = useState<number>(() => Date.now())
   // true só na primeiríssima carga real (sem nada em cache ainda) — usado para não mostrar
   // "Carregando Meta Business..." em cima de dados que já estão na tela vindos do cache.
   const [hasLoadedOnce, setHasLoadedOnce] = useState<boolean>(!!cachedMetaBusiness)
@@ -137,14 +145,18 @@ export default function MetaBusinessPage() {
 
   // Buscar dados de uma lista de contas ativas para UM endpoint específico, em paralelo entre
   // as contas (mas um endpoint por vez no total) — usado pelas 3 funções de busca abaixo.
+  // Retorna também até quando devemos evitar novas chamadas, caso alguma conta tenha
+  // retornado `rateLimited: true` (ver lib/meta-rate-limit.ts no servidor) — o maior tempo de
+  // espera entre todas as contas consultadas nessa chamada.
   const fetchEndpointForActiveAccounts = useCallback(async <T,>(
     endpoint: 'accounts' | 'campaigns' | 'adsets' | 'ads',
     listKey: 'accounts' | 'campaigns' | 'adSets' | 'ads'
-  ): Promise<T[]> => {
+  ): Promise<{ items: T[]; rateLimitedUntil: number | null }> => {
     const activeAccounts = facebookAccounts.filter(a => a.status === 'active')
-    if (activeAccounts.length === 0) return []
+    if (activeAccounts.length === 0) return { items: [], rateLimitedUntil: null }
 
     const dateQuery = customRange ? `&since=${customRange.since}&until=${customRange.until}` : ''
+    let maxRetryAfterSeconds = 0
 
     const results = await Promise.all(
       activeAccounts.map(async (account) => {
@@ -153,7 +165,19 @@ export default function MetaBusinessPage() {
             `/api/meta-business/${endpoint}?accountId=${account.id}&datePreset=${datePreset}${dateQuery}`,
             { credentials: 'include' }
           )
-          const data = response.ok ? await response.json() : {}
+          // Sempre tentamos ler o corpo, mesmo em respostas não-ok (429 de rate limit vem com
+          // dados "stale" quando disponíveis, ou listas vazias + o motivo do bloqueio).
+          let data: any = {}
+          try {
+            data = await response.json()
+          } catch {
+            data = {}
+          }
+
+          if (data?.rateLimited) {
+            maxRetryAfterSeconds = Math.max(maxRetryAfterSeconds, data.retryAfterSeconds || 60)
+          }
+
           return (data[listKey] || []) as T[]
         } catch (error) {
           console.error(`Error fetching ${endpoint} for account ${account.id}:`, error)
@@ -162,7 +186,10 @@ export default function MetaBusinessPage() {
       })
     )
 
-    return results.flat()
+    return {
+      items: results.flat(),
+      rateLimitedUntil: maxRetryAfterSeconds > 0 ? Date.now() + maxRetryAfterSeconds * 1000 : null
+    }
   }, [facebookAccounts, datePreset, customRange])
 
   const persistCache = useCallback((overrides: Partial<MetaBusinessCachedData>) => {
@@ -185,16 +212,25 @@ export default function MetaBusinessPage() {
   const fetchAccountsAndCampaigns = useCallback(async () => {
     try {
       setIsRefreshing(true)
-      const [allAccounts, allCampaigns] = await Promise.all([
+      const [accountsResult, campaignsResult] = await Promise.all([
         fetchEndpointForActiveAccounts<MetaAccount>('accounts', 'accounts'),
         fetchEndpointForActiveAccounts<MetaCampaign>('campaigns', 'campaigns')
       ])
 
-      setAccounts(allAccounts)
-      setCampaigns(allCampaigns)
+      setAccounts(accountsResult.items)
+      setCampaigns(campaignsResult.items)
 
-      const newStats = calculateStats(allAccounts, allCampaigns, adSetsRef.current, adsRef.current)
-      persistCache({ accounts: allAccounts, campaigns: allCampaigns, stats: newStats })
+      const combinedRateLimitedUntil = Math.max(
+        accountsResult.rateLimitedUntil || 0,
+        campaignsResult.rateLimitedUntil || 0
+      )
+      if (combinedRateLimitedUntil > 0) {
+        setRateLimitedUntil(prev => Math.max(prev || 0, combinedRateLimitedUntil))
+        toast.error('Limite de requisições da Meta atingido. Aguarde antes de atualizar de novo.')
+      }
+
+      const newStats = calculateStats(accountsResult.items, campaignsResult.items, adSetsRef.current, adsRef.current)
+      persistCache({ accounts: accountsResult.items, campaigns: campaignsResult.items, stats: newStats })
       setHasLoadedOnce(true)
     } catch (error) {
       console.error('Error fetching accounts/campaigns:', error)
@@ -211,8 +247,12 @@ export default function MetaBusinessPage() {
   const fetchAdSets = useCallback(async () => {
     try {
       setIsLoadingAdSets(true)
-      const allAdSets = await fetchEndpointForActiveAccounts<MetaAdSet>('adsets', 'adSets')
+      const { items: allAdSets, rateLimitedUntil: limitedUntil } = await fetchEndpointForActiveAccounts<MetaAdSet>('adsets', 'adSets')
       setAdSets(allAdSets)
+      if (limitedUntil) {
+        setRateLimitedUntil(prev => Math.max(prev || 0, limitedUntil))
+        toast.error('Limite de requisições da Meta atingido ao buscar conjuntos. Aguarde antes de tentar de novo.')
+      }
       const newStats = calculateStats(accountsRef.current, campaignsRef.current, allAdSets, adsRef.current)
       persistCache({ adSets: allAdSets, stats: newStats })
     } catch (error) {
@@ -227,8 +267,12 @@ export default function MetaBusinessPage() {
   const fetchAds = useCallback(async () => {
     try {
       setIsLoadingAds(true)
-      const allAds = await fetchEndpointForActiveAccounts<MetaAd>('ads', 'ads')
+      const { items: allAds, rateLimitedUntil: limitedUntil } = await fetchEndpointForActiveAccounts<MetaAd>('ads', 'ads')
       setAds(allAds)
+      if (limitedUntil) {
+        setRateLimitedUntil(prev => Math.max(prev || 0, limitedUntil))
+        toast.error('Limite de requisições da Meta atingido ao buscar anúncios. Aguarde antes de tentar de novo.')
+      }
       const newStats = calculateStats(accountsRef.current, campaignsRef.current, adSetsRef.current, allAds)
       persistCache({ ads: allAds, stats: newStats })
     } catch (error) {
@@ -271,15 +315,34 @@ export default function MetaBusinessPage() {
   // Debounce da busca eager para evitar múltiplos refreshs em sequência
   const debouncedFetchAccountsAndCampaigns = useDebounce('meta-business-fetch', fetchAccountsAndCampaigns, 3000)
 
+  // Enquanto bloqueados por rate limit, atualiza a contagem regressiva mostrada no botão
+  // "Atualizar" a cada segundo, e libera automaticamente assim que o tempo passar.
+  useEffect(() => {
+    if (!rateLimitedUntil) return
+    const interval = setInterval(() => {
+      const now = Date.now()
+      setNowTick(now)
+      if (now >= rateLimitedUntil) {
+        setRateLimitedUntil(null)
+      }
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [rateLimitedUntil])
+
+  const isRateLimited = !!rateLimitedUntil && nowTick < rateLimitedUntil
+  const rateLimitCountdownSeconds = isRateLimited ? Math.max(Math.ceil((rateLimitedUntil! - nowTick) / 1000), 0) : 0
+
   useEffect(() => {
     // Bug corrigido: antes checava `accounts.length` (o estado de contas do Meta Business,
     // que só é preenchido DEPOIS dessa busca rodar) em vez de `facebookAccounts.length` (a
     // lista de contas do Facebook vinda do AppContext, que é o que precisa estar pronto ANTES
     // de buscar). Isso fazia essa busca automática nunca disparar sozinha na prática.
-    if (facebookAccounts.length > 0) {
+    // Também não dispara sozinha enquanto estivermos bloqueados por rate limit — insistir só
+    // aumenta o tempo de bloqueio, conforme a própria recomendação da Meta.
+    if (facebookAccounts.length > 0 && !isRateLimited) {
       fetchAccountsAndCampaignsRef.current()
     }
-  }, [facebookAccounts, datePreset, customRange])
+  }, [facebookAccounts, datePreset, customRange, isRateLimited])
 
   // Chave que identifica o "recorte" atual de dados (período de data selecionado). Usada para
   // saber se os conjuntos/anúncios já carregados na aba ainda são válidos para o filtro atual,
@@ -295,6 +358,9 @@ export default function MetaBusinessPage() {
   // inicial, o que ajuda bastante a não estourar o rate limit "Limited Access" da Meta.
   useEffect(() => {
     if (facebookAccounts.length === 0) return
+    // Não dispara enquanto bloqueados por rate limit; quando o bloqueio acabar, o usuário pode
+    // trocar de aba de novo ou clicar em Atualizar para tentar de fato.
+    if (isRateLimited) return
 
     if (activeTab === 'adsets' && adSetsLoadedKeyRef.current !== currentDataKey) {
       adSetsLoadedKeyRef.current = currentDataKey
@@ -304,7 +370,7 @@ export default function MetaBusinessPage() {
       fetchAds()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, facebookAccounts, currentDataKey])
+  }, [activeTab, facebookAccounts, currentDataKey, isRateLimited])
 
   // Mantém o filtro de contas em sincronia sempre que os dados de campanhas/adsets/ads
   // (que carregam accountIds reais) mudarem.
@@ -318,6 +384,14 @@ export default function MetaBusinessPage() {
   }, [accounts])
 
   const handleRefresh = useDebounce('meta-business-refresh', async () => {
+    // Se alguma conta acabou de bater no limite de requisições da Meta, não insiste — a própria
+    // Meta recomenda parar de chamar nesse caso, já que continuar só aumenta o bloqueio. O botão
+    // já fica desabilitado nesse período, mas essa checagem cobre chamadas vindas de outro lugar.
+    if (isRateLimited) {
+      toast.error(`Aguarde ${rateLimitCountdownSeconds}s: limite de requisições da Meta ainda ativo.`)
+      return
+    }
+
     await refreshAccounts()
     await debouncedFetchAccountsAndCampaigns()
     // Atualiza também a aba de conjuntos/anúncios se for a que está aberta no momento —
@@ -327,7 +401,9 @@ export default function MetaBusinessPage() {
     } else if (activeTab === 'ads') {
       await fetchAds()
     }
-    toast.success('Dados atualizados!')
+    if (!isRateLimited) {
+      toast.success('Dados atualizados!')
+    }
   }, 2000)
 
   const handleDatePresetChange = (preset: string) => {
@@ -583,11 +659,14 @@ export default function MetaBusinessPage() {
               </div>
               <button
                 onClick={handleRefresh}
-                disabled={isRefreshing}
-                className="btn-secondary flex items-center justify-center space-x-2 px-4 py-2"
+                disabled={isRefreshing || isRateLimited}
+                title={isRateLimited ? `Limite de requisições da Meta atingido. Tente novamente em ${rateLimitCountdownSeconds}s.` : undefined}
+                className="btn-secondary flex items-center justify-center space-x-2 px-4 py-2 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">Atualizar</span>
+                <span className="hidden sm:inline">
+                  {isRateLimited ? `Aguarde ${rateLimitCountdownSeconds}s` : 'Atualizar'}
+                </span>
               </button>
             </div>
           </div>
@@ -600,6 +679,22 @@ export default function MetaBusinessPage() {
             transition={{ duration: 0.5 }}
             className="space-y-6"
           >
+            {/* Aviso de rate limit ativo — some sozinho quando o tempo passar */}
+            {isRateLimited && (
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-sm text-amber-800 dark:text-amber-300">
+                Limite de requisições da Meta atingido para uma ou mais contas. Os dados exibidos podem estar desatualizados.
+                Nova tentativa liberada em {rateLimitCountdownSeconds}s.
+              </div>
+            )}
+
+            {/* Aviso sobre período "Todo o período" — consulta mais pesada, maior chance de bater no limite */}
+            {datePreset === 'maximum' && !isRateLimited && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm text-blue-800 dark:text-blue-300">
+                O período "Todo o período" faz uma consulta bem mais pesada na API da Meta e tem mais chance de esbarrar no
+                limite de requisições. Se acontecer, prefira um período menor (últimos 7 ou 30 dias).
+              </div>
+            )}
+
             {/* Cards de Estatísticas Básicas */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatsCard

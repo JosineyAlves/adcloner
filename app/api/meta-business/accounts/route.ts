@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { FacebookBatchAPI } from '@/lib/facebook-batch-api'
 import { cache } from '@/lib/cache'
+import {
+  getRateLimitBlock,
+  setRateLimitBlock,
+  isRateLimitErrorBody,
+  saveLastGood,
+  getLastGood,
+  retryAfterSecondsFor
+} from '@/lib/meta-rate-limit'
 
 const facebookBatchAPI = new FacebookBatchAPI()
 
@@ -30,22 +38,54 @@ export async function GET(request: NextRequest) {
     // Verificar cache primeiro com TTL inteligente
     const cacheKey = cache.generateKey('accounts', { accountId, datePreset, since, until })
     const cachedData = cache.get(cacheKey)
-    
+
     if (cachedData) {
       console.log('📦 Retornando dados da conta do cache (TTL inteligente)')
       return NextResponse.json(cachedData)
     }
 
+    // Se essa conta acabou de bater no limite de requisições da Meta, não tentar de novo agora —
+    // a própria doc da Meta recomenda parar de chamar, já que insistir só aumenta o bloqueio.
+    // Servimos o último resultado bom conhecido (se houver) para a tela não ficar vazia.
+    const existingBlock = getRateLimitBlock(accountId)
+    if (existingBlock) {
+      const stale = getLastGood<any>(cacheKey)
+      return NextResponse.json(
+        {
+          ...(stale?.data || { accounts: [], totalAccounts: 0, summary: {} }),
+          rateLimited: true,
+          retryAfterSeconds: retryAfterSecondsFor(accountId),
+          message: 'Limite de requisições da Meta atingido para esta conta. Aguarde antes de tentar novamente.'
+        },
+        { status: 429 }
+      )
+    }
+
     try {
       console.log('🚀 Iniciando busca de insights da conta com Batch Requests')
-      
+
       // PASSO 1: Buscar insights da conta usando batch request
       const accountInsightsBatch = facebookBatchAPI.createAccountInsightsBatch(accountId, datePreset, since || undefined, until || undefined)
-      const accountInsightsResponses = await facebookBatchAPI.makeBatchRequest(accountInsightsBatch, accessToken)
-      
+      const { responses: accountInsightsResponses, estimatedWaitMinutes } = await facebookBatchAPI.makeBatchRequest(accountInsightsBatch, accessToken)
+
       if (accountInsightsResponses[0].code !== 200) {
         const errorData = JSON.parse(accountInsightsResponses[0].body || '{}')
         console.error('❌ Erro ao buscar insights da conta:', errorData)
+
+        if (isRateLimitErrorBody(errorData)) {
+          setRateLimitBlock(accountId, estimatedWaitMinutes, errorData.error?.message || 'Rate limit da Meta')
+          const stale = getLastGood<any>(cacheKey)
+          return NextResponse.json(
+            {
+              ...(stale?.data || { accounts: [], totalAccounts: 0, summary: {} }),
+              rateLimited: true,
+              retryAfterSeconds: retryAfterSecondsFor(accountId),
+              message: 'Limite de requisições da Meta atingido para esta conta. Aguarde antes de tentar novamente.'
+            },
+            { status: 429 }
+          )
+        }
+
         return NextResponse.json(
           { error: errorData.error?.message || 'Failed to fetch account insights' },
           { status: 400 }
@@ -166,6 +206,7 @@ export async function GET(request: NextRequest) {
 
       // Salvar no cache com TTL inteligente
       cache.set(cacheKey, result, 300) // 5 minutos para dados de conta
+      saveLastGood(cacheKey, result)
 
       console.log(`✅ Insights da conta processados com sucesso`)
       return NextResponse.json(result)

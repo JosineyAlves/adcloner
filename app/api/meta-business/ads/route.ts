@@ -3,6 +3,14 @@ import { cache } from '@/lib/cache'
 import { facebookBatchAPI } from '@/lib/facebook-batch-api'
 import { videoMetricsAPI } from '@/lib/video-metrics'
 import { VideoMetrics } from '@/lib/types'
+import {
+  getRateLimitBlock,
+  setRateLimitBlock,
+  isRateLimitErrorBody,
+  saveLastGood,
+  getLastGood,
+  retryAfterSecondsFor
+} from '@/lib/meta-rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -225,16 +233,46 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(cachedData)
     }
 
+    // Se essa conta acabou de bater no limite de requisições da Meta, não tentar de novo agora.
+    const existingBlock = getRateLimitBlock(accountId)
+    if (existingBlock) {
+      const stale = getLastGood<any>(cacheKey)
+      return NextResponse.json(
+        {
+          ...(stale?.data || { ads: [] }),
+          rateLimited: true,
+          retryAfterSeconds: retryAfterSecondsFor(accountId),
+          message: 'Limite de requisições da Meta atingido para esta conta. Aguarde antes de tentar novamente.'
+        },
+        { status: 429 }
+      )
+    }
+
     try {
       console.log('🚀 Iniciando busca de ads com Batch Requests')
-      
+
       // PASSO 1: Buscar ads usando batch request
       const adsBatch = facebookBatchAPI.createAdsBatch(accountId, datePreset, since || undefined, until || undefined)
-      const adsResponses = await facebookBatchAPI.makeBatchRequest(adsBatch, accessToken)
-      
+      const { responses: adsResponses, estimatedWaitMinutes } = await facebookBatchAPI.makeBatchRequest(adsBatch, accessToken)
+
       if (adsResponses[0].code !== 200) {
         const errorData = JSON.parse(adsResponses[0].body || '{}')
         console.error('❌ Erro ao buscar ads:', errorData)
+
+        if (isRateLimitErrorBody(errorData)) {
+          setRateLimitBlock(accountId, estimatedWaitMinutes, errorData.error?.message || 'Rate limit da Meta')
+          const stale = getLastGood<any>(cacheKey)
+          return NextResponse.json(
+            {
+              ...(stale?.data || { ads: [] }),
+              rateLimited: true,
+              retryAfterSeconds: retryAfterSecondsFor(accountId),
+              message: 'Limite de requisições da Meta atingido para esta conta. Aguarde antes de tentar novamente.'
+            },
+            { status: 429 }
+          )
+        }
+
         return NextResponse.json(
           { error: errorData.error?.message || 'Failed to fetch ads' },
           { status: 400 }
@@ -243,14 +281,14 @@ export async function GET(request: NextRequest) {
 
       const adsData = JSON.parse(adsResponses[0].body || '{}')
       const ads: any[] = []
-      
+
       if (adsData.data && adsData.data.length > 0) {
         console.log(`📊 Encontrados ${adsData.data.length} ads`)
-        
+
         // PASSO 2: Buscar insights em batch (até 50 por vez)
         const adIds = adsData.data.map((ad: any) => ad.id)
         const insightsBatch = facebookBatchAPI.createAdInsightsBatch(adIds, datePreset, since || undefined, until || undefined)
-        const insightsResponses = await facebookBatchAPI.makeBatchRequest(insightsBatch, accessToken)
+        const { responses: insightsResponses } = await facebookBatchAPI.makeBatchRequest(insightsBatch, accessToken)
         
         console.log(`📈 Buscando insights para ${adIds.length} ads em ${Math.ceil(insightsBatch.length / 50)} lotes`)
         
@@ -538,7 +576,8 @@ export async function GET(request: NextRequest) {
       
       // Salvar no cache com TTL inteligente (8 minutos para ads)
       cache.setWithIntelligentTTL(cacheKey, result, 'ads')
-      
+      saveLastGood(cacheKey, result)
+
       console.log(`✅ Ads processados com sucesso: ${ads.length} itens`)
       return NextResponse.json(result)
     } catch (error) {
