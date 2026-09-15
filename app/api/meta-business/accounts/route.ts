@@ -116,14 +116,31 @@ export async function GET(request: NextRequest) {
 
       // Processar insights da conta
       const insights = accountInsightsData.data[0]
-      
+
       // Debug: Log dos dados completos da API
       console.log(`🔍 Conta ${accountId} - Dados completos da API:`, JSON.stringify(insights, null, 2))
-      
+
+      // Segundo item do mesmo batch (ver createAccountInsightsBatch) — account_status vem do
+      // objeto Ad Account, não do /insights. Enum oficial da Meta: 1=ACTIVE, 2=DISABLED,
+      // 3=UNSETTLED, 7=PENDING_RISK_REVIEW, 8=PENDING_SETTLEMENT, 9=IN_GRACE_PERIOD,
+      // 100=PENDING_CLOSURE, 101=CLOSED. Segue o mesmo critério binário já usado em
+      // lib/facebook-api.ts (mapAccountStatus): só 1 é "ativa", qualquer outro valor é tratado
+      // como restrita/indisponível para veicular anúncios.
+      let accountStatus: number | null = null
+      if (accountInsightsResponses[1]?.code === 200) {
+        try {
+          const accountFieldsData = JSON.parse(accountInsightsResponses[1].body || '{}')
+          accountStatus = typeof accountFieldsData.account_status === 'number' ? accountFieldsData.account_status : null
+        } catch (e) {
+          console.warn('⚠️ Erro ao parsear account_status:', e)
+        }
+      }
+
       // Criar objeto da conta com insights
       const accountData = {
         id: accountId,
         name: insights.account_name || 'Facebook Account',
+        account_status: accountStatus,
         
         // Métricas básicas (disponíveis em todos os níveis)
         spend: parseFloat(insights.spend || '0'),

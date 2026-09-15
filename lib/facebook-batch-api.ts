@@ -333,10 +333,20 @@ export class FacebookBatchAPI {
       'date_stop'
     ].join(',')
     
-    return [{
-      method: 'GET',
-      relative_url: `${accountId}/insights?fields=${fields}&level=account${dateParam}`
-    }]
+    return [
+      {
+        method: 'GET',
+        relative_url: `${accountId}/insights?fields=${fields}&level=account${dateParam}`
+      },
+      // Segundo item do mesmo batch (mesma requisição HTTP, sem chamada extra de rede): busca
+      // `account_status` direto no objeto Ad Account — esse campo NÃO existe na Ads Insights API
+      // (level=account só tem métricas de performance), é exclusivo do objeto Ad Account em si.
+      // É o que permite mostrar "Ativa"/"Restrita" na coluna Status da aba Contas.
+      {
+        method: 'GET',
+        relative_url: `${accountId}?fields=account_status`
+      }
+    ]
   }
 
   /**

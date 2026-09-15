@@ -55,6 +55,33 @@ export default function AccountsTable({
     }
   }
 
+  // account_status vem do objeto Ad Account (não do /insights) — ver app/api/meta-business/accounts/route.ts.
+  // Só 1 (ACTIVE) é considerado "Ativa"; qualquer outro valor documentado pela Meta (2=DISABLED,
+  // 3=UNSETTLED, 7=PENDING_RISK_REVIEW, 8=PENDING_SETTLEMENT, 9=IN_GRACE_PERIOD,
+  // 100=PENDING_CLOSURE, 101=CLOSED) é tratado como "Restrita" — mesmo critério binário já usado
+  // em lib/facebook-api.ts (mapAccountStatus).
+  const getAccountStatusBadge = (accountStatus: number | null | undefined) => {
+    if (accountStatus === null || accountStatus === undefined) {
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+          -
+        </span>
+      )
+    }
+    const isActive = accountStatus === 1
+    return (
+      <span
+        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
+          isActive
+            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+        }`}
+      >
+        {isActive ? 'Ativa' : 'Restrita'}
+      </span>
+    )
+  }
+
   // Linha de totais no rodapé — mesmo cálculo usado em CampaignsTable/AdSetsTable/AdsTable:
   // soma para colunas 'number'/'currency', média simples para 'percentage'.
   const visibleMetrics = metrics.filter(m => m.visible)
@@ -76,6 +103,9 @@ export default function AccountsTable({
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
                   Conta
                 </th>
                 {showMetrics && metrics.filter(m => m.visible).map((metric) => (
@@ -87,7 +117,7 @@ export default function AccountsTable({
             </thead>
             <tbody>
               <tr>
-                <td colSpan={1 + (showMetrics ? metrics.filter(m => m.visible).length : 0)} className="px-6 py-12 text-center">
+                <td colSpan={2 + (showMetrics ? metrics.filter(m => m.visible).length : 0)} className="px-6 py-12 text-center">
                   <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                     Nenhuma conta encontrada
@@ -110,7 +140,12 @@ export default function AccountsTable({
         <table className="w-full">
           <thead className="bg-gray-50 dark:bg-gray-700">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+              {/* Status/Conta ficam fixos (sticky left) durante a rolagem horizontal pelas colunas
+                  de métrica — mesmo padrão de CampaignsTable/AdSetsTable/AdsTable. */}
+              <th className="sticky left-0 z-20 w-24 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                Status
+              </th>
+              <th className="sticky left-24 z-20 w-[240px] bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
                 Conta
               </th>
               {showMetrics && metrics.filter(m => m.visible).map((metric) => (
@@ -128,10 +163,13 @@ export default function AccountsTable({
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
-                className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="group hover:bg-gray-50 dark:hover:bg-gray-700"
               >
-                <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[280px]" title={account.name}>
+                <td className="sticky left-0 z-10 w-24 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-4">
+                  {getAccountStatusBadge(account.account_status)}
+                </td>
+                <td className="sticky left-24 z-10 w-[240px] bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-4">
+                  <div className="text-sm font-medium text-gray-900 dark:text-white truncate" title={account.name}>
                     {account.name}
                   </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
@@ -152,7 +190,8 @@ export default function AccountsTable({
           </tbody>
           <tfoot>
             <tr>
-              <td className="sticky bottom-0 z-10 bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">
+              <td className="sticky left-0 bottom-0 z-20 w-24 bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 px-6 py-3"></td>
+              <td className="sticky left-24 bottom-0 z-20 w-[240px] bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">
                 {accounts.length} {accounts.length === 1 ? 'CONTA' : 'CONTAS'}
               </td>
               {showMetrics && visibleMetrics.map((metric, index) => (

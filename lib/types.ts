@@ -129,6 +129,9 @@ export interface MetaAccount {
   id: string
   name: string
   account_currency: string
+  // Vem do objeto Ad Account (não do /insights) — 1 = ACTIVE, qualquer outro valor = restrita
+  // (DISABLED/UNSETTLED/PENDING_*/CLOSED etc.). Ver app/api/meta-business/accounts/route.ts.
+  account_status?: number | null
   date_start: string
   date_stop: string
   created_time: string
