@@ -3,10 +3,16 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { FacebookAccount } from '@/lib/types'
 import toast from 'react-hot-toast'
+import {
+  readLocalCache,
+  writeLocalCache,
+  LOCAL_CACHE_KEYS
+} from '@/lib/local-storage-cache'
 
 interface AppContextType {
   accounts: FacebookAccount[]
   isLoading: boolean
+  isRevalidating: boolean
   refreshAccounts: () => Promise<void>
 }
 
@@ -17,46 +23,75 @@ interface AppProviderProps {
 }
 
 export function AppProvider({ children }: AppProviderProps) {
-  const [accounts, setAccounts] = useState<FacebookAccount[]>([])
-  const [isLoading, setIsLoading] = useState<boolean>(true)
+  // Hidratar com o que estiver salvo no localStorage (se houver) para não mostrar tela vazia
+  // enquanto a primeira busca real da sessão ainda não respondeu.
+  const [accounts, setAccounts] = useState<FacebookAccount[]>(() => {
+    const cached = readLocalCache<FacebookAccount[]>(LOCAL_CACHE_KEYS.facebookAccounts)
+    return cached?.data || []
+  })
+  // Só bloqueia a tela com "Carregando..." se não havia nada em cache para mostrar de cara.
+  const [isLoading, setIsLoading] = useState<boolean>(() => {
+    const cached = readLocalCache<FacebookAccount[]>(LOCAL_CACHE_KEYS.facebookAccounts)
+    return !cached
+  })
+  // Indica uma busca em segundo plano (revalidação) sem esconder os dados já exibidos.
+  const [isRevalidating, setIsRevalidating] = useState<boolean>(false)
 
-  const fetchAccounts = async () => {
+  const fetchAccounts = async (isBackground: boolean) => {
+    if (isBackground) {
+      setIsRevalidating(true)
+    }
+
     try {
       const response = await fetch('/api/facebook/accounts', {
         credentials: 'include'
       })
-      
+
       if (response.ok) {
         const data = await response.json()
-        setAccounts(data.accounts || [])
+        const nextAccounts = data.accounts || []
+        setAccounts(nextAccounts)
+        writeLocalCache(LOCAL_CACHE_KEYS.facebookAccounts, nextAccounts)
       } else if (response.status === 401) {
         window.location.href = '/login'
         return
       } else {
         console.error('Failed to fetch accounts')
-        toast.error('Erro ao carregar contas do Facebook')
+        // Se já temos dados em cache/tela, não interrompe o usuário com um toast de erro
+        // por causa de uma revalidação silenciosa que falhou.
+        if (!isBackground) {
+          toast.error('Erro ao carregar contas do Facebook')
+        }
       }
     } catch (error) {
       console.error('Error fetching accounts:', error)
-      toast.error('Erro ao carregar contas do Facebook')
+      if (!isBackground) {
+        toast.error('Erro ao carregar contas do Facebook')
+      }
     } finally {
       setIsLoading(false)
+      setIsRevalidating(false)
     }
   }
 
   const refreshAccounts = async () => {
-    setIsLoading(true)
-    await fetchAccounts()
+    setIsLoading(accounts.length === 0)
+    await fetchAccounts(accounts.length > 0)
   }
 
   useEffect(() => {
-    fetchAccounts()
+    // Se já tínhamos dado em cache, isso roda como revalidação silenciosa em segundo plano;
+    // caso contrário, é a busca inicial normal (com loading bloqueante).
+    const hadCache = accounts.length > 0
+    fetchAccounts(hadCache)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
     <AppContext.Provider value={{
       accounts,
       isLoading,
+      isRevalidating,
       refreshAccounts
     }}>
       {children}

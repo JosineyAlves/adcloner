@@ -1,56 +1,26 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Plus, Search, Facebook, Building2, Users, BarChart3, RefreshCw, Settings } from 'lucide-react'
 import Sidebar from '@/components/layout/Sidebar'
 import AccountCard from '@/components/dashboard/AccountCard'
 import ConnectFacebookModal from '@/components/accounts/ConnectFacebookModal'
-import { FacebookAccount } from '@/lib/types'
 import { getStatusColor, getStatusIcon } from '@/lib/utils'
+import { useApp } from '@/contexts/AppContext'
 import toast from 'react-hot-toast'
 
 export default function AccountsPage() {
-  const [accounts, setAccounts] = useState<FacebookAccount[]>([])
-  const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
+  // Contas vêm do AppContext (compartilhado com o resto do app, já hidratado do cache local),
+  // em vez de uma busca própria e desconectada — isso evitava duas buscas descoordenadas do
+  // mesmo endpoint e fazia a tela de Meta Business depender indiretamente de visitar esta página.
+  const { accounts, isLoading, isRevalidating, refreshAccounts } = useApp()
   const [showConnectModal, setShowConnectModal] = useState<boolean>(false)
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
 
-  useEffect(() => {
-    fetchAccounts()
-  }, [])
-
-  const fetchAccounts = async () => {
-    try {
-      const response = await fetch('/api/facebook/accounts', {
-        credentials: 'include'
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setAccounts(data.accounts || [])
-      } else if (response.status === 401) {
-        // Token expirado, redirecionar para login
-        window.location.href = '/login'
-        return
-      } else {
-        console.error('Failed to fetch accounts')
-        toast.error('Erro ao carregar contas do Facebook')
-      }
-    } catch (error) {
-      console.error('Error fetching accounts:', error)
-      toast.error('Erro ao carregar contas do Facebook')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleRefresh = async () => {
-    setIsRefreshing(true)
-    await fetchAccounts()
-    setIsRefreshing(false)
+    await refreshAccounts()
     toast.success('Contas atualizadas!')
   }
 
@@ -58,7 +28,7 @@ export default function AccountsPage() {
     console.log('✅ Conectado com sucesso:', userInfo)
     setShowConnectModal(false)
     // Recarregar contas após conexão
-    fetchAccounts()
+    refreshAccounts()
     toast.success('Conta do Facebook conectada com sucesso!')
   }
 
@@ -103,10 +73,10 @@ export default function AccountsPage() {
             <div className="flex items-center space-x-3">
               <button
                 onClick={handleRefresh}
-                disabled={isRefreshing}
+                disabled={isRevalidating}
                 className="btn-secondary flex items-center space-x-2"
               >
-                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 ${isRevalidating ? 'animate-spin' : ''}`} />
                 <span>Atualizar</span>
               </button>
               <button 

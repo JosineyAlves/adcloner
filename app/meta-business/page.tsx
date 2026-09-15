@@ -42,19 +42,43 @@ import {
 } from '@/lib/types'
 import { useApp } from '@/contexts/AppContext'
 import { useDebounce } from '@/lib/debounce'
+import {
+  readLocalCache,
+  writeLocalCache,
+  LOCAL_CACHE_KEYS
+} from '@/lib/local-storage-cache'
 import toast from 'react-hot-toast'
+
+interface MetaBusinessCachedData {
+  accounts: MetaAccount[]
+  campaigns: MetaCampaign[]
+  adSets: MetaAdSet[]
+  ads: MetaAd[]
+  stats: MetaBusinessStats
+  datePreset: string
+  customRange?: DateRange
+}
 
 export default function MetaBusinessPage() {
   const { accounts: facebookAccounts, isLoading: accountsLoading, refreshAccounts } = useApp()
+  // Hidratar tudo (contas/campanhas/adsets/ads/stats + filtros de data) a partir do cache local,
+  // se houver, para a tela não aparecer vazia enquanto a busca real na Graph API não termina.
+  const cachedMetaBusiness = useState(() =>
+    readLocalCache<MetaBusinessCachedData>(LOCAL_CACHE_KEYS.metaBusinessData)
+  )[0]
+
   const [activeTab, setActiveTab] = useState<'accounts' | 'campaigns' | 'adsets' | 'ads'>('accounts')
-  const [datePreset, setDatePreset] = useState('last_30d')
-  const [customRange, setCustomRange] = useState<DateRange | undefined>(undefined)
-  const [accounts, setAccounts] = useState<MetaAccount[]>([])
-  const [campaigns, setCampaigns] = useState<MetaCampaign[]>([])
-  const [adSets, setAdSets] = useState<MetaAdSet[]>([])
-  const [ads, setAds] = useState<MetaAd[]>([])
+  const [datePreset, setDatePreset] = useState(() => cachedMetaBusiness?.data.datePreset || 'last_30d')
+  const [customRange, setCustomRange] = useState<DateRange | undefined>(() => cachedMetaBusiness?.data.customRange)
+  const [accounts, setAccounts] = useState<MetaAccount[]>(() => cachedMetaBusiness?.data.accounts || [])
+  const [campaigns, setCampaigns] = useState<MetaCampaign[]>(() => cachedMetaBusiness?.data.campaigns || [])
+  const [adSets, setAdSets] = useState<MetaAdSet[]>(() => cachedMetaBusiness?.data.adSets || [])
+  const [ads, setAds] = useState<MetaAd[]>(() => cachedMetaBusiness?.data.ads || [])
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
-  const [stats, setStats] = useState<MetaBusinessStats>({
+  // true só na primeiríssima carga real (sem nada em cache ainda) — usado para não mostrar
+  // "Carregando Meta Business..." em cima de dados que já estão na tela vindos do cache.
+  const [hasLoadedOnce, setHasLoadedOnce] = useState<boolean>(!!cachedMetaBusiness)
+  const [stats, setStats] = useState<MetaBusinessStats>(() => cachedMetaBusiness?.data.stats || {
     totalSpend: 0,
     totalImpressions: 0,
     totalClicks: 0,
@@ -94,63 +118,54 @@ export default function MetaBusinessPage() {
     try {
       setIsRefreshing(true)
       const activeAccounts = facebookAccounts.filter(a => a.status === 'active')
-      
+
       if (activeAccounts.length === 0) {
-        toast.error('Nenhuma conta ativa encontrada')
+        // Silencioso: isso acontece normalmente enquanto a lista de contas ainda está
+        // carregando (ou revalidando em segundo plano) — não é um erro do usuário.
         return
       }
 
-      // Buscar dados de todas as contas ativas
-      const allAccounts: MetaAccount[] = []
-      const allCampaigns: MetaCampaign[] = []
-      const allAdSets: MetaAdSet[] = []
-      const allAds: MetaAd[] = []
+      const dateQuery = customRange ? `&since=${customRange.since}&until=${customRange.until}` : ''
 
-      for (const account of activeAccounts) {
-        try {
-          // Buscar dados da conta
-          const accountsResponse = await fetch(`/api/meta-business/accounts?accountId=${account.id}&datePreset=${datePreset}${customRange ? `&since=${customRange.since}&until=${customRange.until}` : ''}`, {
-            credentials: 'include'
-          })
-          
-          if (accountsResponse.ok) {
-            const accountsData = await accountsResponse.json()
-            allAccounts.push(...accountsData.accounts || [])
-          }
+      // Buscar dados de todas as contas ativas em paralelo (contas independentes não têm
+      // motivo para esperar umas pelas outras), e dentro de cada conta os 4 endpoints também
+      // em paralelo (accounts/campaigns/adsets/ads não dependem um do outro). Antes disso era
+      // um for-loop 100% sequencial (conta por conta, endpoint por endpoint), o que multiplicava
+      // a latência da Graph API pelo número de contas × 4 chamadas.
+      const perAccountResults = await Promise.all(
+        activeAccounts.map(async (account) => {
+          try {
+            const [accountsResponse, campaignsResponse, adSetsResponse, adsResponse] = await Promise.all([
+              fetch(`/api/meta-business/accounts?accountId=${account.id}&datePreset=${datePreset}${dateQuery}`, { credentials: 'include' }),
+              fetch(`/api/meta-business/campaigns?accountId=${account.id}&datePreset=${datePreset}${dateQuery}`, { credentials: 'include' }),
+              fetch(`/api/meta-business/adsets?accountId=${account.id}&datePreset=${datePreset}${dateQuery}`, { credentials: 'include' }),
+              fetch(`/api/meta-business/ads?accountId=${account.id}&datePreset=${datePreset}${dateQuery}`, { credentials: 'include' })
+            ])
 
-          // Buscar campanhas
-          const campaignsResponse = await fetch(`/api/meta-business/campaigns?accountId=${account.id}&datePreset=${datePreset}${customRange ? `&since=${customRange.since}&until=${customRange.until}` : ''}`, {
-            credentials: 'include'
-          })
-          
-          if (campaignsResponse.ok) {
-            const campaignsData = await campaignsResponse.json()
-            allCampaigns.push(...campaignsData.campaigns || [])
-          }
+            const [accountsData, campaignsData, adSetsData, adsData] = await Promise.all([
+              accountsResponse.ok ? accountsResponse.json() : Promise.resolve({ accounts: [] }),
+              campaignsResponse.ok ? campaignsResponse.json() : Promise.resolve({ campaigns: [] }),
+              adSetsResponse.ok ? adSetsResponse.json() : Promise.resolve({ adSets: [] }),
+              adsResponse.ok ? adsResponse.json() : Promise.resolve({ ads: [] })
+            ])
 
-          // Buscar Ad Sets
-          const adSetsResponse = await fetch(`/api/meta-business/adsets?accountId=${account.id}&datePreset=${datePreset}${customRange ? `&since=${customRange.since}&until=${customRange.until}` : ''}`, {
-            credentials: 'include'
-          })
-          
-          if (adSetsResponse.ok) {
-            const adSetsData = await adSetsResponse.json()
-            allAdSets.push(...adSetsData.adSets || [])
+            return {
+              accounts: accountsData.accounts || [],
+              campaigns: campaignsData.campaigns || [],
+              adSets: adSetsData.adSets || [],
+              ads: adsData.ads || []
+            }
+          } catch (error) {
+            console.error(`Error fetching data for account ${account.id}:`, error)
+            return { accounts: [], campaigns: [], adSets: [], ads: [] }
           }
+        })
+      )
 
-          // Buscar Ads
-          const adsResponse = await fetch(`/api/meta-business/ads?accountId=${account.id}&datePreset=${datePreset}${customRange ? `&since=${customRange.since}&until=${customRange.until}` : ''}`, {
-            credentials: 'include'
-          })
-          
-          if (adsResponse.ok) {
-            const adsData = await adsResponse.json()
-            allAds.push(...adsData.ads || [])
-          }
-        } catch (error) {
-          console.error(`Error fetching data for account ${account.id}:`, error)
-        }
-      }
+      const allAccounts = perAccountResults.flatMap(r => r.accounts)
+      const allCampaigns = perAccountResults.flatMap(r => r.campaigns)
+      const allAdSets = perAccountResults.flatMap(r => r.adSets)
+      const allAds = perAccountResults.flatMap(r => r.ads)
 
       setAccounts(allAccounts)
       setCampaigns(allCampaigns)
@@ -158,8 +173,20 @@ export default function MetaBusinessPage() {
       setAds(allAds)
 
       // Calcular estatísticas
-      calculateStats(allAccounts, allCampaigns, allAdSets, allAds)
-      
+      const newStats = calculateStats(allAccounts, allCampaigns, allAdSets, allAds)
+
+      // Salvar no cache local para a próxima carga da página aparecer instantaneamente
+      writeLocalCache<MetaBusinessCachedData>(LOCAL_CACHE_KEYS.metaBusinessData, {
+        accounts: allAccounts,
+        campaigns: allCampaigns,
+        adSets: allAdSets,
+        ads: allAds,
+        stats: newStats,
+        datePreset,
+        customRange
+      })
+
+      setHasLoadedOnce(true)
     } catch (error) {
       console.error('Error fetching data:', error)
       toast.error('Erro ao carregar dados')
@@ -168,14 +195,14 @@ export default function MetaBusinessPage() {
     }
   }, [facebookAccounts, datePreset, customRange])
 
-  const calculateStats = (accounts: MetaAccount[], campaigns: MetaCampaign[], adSets: MetaAdSet[], ads: MetaAd[]) => {
+  const calculateStats = (accounts: MetaAccount[], campaigns: MetaCampaign[], adSets: MetaAdSet[], ads: MetaAd[]): MetaBusinessStats => {
     // Usar dados das contas se disponíveis, senão usar campanhas
     const dataSource = accounts.length > 0 ? accounts : campaigns
     const totalSpend = dataSource.reduce((sum, c) => sum + c.spend, 0)
     const totalImpressions = dataSource.reduce((sum, c) => sum + c.impressions, 0)
     const totalClicks = dataSource.reduce((sum, c) => sum + c.clicks, 0)
-    
-    setStats({
+
+    const newStats: MetaBusinessStats = {
       totalSpend,
       totalImpressions,
       totalClicks,
@@ -187,7 +214,10 @@ export default function MetaBusinessPage() {
       activeCampaigns: campaigns.filter(c => c.status === 'ACTIVE').length,
       activeAdSets: adSets.filter(a => a.status === 'ACTIVE').length,
       activeAds: ads.filter(a => a.status === 'ACTIVE').length
-    })
+    }
+
+    setStats(newStats)
+    return newStats
   }
 
   // Ref para evitar dependências desnecessárias
@@ -198,15 +228,25 @@ export default function MetaBusinessPage() {
   const debouncedFetchData = useDebounce('meta-business-fetch', fetchData, 3000)
 
   useEffect(() => {
+    // Bug corrigido: antes checava `accounts.length` (o estado de contas do Meta Business,
+    // que só é preenchido DEPOIS que fetchData roda) em vez de `facebookAccounts.length` (a
+    // lista de contas do Facebook vinda do AppContext, que é o que precisa estar pronto ANTES
+    // de buscar). Isso fazia essa busca automática nunca disparar sozinha na prática.
+    if (facebookAccounts.length > 0) {
+      fetchDataRef.current()
+    }
+  }, [facebookAccounts, datePreset, customRange])
+
+  // Mantém o filtro de contas em sincronia sempre que os dados de campanhas/adsets/ads
+  // (que carregam accountIds reais) mudarem.
+  useEffect(() => {
     if (accounts.length > 0) {
       setFilters(prev => ({
         ...prev,
         accountIds: accounts.map(acc => acc.id)
       }))
-      // Usar ref para evitar dependência circular
-      fetchDataRef.current()
     }
-  }, [facebookAccounts, datePreset, customRange])
+  }, [accounts])
 
   const handleRefresh = useDebounce('meta-business-refresh', async () => {
     await refreshAccounts()
@@ -413,7 +453,11 @@ export default function MetaBusinessPage() {
     return true
   })
 
-  if (accountsLoading) {
+  // Só bloqueia a tela inteira com o spinner se não houver NADA em cache para mostrar
+  // (nem contas do Facebook, nem dados salvos do Meta Business de uma visita anterior).
+  // Caso contrário, mostra os dados salvos imediatamente e atualiza em segundo plano
+  // (indicado pelo ícone de "Atualizar" girando via isRefreshing).
+  if (accountsLoading && !hasLoadedOnce) {
     return (
       <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
         <Sidebar />
