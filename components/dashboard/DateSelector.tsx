@@ -53,12 +53,15 @@ const FACEBOOK_DATE_PRESETS: DatePreset[] = [
     description: 'Últimos 30 dias'
   },
   {
-    value: 'this_week',
+    // 'this_week'/'last_week' (sem sufixo) NÃO são valores válidos de `date_preset` na Graph API
+    // — os enums oficiais exigem o sufixo de convenção de semana (_mon_sun ou _sun_sat). Usamos
+    // mon_sun (segunda a domingo) por bater com a descrição já usada aqui.
+    value: 'this_week_mon_sun',
     label: 'Esta semana',
     description: 'De segunda a domingo da semana atual'
   },
   {
-    value: 'last_week',
+    value: 'last_week_mon_sun',
     label: 'Semana passada',
     description: 'De segunda a domingo da semana passada'
   },
@@ -180,17 +183,25 @@ export default function DateSelector({
   }, [isOpen, isMobile])
 
   const handlePresetSelect = (preset: string) => {
-    onDatePresetChange(preset)
     if (preset === 'custom') {
+      // Não avisa o componente pai ainda (não chama onDatePresetChange) — 'custom' não é um
+      // valor válido de `date_preset` da Graph API (ver lib/facebook-batch-api.ts), então só deve
+      // virar o período ativo quando o usuário efetivamente aplicar um `since`/`until` válido
+      // (handleCustomRangeSave, abaixo). Antes disso, mudar o estado aqui já disparava uma busca
+      // automática com `date_preset=custom` e nenhum `time_range` ainda — erro garantido na Meta.
       setShowCustomRange(true)
-    } else {
-      setShowCustomRange(false)
+      return
     }
+    setShowCustomRange(false)
+    onDatePresetChange(preset)
     setIsOpen(false)
   }
 
   const handleCustomRangeSave = () => {
     if (onCustomRangeChange && tempCustomRange.since && tempCustomRange.until) {
+      // Aplica os dois de uma vez: 'custom' como período ativo + o range em si, para nunca existir
+      // um estado intermediário em que datePreset já é 'custom' mas customRange ainda não existe.
+      onDatePresetChange('custom')
       onCustomRangeChange(tempCustomRange)
       setIsOpen(false)
     }
@@ -202,7 +213,9 @@ export default function DateSelector({
       until: customRange?.until || ''
     })
     setShowCustomRange(false)
-    onDatePresetChange('last_7d')
+    // Com o fix acima, abrir o editor de período personalizado não muda mais `datePreset` no
+    // componente pai (só muda ao clicar "Aplicar") — então cancelar não precisa mais forçar
+    // nenhum período de volta, o que já estava selecionado antes continua ativo.
   }
 
   return (

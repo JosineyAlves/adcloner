@@ -69,7 +69,10 @@ export default function MetaBusinessPage() {
   )[0]
 
   const [activeTab, setActiveTab] = useState<'accounts' | 'campaigns' | 'adsets' | 'ads'>('accounts')
-  const [datePreset, setDatePreset] = useState(() => cachedMetaBusiness?.data.datePreset || 'last_30d')
+  // Padrão pedido pelo usuário: abrir a tela já com "Hoje" selecionado (em vez de "Últimos 30
+  // dias") — só usado quando não há nada em cache ainda; uma visita anterior mantém o período que
+  // o usuário deixou selecionado.
+  const [datePreset, setDatePreset] = useState(() => cachedMetaBusiness?.data.datePreset || 'today')
   const [customRange, setCustomRange] = useState<DateRange | undefined>(() => cachedMetaBusiness?.data.customRange)
   const [accounts, setAccounts] = useState<MetaAccount[]>(() => cachedMetaBusiness?.data.accounts || [])
   const [campaigns, setCampaigns] = useState<MetaCampaign[]>(() => cachedMetaBusiness?.data.campaigns || [])
@@ -108,9 +111,13 @@ export default function MetaBusinessPage() {
     activeAds: 0
   })
   
-  // Filtros globais (removido datePreset e customRange)
+  // Filtros globais (removido datePreset e customRange). Por padrão só "Ativo" fica marcado — o
+  // usuário decidiu manter a busca trazendo todos os status da Meta (não vale a pena economizar
+  // chamada filtrando na origem, ver discussão no doc do projeto), mas a tela deve abrir já
+  // mostrando só as campanhas ativas por padrão; o usuário pode trocar pra "Todos os Status",
+  // "Pausado" ou "Arquivado" a qualquer momento no filtro existente.
   const [filters, setFilters] = useState({
-    status: [] as string[],
+    status: ['ACTIVE'] as string[],
     search: '',
     accountIds: [] as string[]
   })

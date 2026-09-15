@@ -190,6 +190,21 @@ export class FacebookBatchAPI {
   }
 
   /**
+   * Monta o parâmetro de período pra uma chamada à Graph API — `date_preset` e `time_range` são
+   * MUTUAMENTE EXCLUSIVOS na Marketing API (ver developers.facebook.com/docs/marketing-api/insights/parameters),
+   * então nunca devem ser enviados juntos na mesma URL. Antes disso todas as chamadas deste
+   * arquivo enviavam os dois ao mesmo tempo quando um período personalizado estava selecionado
+   * (`date_preset=custom&time_range={...}` — "custom" nem é um valor válido de `date_preset`),
+   * o que fazia o modo "Personalizado" da tela não se comportar de forma confiável.
+   */
+  private buildDateQueryParam(datePreset: string, since?: string, until?: string): string {
+    if (since && until) {
+      return `&time_range=${JSON.stringify({ since, until })}`
+    }
+    return `&date_preset=${datePreset}`
+  }
+
+  /**
    * Divide array em chunks de tamanho específico
    */
   private chunkArray<T>(array: T[], size: number): T[][] {
@@ -211,12 +226,12 @@ export class FacebookBatchAPI {
    * Cria batch de requisições para campanhas
    */
   createCampaignsBatch(accountId: string, datePreset: string, since?: string, until?: string): BatchRequest[] {
-    const timeRange = since && until ? `&time_range=${JSON.stringify({since, until})}` : ''
-    
+    const dateParam = this.buildDateQueryParam(datePreset, since, until)
+
     return [
       {
         method: 'GET',
-        relative_url: `${accountId}/campaigns?fields=id,name,objective,status,effective_status,daily_budget,lifetime_budget,created_time,updated_time&date_preset=${datePreset}&limit=2500${timeRange}`
+        relative_url: `${accountId}/campaigns?fields=id,name,objective,status,effective_status,daily_budget,lifetime_budget,created_time,updated_time&limit=2500${dateParam}`
       }
     ]
   }
@@ -229,7 +244,7 @@ export class FacebookBatchAPI {
    * Ver lib/insights-fields.ts para o motivo disso reduzir a chance de bater no rate limit.
    */
   createCampaignInsightsBatch(campaignIds: string[], datePreset: string, since?: string, until?: string, metricIdsParam?: string | null): BatchRequest[] {
-    const timeRange = since && until ? `&time_range=${JSON.stringify({since, until})}` : ''
+    const dateParam = this.buildDateQueryParam(datePreset, since, until)
 
     const fields = [
       ...CAMPAIGN_ALWAYS_FIELDS,
@@ -238,7 +253,7 @@ export class FacebookBatchAPI {
 
     return campaignIds.map(campaignId => ({
       method: 'GET',
-      relative_url: `${campaignId}/insights?fields=${fields}&level=campaign&date_preset=${datePreset}${timeRange}`
+      relative_url: `${campaignId}/insights?fields=${fields}&level=campaign${dateParam}`
     }))
   }
 
@@ -246,8 +261,8 @@ export class FacebookBatchAPI {
    * Cria batch de requisições para insights de contas (level=account)
    */
   createAccountInsightsBatch(accountId: string, datePreset: string, since?: string, until?: string): BatchRequest[] {
-    const timeRange = since && until ? `&time_range=${JSON.stringify({since, until})}` : ''
-    
+    const dateParam = this.buildDateQueryParam(datePreset, since, until)
+
     // Campos válidos na API de Insights do Facebook para level=account
     const fields = [
       // Identificação básica
@@ -320,7 +335,7 @@ export class FacebookBatchAPI {
     
     return [{
       method: 'GET',
-      relative_url: `${accountId}/insights?fields=${fields}&level=account&date_preset=${datePreset}${timeRange}`
+      relative_url: `${accountId}/insights?fields=${fields}&level=account${dateParam}`
     }]
   }
 
@@ -328,12 +343,12 @@ export class FacebookBatchAPI {
    * Cria batch de requisições para ad sets
    */
   createAdSetsBatch(accountId: string, datePreset: string, since?: string, until?: string): BatchRequest[] {
-    const timeRange = since && until ? `&time_range=${JSON.stringify({since, until})}` : ''
-    
+    const dateParam = this.buildDateQueryParam(datePreset, since, until)
+
     return [
       {
         method: 'GET',
-        relative_url: `${accountId}/adsets?fields=id,name,campaign_id,campaign{id,name},status,effective_status,daily_budget,lifetime_budget,created_time,updated_time&date_preset=${datePreset}&limit=2500${timeRange}`
+        relative_url: `${accountId}/adsets?fields=id,name,campaign_id,campaign{id,name},status,effective_status,daily_budget,lifetime_budget,created_time,updated_time&limit=2500${dateParam}`
       }
     ]
   }
@@ -343,7 +358,7 @@ export class FacebookBatchAPI {
    * `metricIdsParam`: ver comentário em createCampaignInsightsBatch.
    */
   createAdSetInsightsBatch(adSetIds: string[], datePreset: string, since?: string, until?: string, metricIdsParam?: string | null): BatchRequest[] {
-    const timeRange = since && until ? `&time_range=${JSON.stringify({since, until})}` : ''
+    const dateParam = this.buildDateQueryParam(datePreset, since, until)
 
     const fields = [
       ...ADSET_OR_AD_ALWAYS_FIELDS,
@@ -352,7 +367,7 @@ export class FacebookBatchAPI {
 
     return adSetIds.map(adSetId => ({
       method: 'GET',
-      relative_url: `${adSetId}/insights?fields=${fields}&level=adset&date_preset=${datePreset}${timeRange}`
+      relative_url: `${adSetId}/insights?fields=${fields}&level=adset${dateParam}`
     }))
   }
 
@@ -360,12 +375,12 @@ export class FacebookBatchAPI {
    * Cria batch de requisições para ads
    */
   createAdsBatch(accountId: string, datePreset: string, since?: string, until?: string): BatchRequest[] {
-    const timeRange = since && until ? `&time_range=${JSON.stringify({since, until})}` : ''
-    
+    const dateParam = this.buildDateQueryParam(datePreset, since, until)
+
     return [
       {
         method: 'GET',
-        relative_url: `${accountId}/ads?fields=id,name,adset_id,adset{id,name},campaign_id,campaign{id,name},status,effective_status,created_time,updated_time&date_preset=${datePreset}&limit=2500${timeRange}`
+        relative_url: `${accountId}/ads?fields=id,name,adset_id,adset{id,name},campaign_id,campaign{id,name},status,effective_status,created_time,updated_time&limit=2500${dateParam}`
       }
     ]
   }
@@ -375,7 +390,7 @@ export class FacebookBatchAPI {
    * `metricIdsParam`: ver comentário em createCampaignInsightsBatch.
    */
   createAdInsightsBatch(adIds: string[], datePreset: string, since?: string, until?: string, metricIdsParam?: string | null): BatchRequest[] {
-    const timeRange = since && until ? `&time_range=${JSON.stringify({since, until})}` : ''
+    const dateParam = this.buildDateQueryParam(datePreset, since, until)
 
     const fields = [
       ...ADSET_OR_AD_ALWAYS_FIELDS,
@@ -384,7 +399,7 @@ export class FacebookBatchAPI {
 
     return adIds.map(adId => ({
       method: 'GET',
-      relative_url: `${adId}/insights?fields=${fields}&level=ad&date_preset=${datePreset}${timeRange}`
+      relative_url: `${adId}/insights?fields=${fields}&level=ad${dateParam}`
     }))
   }
 }
