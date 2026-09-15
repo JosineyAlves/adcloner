@@ -276,9 +276,6 @@ export default function DashboardPage() {
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Dashboard Financeiro
               </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                Visão consolidada de {accounts.length} {accounts.length === 1 ? 'conta habilitada' : 'contas habilitadas'}
-              </p>
             </div>
             <div className="flex items-center space-x-3">
                 <DateSelector

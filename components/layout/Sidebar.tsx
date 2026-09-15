@@ -82,7 +82,7 @@ export default function Sidebar() {
   return (
     <motion.div
       initial={false}
-      animate={{ width: collapsed ? 72 : 224 }}
+      animate={{ width: collapsed ? 64 : 176 }}
       transition={{ duration: hydrated ? 0.2 : 0, ease: 'easeInOut' }}
       className="relative flex h-full flex-col bg-brand-500 flex-shrink-0 overflow-hidden"
     >
