@@ -43,6 +43,7 @@ export interface AdAccountSummary {
   currency: string | null
   accountStatus: number | null
   relationship: 'owned' | 'client'
+  businessId: string | null
   businessName: string | null
   connectionFbUserName: string | null
   syncEnabled: boolean
@@ -308,7 +309,7 @@ export async function listAdAccounts(options?: { enabledOnly?: boolean }): Promi
   let query = supabase
     .from('meta_ad_accounts')
     .select(
-      `id, connection_id, meta_account_id, name, currency, account_status, relationship, sync_enabled, last_synced_at,
+      `id, connection_id, meta_account_id, name, currency, account_status, relationship, business_id, sync_enabled, last_synced_at,
        meta_businesses ( name ),
        meta_connections ( fb_user_name )`
     )
@@ -330,6 +331,7 @@ export async function listAdAccounts(options?: { enabledOnly?: boolean }): Promi
     currency: row.currency,
     accountStatus: row.account_status,
     relationship: row.relationship,
+    businessId: row.business_id,
     businessName: row.meta_businesses?.name ?? null,
     connectionFbUserName: row.meta_connections?.fb_user_name ?? null,
     syncEnabled: row.sync_enabled,
