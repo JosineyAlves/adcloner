@@ -6,12 +6,12 @@ import { usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   LayoutDashboard,
+  Facebook,
   Link2,
   LogOut,
   ChevronsLeft,
   ChevronsRight
 } from 'lucide-react'
-import MetaIcon from '@/components/meta-business/icons/MetaIcon'
 import toast from 'react-hot-toast'
 
 // Sidebar — elemento mais forte da identidade visual do AdCloner Pro: fundo na cor de marca
@@ -27,7 +27,7 @@ import toast from 'react-hot-toast'
 // anúncio já disponível em "Integrações". Ver seção 40 do doc do projeto.
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Meta Business', href: '/meta-business', icon: MetaIcon },
+  { name: 'Meta Business', href: '/meta-business', icon: Facebook },
   { name: 'Integrações', href: '/meta-accounts', icon: Link2 },
 ]
 
