@@ -872,7 +872,7 @@ export default function MetaBusinessPage() {
                     onClick={handleRefresh}
                     disabled={isRefreshing || isRateLimited}
                     title={isRateLimited ? `Limite de requisições da Meta atingido. Tente novamente em ${rateLimitCountdownSeconds}s.` : 'Atualizar'}
-                    className="btn-secondary flex items-center justify-center space-x-2 px-3 py-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="btn-primary flex items-center justify-center space-x-2 px-3 py-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                     <span className="hidden sm:inline">
@@ -890,15 +890,14 @@ export default function MetaBusinessPage() {
               <div className="border-b border-gray-200 dark:border-gray-700">
                 <nav className="flex space-x-8 px-6">
                   {[
-                    { id: 'accounts', label: 'Contas', icon: AccountsIcon, count: accounts.length },
-                    { id: 'campaigns', label: 'Campanhas', icon: CampaignsIcon, count: filteredCampaigns.length },
+                    { id: 'accounts', label: 'Contas', icon: AccountsIcon },
+                    { id: 'campaigns', label: 'Campanhas', icon: CampaignsIcon },
                     {
                       id: 'adsets',
                       label: selectedCampaigns.size > 0
                         ? `Conjuntos de anúncios para ${selectedCampaigns.size} Campanha${selectedCampaigns.size === 1 ? '' : 's'}`
                         : 'Conjuntos',
-                      icon: AdSetsIcon,
-                      count: filteredAdSets.length
+                      icon: AdSetsIcon
                     },
                     {
                       id: 'ads',
@@ -907,8 +906,7 @@ export default function MetaBusinessPage() {
                         : selectedCampaigns.size > 0
                           ? `Anúncios para ${selectedCampaigns.size} Campanha${selectedCampaigns.size === 1 ? '' : 's'}`
                           : 'Anúncios',
-                      icon: AdsIcon,
-                      count: filteredAds.length
+                      icon: AdsIcon
                     }
                   ].map((tab) => {
                     const Icon = tab.icon
@@ -924,13 +922,6 @@ export default function MetaBusinessPage() {
                       >
                         <Icon className="w-4 h-4" />
                         <span>{tab.label}</span>
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          activeTab === tab.id
-                            ? 'bg-black text-brand-400'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                        }`}>
-                          {tab.count}
-                        </span>
                       </button>
                     )
                   })}
