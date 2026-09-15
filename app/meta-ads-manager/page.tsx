@@ -816,7 +816,7 @@ export default function MetaBusinessPage() {
                     placeholder="Filtrar por nome"
                     value={filters.search}
                     onChange={(e) => handleSearchChange(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-ds-md focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
                   />
                 </div>
 
@@ -827,7 +827,7 @@ export default function MetaBusinessPage() {
                   <select
                     value={filters.status.join(',')}
                     onChange={(e) => handleStatusFilter(e.target.value ? e.target.value.split(',') : [])}
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-ds-md focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
                   >
                     <option value="">Qualquer</option>
                     <option value="ACTIVE">Ativo</option>
@@ -842,7 +842,7 @@ export default function MetaBusinessPage() {
                   <select
                     value={filters.accountIds.length === 1 ? filters.accountIds[0] : ''}
                     onChange={(e) => handleAccountFilter(e.target.value ? [e.target.value] : [])}
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-ds-md focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
                   >
                     <option value="">Todas as Contas</option>
                     {accounts.map((account) => (

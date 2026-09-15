@@ -134,13 +134,13 @@ export default function ColumnsCustomizationModal({
           <div className="flex items-center gap-3">
             <button
               onClick={handleSelectAll}
-              className="px-3 py-1.5 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+              className="px-3 py-1.5 text-sm bg-blue-500 text-white rounded-ds-md hover:bg-blue-600 transition-colors"
             >
               Selecionar Todas
             </button>
             <button
               onClick={handleDeselectAll}
-              className="px-3 py-1.5 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+              className="px-3 py-1.5 text-sm bg-gray-500 text-white rounded-ds-md hover:bg-gray-600 transition-colors"
             >
               Desmarcar Todas
             </button>
@@ -165,7 +165,7 @@ export default function ColumnsCustomizationModal({
                   placeholder="Buscar por coluna"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-ds-md focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -270,13 +270,13 @@ export default function ColumnsCustomizationModal({
         <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
           <button
             onClick={handleCancel}
-            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-ds-md hover:bg-gray-50 transition-colors"
           >
             Cancelar
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-blue-600 text-white rounded-ds-md hover:bg-blue-700 transition-colors"
           >
             Salvar
           </button>

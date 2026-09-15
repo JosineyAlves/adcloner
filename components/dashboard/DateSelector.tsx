@@ -277,7 +277,7 @@ export default function DateSelector({
                   <button
                     key={preset.value}
                     onClick={() => handlePresetSelect(preset.value)}
-                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                    className={`w-full text-left px-3 py-2 rounded-ds-md text-sm transition-colors ${
                       datePreset === preset.value
                         ? 'bg-brand-100 dark:bg-brand-500/10 text-black dark:text-brand-300 font-semibold'
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -297,7 +297,7 @@ export default function DateSelector({
                     type="date"
                     value={tempCustomRange.since}
                     onChange={(e) => setTempCustomRange(prev => ({ ...prev, since: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-ds-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
                 </div>
                 <div>
@@ -308,20 +308,20 @@ export default function DateSelector({
                     type="date"
                     value={tempCustomRange.until}
                     onChange={(e) => setTempCustomRange(prev => ({ ...prev, until: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-ds-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
                 </div>
                 <div className="flex space-x-2">
                   <button
                     onClick={handleCustomRangeSave}
                     disabled={!tempCustomRange.since || !tempCustomRange.until}
-                    className="flex-1 px-3 py-2 bg-brand-500 text-black text-sm font-medium rounded-md hover:bg-brand-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-3 py-2 bg-brand-500 text-black text-sm font-medium rounded-ds-md hover:bg-brand-400 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Aplicar
                   </button>
                   <button
                     onClick={handleCustomRangeCancel}
-                    className="flex-1 px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"
+                    className="flex-1 px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-ds-md hover:bg-gray-300 dark:hover:bg-gray-600"
                   >
                     Cancelar
                   </button>
