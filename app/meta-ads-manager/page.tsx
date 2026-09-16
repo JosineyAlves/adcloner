@@ -790,9 +790,15 @@ export default function MetaBusinessPage() {
             primeira dobra em vez de uma altura fixa em vh/calc que sobra ou falta espaço
             dependendo do monitor. */}
         <main className="flex-1 overflow-y-auto p-6 flex flex-col">
+          {/* Só opacity na animação de entrada — sem "y" (que o Framer Motion resolve como
+              transform: translateY(...) e mantém como estilo inline mesmo depois da animação
+              terminar). Esse motion.div é ancestral de toda a área rolável da tabela, e um
+              transform em qualquer ancestral de um elemento sticky pode mudar a referência de
+              posicionamento dele, causando a instabilidade de "colunas se empurrando" durante o
+              scroll lateral relatada nas 4 abas — a causa não estava na tabela em si. */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
             className="space-y-6 flex-1 flex flex-col min-h-0"
           >

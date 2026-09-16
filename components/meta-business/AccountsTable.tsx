@@ -178,11 +178,15 @@ export default function AccountsTable({
           </thead>
 
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            {/* Só opacity — sem "y" (vira transform: translateY(...) que fica como estilo
+                inline mesmo após a animação, e um transform no <tr> ancestral das próprias
+                células sticky da linha pode interferir no posicionamento delas durante o scroll
+                lateral). */}
             {accounts.map((account, index) => (
               <motion.tr
                 key={account.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
                 className="group hover:bg-gray-50 dark:hover:bg-gray-700"
               >
