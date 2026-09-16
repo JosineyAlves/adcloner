@@ -140,7 +140,7 @@ export default function AdSetsTable({
       <div className="space-y-4">
         {/* Cabeçalho da tabela mesmo sem dados */}
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="min-w-full">
             <thead className="sticky top-0 z-30 bg-gray-50 dark:bg-gray-700">
               <tr>
                 <th className="sticky left-0 z-20 w-12 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left">
@@ -161,7 +161,7 @@ export default function AdSetsTable({
                 </th>
                 {showMetrics && metrics.filter(m => m.visible).map((metric) => (
                   <th key={metric.id} className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-normal min-w-[130px] max-w-[220px] leading-tight align-bottom">
-                    <span title={metric.label}>{metric.label}</span>
+                    <span title={metric.label} className="block line-clamp-2">{metric.label}</span>
                   </th>
                 ))}
               </tr>
@@ -198,7 +198,7 @@ export default function AdSetsTable({
           colunas fixas, sem impacto funcional), então voltamos à versão mais simples: flex-1
           min-h-0 continua fazendo a tabela ocupar exatamente a primeira dobra disponível. */}
       <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0">
-        <table className="w-full">
+        <table className="min-w-full">
           <thead className="sticky top-0 z-30 bg-gray-50 dark:bg-gray-700">
             <tr>
               <th className="sticky left-0 z-20 w-12 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left">
@@ -220,7 +220,7 @@ export default function AdSetsTable({
               </th>
               {showMetrics && metrics.filter(m => m.visible).map((metric) => (
                 <th key={metric.id} className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-normal min-w-[130px] max-w-[220px] leading-tight align-bottom">
-                  <span title={metric.label}>{metric.label}</span>
+                  <span title={metric.label} className="block line-clamp-2">{metric.label}</span>
                 </th>
               ))}
             </tr>
