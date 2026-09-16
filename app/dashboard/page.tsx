@@ -433,20 +433,26 @@ export default function DashboardPage() {
       <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto pt-3 px-6 pb-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             className="space-y-8"
           >
-            <PageHeader title="Dashboard Financeiro" />
+            {/* PageHeader e o card de filtros logo abaixo ficam com um espaçamento próprio bem
+                mais justo (space-y-3) do que o space-y-8 usado entre as demais seções da página
+                — são duas peças do mesmo "cabeçalho" da tela (identidade + filtros), não duas
+                seções de conteúdo distintas, então não faz sentido a mesma folga generosa usada
+                para separar Resumo/Gráficos/etc. */}
+            <div className="space-y-3">
+              <PageHeader title="Dashboard Financeiro" />
 
-            {/* Filtros + Atualizar — mesmo padrão de card e mesmos rótulos/ordem usados no
-                Meta Ads (Conta de Anúncio, Data), pra ficar consistente entre as duas telas. As
-                ferramentas de dados ficam junto do conteúdo que afetam, não no cabeçalho da
-                página (ver PageHeader), seguindo a referência da UTMify. */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700 flex flex-wrap items-end justify-between gap-3">
+              {/* Filtros + Atualizar — mesmo padrão de card e mesmos rótulos/ordem usados no
+                  Meta Ads (Conta de Anúncio, Data), pra ficar consistente entre as duas telas. As
+                  ferramentas de dados ficam junto do conteúdo que afetam, não no cabeçalho da
+                  página (ver PageHeader), seguindo a referência da UTMify. */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700 flex flex-wrap items-end justify-between gap-3">
               <div className="flex flex-wrap items-end gap-3">
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
@@ -483,6 +489,7 @@ export default function DashboardPage() {
                 <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                 <span>Atualizar</span>
               </button>
+              </div>
             </div>
 
             {/* Resumo — KPIs principais: o que eu preciso saber primeiro */}
