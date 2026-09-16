@@ -52,6 +52,12 @@ const ACTION_TYPE_PRIORITY: Record<string, string[]> = {
     'offsite_conversion.fb_pixel_initiate_checkout',
     'initiate_checkout',
   ],
+  landing_page_view: [
+    'omni_landing_page_view',
+    'onsite_web_landing_page_view',
+    'offsite_conversion.fb_pixel_landing_page_view',
+    'landing_page_view',
+  ],
 }
 
 // Função auxiliar para processar cost_per_action_type (AdsActionStats)
@@ -358,6 +364,7 @@ export async function GET(request: NextRequest) {
               video_p75_watched_actions: 0,
               video_p95_watched_actions: 0,
               video_p100_watched_actions: 0,
+              video_continuous_2_sec_watched_actions: 0,
               
               // Métricas específicas de campanhas (não disponíveis em adsets/ads)
               cost_per_conversion: 0,
@@ -366,6 +373,8 @@ export async function GET(request: NextRequest) {
               cost_per_action_type: 0,
               cost_per_inline_link_click: 0,
               cost_per_landing_page_view: 0,
+              purchase_roas: 0,
+              landing_page_view: 0,
               conversions: 0,
               conversion_values: 0,
               results: 0,
@@ -422,6 +431,7 @@ export async function GET(request: NextRequest) {
                 video_p75_watched_actions: processVideoMetric(insight.video_p75_watched_actions),
                 video_p95_watched_actions: processVideoMetric(insight.video_p95_watched_actions),
                 video_p100_watched_actions: processVideoMetric(insight.video_p100_watched_actions),
+                video_continuous_2_sec_watched_actions: processVideoMetric(insight.video_continuous_2_sec_watched_actions),
                 
                 // Métricas específicas de campanhas (não disponíveis em adsets/ads)
                 cost_per_conversion: processCostPerActionType(insight.cost_per_action_type, 'purchase'),
@@ -430,6 +440,8 @@ export async function GET(request: NextRequest) {
                 cost_per_action_type: processCostPerActionType(insight.cost_per_action_type),
                 cost_per_inline_link_click: parseFloat(insight.cost_per_inline_link_click || '0'),
                 cost_per_landing_page_view: processCostPerActionType(insight.cost_per_action_type, 'landing_page_view'),
+                purchase_roas: extractActionTypeValue(insight.purchase_roas, 'purchase'),
+                landing_page_view: extractActionTypeValue(insight.actions, 'landing_page_view'),
                   // `conversions`/`conversion_values` (campos nativos da API) só vêm preenchidos
                   // quando a conta tem uma Conversão Personalizada configurada — na maioria das
                   // contas (só com eventos padrão de Pixel/CAPI) eles voltam vazios, e por isso
@@ -506,6 +518,7 @@ export async function GET(request: NextRequest) {
               video_p75_watched_actions: insights.video_p75_watched_actions,
               video_p95_watched_actions: insights.video_p95_watched_actions,
               video_p100_watched_actions: insights.video_p100_watched_actions,
+              video_continuous_2_sec_watched_actions: insights.video_continuous_2_sec_watched_actions,
               
               // Métricas específicas de campanhas (não disponíveis em adsets/ads)
               cost_per_conversion: insights.cost_per_conversion,
@@ -514,6 +527,8 @@ export async function GET(request: NextRequest) {
               cost_per_action_type: insights.cost_per_action_type,
               cost_per_inline_link_click: insights.cost_per_inline_link_click,
               cost_per_landing_page_view: insights.cost_per_landing_page_view,
+              purchase_roas: insights.purchase_roas,
+              landing_page_view: insights.landing_page_view,
               conversions: insights.conversions,
               conversion_values: insights.conversion_values,
               results: insights.results,
@@ -579,6 +594,7 @@ export async function GET(request: NextRequest) {
               video_p75_watched_actions: 0,
               video_p95_watched_actions: 0,
               video_p100_watched_actions: 0,
+              video_continuous_2_sec_watched_actions: 0,
               
               // Métricas específicas de campanhas (não disponíveis em adsets/ads)
               cost_per_conversion: 0,
@@ -587,6 +603,8 @@ export async function GET(request: NextRequest) {
               cost_per_action_type: 0,
               cost_per_inline_link_click: 0,
               cost_per_landing_page_view: 0,
+              purchase_roas: 0,
+              landing_page_view: 0,
               conversions: 0,
               conversion_values: 0,
               results: 0,

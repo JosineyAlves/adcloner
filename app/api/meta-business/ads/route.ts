@@ -51,6 +51,12 @@ const ACTION_TYPE_PRIORITY: Record<string, string[]> = {
     'offsite_conversion.fb_pixel_initiate_checkout',
     'initiate_checkout',
   ],
+  landing_page_view: [
+    'omni_landing_page_view',
+    'onsite_web_landing_page_view',
+    'offsite_conversion.fb_pixel_landing_page_view',
+    'landing_page_view',
+  ],
 }
 
 // Função auxiliar para processar cost_per_action_type (AdsActionStats)
@@ -344,6 +350,8 @@ export async function GET(request: NextRequest) {
                     cost_per_initiate_checkout: 0,
                     initiate_checkout: 0,
                     cost_per_landing_page_view: 0,
+                    purchase_roas: 0,
+                    landing_page_view: 0,
                     conversions: 0,
                     conversion_values: 0,
                     results: 0,
@@ -365,7 +373,8 @@ export async function GET(request: NextRequest) {
                     video_p50_watched_actions: 0,
                     video_p75_watched_actions: 0,
                     video_p95_watched_actions: 0,
-                    video_p100_watched_actions: 0
+                    video_p100_watched_actions: 0,
+                    video_continuous_2_sec_watched_actions: 0,
                   }
 
             if (insightsResponse.code === 200) {
@@ -401,6 +410,8 @@ export async function GET(request: NextRequest) {
                       cost_per_initiate_checkout: processCostPerActionType(insight.cost_per_action_type, 'initiate_checkout'),
                       initiate_checkout: processInitiateCheckoutMetric(insight.actions),
                       cost_per_landing_page_view: processCostPerActionType(insight.cost_per_action_type, 'landing_page_view'),
+                purchase_roas: extractActionTypeValue(insight.purchase_roas, 'purchase'),
+                landing_page_view: extractActionTypeValue(insight.actions, 'landing_page_view'),
                       // Ver comentário equivalente em app/api/meta-business/campaigns/route.ts —
                       // fallback pro action_type de compra em vez de somar `actions`/`action_values`
                       // inteiros (que misturava initiate_checkout etc. no "Valor das Conversões").
@@ -425,7 +436,8 @@ export async function GET(request: NextRequest) {
                       video_p50_watched_actions: processVideoMetric(insight.video_p50_watched_actions),
                       video_p75_watched_actions: processVideoMetric(insight.video_p75_watched_actions),
                       video_p95_watched_actions: processVideoMetric(insight.video_p95_watched_actions),
-                      video_p100_watched_actions: processVideoMetric(insight.video_p100_watched_actions)
+                      video_p100_watched_actions: processVideoMetric(insight.video_p100_watched_actions),
+                  video_continuous_2_sec_watched_actions: processVideoMetric(insight.video_continuous_2_sec_watched_actions)
                     }
               }
             } else {
@@ -563,6 +575,8 @@ export async function GET(request: NextRequest) {
               cost_per_initiate_checkout: 0,
               initiate_checkout: 0,
               cost_per_landing_page_view: 0,
+              purchase_roas: 0,
+              landing_page_view: 0,
               conversions: 0,
               conversion_values: 0,
               results: 0,
@@ -585,6 +599,7 @@ export async function GET(request: NextRequest) {
               video_p75_watched_actions: 0,
               video_p95_watched_actions: 0,
               video_p100_watched_actions: 0,
+              video_continuous_2_sec_watched_actions: 0,
               
               created_time: ad.created_time,
               updated_time: ad.updated_time,

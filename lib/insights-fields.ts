@@ -33,7 +33,11 @@ export const OPTIONAL_METRIC_FIELD_DEPENDENCIES: Record<string, string[]> = {
   video_p50_watched_actions: ['video_p50_watched_actions'],
   video_p75_watched_actions: ['video_p75_watched_actions'],
   video_p95_watched_actions: ['video_p95_watched_actions'],
-  video_p100_watched_actions: ['video_p100_watched_actions']
+  video_p100_watched_actions: ['video_p100_watched_actions'],
+  video_continuous_2_sec_watched_actions: ['video_continuous_2_sec_watched_actions'],
+  purchase_roas: ['purchase_roas'],
+  landing_page_view: ['actions'],
+  cost_per_landing_page_view: ['cost_per_action_type']
   // impressions/clicks/spend não entram aqui de propósito: são sempre incluídos (ver
   // *_ALWAYS_FIELDS abaixo), já que os cards de resumo da tela (Gasto Total, Impressões,
   // Cliques) dependem deles independentemente de quais colunas estejam visíveis na tabela.

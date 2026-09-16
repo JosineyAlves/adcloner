@@ -132,6 +132,33 @@ export const ALL_METRICS: MetricConfig[] = [
     order: 15,
     category: 'cost'
   },
+  {
+    id: 'purchase_roas',
+    label: 'ROAS de Compra',
+    description: 'Retorno sobre o investimento em anúncios (valor das compras dividido pelo valor gasto).',
+    type: 'number',
+    visible: false,
+    order: 27,
+    category: 'cost'
+  },
+  {
+    id: 'landing_page_view',
+    label: 'Page View',
+    description: 'Número de vezes que uma pessoa clicou no anúncio e a página de destino carregou com sucesso.',
+    type: 'number',
+    visible: false,
+    order: 28,
+    category: 'cost'
+  },
+  {
+    id: 'cost_per_landing_page_view',
+    label: 'Custo/Page View',
+    description: 'O custo médio para cada visualização da página de destino.',
+    type: 'currency',
+    visible: false,
+    order: 29,
+    category: 'cost'
+  },
 
   // === MÉTRICAS DE ALCANCE E FREQUÊNCIA ===
   {
@@ -269,6 +296,15 @@ export const ALL_METRICS: MetricConfig[] = [
     type: 'number',
     visible: false,
     order: 26,
+    category: 'video'
+  },
+  {
+    id: 'video_continuous_2_sec_watched_actions',
+    label: 'Visualizações',
+    description: 'Número de vezes que o vídeo foi reproduzido por pelo menos 2 segundos contínuos (métrica "Visualizações do vídeo" do Gerenciador de Anúncios).',
+    type: 'number',
+    visible: false,
+    order: 30,
     category: 'video'
   }
 ]

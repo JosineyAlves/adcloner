@@ -181,7 +181,12 @@ export async function GET(request: NextRequest) {
         cost_per_conversion: parseFloat(insights.cost_per_conversion || '0'),
         cost_per_action_type: parseFloat(insights.cost_per_action_type || '0'),
         cost_per_inline_link_click: parseFloat(insights.cost_per_inline_link_click || '0'),
-        cost_per_landing_page_view: parseFloat(insights.cost_per_landing_page_view || '0'),
+        // `cost_per_landing_page_view` não é um campo próprio da Ads Insights API (confirmado
+        // contra o enum oficial do SDK) — "Visualização da Página de Destino" é um action_type
+        // dentro de `actions`/`cost_per_action_type`, igual a `initiate_checkout`/`purchase`.
+        cost_per_landing_page_view: extractAccountActionTypeValue(insights.cost_per_action_type, 'landing_page_view'),
+        purchase_roas: extractAccountActionTypeValue(insights.purchase_roas, 'purchase'),
+        landing_page_view: extractAccountActionTypeValue(insights.actions, 'landing_page_view'),
         cost_per_ad_click: parseFloat(insights.cost_per_ad_click || '0'),
         cost_per_outbound_click: parseFloat(insights.cost_per_outbound_click || '0'),
         cost_per_unique_outbound_click: parseFloat(insights.cost_per_unique_outbound_click || '0'),
@@ -276,6 +281,12 @@ const ACCOUNT_ACTION_TYPE_PRIORITY: Record<string, string[]> = {
     'web_in_store_purchase',
     'web_app_in_store_purchase',
     'purchase',
+  ],
+  landing_page_view: [
+    'omni_landing_page_view',
+    'onsite_web_landing_page_view',
+    'offsite_conversion.fb_pixel_landing_page_view',
+    'landing_page_view',
   ],
 }
 

@@ -306,6 +306,7 @@ export class FacebookBatchAPI {
       'conversion_values',
       'conversions',
       'conversion_rate_ranking',
+      'purchase_roas',
       
       // Métricas de vídeo (baseado na documentação oficial do Meta)
       'video_play_actions',

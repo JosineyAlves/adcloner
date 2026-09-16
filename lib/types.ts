@@ -180,6 +180,8 @@ export interface MetaAccount {
   cost_per_action_type: number
   cost_per_inline_link_click: number
   cost_per_landing_page_view: number
+  purchase_roas: number
+  landing_page_view: number
   cost_per_ad_click: number
   cost_per_outbound_click: number
   cost_per_unique_outbound_click: number
@@ -231,6 +233,8 @@ export interface MetaCampaign {
   cost_per_unique_click: number
   cost_per_unique_inline_link_click: number
   cost_per_landing_page_view: number
+  purchase_roas: number
+  landing_page_view: number
   
   // Métricas de engajamento (apenas as válidas)
   inline_link_clicks: number
@@ -250,6 +254,7 @@ export interface MetaCampaign {
   video_p75_watched_actions: number
   video_p95_watched_actions: number
   video_p100_watched_actions: number
+  video_continuous_2_sec_watched_actions: number
 
   // Métricas de qualidade
   quality_ranking: string | null
@@ -301,6 +306,8 @@ export interface MetaAdSet {
   initiate_checkout: number
   cost_per_inline_link_click: number
   cost_per_landing_page_view: number
+  purchase_roas: number
+  landing_page_view: number
   
   // Métricas de engajamento
   inline_link_clicks: number
@@ -326,6 +333,7 @@ export interface MetaAdSet {
   video_p75_watched_actions: number
   video_p95_watched_actions: number
   video_p100_watched_actions: number
+  video_continuous_2_sec_watched_actions: number
   
   // Métricas de vídeo - Tempo
   video_30_sec_watched_actions: number
@@ -367,6 +375,8 @@ export interface MetaAd {
   initiate_checkout: number
   cost_per_inline_link_click: number
   cost_per_landing_page_view: number
+  purchase_roas: number
+  landing_page_view: number
   
   // Métricas de engajamento
   inline_link_clicks: number
@@ -392,6 +402,7 @@ export interface MetaAd {
   video_p75_watched_actions: number
   video_p95_watched_actions: number
   video_p100_watched_actions: number
+  video_continuous_2_sec_watched_actions: number
   
   // Métricas de vídeo - Tempo
   video_30_sec_watched_actions: number
