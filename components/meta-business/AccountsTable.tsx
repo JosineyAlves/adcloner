@@ -208,12 +208,12 @@ export default function AccountsTable({
           </tbody>
           <tfoot>
             <tr>
-              <td className="sticky left-0 bottom-0 z-20 w-24 bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 px-6 py-3"></td>
-              <td className="sticky left-24 bottom-0 z-20 w-[240px] bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">
+              <td className="sticky left-0 bottom-0 z-20 w-24 bg-gray-100 dark:bg-gray-900 border-t-2 border-gray-300 dark:border-gray-500 px-6 py-3"></td>
+              <td className="sticky left-24 bottom-0 z-20 w-[240px] bg-gray-100 dark:bg-gray-900 border-t-2 border-gray-300 dark:border-gray-500 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">
                 {accounts.length} {accounts.length === 1 ? 'CONTA' : 'CONTAS'}
               </td>
               {showMetrics && visibleMetrics.map((metric, index) => (
-                <td key={metric.id} className="sticky bottom-0 z-10 bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600 px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                <td key={metric.id} className="sticky bottom-0 z-10 bg-gray-100 dark:bg-gray-900 border-t-2 border-gray-300 dark:border-gray-500 px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
                   {metricTotals[index] === null ? '-' : formatMetricValue(metricTotals[index], metric.type, metric.id)}
                 </td>
               ))}

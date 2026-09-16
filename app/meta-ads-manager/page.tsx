@@ -789,7 +789,7 @@ export default function MetaBusinessPage() {
             abas/tabela logo abaixo (flex-1 min-h-0) — a tabela se adapta à altura real da
             primeira dobra em vez de uma altura fixa em vh/calc que sobra ou falta espaço
             dependendo do monitor. */}
-        <main className="flex-1 overflow-y-auto p-6 flex flex-col">
+        <main className="flex-1 overflow-y-auto pt-6 px-6 flex flex-col">
           {/* Só opacity na animação de entrada — sem "y" (que o Framer Motion resolve como
               transform: translateY(...) e mantém como estilo inline mesmo depois da animação
               terminar). Esse motion.div é ancestral de toda a área rolável da tabela, e um
