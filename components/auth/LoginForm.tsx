@@ -142,28 +142,6 @@ export default function LoginForm() {
               </a>
             </p>
           </div>
-
-          <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <div className="text-center">
-              <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
-                Após o login, você poderá:
-              </h3>
-              <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                <div className="flex items-center justify-center space-x-2">
-                  <span className="text-green-500">✓</span>
-                  <span>Conectar suas contas do Facebook</span>
-                </div>
-                <div className="flex items-center justify-center space-x-2">
-                  <span className="text-green-500">✓</span>
-                  <span>Clonar campanhas entre contas</span>
-                </div>
-                <div className="flex items-center justify-center space-x-2">
-                  <span className="text-green-500">✓</span>
-                  <span>Gerenciar múltiplos Business Managers</span>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </motion.div>
     </div>
