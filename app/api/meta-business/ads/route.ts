@@ -504,6 +504,8 @@ export async function GET(request: NextRequest) {
                     cost_per_initiate_checkout: insights.cost_per_initiate_checkout,
                     initiate_checkout: insights.initiate_checkout,
                     cost_per_landing_page_view: insights.cost_per_landing_page_view,
+                    purchase_roas: insights.purchase_roas,
+                    landing_page_view: insights.landing_page_view,
                     conversions: insights.conversions,
                     conversion_values: insights.conversion_values,
                     results: insights.results,
@@ -526,6 +528,7 @@ export async function GET(request: NextRequest) {
                     video_p75_watched_actions: insights.video_p75_watched_actions || 0,
                     video_p95_watched_actions: insights.video_p95_watched_actions || 0,
                     video_p100_watched_actions: insights.video_p100_watched_actions || 0,
+                    video_continuous_2_sec_watched_actions: insights.video_continuous_2_sec_watched_actions || 0,
               
               // Métricas de vídeo detalhadas
               videoMetrics: videoMetrics,
