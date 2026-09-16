@@ -144,7 +144,16 @@ export default function AccountsTable({
 
   return (
     <div className="flex-1 min-h-0 flex flex-col">
-      <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0">
+      {/* Rolagem horizontal e vertical em contêineres SEPARADOS (em vez de um único div
+          overflow-x-auto+overflow-y-auto) — combinar os dois eixos no mesmo contêiner faz o
+          cabeçalho sticky (eixo vertical) e as colunas sticky (eixo horizontal) referenciarem
+          o mesmo ancestral rolável, e o Chrome pode atualizar um eixo um frame antes do outro
+          nas células do "canto" (cabeçalho × coluna fixa), dando a impressão de colunas se
+          empurrando durante o scroll lateral. Com contêineres distintos, o sticky left passa a
+          referenciar só o contêiner horizontal e o sticky top só o vertical — cada eixo com seu
+          próprio ancestral rolável, sem disputa. */}
+      <div className="overflow-x-auto flex-1 min-h-0 flex flex-col">
+        <div className="overflow-y-auto flex-1 min-h-0">
         <table className="w-full">
           <thead className="sticky top-0 z-30 bg-gray-50 dark:bg-gray-700">
             <tr>
@@ -211,6 +220,7 @@ export default function AccountsTable({
             </tr>
           </tfoot>
         </table>
+        </div>
       </div>
     </div>
   )
