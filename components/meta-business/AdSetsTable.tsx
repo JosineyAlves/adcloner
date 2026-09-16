@@ -228,7 +228,7 @@ export default function AdSetsTable({
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {adSets.map((adSet) => (
               <tr key={adSet.id} className="group hover:bg-gray-50 dark:hover:bg-gray-700">
-                <td className="sticky left-0 z-10 w-12 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-2.5">
+                <td className="sticky left-0 z-10 w-12 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-2">
                   <input
                     type="checkbox"
                     checked={selectedAdSets.has(adSet.id)}
@@ -236,7 +236,7 @@ export default function AdSetsTable({
                     className="rounded border-gray-300 text-brand-500 focus:ring-brand-500"
                   />
                 </td>
-                <td className="sticky left-12 z-10 w-24 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-2.5">
+                <td className="sticky left-12 z-10 w-24 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-2">
                   <StatusToggle
                     id={adSet.id}
                     status={adSet.status}
@@ -246,22 +246,19 @@ export default function AdSetsTable({
                     size="md"
                   />
                 </td>
-                <td className="sticky left-[144px] z-10 w-[240px] bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-2.5">
+                <td className="sticky left-[144px] z-10 w-[240px] bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-2">
                   <div className="text-sm font-medium text-gray-900 dark:text-white truncate" title={adSet.name}>
                     {adSet.name}
                   </div>
                 </td>
-                <td className="px-6 py-2.5">
+                <td className="px-6 py-2">
                   {adSet.campaign_advantage_budget ? (
                     // Campanha-pai usa CBO (Advantage Campaign Budget) — o orçamento vive na
                     // Campaign, o Ad Set não tem orçamento próprio pra editar (mesmo padrão de
                     // "Definido no conjunto" usado em AdsTable.tsx para anúncios).
-                    <div>
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">-</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        Definido na campanha
-                      </div>
-                    </div>
+                    <span className="text-sm font-medium text-gray-400 dark:text-gray-500" title="Esta campanha usa CBO — o orçamento é definido no nível da Campanha">
+                      N/A
+                    </span>
                   ) : (
                     <BudgetEditor
                       id={adSet.id}
@@ -307,7 +304,7 @@ export default function AdSetsTable({
                   const value = (adSet as any)[metric.id]
                   const formattedValue = formatMetricValue(value, metric.type, metric.id)
                   return (
-                    <td key={metric.id} className="px-4 py-2.5 text-sm text-gray-900 dark:text-white whitespace-nowrap">
+                    <td key={metric.id} className="px-4 py-2 text-sm text-gray-900 dark:text-white whitespace-nowrap">
                       {formattedValue}
                     </td>
                   )
@@ -317,16 +314,16 @@ export default function AdSetsTable({
           </tbody>
           <tfoot>
             <tr>
-              <td className="sticky left-0 bottom-0 z-20 w-12 bg-gray-100 dark:bg-gray-900 border-t-2 border-gray-300 dark:border-gray-500 px-6 py-3"></td>
-              <td className="sticky left-12 bottom-0 z-20 w-24 bg-gray-100 dark:bg-gray-900 border-t-2 border-gray-300 dark:border-gray-500 px-6 py-3"></td>
-              <td className="sticky left-[144px] bottom-0 z-20 w-[240px] bg-gray-100 dark:bg-gray-900 border-t-2 border-gray-300 dark:border-gray-500 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">
+              <td className="sticky left-0 bottom-0 z-20 w-12 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-6 py-3"></td>
+              <td className="sticky left-12 bottom-0 z-20 w-24 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-6 py-3"></td>
+              <td className="sticky left-[144px] bottom-0 z-20 w-[240px] bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">
                 {adSets.length} {adSets.length === 1 ? 'CONJUNTO' : 'CONJUNTOS'}
               </td>
-              <td className="sticky bottom-0 z-10 bg-gray-100 dark:bg-gray-900 border-t-2 border-gray-300 dark:border-gray-500 px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+              <td className="sticky bottom-0 z-10 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
                 {totalBudget > 0 ? formatCurrency(totalBudget) : '-'}
               </td>
               {showMetrics && visibleMetrics.map((metric, index) => (
-                <td key={metric.id} className="sticky bottom-0 z-10 bg-gray-100 dark:bg-gray-900 border-t-2 border-gray-300 dark:border-gray-500 px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                <td key={metric.id} className="sticky bottom-0 z-10 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
                   {metricTotals[index] === null ? '-' : formatMetricValue(metricTotals[index], metric.type, metric.id)}
                 </td>
               ))}

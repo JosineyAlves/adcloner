@@ -10,7 +10,8 @@ import {
   Pause,
   Archive,
   Layers,
-  Megaphone
+  Megaphone,
+  X
 } from 'lucide-react'
 import { DEFAULT_METRIC_IDS, buildMetricsFromIds, MetricConfig } from '@/lib/metrics-config'
 import { useColumnPreferences } from '@/hooks/useColumnPreferences'
@@ -804,14 +805,6 @@ export default function MetaBusinessPage() {
           >
             <PageHeader title="Meta Ads" />
 
-            {/* Aviso de rate limit ativo — some sozinho quando o tempo passar */}
-            {isRateLimited && (
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-sm text-amber-800 dark:text-amber-300">
-                Limite de requisições da Meta atingido para uma ou mais contas. Os dados exibidos podem estar desatualizados.
-                Nova tentativa liberada em {rateLimitCountdownSeconds}s.
-              </div>
-            )}
-
             {/* Filtros — layout em grade com rótulo acima de cada campo (estilo trackers como a
                 UTMify), em vez dos cards de estatísticas + barra de filtros em linha única que
                 existiam antes. */}
@@ -902,16 +895,24 @@ export default function MetaBusinessPage() {
                 fixa (natural do conteúdo). */}
             <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex-1 min-h-0 flex flex-col">
               <div className="border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                <nav className="flex space-x-8 px-6">
+                <nav className="flex items-center space-x-8 px-6">
                   {[
-                    { id: 'accounts', label: 'Contas', icon: AccountsIcon },
-                    { id: 'campaigns', label: 'Campanhas', icon: CampaignsIcon },
+                    { id: 'accounts', label: 'Contas', icon: AccountsIcon, selectedCount: 0, onClearSelection: undefined as (() => void) | undefined },
+                    {
+                      id: 'campaigns',
+                      label: 'Campanhas',
+                      icon: CampaignsIcon,
+                      selectedCount: selectedCampaigns.size,
+                      onClearSelection: () => setSelectedCampaigns(new Set())
+                    },
                     {
                       id: 'adsets',
                       label: selectedCampaigns.size > 0
                         ? `Conjuntos de anúncios para ${selectedCampaigns.size} Campanha${selectedCampaigns.size === 1 ? '' : 's'}`
                         : 'Conjuntos',
-                      icon: AdSetsIcon
+                      icon: AdSetsIcon,
+                      selectedCount: selectedAdSets.size,
+                      onClearSelection: () => setSelectedAdSets(new Set())
                     },
                     {
                       id: 'ads',
@@ -920,22 +921,49 @@ export default function MetaBusinessPage() {
                         : selectedCampaigns.size > 0
                           ? `Anúncios para ${selectedCampaigns.size} Campanha${selectedCampaigns.size === 1 ? '' : 's'}`
                           : 'Anúncios',
-                      icon: AdsIcon
+                      icon: AdsIcon,
+                      selectedCount: 0,
+                      onClearSelection: undefined as (() => void) | undefined
                     }
                   ].map((tab) => {
                     const Icon = tab.icon
+                    const hasSelection = tab.selectedCount > 0
                     return (
                       <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
-                        className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
-                          activeTab === tab.id
-                            ? 'border-brand-500 text-gray-900 dark:text-white'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                        }`}
+                        className={
+                          hasSelection
+                            // Padrão nativo do Gerenciador de Anúncios da Meta: a aba de ORIGEM da
+                            // seleção (ex.: "Campanhas" quando há campanhas selecionadas, cuja
+                            // seleção filtra as abas seguintes) vira um "chip" sólido na cor da marca,
+                            // com o badge "N selecionado" e um "×" pra limpar sem sair da aba atual.
+                            ? 'flex items-center gap-2 rounded-full bg-brand-500 text-white pl-3 pr-1.5 py-1.5 text-sm font-medium transition-colors'
+                            : `py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors ${
+                                activeTab === tab.id
+                                  ? 'border-brand-500 text-gray-900 dark:text-white'
+                                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                              }`
+                        }
                       >
                         <Icon className="w-4 h-4" />
                         <span>{tab.label}</span>
+                        {hasSelection && (
+                          <span className="flex items-center gap-1 bg-white/20 rounded-full pl-2 pr-0.5 py-0.5 text-xs font-semibold">
+                            {tab.selectedCount} selecionado{tab.selectedCount === 1 ? '' : 's'}
+                            <span
+                              role="button"
+                              title="Limpar seleção"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                tab.onClearSelection?.()
+                              }}
+                              className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-white/30 cursor-pointer"
+                            >
+                              <X className="w-3 h-3" />
+                            </span>
+                          </span>
+                        )}
                       </button>
                     )
                   })}
@@ -990,20 +1018,6 @@ export default function MetaBusinessPage() {
                     </div>
                   ) : (
                     <>
-                    {selectedCampaigns.size > 0 && (
-                      <div className="mb-4 flex items-center justify-between gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-3 py-2 text-sm text-blue-800 dark:text-blue-300">
-                        <span>
-                          Mostrando conjuntos de {selectedCampaigns.size} campanha{selectedCampaigns.size === 1 ? '' : 's'} selecionada{selectedCampaigns.size === 1 ? '' : 's'}.
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedCampaigns(new Set())}
-                          className="font-medium hover:underline flex-shrink-0"
-                        >
-                          Limpar seleção
-                        </button>
-                      </div>
-                    )}
                     <AdSetsTable
                       adSets={filteredAdSets}
                       selectedAdSets={selectedAdSets}
@@ -1026,22 +1040,6 @@ export default function MetaBusinessPage() {
                     </div>
                   ) : (
                     <>
-                    {(selectedAdSets.size > 0 || selectedCampaigns.size > 0) && (
-                      <div className="mb-4 flex items-center justify-between gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-3 py-2 text-sm text-blue-800 dark:text-blue-300">
-                        <span>
-                          {selectedAdSets.size > 0
-                            ? `Mostrando anúncios de ${selectedAdSets.size} conjunto${selectedAdSets.size === 1 ? '' : 's'} selecionado${selectedAdSets.size === 1 ? '' : 's'}.`
-                            : `Mostrando anúncios de ${selectedCampaigns.size} campanha${selectedCampaigns.size === 1 ? '' : 's'} selecionada${selectedCampaigns.size === 1 ? '' : 's'}.`}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => { setSelectedAdSets(new Set()); setSelectedCampaigns(new Set()) }}
-                          className="font-medium hover:underline flex-shrink-0"
-                        >
-                          Limpar seleção
-                        </button>
-                      </div>
-                    )}
                     <AdsTable
                       ads={filteredAds}
                       selectedAds={selectedAds}
