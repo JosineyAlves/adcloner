@@ -1,11 +1,26 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Mail, Lock, Loader2, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { createClient } from '@/lib/supabase/client'
+
+// Mensagens de erro do Supabase Auth traduzidas para o que faz sentido mostrar
+// ao usuário — a mensagem original em inglês nunca chega na tela.
+function translateAuthError(message: string): string {
+  if (message.includes('Invalid login credentials')) {
+    return 'Email ou senha incorretos.'
+  }
+  if (message.includes('Email not confirmed')) {
+    return 'Confirme seu email antes de entrar (verifique sua caixa de entrada).'
+  }
+  return 'Não foi possível entrar. Tente novamente.'
+}
 
 export default function LoginForm() {
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [showPassword, setShowPassword] = useState<boolean>(false)
   const [formData, setFormData] = useState<{
@@ -19,17 +34,25 @@ export default function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    
+
     try {
-      // Simular login (substitua pela sua API real)
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Redirecionar para dashboard após login
-      window.location.href = '/dashboard'
-      
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      })
+
+      if (error) {
+        toast.error(translateAuthError(error.message))
+        return
+      }
+
       toast.success('Login realizado com sucesso!')
+      router.push('/dashboard')
+      router.refresh()
     } catch (error) {
-      toast.error('Email ou senha incorretos.')
+      console.error('Login error:', error)
+      toast.error('Não foi possível entrar. Tente novamente.')
     } finally {
       setIsLoading(false)
     }
@@ -129,7 +152,7 @@ export default function LoginForm() {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Não tem uma conta?{' '}
-              <a href="#" className="text-primary-600 hover:text-primary-700 font-medium">
+              <a href="/register" className="text-primary-600 hover:text-primary-700 font-medium">
                 Criar conta
               </a>
             </p>
