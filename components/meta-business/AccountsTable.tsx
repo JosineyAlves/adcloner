@@ -110,15 +110,15 @@ export default function AccountsTable({
           <table className="w-full">
             <thead className="sticky top-0 z-30 bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
                   Conta
                 </th>
                 {showMetrics && metrics.filter(m => m.visible).map((metric) => (
                   <th key={metric.id} className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-normal min-w-[130px] max-w-[220px] leading-tight align-bottom">
-                    <span title={metric.label}>{metric.label}</span>
+                    <span title={metric.label} className="block line-clamp-2">{metric.label}</span>
                   </th>
                 ))}
               </tr>
@@ -159,15 +159,15 @@ export default function AccountsTable({
                   sua própria camada de GPU, e como o navegador atualiza cada camada de forma um
                   pouco independente a cada frame, dava pra perceber Status/Conta desalinhando 1-2px
                   durante o scroll, corrigindo sozinho ao parar. */}
-              <th className="sticky left-0 z-20 w-24 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
+              <th className="sticky left-0 z-20 w-24 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
                 Status
               </th>
-              <th className="sticky left-24 z-20 w-[240px] bg-gray-50 dark:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.4)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.4)] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
+              <th className="sticky left-24 z-20 w-[240px] bg-gray-50 dark:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.4)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.4)] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
                 Conta
               </th>
               {showMetrics && metrics.filter(m => m.visible).map((metric) => (
                 <th key={metric.id} className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-normal min-w-[130px] max-w-[220px] leading-tight align-bottom">
-                  <span title={metric.label}>{metric.label}</span>
+                  <span title={metric.label} className="block line-clamp-2">{metric.label}</span>
                 </th>
               ))}
             </tr>

@@ -132,25 +132,25 @@ export default function CampaignsTable({
                   <table className="w-full">
                     <thead className="bg-gray-50 dark:bg-gray-700">
                       <tr>
-                        <th className="sticky left-0 z-20 w-12 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left align-bottom">
+                        <th className="sticky left-0 z-20 w-12 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left">
                           <input
                             type="checkbox"
                             disabled
                             className="rounded border-gray-300 text-brand-500 focus:ring-brand-500"
                           />
                         </th>
-                        <th className="sticky left-12 z-20 w-24 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
+                        <th className="sticky left-12 z-20 w-24 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
                           Status
                         </th>
-                        <th className="sticky left-[144px] z-20 w-[240px] bg-gray-50 dark:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.4)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.4)] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
+                        <th className="sticky left-[144px] z-20 w-[240px] bg-gray-50 dark:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.4)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.4)] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
                           Campanha
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
                           Orçamento
                         </th>
                         {showMetrics && metrics.filter(m => m.visible).map((metric) => (
                           <th key={metric.id} className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-normal min-w-[130px] max-w-[220px] leading-tight align-bottom">
-                            <span title={metric.label}>{metric.label}</span>
+                            <span title={metric.label} className="block line-clamp-2">{metric.label}</span>
                           </th>
                         ))}
                       </tr>
@@ -195,7 +195,7 @@ export default function CampaignsTable({
                   z-10 no corpo/z-20 no rodapé evitam que conteúdo role por cima na direção errada.
                   O próprio <thead> agora é `sticky top-0` também, pra continuar visível durante a
                   rolagem vertical (antes só a linha de totais no rodapé ficava fixa). */}
-              <th className="sticky left-0 z-20 w-12 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left align-bottom">
+              <th className="sticky left-0 z-20 w-12 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left">
                 <input
                   type="checkbox"
                   checked={selectedCampaigns.size === campaigns.length && campaigns.length > 0}
@@ -203,18 +203,18 @@ export default function CampaignsTable({
                   className="rounded border-gray-300 text-brand-500 focus:ring-brand-500"
                 />
               </th>
-              <th className="sticky left-12 z-20 w-24 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
+              <th className="sticky left-12 z-20 w-24 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
                 Status
               </th>
-              <th className="sticky left-[144px] z-20 w-[240px] bg-gray-50 dark:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.4)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.4)] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
+              <th className="sticky left-[144px] z-20 w-[240px] bg-gray-50 dark:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.4)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.4)] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
                 Campanha
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
                 Orçamento
               </th>
               {showMetrics && metrics.filter(m => m.visible).map((metric) => (
                 <th key={metric.id} className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-normal min-w-[130px] max-w-[220px] leading-tight align-bottom">
-                  <span title={metric.label}>{metric.label}</span>
+                  <span title={metric.label} className="block line-clamp-2">{metric.label}</span>
                 </th>
               ))}
             </tr>
