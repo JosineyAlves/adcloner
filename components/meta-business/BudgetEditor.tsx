@@ -224,7 +224,7 @@ export default function BudgetEditor({
 
   return (
     <div 
-      className={`flex items-center space-x-2 min-w-[140px] rounded px-3 py-2 transition-all duration-200 ${
+      className={`flex items-center space-x-2 min-w-[140px] rounded px-3 py-0 transition-all duration-200 ${
         canEdit 
           ? 'cursor-pointer group hover:bg-blue-50 hover:border-blue-200 border border-transparent hover:shadow-sm' 
           : 'cursor-not-allowed opacity-60'
