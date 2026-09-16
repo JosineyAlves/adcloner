@@ -124,7 +124,10 @@ export class FacebookBatchAPI {
             const callCount = limit.call_count || 0
 
             if (callCount > this.criticalThreshold) {
-              console.error(`🚨 RATE LIMIT CRÍTICO (${businessId}): ${callCount}% - PAUSANDO REQUISIÇÕES`)
+              // Nota: isto é só um log de alerta — não pausa nenhuma requisição de fato. O
+              // controle real de bloqueio/backoff fica em lib/meta-rate-limit.ts, acionado
+              // reativamente quando a própria Meta retorna um erro de rate limit.
+              console.error(`🚨 RATE LIMIT CRÍTICO (${businessId}): ${callCount}%`)
             } else if (callCount > this.rateLimitThreshold) {
               console.warn(`⚠️ Rate limit próximo (${businessId}): ${callCount}%`)
             } else {
