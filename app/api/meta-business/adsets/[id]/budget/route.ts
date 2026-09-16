@@ -63,25 +63,21 @@ export async function POST(
         }
       )
       
-      // Verificar se a resposta é válida antes de fazer parse JSON
-      if (!response.ok) {
-        console.error('Facebook API response not ok:', response.status, response.statusText)
-        return NextResponse.json({ 
-          error: `Erro na API do Facebook: ${response.status} ${response.statusText}`,
-          code: 'FACEBOOK_API_ERROR'
-        }, { status: response.status })
-      }
-
-      // Verificar se há conteúdo para fazer parse
+      // A Graph API praticamente sempre devolve um corpo JSON com o motivo real do erro mesmo
+      // quando o status HTTP já é 4xx (ex.: 400 Bad Request) — então o parse do corpo tem que
+      // acontecer ANTES de decidir se foi erro, senão a mensagem específica do Facebook se perde
+      // e sobra só o genérico "400 Bad Request".
       const responseText = await response.text()
       console.log('📥 Resposta da Facebook API (AdSet):', responseText)
-      
+
       if (!responseText) {
-        console.error('Facebook API returned empty response')
+        console.error('Facebook API returned empty response, status:', response.status, response.statusText)
         return NextResponse.json({ 
-          error: 'Resposta vazia da API do Facebook',
-          code: 'EMPTY_RESPONSE'
-        }, { status: 500 })
+          error: response.ok
+            ? 'Resposta vazia da API do Facebook'
+            : `Erro na API do Facebook: ${response.status} ${response.statusText}`,
+          code: response.ok ? 'EMPTY_RESPONSE' : 'FACEBOOK_API_ERROR'
+        }, { status: response.ok ? 500 : response.status })
       }
 
       let data
@@ -91,9 +87,11 @@ export async function POST(
         console.error('Failed to parse Facebook API response:', parseError)
         console.error('Response text:', responseText)
         return NextResponse.json({ 
-          error: 'Resposta inválida da API do Facebook',
-          code: 'INVALID_JSON_RESPONSE'
-        }, { status: 500 })
+          error: response.ok
+            ? 'Resposta inválida da API do Facebook'
+            : `Erro na API do Facebook: ${response.status} ${response.statusText}`,
+          code: response.ok ? 'INVALID_JSON_RESPONSE' : 'FACEBOOK_API_ERROR'
+        }, { status: response.ok ? 500 : response.status })
       }
       
       if (data.error) {
@@ -122,7 +120,7 @@ export async function POST(
         
         return NextResponse.json(
           { 
-            error: `Erro ao atualizar orçamento: ${data.error.message}`,
+            error: `Erro ao atualizar orçamento: ${data.error.error_user_msg || data.error.message}`,
             code: 'UPDATE_ERROR'
           },
           { status: 400 }
