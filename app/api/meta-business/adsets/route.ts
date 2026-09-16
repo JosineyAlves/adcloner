@@ -324,6 +324,33 @@ export async function GET(request: NextRequest) {
         console.log(`📈 Buscando insights para ${adSetIds.length} ad sets em ${Math.ceil(insightsBatch.length / 50)} lotes`)
         
         // PASSO 3: Processar ad sets com insights
+
+        // Retry pontual: um sub-request especifico dentro de um lote de batch pode falhar
+        // (code != 200) por um motivo transitorio, independente do lote inteiro ter tido HTTP 200 —
+        // isso e mais provavel aqui do que em campanhas porque contas costumam ter muito mais
+        // ad set(s) do que campanhas, entao ha mais lotes e mais sub-requests individuais que
+        // podem falhar. Antes desta correcao, uma falha assim virava silenciosamente uma linha
+        // zerada (so um console.warn), sem nenhuma nova tentativa — dai a metrica "sumida" so
+        // aparecer em uma parte dos ad sets/ads, nunca nas campanhas.
+        const failedInsightsIndexes = insightsResponses
+          .map((r, idx) => (r.code !== 200 ? idx : -1))
+          .filter((idx) => idx !== -1)
+
+        if (failedInsightsIndexes.length > 0) {
+          console.warn(`⚠️ ${failedInsightsIndexes.length} ad set(s) com erro no lote de insights, tentando novamente...`)
+          const retryIds = failedInsightsIndexes.map((idx) => adSetIds[idx])
+          await new Promise((resolve) => setTimeout(resolve, 500))
+          const retryBatch = facebookBatchAPI.createAdSetInsightsBatch(retryIds, datePreset, since || undefined, until || undefined, metricIds)
+          const { responses: retryResponses } = await facebookBatchAPI.makeBatchRequest(retryBatch, accessToken)
+          failedInsightsIndexes.forEach((originalIdx, i) => {
+            if (retryResponses[i]) insightsResponses[originalIdx] = retryResponses[i]
+          })
+          const stillFailingCount = failedInsightsIndexes.filter((idx) => insightsResponses[idx].code !== 200).length
+          if (stillFailingCount > 0) {
+            console.warn(`⚠️ ${stillFailingCount} ad set(s) continuam com erro apos nova tentativa — serao exibidos com metricas zeradas.`)
+          }
+        }
+
         for (let i = 0; i < adSetsData.data.length; i++) {
           const adSet = adSetsData.data[i]
           const insightsResponse = insightsResponses[i]
