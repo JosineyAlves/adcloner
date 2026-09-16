@@ -784,12 +784,17 @@ export default function MetaBusinessPage() {
       <Sidebar />
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        <main className="flex-1 overflow-y-auto p-6">
+        {/* main mantém overflow-y-auto como rede de segurança (ex.: filtros quebrando em várias
+            linhas numa tela estreita), mas em telas normais quem preenche o espaço é o card de
+            abas/tabela logo abaixo (flex-1 min-h-0) — a tabela se adapta à altura real da
+            primeira dobra em vez de uma altura fixa em vh/calc que sobra ou falta espaço
+            dependendo do monitor. */}
+        <main className="flex-1 overflow-y-auto p-6 flex flex-col">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="space-y-6"
+            className="space-y-6 flex-1 flex flex-col min-h-0"
           >
             <PageHeader title="Meta Ads" />
 
@@ -886,8 +891,11 @@ export default function MetaBusinessPage() {
             {/* Abas — os rótulos de Conjuntos/Anúncios mudam pra "... para N Campanha(s)/Conjunto(s)"
                 quando há uma seleção ativa vinda da aba anterior, igual ao Gerenciador de Anúncios
                 nativo (ver campanhaScopeLabel/adSetScopeLabel e o filtro em filteredAdSets/filteredAds). */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-              <div className="border-b border-gray-200 dark:border-gray-700">
+            {/* flex-1 min-h-0: este card (abas + tabela) é o único bloco que deve crescer pra
+                preencher o resto da primeira dobra — PageHeader/aviso/filtros acima têm altura
+                fixa (natural do conteúdo). */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex-1 min-h-0 flex flex-col">
+              <div className="border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <nav className="flex space-x-8 px-6">
                   {[
                     { id: 'accounts', label: 'Contas', icon: AccountsIcon },
@@ -930,11 +938,12 @@ export default function MetaBusinessPage() {
 
               {/* Sem padding no topo nem nas laterais — a tabela encosta direto na barra de
                   abas e nas bordas do card, ganhando mais espaço horizontal pras colunas de
-                  métrica (o scroll horizontal da própria tabela cuida do resto). */}
-              <div className="pb-6">
+                  métrica (o scroll horizontal da própria tabela cuida do resto). flex-1 min-h-0
+                  propaga a altura restante do card até a <Table/> de cada aba. */}
+              <div className="pb-6 flex-1 min-h-0 flex flex-col">
                 {activeTab === 'accounts' && (
                   isLoadingAccounts && accounts.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-16">
+                    <div className="flex-1 min-h-0 flex flex-col items-center justify-center">
                       <RefreshCw className="w-6 h-6 animate-spin text-brand-600 mb-3" />
                       <p className="text-gray-500 dark:text-gray-400 text-sm">Carregando contas...</p>
                     </div>
@@ -949,7 +958,7 @@ export default function MetaBusinessPage() {
 
                 {activeTab === 'campaigns' && (
                   isLoadingCampaigns && filteredCampaigns.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-16">
+                    <div className="flex-1 min-h-0 flex flex-col items-center justify-center">
                       <RefreshCw className="w-6 h-6 animate-spin text-brand-600 mb-3" />
                       <p className="text-gray-500 dark:text-gray-400 text-sm">Carregando campanhas...</p>
                     </div>
@@ -969,7 +978,7 @@ export default function MetaBusinessPage() {
                 
                 {activeTab === 'adsets' && (
                   isLoadingAdSets && filteredAdSets.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-16">
+                    <div className="flex-1 min-h-0 flex flex-col items-center justify-center">
                       <RefreshCw className="w-6 h-6 animate-spin text-brand-600 mb-3" />
                       <p className="text-gray-500 dark:text-gray-400 text-sm">Carregando conjuntos de anúncios...</p>
                     </div>
@@ -1005,7 +1014,7 @@ export default function MetaBusinessPage() {
 
                 {activeTab === 'ads' && (
                   isLoadingAds && filteredAds.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-16">
+                    <div className="flex-1 min-h-0 flex flex-col items-center justify-center">
                       <RefreshCw className="w-6 h-6 animate-spin text-brand-600 mb-3" />
                       <p className="text-gray-500 dark:text-gray-400 text-sm">Carregando anúncios...</p>
                     </div>

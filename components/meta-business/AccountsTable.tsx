@@ -143,8 +143,8 @@ export default function AccountsTable({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-360px)]">
+    <div className="flex-1 min-h-0 flex flex-col">
+      <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0">
         <table className="w-full">
           <thead className="sticky top-0 z-30 bg-gray-50 dark:bg-gray-700">
             <tr>
@@ -173,10 +173,10 @@ export default function AccountsTable({
                 transition={{ duration: 0.3, delay: index * 0.05 }}
                 className="group hover:bg-gray-50 dark:hover:bg-gray-700"
               >
-                <td className="sticky will-change-transform left-0 z-10 w-24 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-4">
+                <td className="sticky will-change-transform left-0 z-10 w-24 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-2.5">
                   {getAccountStatusBadge(account.account_status)}
                 </td>
-                <td className="sticky will-change-transform left-24 z-10 w-[240px] bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-4">
+                <td className="sticky will-change-transform left-24 z-10 w-[240px] bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-2.5">
                   <div className="text-sm font-medium text-gray-900 dark:text-white truncate" title={account.name}>
                     {account.name}
                   </div>
@@ -185,7 +185,7 @@ export default function AccountsTable({
                   const value = (account as any)[metric.id]
                   const formattedValue = formatMetricValue(value, metric.type, metric.id)
                   return (
-                    <td key={metric.id} className="px-4 py-4 text-sm text-gray-900 dark:text-white whitespace-nowrap">
+                    <td key={metric.id} className="px-4 py-2.5 text-sm text-gray-900 dark:text-white whitespace-nowrap">
                       {formattedValue}
                     </td>
                   )

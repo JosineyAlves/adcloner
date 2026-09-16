@@ -188,11 +188,11 @@ export default function AdSetsTable({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex-1 min-h-0 flex flex-col">
 
       {/* Tabela — altura limitada com rolagem própria (max-h + overflow-y-auto) para que a linha
           de totais no rodapé possa ficar fixa (sticky) enquanto as linhas passam por baixo dela. */}
-      <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-360px)]">
+      <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0">
         <table className="w-full">
           <thead className="sticky top-0 z-30 bg-gray-50 dark:bg-gray-700">
             <tr>
@@ -223,7 +223,7 @@ export default function AdSetsTable({
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {adSets.map((adSet) => (
               <tr key={adSet.id} className="group hover:bg-gray-50 dark:hover:bg-gray-700">
-                <td className="sticky will-change-transform left-0 z-10 w-12 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-4">
+                <td className="sticky will-change-transform left-0 z-10 w-12 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-2.5">
                   <input
                     type="checkbox"
                     checked={selectedAdSets.has(adSet.id)}
@@ -231,7 +231,7 @@ export default function AdSetsTable({
                     className="rounded border-gray-300 text-brand-500 focus:ring-brand-500"
                   />
                 </td>
-                <td className="sticky will-change-transform left-12 z-10 w-24 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-4">
+                <td className="sticky will-change-transform left-12 z-10 w-24 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-2.5">
                   <StatusToggle
                     id={adSet.id}
                     status={adSet.status}
@@ -241,12 +241,12 @@ export default function AdSetsTable({
                     size="md"
                   />
                 </td>
-                <td className="sticky will-change-transform left-[144px] z-10 w-[240px] bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-4">
+                <td className="sticky will-change-transform left-[144px] z-10 w-[240px] bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-2.5">
                   <div className="text-sm font-medium text-gray-900 dark:text-white truncate" title={adSet.name}>
                     {adSet.name}
                   </div>
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-2.5">
                   {adSet.campaign_advantage_budget ? (
                     // Campanha-pai usa CBO (Advantage Campaign Budget) — o orçamento vive na
                     // Campaign, o Ad Set não tem orçamento próprio pra editar (mesmo padrão de
@@ -302,7 +302,7 @@ export default function AdSetsTable({
                   const value = (adSet as any)[metric.id]
                   const formattedValue = formatMetricValue(value, metric.type, metric.id)
                   return (
-                    <td key={metric.id} className="px-4 py-4 text-sm text-gray-900 dark:text-white whitespace-nowrap">
+                    <td key={metric.id} className="px-4 py-2.5 text-sm text-gray-900 dark:text-white whitespace-nowrap">
                       {formattedValue}
                     </td>
                   )
