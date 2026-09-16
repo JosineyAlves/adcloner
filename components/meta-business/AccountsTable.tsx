@@ -17,6 +17,12 @@ interface AccountsTableProps {
 // com uma coluna fixa embutida. Isso também elimina os ícones que só existiam neste componente
 // (cabeçalho "Contas N contas", "N métricas visíveis", avatar de cada linha) e que não existem
 // nas outras 3 abas.
+interface RatioMetricConfig {
+  numerator: string
+  denominator: string
+  multiplier?: number
+}
+
 export default function AccountsTable({
   accounts,
   metrics = [],
@@ -93,27 +99,36 @@ export default function AccountsTable({
   // Linha de totais no rodapé — mesmo cálculo usado em CampaignsTable/AdSetsTable/AdsTable:
   // soma para colunas 'number'/'currency', média simples para 'percentage'.
   const visibleMetrics = metrics.filter(m => m.visible)
-  const RATIO_METRIC_DENOMINATOR_FIELD: Record<string, string> = {
-    cost_per_conversion: 'conversions',
-    cost_per_initiate_checkout: 'initiate_checkout',
-    frequency: 'reach'
+  // Metricas de razao (custo-por-X, CTR-familia, ROAS, frequencia): somar ou fazer media simples
+  // das linhas esta matematicamente errado - ex.: CPM do total NAO e a soma dos CPMs de cada
+  // linha. O correto, e o que o proprio Gerenciador de Anuncios da Meta faz na linha de totais, e
+  // recalcular a razao a partir dos totais reais de numerador/denominador das linhas visiveis
+  // (ex.: total gasto / total de impressoes * 1000 para CPM). `multiplier` cobre os casos que nao
+  // sao uma razao direta (CPM x1000, CTRs em % x100).
+  const RATIO_METRICS: Record<string, RatioMetricConfig> = {
+    cpc: { numerator: 'spend', denominator: 'clicks' },
+    cost_per_inline_link_click: { numerator: 'spend', denominator: 'inline_link_clicks' },
+    cpm: { numerator: 'spend', denominator: 'impressions', multiplier: 1000 },
+    cost_per_conversion: { numerator: 'spend', denominator: 'conversions' },
+    cost_per_initiate_checkout: { numerator: 'spend', denominator: 'initiate_checkout' },
+    cost_per_landing_page_view: { numerator: 'spend', denominator: 'landing_page_view' },
+    purchase_roas: { numerator: 'conversion_values', denominator: 'spend' },
+    frequency: { numerator: 'impressions', denominator: 'reach' },
+    ctr: { numerator: 'clicks', denominator: 'impressions', multiplier: 100 },
+    unique_ctr: { numerator: 'unique_clicks', denominator: 'reach', multiplier: 100 },
+    inline_link_click_ctr: { numerator: 'inline_link_clicks', denominator: 'impressions', multiplier: 100 },
+    unique_inline_link_click_ctr: { numerator: 'unique_inline_link_clicks', denominator: 'reach', multiplier: 100 }
   }
 
   const metricTotals = visibleMetrics.map((metric) => {
-    // Metricas de razao (custo por X, frequencia): somar ou fazer media simples das linhas esta
-    // matematicamente errado - cost_per_conversion do total NAO e a soma dos cost_per_conversion
-    // de cada linha. O correto, e o que o proprio Gerenciador de Anuncios da Meta faz na linha de
-    // totais, e recalcular a partir dos totais reais de numerador/denominador das linhas visiveis:
-    // total gasto / total de conversoes (idem para checkout e frequencia = impressoes/alcance).
-    const denominatorField = RATIO_METRIC_DENOMINATOR_FIELD[metric.id]
-    if (denominatorField) {
-      const numeratorField = metric.id === 'frequency' ? 'impressions' : 'spend'
+    const ratio = RATIO_METRICS[metric.id]
+    if (ratio) {
       let totalNumerator = 0
       let totalDenominator = 0
       let hasData = false
       for (const row of accounts) {
-        const num = (row as any)[numeratorField]
-        const den = (row as any)[denominatorField]
+        const num = (row as any)[ratio.numerator]
+        const den = (row as any)[ratio.denominator]
         if (typeof num === 'number' && !isNaN(num)) {
           totalNumerator += num
           hasData = true
@@ -121,7 +136,7 @@ export default function AccountsTable({
         if (typeof den === 'number' && !isNaN(den)) totalDenominator += den
       }
       if (!hasData || totalDenominator === 0) return null
-      return totalNumerator / totalDenominator
+      return (totalNumerator / totalDenominator) * (ratio.multiplier ?? 1)
     }
 
     const values = accounts

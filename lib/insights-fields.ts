@@ -12,7 +12,7 @@ export const OPTIONAL_METRIC_FIELD_DEPENDENCIES: Record<string, string[]> = {
   cpc: ['cpc'],
   ctr: ['ctr'],
   cpm: ['cpm'],
-  cost_per_inline_link_click: ['cost_per_inline_link_click'],
+  cost_per_inline_link_click: ['cost_per_inline_link_click', 'inline_link_clicks'],
   cost_per_conversion: ['cost_per_action_type', 'actions', 'conversions'],
   cost_per_initiate_checkout: ['cost_per_action_type', 'actions'],
   initiate_checkout: ['actions'],
@@ -23,11 +23,11 @@ export const OPTIONAL_METRIC_FIELD_DEPENDENCIES: Record<string, string[]> = {
   frequency: ['frequency', 'reach'],
   unique_clicks: ['unique_clicks'],
   inline_link_clicks: ['inline_link_clicks'],
-  unique_ctr: ['unique_ctr'],
-  inline_link_click_ctr: ['inline_link_click_ctr'],
+  unique_ctr: ['unique_ctr', 'unique_clicks', 'reach'],
+  inline_link_click_ctr: ['inline_link_click_ctr', 'inline_link_clicks'],
   inline_post_engagement: ['inline_post_engagement'],
   unique_inline_link_clicks: ['unique_inline_link_clicks'],
-  unique_inline_link_click_ctr: ['unique_inline_link_click_ctr'],
+  unique_inline_link_click_ctr: ['unique_inline_link_click_ctr', 'unique_inline_link_clicks', 'reach'],
   video_play_actions: ['video_play_actions'],
   video_p25_watched_actions: ['video_p25_watched_actions'],
   video_p50_watched_actions: ['video_p50_watched_actions'],
@@ -35,9 +35,9 @@ export const OPTIONAL_METRIC_FIELD_DEPENDENCIES: Record<string, string[]> = {
   video_p95_watched_actions: ['video_p95_watched_actions'],
   video_p100_watched_actions: ['video_p100_watched_actions'],
   video_continuous_2_sec_watched_actions: ['video_continuous_2_sec_watched_actions'],
-  purchase_roas: ['purchase_roas'],
+  purchase_roas: ['purchase_roas', 'conversion_values', 'action_values'],
   landing_page_view: ['actions'],
-  cost_per_landing_page_view: ['cost_per_action_type']
+  cost_per_landing_page_view: ['cost_per_action_type', 'actions']
   // impressions/clicks/spend não entram aqui de propósito: são sempre incluídos (ver
   // *_ALWAYS_FIELDS abaixo), já que os cards de resumo da tela (Gasto Total, Impressões,
   // Cliques) dependem deles independentemente de quais colunas estejam visíveis na tabela.
