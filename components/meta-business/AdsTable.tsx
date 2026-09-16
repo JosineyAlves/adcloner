@@ -248,7 +248,7 @@ export default function AdsTable({
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {ads.map((ad) => (
               <tr key={ad.id} className="group hover:bg-gray-50 dark:hover:bg-gray-700">
-                <td className="sticky left-0 z-10 w-12 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-2">
+                <td className="sticky left-0 z-10 w-12 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-3">
                   <input
                     type="checkbox"
                     checked={selectedAds.has(ad.id)}
@@ -256,7 +256,7 @@ export default function AdsTable({
                     className="rounded border-gray-300 text-brand-500 focus:ring-brand-500"
                   />
                 </td>
-                <td className="sticky left-12 z-10 w-24 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-2">
+                <td className="sticky left-12 z-10 w-24 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-3">
                   <StatusToggle
                     id={ad.id}
                     status={ad.status}
@@ -266,12 +266,12 @@ export default function AdsTable({
                     size="md"
                   />
                 </td>
-                <td className="sticky left-[144px] z-10 w-[240px] bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-2">
+                <td className="sticky left-[144px] z-10 w-[240px] bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-3">
                   <div className="text-sm font-medium text-gray-900 dark:text-white truncate" title={ad.name}>
                     {ad.name}
                   </div>
                 </td>
-                <td className="px-6 py-2">
+                <td className="px-6 py-3">
                   <span className="text-sm font-medium text-gray-400 dark:text-gray-500" title="Orçamento é definido no nível do Conjunto de Anúncios">
                     N/A
                   </span>
@@ -280,7 +280,7 @@ export default function AdsTable({
                   const value = (ad as any)[metric.id]
                   const formattedValue = formatMetricValue(value, metric.type, metric.id)
                   return (
-                    <td key={metric.id} className="px-4 py-2 text-sm text-gray-900 dark:text-white whitespace-nowrap">
+                    <td key={metric.id} className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
                       {formattedValue}
                     </td>
                   )

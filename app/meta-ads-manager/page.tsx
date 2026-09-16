@@ -932,24 +932,21 @@ export default function MetaBusinessPage() {
                       <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
-                        className={
-                          hasSelection
-                            // Padrão nativo do Gerenciador de Anúncios da Meta: a aba de ORIGEM da
-                            // seleção (ex.: "Campanhas" quando há campanhas selecionadas, cuja
-                            // seleção filtra as abas seguintes) vira um "chip" sólido na cor da marca,
-                            // com o badge "N selecionado" e um "×" pra limpar sem sair da aba atual.
-                            ? 'flex items-center gap-2 rounded-full bg-brand-500 text-white pl-3 pr-1.5 py-1.5 text-sm font-medium transition-colors'
-                            : `py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors ${
-                                activeTab === tab.id
-                                  ? 'border-brand-500 text-gray-900 dark:text-white'
-                                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                              }`
-                        }
+                        className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors ${
+                          activeTab === tab.id || hasSelection
+                            ? 'border-brand-500 text-gray-900 dark:text-white'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                        }`}
                       >
                         <Icon className="w-4 h-4" />
                         <span>{tab.label}</span>
                         {hasSelection && (
-                          <span className="flex items-center gap-1 bg-white/20 rounded-full pl-2 pr-0.5 py-0.5 text-xs font-semibold">
+                          // Padrão nativo do Gerenciador de Anúncios da Meta: a aba de ORIGEM da
+                          // seleção (ex.: "Campanhas" quando há campanhas selecionadas, cuja
+                          // seleção filtra as abas seguintes) ganha um badge discreto "N
+                          // selecionado" com "×" pra limpar sem sair da aba atual — sem pintar a
+                          // aba inteira, só o badge se destaca.
+                          <span className="flex items-center gap-1 bg-brand-50 dark:bg-brand-500/10 text-brand-800 dark:text-brand-300 rounded-full pl-2 pr-0.5 py-0.5 text-xs font-semibold">
                             {tab.selectedCount} selecionado{tab.selectedCount === 1 ? '' : 's'}
                             <span
                               role="button"
@@ -958,7 +955,7 @@ export default function MetaBusinessPage() {
                                 e.stopPropagation()
                                 tab.onClearSelection?.()
                               }}
-                              className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-white/30 cursor-pointer"
+                              className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-brand-100 dark:hover:bg-brand-500/20 cursor-pointer"
                             >
                               <X className="w-3 h-3" />
                             </span>
