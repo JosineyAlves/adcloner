@@ -22,9 +22,13 @@ interface ConnectionSummary {
 
 // Tela "Integrações" — reorganizada no estilo "Central de Contas" (perfis do Meta como cards
 // pesquisáveis, cada um levando pra uma tela própria com as contas de anúncio daquele perfil em
-// app/meta-accounts/[connectionId]/page.tsx). Por enquanto só a aba "Central de Contas" existe de
-// fato: Webhooks/UTMs/Pixel/WhatsApp não têm nenhuma funcionalidade equivalente aqui ainda.
+// app/meta-accounts/[connectionId]/page.tsx). As abas agora são POR PLATAFORMA de anúncio (Meta
+// Ads / Google Ads), não mais uma aba genérica única — preparando terreno pra quando o Google Ads
+// for integrado de verdade, ele ganha sua própria aba com perfis/contas próprias, em vez de
+// disputar espaço na mesma lista da Meta. "Google Ads" fica desabilitada ("Em breve") até existir
+// alguma integração real por trás dela.
 export default function MetaAccountsPage() {
+  const [activeTab, setActiveTab] = useState<'meta' | 'google'>('meta')
   const [connections, setConnections] = useState<ConnectionSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -99,11 +103,30 @@ export default function MetaAccountsPage() {
             <PageHeader title="Integrações" />
           </div>
 
-          {/* Abas — hoje só "Central de Contas" está implementada de fato */}
+          {/* Abas por plataforma de anúncio — cada uma terá seus próprios perfis/contas. Só
+              "Meta Ads" tem integração real hoje; "Google Ads" fica reservada e desabilitada até
+              existir alguma funcionalidade de verdade por trás dela. */}
           <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
             <nav className="flex gap-6">
-              <button className="pb-3 px-1 border-b-2 border-brand-500 text-gray-900 dark:text-white text-sm font-medium">
-                Central de Contas
+              <button
+                onClick={() => setActiveTab('meta')}
+                className={`pb-3 px-1 border-b-2 text-sm font-medium transition-colors ${
+                  activeTab === 'meta'
+                    ? 'border-brand-500 text-gray-900 dark:text-white'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+              >
+                Meta Ads
+              </button>
+              <button
+                disabled
+                title="Em breve"
+                className="pb-3 px-1 border-b-2 border-transparent text-gray-300 dark:text-gray-600 text-sm font-medium cursor-not-allowed flex items-center gap-2"
+              >
+                Google Ads
+                <span className="text-[10px] font-semibold uppercase tracking-wide bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 px-1.5 py-0.5 rounded">
+                  Em breve
+                </span>
               </button>
             </nav>
           </div>
@@ -113,7 +136,7 @@ export default function MetaAccountsPage() {
               <Loader2 className="w-6 h-6 animate-spin mr-2" />
               Carregando...
             </div>
-          ) : (
+          ) : activeTab !== 'meta' ? null : (
             <>
               {/* Card da plataforma Meta Ads */}
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 mb-10 flex items-center justify-between gap-4 flex-wrap">
