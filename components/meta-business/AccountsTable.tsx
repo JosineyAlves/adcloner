@@ -93,7 +93,37 @@ export default function AccountsTable({
   // Linha de totais no rodapé — mesmo cálculo usado em CampaignsTable/AdSetsTable/AdsTable:
   // soma para colunas 'number'/'currency', média simples para 'percentage'.
   const visibleMetrics = metrics.filter(m => m.visible)
+  const RATIO_METRIC_DENOMINATOR_FIELD: Record<string, string> = {
+    cost_per_conversion: 'conversions',
+    cost_per_initiate_checkout: 'initiate_checkout',
+    frequency: 'reach'
+  }
+
   const metricTotals = visibleMetrics.map((metric) => {
+    // Metricas de razao (custo por X, frequencia): somar ou fazer media simples das linhas esta
+    // matematicamente errado - cost_per_conversion do total NAO e a soma dos cost_per_conversion
+    // de cada linha. O correto, e o que o proprio Gerenciador de Anuncios da Meta faz na linha de
+    // totais, e recalcular a partir dos totais reais de numerador/denominador das linhas visiveis:
+    // total gasto / total de conversoes (idem para checkout e frequencia = impressoes/alcance).
+    const denominatorField = RATIO_METRIC_DENOMINATOR_FIELD[metric.id]
+    if (denominatorField) {
+      const numeratorField = metric.id === 'frequency' ? 'impressions' : 'spend'
+      let totalNumerator = 0
+      let totalDenominator = 0
+      let hasData = false
+      for (const row of accounts) {
+        const num = (row as any)[numeratorField]
+        const den = (row as any)[denominatorField]
+        if (typeof num === 'number' && !isNaN(num)) {
+          totalNumerator += num
+          hasData = true
+        }
+        if (typeof den === 'number' && !isNaN(den)) totalDenominator += den
+      }
+      if (!hasData || totalDenominator === 0) return null
+      return totalNumerator / totalDenominator
+    }
+
     const values = accounts
       .map((a) => (a as any)[metric.id])
       .map((v) => (typeof v === 'number' ? v : parseFloat(v)))

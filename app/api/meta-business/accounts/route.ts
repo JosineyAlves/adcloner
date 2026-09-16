@@ -178,7 +178,12 @@ export async function GET(request: NextRequest) {
         video_time_watched_actions: processVideoMetric(insights.video_time_watched_actions),
         
         // Métricas específicas de contas (level=account)
-        cost_per_conversion: parseFloat(insights.cost_per_conversion || '0'),
+        // `cost_per_conversion` também não é campo próprio da API (mesmo caso de
+        // `cost_per_landing_page_view` acima) — deriva de cost_per_action_type + 'purchase'.
+        cost_per_conversion: extractAccountActionTypeValue(insights.cost_per_action_type, 'purchase'),
+        cost_per_initiate_checkout: extractAccountActionTypeValue(insights.cost_per_action_type, 'initiate_checkout'),
+        initiate_checkout: extractAccountActionTypeValue(insights.actions, 'initiate_checkout'),
+        results: processResultsMetric(insights.results),
         cost_per_action_type: parseFloat(insights.cost_per_action_type || '0'),
         cost_per_inline_link_click: parseFloat(insights.cost_per_inline_link_click || '0'),
         // `cost_per_landing_page_view` não é um campo próprio da Ads Insights API (confirmado
@@ -258,6 +263,24 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// Função auxiliar para processar métricas de resultados (estrutura real da API) — mesma lógica
+// usada em app/api/meta-business/campaigns/route.ts.
+function processResultsMetric(resultsMetric: any): number {
+  if (!resultsMetric) return 0
+
+  if (Array.isArray(resultsMetric)) {
+    return resultsMetric.reduce((total, result) => {
+      if (result.values && Array.isArray(result.values)) {
+        const resultValue = result.values.reduce((sum: number, valueObj: any) => sum + parseInt(valueObj.value || '0'), 0)
+        return total + resultValue
+      }
+      return total
+    }, 0)
+  }
+
+  return parseInt(resultsMetric.toString() || '0')
+}
+
 // Função para processar métricas de vídeo
 function processVideoMetric(videoMetric: any): number {
   if (!videoMetric) return 0
@@ -287,6 +310,12 @@ const ACCOUNT_ACTION_TYPE_PRIORITY: Record<string, string[]> = {
     'onsite_web_landing_page_view',
     'offsite_conversion.fb_pixel_landing_page_view',
     'landing_page_view',
+  ],
+  initiate_checkout: [
+    'omni_initiated_checkout',
+    'onsite_web_initiate_checkout',
+    'offsite_conversion.fb_pixel_initiate_checkout',
+    'initiate_checkout',
   ],
 }
 
