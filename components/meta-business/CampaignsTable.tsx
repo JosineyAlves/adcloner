@@ -180,16 +180,12 @@ export default function CampaignsTable({
       {/* Tabela — altura limitada com rolagem própria (max-h + overflow-y-auto) para que a linha
           de totais no rodapé possa ficar fixa (sticky) enquanto as linhas de campanha passam por
           baixo dela, sem precisar rolar a página inteira até o fim para ver os totais. */}
-      {/* Rolagem horizontal e vertical em contêineres SEPARADOS (em vez de um único div
-          overflow-x-auto+overflow-y-auto) — combinar os dois eixos no mesmo contêiner faz o
-          cabeçalho sticky (eixo vertical) e as colunas sticky (eixo horizontal) referenciarem
-          o mesmo ancestral rolável, e o Chrome pode atualizar um eixo um frame antes do outro
-          nas células do "canto" (cabeçalho × coluna fixa), dando a impressão de colunas se
-          empurrando durante o scroll lateral. Com contêineres distintos, o sticky left passa a
-          referenciar só o contêiner horizontal e o sticky top só o vertical — cada eixo com seu
-          próprio ancestral rolável, sem disputa. */}
-      <div className="overflow-x-auto flex-1 min-h-0 flex flex-col">
-        <div className="overflow-y-auto flex-1 min-h-0">
+      {/* Área de rolagem única (horizontal + vertical) — a tentativa de separar isso em dois
+          contêineres não resolveu o leve efeito visual de "colunas se empurrando" no scroll
+          lateral (é um comportamento residual do próprio navegador ao combinar cabeçalho fixo +
+          colunas fixas, sem impacto funcional), então voltamos à versão mais simples: flex-1
+          min-h-0 continua fazendo a tabela ocupar exatamente a primeira dobra disponível. */}
+      <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0">
         <table className="w-full">
           <thead className="sticky top-0 z-30 bg-gray-50 dark:bg-gray-700">
             <tr>
@@ -325,7 +321,6 @@ export default function CampaignsTable({
             </tr>
           </tfoot>
         </table>
-        </div>
       </div>
     </div>
   )
