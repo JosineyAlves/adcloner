@@ -204,8 +204,21 @@ export default function BudgetEditor({
     (level === 'adset' && !isCBO)
   )
 
+  // Orçamento não se aplica a este nível — campanha sem CBO não tem orçamento próprio (mora nos
+  // conjuntos) e conjunto de campanha com CBO idem (mora na campanha). Antes mostrava "$0.00", que
+  // parecia um valor real zerado; "N/A" deixa claro que o campo simplesmente não existe aqui.
+  const isNotApplicable = !disabled && (
+    (level === 'campaign' && !isCBO) ||
+    (level === 'adset' && isCBO)
+  )
+
   const getTooltipMessage = () => {
     if (disabled) return 'Orçamento não pode ser editado'
+    if (isNotApplicable) {
+      return level === 'campaign'
+        ? 'Esta campanha não usa CBO — o orçamento é definido em cada Conjunto de Anúncios'
+        : 'Esta campanha usa CBO — o orçamento é definido no nível da Campanha'
+    }
     return `Clique para editar orçamento ${budgetType === 'daily' ? 'diário' : 'total'}`
   }
 
@@ -220,12 +233,18 @@ export default function BudgetEditor({
       title={getTooltipMessage()}
     >
       <div className="flex items-center space-x-2 flex-1">
-        <span className="text-sm font-medium text-gray-900 dark:text-white">
-          {formatCurrency(currentBudget)}
-        </span>
-        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-          {budgetType === 'daily' ? 'Diário' : 'Total'}
-        </span>
+        {isNotApplicable ? (
+          <span className="text-sm font-medium text-gray-400 dark:text-gray-500">N/A</span>
+        ) : (
+          <>
+            <span className="text-sm font-medium text-gray-900 dark:text-white">
+              {formatCurrency(currentBudget)}
+            </span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+              {budgetType === 'daily' ? 'Diário' : 'Total'}
+            </span>
+          </>
+        )}
         {canEdit && (
           <div className="w-1 h-1 bg-gray-300 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
         )}
