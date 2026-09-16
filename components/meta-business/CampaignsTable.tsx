@@ -149,8 +149,8 @@ export default function CampaignsTable({
                           Orçamento
                         </th>
                         {showMetrics && metrics.filter(m => m.visible).map((metric) => (
-                          <th key={metric.id} className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-normal max-w-[190px] leading-tight align-bottom">
-                            <span className="line-clamp-2" title={metric.label}>{metric.label}</span>
+                          <th key={metric.id} className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-normal min-w-[130px] max-w-[220px] leading-tight align-bottom">
+                            <span title={metric.label}>{metric.label}</span>
                           </th>
                         ))}
                       </tr>
@@ -180,7 +180,7 @@ export default function CampaignsTable({
       {/* Tabela — altura limitada com rolagem própria (max-h + overflow-y-auto) para que a linha
           de totais no rodapé possa ficar fixa (sticky) enquanto as linhas de campanha passam por
           baixo dela, sem precisar rolar a página inteira até o fim para ver os totais. */}
-      <div className="overflow-x-auto overflow-y-auto max-h-[65vh]">
+      <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-360px)]">
         <table className="w-full">
           <thead className="sticky top-0 z-30 bg-gray-50 dark:bg-gray-700">
             <tr>
@@ -208,8 +208,8 @@ export default function CampaignsTable({
                 Orçamento
               </th>
               {showMetrics && metrics.filter(m => m.visible).map((metric) => (
-                <th key={metric.id} className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-normal max-w-[190px] leading-tight align-bottom">
-                  <span className="line-clamp-2" title={metric.label}>{metric.label}</span>
+                <th key={metric.id} className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-normal min-w-[130px] max-w-[220px] leading-tight align-bottom">
+                  <span title={metric.label}>{metric.label}</span>
                 </th>
               ))}
             </tr>
