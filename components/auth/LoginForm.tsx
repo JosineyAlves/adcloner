@@ -56,16 +56,13 @@ export default function LoginForm() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              className="w-16 h-16 bg-primary-600 rounded-full flex items-center justify-center mx-auto mb-4"
+              className="flex items-center justify-center mx-auto mb-4"
             >
-              <span className="text-white text-2xl font-bold">AC</span>
+              <img src="/logo.svg" alt="vmetrics" className="h-10 w-auto" />
             </motion.div>
-            
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              AdCloner Pro
-            </h1>
+
             <p className="text-gray-600 dark:text-gray-400">
-              Clone Facebook Ads campaigns across multiple accounts
+              Gerencie e clone campanhas do Meta Ads em múltiplas contas e Business Managers
             </p>
           </div>
 
