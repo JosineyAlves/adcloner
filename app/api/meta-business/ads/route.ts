@@ -228,6 +228,14 @@ export async function GET(request: NextRequest) {
     const until = searchParams.get('until')
     // Ver comentário equivalente em campaigns/route.ts.
     const metricIds = searchParams.get('metricIds')
+    // Quando a tela já tem conjunto(s)/campanha(s) selecionado(s) (ver selectedAdSets/
+    // selectedCampaigns em app/meta-ads-manager/page.tsx), o cliente manda os IDs aqui pra
+    // filtrar os anúncios direto na Graph API, em vez de baixar todos os anúncios da conta.
+    // Ver createAdsBatch em lib/facebook-batch-api.ts.
+    const adSetIdsParam = searchParams.get('adSetIds')
+    const adSetIds = adSetIdsParam ? adSetIdsParam.split(',').filter(Boolean) : undefined
+    const campaignIdsParam = searchParams.get('campaignIds')
+    const campaignIds = campaignIdsParam ? campaignIdsParam.split(',').filter(Boolean) : undefined
 
     if (!accessToken) {
       return NextResponse.json(
@@ -244,7 +252,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Verificar cache primeiro com TTL inteligente
-    const cacheKey = cache.generateKey('ads', { accountId, datePreset, since, until, metricIds })
+    const cacheKey = cache.generateKey('ads', { accountId, datePreset, since, until, metricIds, adSetIds, campaignIds })
     const cachedData = cache.get(cacheKey)
     
     if (cachedData) {
@@ -271,7 +279,7 @@ export async function GET(request: NextRequest) {
       console.log('🚀 Iniciando busca de ads com Batch Requests')
 
       // PASSO 1: Buscar ads usando batch request
-      const adsBatch = facebookBatchAPI.createAdsBatch(accountId, datePreset, since || undefined, until || undefined)
+      const adsBatch = facebookBatchAPI.createAdsBatch(accountId, datePreset, since || undefined, until || undefined, adSetIds, campaignIds)
       const { responses: adsResponses, estimatedWaitMinutes } = await facebookBatchAPI.makeBatchRequest(adsBatch, accessToken)
 
       if (adsResponses[0].code !== 200) {

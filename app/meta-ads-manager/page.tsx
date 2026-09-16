@@ -203,7 +203,11 @@ export default function MetaBusinessPage() {
   // espera entre todas as contas consultadas nessa chamada.
   const fetchEndpointForActiveAccounts = useCallback(async <T,>(
     endpoint: 'accounts' | 'campaigns' | 'adsets' | 'ads',
-    listKey: 'accounts' | 'campaigns' | 'adSets' | 'ads'
+    listKey: 'accounts' | 'campaigns' | 'adSets' | 'ads',
+    // Query extra (ex.: &campaignIds=...&adSetIds=...) pra pedir à Meta só os dados da
+    // campanha/conjunto já selecionado na tela, em vez de baixar tudo da conta — ver
+    // fetchAdSets/fetchAds abaixo.
+    scopeQuery: string = ''
   ): Promise<{ items: T[]; rateLimitedUntil: number | null }> => {
     // Não filtra mais por account_status (status real da conta perante a Meta, ex.: "Restrita").
     // O único controle de quais contas entram aqui é o toggle habilitar/desabilitar da tela de
@@ -226,7 +230,7 @@ export default function MetaBusinessPage() {
       activeAccounts.map(async (account) => {
         try {
           const response = await fetch(
-            `/api/meta-business/${endpoint}?accountId=${account.id}&datePreset=${datePreset}${dateQuery}${metricsQuery}`,
+            `/api/meta-business/${endpoint}?accountId=${account.id}&datePreset=${datePreset}${dateQuery}${metricsQuery}${scopeQuery}`,
             { credentials: 'include' }
           )
           // Sempre tentamos ler o corpo, mesmo em respostas não-ok (429 de rate limit vem com
@@ -326,7 +330,15 @@ export default function MetaBusinessPage() {
   const fetchAdSets = useCallback(async () => {
     try {
       setIsLoadingAdSets(true)
-      const adSetsResult = await fetchEndpointForActiveAccounts<MetaAdSet>('adsets', 'adSets')
+      // Se já há campanha(s) selecionada(s) na aba Campanhas, pede à Meta só os ad sets
+      // daquelas campanhas (filtro nativo da Graph API) em vez de baixar TODOS os ad sets da
+      // conta e descartar o resto no cliente — isso é o que fazia reabrir "Conjuntos" com uma
+      // campanha selecionada gastar rate limit à toa (às vezes 1000+ ad sets pra mostrar só os
+      // de 1 campanha). Ver createAdSetsBatch em lib/facebook-batch-api.ts.
+      const campaignScope = selectedCampaigns.size > 0
+        ? `&campaignIds=${Array.from(selectedCampaigns).map(encodeURIComponent).join(',')}`
+        : ''
+      const adSetsResult = await fetchEndpointForActiveAccounts<MetaAdSet>('adsets', 'adSets', campaignScope)
       const resolvedAdSets = resolveFetchedItems(adSetsRef.current, adSetsResult)
       setAdSets(resolvedAdSets)
       if (adSetsResult.rateLimitedUntil) {
@@ -341,13 +353,20 @@ export default function MetaBusinessPage() {
     } finally {
       setIsLoadingAdSets(false)
     }
-  }, [fetchEndpointForActiveAccounts, persistCache])
+  }, [fetchEndpointForActiveAccounts, persistCache, selectedCampaigns])
 
   // Busca LAZY: mesma lógica de fetchAdSets, para a aba "Anúncios".
   const fetchAds = useCallback(async () => {
     try {
       setIsLoadingAds(true)
-      const adsResult = await fetchEndpointForActiveAccounts<MetaAd>('ads', 'ads')
+      // Mesma lógica de fetchAdSets acima: conjunto selecionado é mais específico que campanha,
+      // então tem prioridade no filtro nativo da Graph API.
+      const adsScope = selectedAdSets.size > 0
+        ? `&adSetIds=${Array.from(selectedAdSets).map(encodeURIComponent).join(',')}`
+        : selectedCampaigns.size > 0
+          ? `&campaignIds=${Array.from(selectedCampaigns).map(encodeURIComponent).join(',')}`
+          : ''
+      const adsResult = await fetchEndpointForActiveAccounts<MetaAd>('ads', 'ads', adsScope)
       const resolvedAds = resolveFetchedItems(adsRef.current, adsResult)
       setAds(resolvedAds)
       if (adsResult.rateLimitedUntil) {
@@ -362,7 +381,7 @@ export default function MetaBusinessPage() {
     } finally {
       setIsLoadingAds(false)
     }
-  }, [fetchEndpointForActiveAccounts, persistCache])
+  }, [fetchEndpointForActiveAccounts, persistCache, selectedAdSets, selectedCampaigns])
 
   const calculateStats = (accounts: MetaAccount[], campaigns: MetaCampaign[], adSets: MetaAdSet[], ads: MetaAd[]): MetaBusinessStats => {
     // Usar dados das contas se disponíveis, senão usar campanhas
@@ -410,6 +429,15 @@ export default function MetaBusinessPage() {
   // saber se os dados já carregados numa aba ainda são válidos para o filtro atual, ou se
   // precisam ser buscados de novo quando o usuário voltar a essa aba (ex.: trocou o período).
   const currentDataKey = `${datePreset}|${customRange?.since || ''}|${customRange?.until || ''}`
+  // Conjuntos e Anúncios agora são buscados já filtrados pela campanha/conjunto selecionado
+  // (ver fetchAdSets/fetchAds), então a chave de "já carregado" precisa incluir a seleção — do
+  // contrário, selecionar uma campanha diferente (ou limpar a seleção) não dispararia uma nova
+  // busca, e a aba continuaria mostrando os dados da seleção anterior (ou nenhum dado, se a
+  // seleção anterior tiver ficado vazia).
+  const selectedCampaignsKey = Array.from(selectedCampaigns).sort().join(',')
+  const selectedAdSetsKey = Array.from(selectedAdSets).sort().join(',')
+  const adSetsDataKey = `${currentDataKey}|campaigns:${selectedCampaignsKey}`
+  const adsDataKey = `${currentDataKey}|adsets:${selectedAdSetsKey}|campaigns:${selectedCampaignsKey}`
   const accountsLoadedKeyRef = useRef<string | null>(null)
   const campaignsLoadedKeyRef = useRef<string | null>(null)
   const adSetsLoadedKeyRef = useRef<string | null>(null)
@@ -458,15 +486,15 @@ export default function MetaBusinessPage() {
     } else if (activeTab === 'campaigns' && campaignsLoadedKeyRef.current !== currentDataKey) {
       campaignsLoadedKeyRef.current = currentDataKey
       fetchCampaigns()
-    } else if (activeTab === 'adsets' && adSetsLoadedKeyRef.current !== currentDataKey) {
-      adSetsLoadedKeyRef.current = currentDataKey
+    } else if (activeTab === 'adsets' && adSetsLoadedKeyRef.current !== adSetsDataKey) {
+      adSetsLoadedKeyRef.current = adSetsDataKey
       fetchAdSets()
-    } else if (activeTab === 'ads' && adsLoadedKeyRef.current !== currentDataKey) {
-      adsLoadedKeyRef.current = currentDataKey
+    } else if (activeTab === 'ads' && adsLoadedKeyRef.current !== adsDataKey) {
+      adsLoadedKeyRef.current = adsDataKey
       fetchAds()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, facebookAccounts, currentDataKey, isRateLimited, accountsLoading, persistCache])
+  }, [activeTab, facebookAccounts, currentDataKey, adSetsDataKey, adsDataKey, isRateLimited, accountsLoading, persistCache])
 
   // Mantém o filtro de contas em sincronia sempre que os dados de campanhas/adsets/ads
   // (que carregam accountIds reais) mudarem.

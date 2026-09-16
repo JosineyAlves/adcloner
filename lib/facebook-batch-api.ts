@@ -426,8 +426,16 @@ export class FacebookBatchAPI {
   /**
    * Cria batch de requisições para ad sets
    */
-  createAdSetsBatch(accountId: string, datePreset: string, since?: string, until?: string): BatchRequest[] {
+  createAdSetsBatch(accountId: string, datePreset: string, since?: string, until?: string, campaignIds?: string[]): BatchRequest[] {
     const dateParam = this.buildDateQueryParam(datePreset, since, until)
+    // Quando o usuário já selecionou campanha(s) específica(s) na aba Campanhas, filtra os ad
+    // sets direto na Graph API (`filtering` por campaign.id) em vez de trazer TODOS os ad sets
+    // da conta (podem ser milhares) e descartar a maioria no cliente. Além de mais rápido, isso
+    // evita gastar rate limit buscando insights (chamada individual por ad set, ver
+    // createAdSetInsightsBatch) de ad sets que nem seriam exibidos.
+    const filteringParam = campaignIds && campaignIds.length > 0
+      ? `&filtering=${JSON.stringify([{ field: 'campaign.id', operator: 'IN', value: campaignIds }])}`
+      : ''
 
     return [
       {
@@ -437,7 +445,7 @@ export class FacebookBatchAPI {
         // saber se aquela campanha usa CBO (Advantage Campaign Budget): a Graph API não expõe um
         // booleano dedicado para isso, só o fato de o orçamento estar setado na Campaign em vez do
         // Ad Set. Ver `campaignAdvantageBudget` em app/api/meta-business/adsets/route.ts.
-        relative_url: `${accountId}/adsets?fields=id,name,campaign_id,campaign{id,name,daily_budget,lifetime_budget},status,effective_status,daily_budget,lifetime_budget,created_time,updated_time&limit=2500${dateParam}`
+        relative_url: `${accountId}/adsets?fields=id,name,campaign_id,campaign{id,name,daily_budget,lifetime_budget},status,effective_status,daily_budget,lifetime_budget,created_time,updated_time&limit=2500${dateParam}${filteringParam}`
       }
     ]
   }
@@ -463,13 +471,25 @@ export class FacebookBatchAPI {
   /**
    * Cria batch de requisições para ads
    */
-  createAdsBatch(accountId: string, datePreset: string, since?: string, until?: string): BatchRequest[] {
+  createAdsBatch(accountId: string, datePreset: string, since?: string, until?: string, adSetIds?: string[], campaignIds?: string[]): BatchRequest[] {
     const dateParam = this.buildDateQueryParam(datePreset, since, until)
+    // Mesma lógica de createAdSetsBatch: se o usuário já selecionou conjunto(s) (o mais
+    // específico) ou campanha(s) na tela, filtra os anúncios direto na Graph API em vez de
+    // trazer todos os anúncios da conta. adset.id tem prioridade sobre campaign.id porque uma
+    // seleção de conjunto é sempre mais específica que a de campanha.
+    const filteringField = adSetIds && adSetIds.length > 0
+      ? { field: 'adset.id', operator: 'IN', value: adSetIds }
+      : campaignIds && campaignIds.length > 0
+        ? { field: 'campaign.id', operator: 'IN', value: campaignIds }
+        : null
+    const filteringParam = filteringField
+      ? `&filtering=${JSON.stringify([filteringField])}`
+      : ''
 
     return [
       {
         method: 'GET',
-        relative_url: `${accountId}/ads?fields=id,name,adset_id,adset{id,name},campaign_id,campaign{id,name},status,effective_status,created_time,updated_time&limit=2500${dateParam}`
+        relative_url: `${accountId}/ads?fields=id,name,adset_id,adset{id,name},campaign_id,campaign{id,name},status,effective_status,created_time,updated_time&limit=2500${dateParam}${filteringParam}`
       }
     ]
   }
