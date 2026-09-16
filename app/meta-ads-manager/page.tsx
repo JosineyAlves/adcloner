@@ -940,7 +940,7 @@ export default function MetaBusinessPage() {
                   abas e nas bordas do card, ganhando mais espaço horizontal pras colunas de
                   métrica (o scroll horizontal da própria tabela cuida do resto). flex-1 min-h-0
                   propaga a altura restante do card até a <Table/> de cada aba. */}
-              <div className="pb-6 flex-1 min-h-0 flex flex-col">
+              <div className="flex-1 min-h-0 flex flex-col">
                 {activeTab === 'accounts' && (
                   isLoadingAccounts && accounts.length === 0 ? (
                     <div className="flex-1 min-h-0 flex flex-col items-center justify-center">
