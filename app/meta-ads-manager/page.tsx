@@ -818,7 +818,7 @@ export default function MetaBusinessPage() {
             abas/tabela logo abaixo (flex-1 min-h-0) — a tabela se adapta à altura real da
             primeira dobra em vez de uma altura fixa em vh/calc que sobra ou falta espaço
             dependendo do monitor. */}
-        <main className="flex-1 overflow-y-auto pt-6 px-6 flex flex-col">
+        <main className="flex-1 overflow-y-auto pt-3 px-6 flex flex-col">
           {/* Só opacity na animação de entrada — sem "y" (que o Framer Motion resolve como
               transform: translateY(...) e mantém como estilo inline mesmo depois da animação
               terminar). Esse motion.div é ancestral de toda a área rolável da tabela, e um
@@ -831,12 +831,17 @@ export default function MetaBusinessPage() {
             transition={{ duration: 0.5 }}
             className="space-y-6 flex-1 flex flex-col min-h-0"
           >
-            <PageHeader title="Meta Ads" />
+            {/* PageHeader + card de filtros com espaçamento próprio bem mais justo (space-y-3)
+                do que o space-y-6 usado entre este bloco e o card de abas/tabela logo abaixo —
+                mesmo padrão aplicado no Dashboard Financeiro: são duas peças do mesmo
+                "cabeçalho" da tela, não seções de conteúdo distintas. */}
+            <div className="space-y-3">
+              <PageHeader title="Meta Ads" />
 
-            {/* Filtros — layout em grade com rótulo acima de cada campo (estilo trackers como a
-                UTMify), em vez dos cards de estatísticas + barra de filtros em linha única que
-                existiam antes. */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+              {/* Filtros — layout em grade com rótulo acima de cada campo (estilo trackers como a
+                  UTMify), em vez dos cards de estatísticas + barra de filtros em linha única que
+                  existiam antes. */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 items-end">
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
@@ -912,6 +917,7 @@ export default function MetaBusinessPage() {
                     </span>
                   </button>
                 </div>
+              </div>
               </div>
             </div>
 
