@@ -36,7 +36,17 @@ export const OPTIONAL_METRIC_FIELD_DEPENDENCIES: Record<string, string[]> = {
   video_p100_watched_actions: ['video_p100_watched_actions'],
   purchase_roas: ['purchase_roas', 'conversion_values', 'action_values'],
   landing_page_view: ['actions'],
-  cost_per_landing_page_view: ['cost_per_action_type', 'actions']
+  cost_per_landing_page_view: ['cost_per_action_type', 'actions'],
+
+  // Metricas de funil de video (Hook/Body/CTA) - ver lib/metrics-config.ts. Cada uma so
+  // precisa dos campos brutos usados na sua propria formula (as outras metricas dessa lista
+  // ja cobrem impressions/clicks/spend via *_ALWAYS_FIELDS).
+  video_hook_rate: ['actions'],
+  video_hook_retention: ['actions', 'video_play_actions'],
+  video_hook_play_rate: ['video_play_actions'],
+  video_body_retention: ['video_p75_watched_actions', 'video_play_actions'],
+  video_body_conversion: ['conversions', 'actions', 'video_p75_watched_actions'],
+  video_cta_rate: ['inline_link_clicks', 'video_p75_watched_actions']
   // impressions/clicks/spend não entram aqui de propósito: são sempre incluídos (ver
   // *_ALWAYS_FIELDS abaixo), já que os cards de resumo da tela (Gasto Total, Impressões,
   // Cliques) dependem deles independentemente de quais colunas estejam visíveis na tabela.

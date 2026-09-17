@@ -139,7 +139,15 @@ export default function CampaignsTable({
     ctr: { numerator: 'clicks', denominator: 'impressions', multiplier: 100 },
     unique_ctr: { numerator: 'unique_clicks', denominator: 'reach', multiplier: 100 },
     inline_link_click_ctr: { numerator: 'inline_link_clicks', denominator: 'impressions', multiplier: 100 },
-    unique_inline_link_click_ctr: { numerator: 'unique_inline_link_clicks', denominator: 'reach', multiplier: 100 }
+    unique_inline_link_click_ctr: { numerator: 'unique_inline_link_clicks', denominator: 'reach', multiplier: 100 },
+
+    // Funil de vídeo (Hook/Body/CTA) — ver lib/metrics-config.ts pras fórmulas e descrições.
+    video_hook_rate: { numerator: 'video_views_3s', denominator: 'impressions', multiplier: 100 },
+    video_hook_retention: { numerator: 'video_views_3s', denominator: 'video_play_actions', multiplier: 100 },
+    video_hook_play_rate: { numerator: 'video_play_actions', denominator: 'impressions', multiplier: 100 },
+    video_body_retention: { numerator: 'video_p75_watched_actions', denominator: 'video_play_actions', multiplier: 100 },
+    video_body_conversion: { numerator: 'conversions', denominator: 'video_p75_watched_actions', multiplier: 100 },
+    video_cta_rate: { numerator: 'inline_link_clicks', denominator: 'video_p75_watched_actions', multiplier: 100 }
   }
 
   const metricTotals = visibleMetrics.map((metric) => {

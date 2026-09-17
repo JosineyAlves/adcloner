@@ -168,6 +168,15 @@ export interface MetaAccount {
   video_p25_watched_actions: number
   video_p50_watched_actions: number
   video_p75_watched_actions: number
+  // Metricas personalizadas de funil de video (Hook/Body/CTA) - calculadas pelo vmetrics a
+  // partir dos campos nativos acima, nao existem prontas na API de Insights da Meta.
+  video_views_3s: number
+  video_hook_rate: number
+  video_hook_retention: number
+  video_hook_play_rate: number
+  video_body_retention: number
+  video_body_conversion: number
+  video_cta_rate: number
   video_p95_watched_actions: number
   video_p100_watched_actions: number
   video_time_watched_actions: number
@@ -251,6 +260,15 @@ export interface MetaCampaign {
   video_p25_watched_actions: number
   video_p50_watched_actions: number
   video_p75_watched_actions: number
+  // Metricas personalizadas de funil de video (Hook/Body/CTA) - calculadas pelo vmetrics a
+  // partir dos campos nativos acima, nao existem prontas na API de Insights da Meta.
+  video_views_3s: number
+  video_hook_rate: number
+  video_hook_retention: number
+  video_hook_play_rate: number
+  video_body_retention: number
+  video_body_conversion: number
+  video_cta_rate: number
   video_p95_watched_actions: number
   video_p100_watched_actions: number
 
@@ -329,6 +347,15 @@ export interface MetaAdSet {
   video_p25_watched_actions: number
   video_p50_watched_actions: number
   video_p75_watched_actions: number
+  // Metricas personalizadas de funil de video (Hook/Body/CTA) - calculadas pelo vmetrics a
+  // partir dos campos nativos acima, nao existem prontas na API de Insights da Meta.
+  video_views_3s: number
+  video_hook_rate: number
+  video_hook_retention: number
+  video_hook_play_rate: number
+  video_body_retention: number
+  video_body_conversion: number
+  video_cta_rate: number
   video_p95_watched_actions: number
   video_p100_watched_actions: number
   
@@ -397,6 +424,15 @@ export interface MetaAd {
   video_p25_watched_actions: number
   video_p50_watched_actions: number
   video_p75_watched_actions: number
+  // Metricas personalizadas de funil de video (Hook/Body/CTA) - calculadas pelo vmetrics a
+  // partir dos campos nativos acima, nao existem prontas na API de Insights da Meta.
+  video_views_3s: number
+  video_hook_rate: number
+  video_hook_retention: number
+  video_hook_play_rate: number
+  video_body_retention: number
+  video_body_conversion: number
+  video_cta_rate: number
   video_p95_watched_actions: number
   video_p100_watched_actions: number
   

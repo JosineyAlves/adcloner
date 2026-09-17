@@ -391,6 +391,7 @@ export async function GET(request: NextRequest) {
               video_p75_watched_actions: 0,
               video_p95_watched_actions: 0,
               video_p100_watched_actions: 0,
+              video_views_3s: 0,
               
               // Métricas específicas de campanhas (não disponíveis em adsets/ads)
               cost_per_conversion: 0,
@@ -457,6 +458,7 @@ export async function GET(request: NextRequest) {
                 video_p75_watched_actions: processVideoMetric(insight.video_p75_watched_actions),
                 video_p95_watched_actions: processVideoMetric(insight.video_p95_watched_actions),
                 video_p100_watched_actions: processVideoMetric(insight.video_p100_watched_actions),
+                video_views_3s: extractActionTypeValue(insight.actions, 'video_view'),
                 
                 // Métricas específicas de campanhas (não disponíveis em adsets/ads)
                 cost_per_conversion: processCostPerActionType(insight.cost_per_action_type, 'purchase'),
@@ -543,6 +545,15 @@ export async function GET(request: NextRequest) {
               video_p75_watched_actions: insights.video_p75_watched_actions,
               video_p95_watched_actions: insights.video_p95_watched_actions,
               video_p100_watched_actions: insights.video_p100_watched_actions,
+              // Metricas de funil de video (Hook/Body/CTA) - calculadas aqui a partir dos campos
+              // brutos acima, nao existem prontas na Ads Insights API (ver lib/metrics-config.ts).
+              video_views_3s: insights.video_views_3s,
+              video_hook_rate: insights.impressions > 0 ? (insights.video_views_3s / insights.impressions) * 100 : 0,
+              video_hook_retention: insights.video_play_actions > 0 ? (insights.video_views_3s / insights.video_play_actions) * 100 : 0,
+              video_hook_play_rate: insights.impressions > 0 ? (insights.video_play_actions / insights.impressions) * 100 : 0,
+              video_body_retention: insights.video_play_actions > 0 ? (insights.video_p75_watched_actions / insights.video_play_actions) * 100 : 0,
+              video_body_conversion: insights.video_p75_watched_actions > 0 ? (insights.conversions / insights.video_p75_watched_actions) * 100 : 0,
+              video_cta_rate: insights.video_p75_watched_actions > 0 ? (insights.inline_link_clicks / insights.video_p75_watched_actions) * 100 : 0,
               
               // Métricas específicas de campanhas (não disponíveis em adsets/ads)
               cost_per_conversion: insights.cost_per_conversion,
@@ -618,6 +629,13 @@ export async function GET(request: NextRequest) {
               video_p75_watched_actions: 0,
               video_p95_watched_actions: 0,
               video_p100_watched_actions: 0,
+              video_views_3s: 0,
+              video_hook_rate: 0,
+              video_hook_retention: 0,
+              video_hook_play_rate: 0,
+              video_body_retention: 0,
+              video_body_conversion: 0,
+              video_cta_rate: 0,
               
               // Métricas específicas de campanhas (não disponíveis em adsets/ads)
               cost_per_conversion: 0,

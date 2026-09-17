@@ -137,6 +137,16 @@ export async function GET(request: NextRequest) {
       }
 
       // Criar objeto da conta com insights
+      // Valores brutos usados nas metricas de funil de video (Hook/Body/CTA) abaixo, calculados
+      // uma vez aqui porque accountData e um unico objeto literal (nao ha um estagio
+      // intermediario "insights" separado como em campaigns/adsets/ads route.ts).
+      const accImpressionsForVideoFunnel = parseInt(insights.impressions || '0')
+      const accVideoPlayActionsForVideoFunnel = processVideoMetric(insights.video_play_actions)
+      const accVideoP75ForVideoFunnel = processVideoMetric(insights.video_p75_watched_actions)
+      const accInlineLinkClicksForVideoFunnel = parseInt(insights.inline_link_clicks || '0')
+      const accVideoViews3sForVideoFunnel = extractAccountActionTypeValue(insights.actions, 'video_view')
+      const accConversionsForVideoFunnel = sumActionStats(insights.conversions) || extractAccountActionTypeValue(insights.actions, 'purchase')
+
       const accountData = {
         id: accountId,
         name: insights.account_name || 'Facebook Account',
@@ -175,6 +185,20 @@ export async function GET(request: NextRequest) {
         video_p95_watched_actions: processVideoMetric(insights.video_p95_watched_actions),
         video_p100_watched_actions: processVideoMetric(insights.video_p100_watched_actions),
         video_time_watched_actions: processVideoMetric(insights.video_time_watched_actions),
+        
+        // Métricas de funil de vídeo (Hook/Body/CTA) — ver lib/metrics-config.ts. Calculadas a
+        // partir dos campos brutos acima; não existem prontas na Ads Insights API. Como este
+        // objeto é montado numa única etapa (diferente de campaigns/adsets/ads), os valores
+        // brutos usados nas razões são recalculados aqui em variáveis locais antes do literal,
+        // já que não dá pra referenciar uma propriedade irmã (`accountData.impressions`)
+        // enquanto o próprio `accountData` ainda está sendo construído.
+        video_views_3s: accVideoViews3sForVideoFunnel,
+        video_hook_rate: accImpressionsForVideoFunnel > 0 ? (accVideoViews3sForVideoFunnel / accImpressionsForVideoFunnel) * 100 : 0,
+        video_hook_retention: accVideoPlayActionsForVideoFunnel > 0 ? (accVideoViews3sForVideoFunnel / accVideoPlayActionsForVideoFunnel) * 100 : 0,
+        video_hook_play_rate: accImpressionsForVideoFunnel > 0 ? (accVideoPlayActionsForVideoFunnel / accImpressionsForVideoFunnel) * 100 : 0,
+        video_body_retention: accVideoPlayActionsForVideoFunnel > 0 ? (accVideoP75ForVideoFunnel / accVideoPlayActionsForVideoFunnel) * 100 : 0,
+        video_body_conversion: accVideoP75ForVideoFunnel > 0 ? (accConversionsForVideoFunnel / accVideoP75ForVideoFunnel) * 100 : 0,
+        video_cta_rate: accVideoP75ForVideoFunnel > 0 ? (accInlineLinkClicksForVideoFunnel / accVideoP75ForVideoFunnel) * 100 : 0,
         
         // Métricas específicas de contas (level=account)
         // `cost_per_conversion` também não é campo próprio da API (mesmo caso de

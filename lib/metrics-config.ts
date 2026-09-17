@@ -297,6 +297,65 @@ export const ALL_METRICS: MetricConfig[] = [
     visible: false,
     order: 26,
     category: 'video'
+  },
+
+  // === MÉTRICAS DE FUNIL DE VÍDEO (Hook / Body / CTA) ===
+  // Calculadas pelo vmetrics a partir de campos nativos da Meta (video_play_actions,
+  // video_p75_watched_actions, impressions, inline_link_clicks, conversions e a contagem de
+  // visualizações de vídeo de 3+ segundos) — não existem prontas na API de Insights.
+  {
+    id: 'video_hook_rate',
+    label: 'Hook',
+    description: 'Percentual de impressões que geraram 3 segundos de visualização. Calculado como: Reproduções do vídeo por no mínimo 3 segundos / Impressões.',
+    type: 'percentage',
+    visible: false,
+    order: 27,
+    category: 'video'
+  },
+  {
+    id: 'video_hook_retention',
+    label: 'Retenção do Hook',
+    description: 'Percentual de espectadores que assistiram ao menos 3 segundos do vídeo. Calculado como: Reproduções do vídeo por no mínimo 3 segundos / Reproduções de vídeo.',
+    type: 'percentage',
+    visible: false,
+    order: 28,
+    category: 'video'
+  },
+  {
+    id: 'video_hook_play_rate',
+    label: 'Play Rate do Hook',
+    description: 'Taxa de reprodução do vídeo em relação às impressões. Calculado como: Reproduções de vídeo / Impressões.',
+    type: 'percentage',
+    visible: false,
+    order: 29,
+    category: 'video'
+  },
+  {
+    id: 'video_body_retention',
+    label: 'Retenção do Body',
+    description: 'Percentual de espectadores que assistiram ao menos 75% do vídeo em relação ao total de reproduções de vídeo iniciadas. Calculado como: Reproduções de 75% do vídeo / Reproduções de vídeo.',
+    type: 'percentage',
+    visible: false,
+    order: 30,
+    category: 'video'
+  },
+  {
+    id: 'video_body_conversion',
+    label: 'Conversão do Body',
+    description: 'Taxa de conversão dos espectadores que chegaram ao CTA (75% do vídeo). Calculado como: Conversões / Reproduções de 75% do vídeo.',
+    type: 'percentage',
+    visible: false,
+    order: 31,
+    category: 'video'
+  },
+  {
+    id: 'video_cta_rate',
+    label: 'CTA',
+    description: 'Percentual de cliques no anúncio entre espectadores que assistiram 75% do vídeo. Calculado como: Cliques no link / Reproduções de 75% do vídeo.',
+    type: 'percentage',
+    visible: false,
+    order: 32,
+    category: 'video'
   }
 ]
 
