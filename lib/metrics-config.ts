@@ -297,15 +297,6 @@ export const ALL_METRICS: MetricConfig[] = [
     visible: false,
     order: 26,
     category: 'video'
-  },
-  {
-    id: 'video_continuous_2_sec_watched_actions',
-    label: 'Visualizações',
-    description: 'Número de vezes que o vídeo foi reproduzido por pelo menos 2 segundos contínuos (métrica "Visualizações do vídeo" do Gerenciador de Anúncios).',
-    type: 'number',
-    visible: false,
-    order: 30,
-    category: 'video'
   }
 ]
 

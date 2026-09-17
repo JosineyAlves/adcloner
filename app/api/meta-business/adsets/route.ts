@@ -399,7 +399,6 @@ export async function GET(request: NextRequest) {
               video_p75_watched_actions: 0,
               video_p95_watched_actions: 0,
               video_p100_watched_actions: 0,
-              video_continuous_2_sec_watched_actions: 0,
             }
 
             if (insightsResponse.code === 200) {
@@ -464,7 +463,6 @@ export async function GET(request: NextRequest) {
                   video_p75_watched_actions: processVideoMetric(insight.video_p75_watched_actions),
                   video_p95_watched_actions: processVideoMetric(insight.video_p95_watched_actions),
                   video_p100_watched_actions: processVideoMetric(insight.video_p100_watched_actions),
-                  video_continuous_2_sec_watched_actions: extractActionTypeValue(insight.actions, 'video_view')
                 }
               }
             } else {
@@ -548,7 +546,6 @@ export async function GET(request: NextRequest) {
               video_p75_watched_actions: insights.video_p75_watched_actions || 0,
               video_p95_watched_actions: insights.video_p95_watched_actions || 0,
               video_p100_watched_actions: insights.video_p100_watched_actions || 0,
-              video_continuous_2_sec_watched_actions: insights.video_continuous_2_sec_watched_actions || 0,
               
               // Métricas de vídeo detalhadas
               videoMetrics: videoMetrics,
@@ -623,7 +620,6 @@ export async function GET(request: NextRequest) {
               video_p75_watched_actions: 0,
               video_p95_watched_actions: 0,
               video_p100_watched_actions: 0,
-              video_continuous_2_sec_watched_actions: 0,
               
               created_time: adSet.created_time,
               updated_time: adSet.updated_time,

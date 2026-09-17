@@ -170,7 +170,6 @@ export interface MetaAccount {
   video_p75_watched_actions: number
   video_p95_watched_actions: number
   video_p100_watched_actions: number
-  video_continuous_2_sec_watched_actions: number
   video_time_watched_actions: number
   
   // Métricas específicas de contas (level=account)
@@ -254,7 +253,6 @@ export interface MetaCampaign {
   video_p75_watched_actions: number
   video_p95_watched_actions: number
   video_p100_watched_actions: number
-  video_continuous_2_sec_watched_actions: number
 
   // Métricas de qualidade
   quality_ranking: string | null
@@ -333,7 +331,6 @@ export interface MetaAdSet {
   video_p75_watched_actions: number
   video_p95_watched_actions: number
   video_p100_watched_actions: number
-  video_continuous_2_sec_watched_actions: number
   
   // Métricas de vídeo - Tempo
   video_30_sec_watched_actions: number
@@ -402,7 +399,6 @@ export interface MetaAd {
   video_p75_watched_actions: number
   video_p95_watched_actions: number
   video_p100_watched_actions: number
-  video_continuous_2_sec_watched_actions: number
   
   // Métricas de vídeo - Tempo
   video_30_sec_watched_actions: number

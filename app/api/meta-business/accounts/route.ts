@@ -174,7 +174,6 @@ export async function GET(request: NextRequest) {
         video_p75_watched_actions: processVideoMetric(insights.video_p75_watched_actions),
         video_p95_watched_actions: processVideoMetric(insights.video_p95_watched_actions),
         video_p100_watched_actions: processVideoMetric(insights.video_p100_watched_actions),
-        video_continuous_2_sec_watched_actions: extractAccountActionTypeValue(insights.actions, 'video_view'),
         video_time_watched_actions: processVideoMetric(insights.video_time_watched_actions),
         
         // Métricas específicas de contas (level=account)
