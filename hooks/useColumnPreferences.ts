@@ -46,7 +46,16 @@ export function useColumnPreferences(viewKey: string, defaultMetricIds: string[]
           `/api/meta-business/column-preferences?viewKey=${encodeURIComponent(viewKey)}`,
           { credentials: 'include' }
         )
-        if (!response.ok) return
+        if (!response.ok) {
+          // Antes esse retorno era ignorado em silêncio (inclusive um 401 permanente, já que o
+          // cookie que a rota esperava nunca era setado) — agora loga pra ficar visível que a
+          // preferência não está vindo do servidor, mesmo que a tela continue funcionando com o
+          // cache local/padrão.
+          console.error(
+            `Erro ao carregar preferências de colunas salvas: HTTP ${response.status}`
+          )
+          return
+        }
         const data = await response.json()
         const saved = data?.metricIds
         if (!cancelled && Array.isArray(saved) && saved.length > 0) {
@@ -69,14 +78,28 @@ export function useColumnPreferences(viewKey: string, defaultMetricIds: string[]
     setMetricIds(ids)
     writeLocalCache(cacheKey, ids)
 
+    // fetch() só rejeita em falha de rede — uma resposta HTTP de erro (401, 500...) resolve a
+    // promise normalmente, então o .catch sozinho nunca pegava isso: um 401 permanente (cookie
+    // que a rota esperava nunca era setado) ficava completamente invisível e a gravação no
+    // Supabase nunca acontecia, mesmo com a seleção "funcionando" via cache local.
     fetch('/api/meta-business/column-preferences', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({ viewKey, metricIds: ids })
-    }).catch((error) => {
-      console.error('Erro ao salvar preferências de colunas:', error)
     })
+      .then(async (response) => {
+        if (!response.ok) {
+          const body = await response.json().catch(() => null)
+          console.error(
+            `Erro ao salvar preferências de colunas: HTTP ${response.status}`,
+            body?.error ?? ''
+          )
+        }
+      })
+      .catch((error) => {
+        console.error('Erro ao salvar preferências de colunas:', error)
+      })
   }, [viewKey, cacheKey])
 
   return { metricIds, saveMetricIds, isLoaded }

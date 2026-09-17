@@ -7,20 +7,25 @@
  * isso também significava que a seleção não acompanhava o usuário entre navegadores/dispositivos.
  *
  * Este módulo persiste a seleção (lista ordenada de ids de métrica) no Supabase, por usuário
- * (fb_user_id — mesmo identificador usado em meta_connections, já que este app não tem uma
- * tabela de "usuários" própria: ver app/api/auth/check/route.ts) e por "view" (view_key), para
- * permitir reaproveitar a mesma tabela caso outras telas ganhem seletores de coluna no futuro.
+ * vmetrics autenticado (user_id = auth.users.id, igual meta_connections e as rotas de
+ * meta-business/* — ver lib/supabase/server.ts -> getAuthenticatedUserId) e por "view"
+ * (view_key), para permitir reaproveitar a mesma tabela caso outras telas ganhem seletores de
+ * coluna no futuro.
+ *
+ * Antes usava fb_user_id (cookie do perfil do Facebook), que nunca era setado em nenhum fluxo
+ * real do app — toda gravação falhava com 401 silenciosamente (ver hooks/useColumnPreferences.ts)
+ * e a tabela ficava sempre vazia, mesmo com a seleção "funcionando" via cache em localStorage.
  */
 
 import { getSupabaseAdmin } from './supabase-admin'
 
-export async function getColumnPreferences(fbUserId: string, viewKey: string): Promise<string[] | null> {
+export async function getColumnPreferences(userId: string, viewKey: string): Promise<string[] | null> {
   const supabase = getSupabaseAdmin()
 
   const { data, error } = await supabase
     .from('column_preferences')
     .select('metric_ids')
-    .eq('fb_user_id', fbUserId)
+    .eq('user_id', userId)
     .eq('view_key', viewKey)
     .maybeSingle()
 
@@ -32,7 +37,7 @@ export async function getColumnPreferences(fbUserId: string, viewKey: string): P
 }
 
 export async function saveColumnPreferences(
-  fbUserId: string,
+  userId: string,
   viewKey: string,
   metricIds: string[]
 ): Promise<void> {
@@ -42,12 +47,12 @@ export async function saveColumnPreferences(
     .from('column_preferences')
     .upsert(
       {
-        fb_user_id: fbUserId,
+        user_id: userId,
         view_key: viewKey,
         metric_ids: metricIds,
         updated_at: new Date().toISOString(),
       },
-      { onConflict: 'fb_user_id,view_key' }
+      { onConflict: 'user_id,view_key' }
     )
 
   if (error) throw new Error(`Falha ao salvar preferências de colunas: ${error.message}`)
