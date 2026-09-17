@@ -18,6 +18,8 @@ import { MetaCampaign } from '@/lib/types'
 import { MetricConfig } from '@/lib/metrics-config'
 import StatusToggle from './StatusToggle'
 import BudgetEditor from './BudgetEditor'
+import SortIcon from './SortIcon'
+import { useTableSort } from '@/hooks/useTableSort'
 import toast from 'react-hot-toast'
 
 interface CampaignsTableProps {
@@ -178,6 +180,15 @@ export default function CampaignsTable({
     return metric.type === 'percentage' ? sum / values.length : sum
   })
 
+  // Ordenação por coluna (clique no cabeçalho) — ver hooks/useTableSort.ts. "budget" é uma chave
+  // virtual (não existe como campo único no objeto) porque o orçamento efetivo é
+  // daily_budget || lifetime_budget, igual ao que já é exibido/somado acima.
+  const { sortConfig, handleSort, sortedRows: sortedCampaigns } = useTableSort<MetaCampaign>(
+    campaigns,
+    'name',
+    (row, key) => (key === 'budget' ? row.daily_budget || row.lifetime_budget || 0 : (row as any)[key])
+  )
+
           if (campaigns.length === 0) {
             return (
               <div className="space-y-4">
@@ -260,21 +271,36 @@ export default function CampaignsTable({
               <th className="sticky left-12 z-20 w-24 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
                 Status
               </th>
-              <th className="sticky left-[144px] z-20 w-[240px] bg-gray-50 dark:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.4)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.4)] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
+              <th
+                onClick={() => handleSort('name')}
+                className="group sticky left-[144px] z-20 w-[240px] bg-gray-50 dark:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.4)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.4)] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom cursor-pointer select-none"
+              >
                 Campanha
+                <SortIcon active={sortConfig?.key === 'name'} direction={sortConfig?.key === 'name' ? sortConfig.direction : undefined} />
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
+              <th
+                onClick={() => handleSort('budget')}
+                className="group px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom cursor-pointer select-none"
+              >
                 Orçamento
+                <SortIcon active={sortConfig?.key === 'budget'} direction={sortConfig?.key === 'budget' ? sortConfig.direction : undefined} />
               </th>
               {showMetrics && metrics.filter(m => m.visible).map((metric) => (
-                <th key={metric.id} className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-normal min-w-[130px] max-w-[220px] leading-tight align-bottom">
-                  <span title={metric.label} className="block line-clamp-2">{metric.label}</span>
+                <th
+                  key={metric.id}
+                  onClick={() => handleSort(metric.id)}
+                  className="group px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-normal min-w-[130px] max-w-[220px] leading-tight align-bottom cursor-pointer select-none"
+                >
+                  <span className="inline-flex items-start gap-1">
+                    <span title={metric.label} className="line-clamp-2">{metric.label}</span>
+                    <SortIcon active={sortConfig?.key === metric.id} direction={sortConfig?.key === metric.id ? sortConfig.direction : undefined} />
+                  </span>
                 </th>
               ))}
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            {campaigns.map((campaign) => (
+            {sortedCampaigns.map((campaign) => (
               <tr key={campaign.id} className="group hover:bg-gray-50 dark:hover:bg-gray-700">
                 <td className="sticky left-0 z-10 w-12 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-3">
                   <input
