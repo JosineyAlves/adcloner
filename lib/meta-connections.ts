@@ -108,9 +108,15 @@ export async function saveConnection(params: {
 
 /**
  * Passo 2: usa o token da conexão para descobrir toda a estrutura visível a ele —
- * Business Managers, contas de anúncio (owned + client), páginas e pixels — e grava
- * tudo no Supabase. Idempotente: pode ser chamado de novo a qualquer momento para
- * atualizar a estrutura (upsert por meta_business_id / meta_account_id).
+ * Business Managers e contas de anúncio (owned + client) — e grava tudo no Supabase.
+ * Idempotente: pode ser chamado de novo a qualquer momento para atualizar a estrutura
+ * (upsert por meta_business_id / meta_account_id).
+ *
+ * Não busca mais Páginas/Pixels (owned_pages/owned_pixels) — eram gravados em
+ * meta_pages/meta_pixels, tabelas do produto antigo "AdCloner" sem nenhum consumidor no
+ * vmetrics (nada lia essas tabelas), removidas junto com este código (ver
+ * claude/estado-integracao-facebook.md no projeto). Reduz 2 chamadas Graph API por Business
+ * Manager a cada connect/reconnect.
  */
 export async function discoverBusinessStructure(connectionId: string, accessToken: string) {
   const supabase = getSupabaseAdmin()
@@ -170,42 +176,6 @@ export async function discoverBusinessStructure(connectionId: string, accessToke
     for (const acc of client.data ?? []) accountIdsWithBusiness.add(acc.account_id ?? acc.id)
     accountCount += await upsertAdAccounts(connectionId, businessRowId, client.data ?? [], 'client')
 
-    // Páginas próprias
-    try {
-      const pages = await graphGet(`/${biz.id}/owned_pages`, accessToken, { fields: 'id,name,category' })
-      for (const page of pages.data ?? []) {
-        await supabase.from('meta_pages').upsert(
-          {
-            connection_id: connectionId,
-            business_id: businessRowId,
-            meta_page_id: page.id,
-            name: page.name ?? null,
-            category: page.category ?? null,
-          },
-          { onConflict: 'connection_id,meta_page_id' }
-        )
-      }
-    } catch (err: any) {
-      console.error(`Erro ao buscar páginas do business ${biz.id}:`, err.message)
-    }
-
-    // Pixels próprios
-    try {
-      const pixels = await graphGet(`/${biz.id}/owned_pixels`, accessToken, { fields: 'id,name' })
-      for (const pixel of pixels.data ?? []) {
-        await supabase.from('meta_pixels').upsert(
-          {
-            connection_id: connectionId,
-            business_id: businessRowId,
-            meta_pixel_id: pixel.id,
-            name: pixel.name ?? null,
-          },
-          { onConflict: 'connection_id,meta_pixel_id' }
-        )
-      }
-    } catch (err: any) {
-      console.error(`Erro ao buscar pixels do business ${biz.id}:`, err.message)
-    }
   }
 
   // 2) Contas de anúncio pessoais do usuário, não vinculadas a nenhum Business Manager.

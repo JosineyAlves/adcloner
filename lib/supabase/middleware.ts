@@ -6,7 +6,9 @@ import { NextResponse, type NextRequest } from 'next/server'
 // de propósito: são a integração com o Facebook, não o login do app — quem as
 // aciona já deveria estar logado, mas mantê-las fora da lista evita qualquer
 // risco de quebrar o fluxo de conexão de contas hoje em produção.
-const PUBLIC_PATHS = ['/login', '/register', '/api/auth', '/api/cron', '/api/meta/sync']
+// /api/meta/sync removido daqui junto com a rota (app/api/meta/sync/route.ts) e o cron em
+// vercel.json — pipeline de sync sem nenhum consumidor, ver claude/estado-integracao-facebook.md.
+const PUBLIC_PATHS = ['/login', '/register', '/api/auth', '/api/cron']
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`))
