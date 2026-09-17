@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
           email: responseData.fb_user_email ?? undefined,
         },
         accessToken: responseData.access_token,
-        tokenType: 'system_user',
+        tokenType: 'user',
       })
       const discovery = await discoverBusinessStructure(connectionId, responseData.access_token)
       console.log('💾 Conexão salva no Supabase:', { connectionId, userId, ...discovery })
@@ -331,7 +331,7 @@ export async function GET(request: NextRequest) {
               email: userData.email ?? undefined,
             },
             accessToken: tokenData.access_token,
-            tokenType: 'system_user',
+            tokenType: 'user',
           })
           const discovery = await discoverBusinessStructure(connectionId, tokenData.access_token)
           console.log('💾 Conexão salva no Supabase (GET/redirect flow):', { connectionId, userId, ...discovery })

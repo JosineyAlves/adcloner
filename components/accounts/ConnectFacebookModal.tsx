@@ -48,27 +48,20 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
         return
       }
 
-      // Login para Empresas via config_id (vmetrics_config, App Dashboard → Facebook Login for
-      // Business → Configurações) — ao contrário do OAuth clássico com `scope`, gera um Business
-      // Integration System User Access Token, escopado exatamente aos ativos que o cliente
-      // selecionar na tela de autorização (doc oficial: "Access is explicitly delegated at the
-      // time of authorization"). Substitui o fluxo antigo (`scope` cru) que vazava contas de
-      // outros Business Managers não selecionados.
-      const configId = process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID
+      // Revertido para OAuth clássico com `scope` (ver seção 41 do doc do projeto) — o fluxo
+      // via config_id (Login para Empresas) só permitia selecionar UMA conta de anúncio por vez
+      // na tela de consentimento, impedindo conectar todos os ativos de uma BM de uma vez. Volta
+      // a ter o efeito colateral de vazamento de contas de outros Business Managers não
+      // selecionados (ver discoverBusinessStructure em lib/meta-connections.ts) — trade-off aceito
+      // conscientemente em favor de poder conectar múltiplos ativos de uma vez.
+      const scope = 'ads_management,ads_read,business_management,public_profile'
       const redirectUri = `${appUrl}/api/auth/callback/facebook`
-
-      if (!configId) {
-        setErrorMessage('Configuração do Facebook Login for Business não encontrada (NEXT_PUBLIC_FACEBOOK_CONFIG_ID).')
-        setConnectionStatus('error')
-        setIsConnecting(false)
-        return
-      }
 
       const oauthUrl =
         `https://www.facebook.com/v23.0/dialog/oauth` +
         `?client_id=${encodeURIComponent(appId)}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-        `&config_id=${encodeURIComponent(configId)}` +
+        `&scope=${encodeURIComponent(scope)}` +
         `&response_type=code` +
         `&display=popup`
 
