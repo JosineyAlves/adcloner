@@ -34,7 +34,7 @@ export const OPTIONAL_METRIC_FIELD_DEPENDENCIES: Record<string, string[]> = {
   video_p75_watched_actions: ['video_p75_watched_actions'],
   video_p95_watched_actions: ['video_p95_watched_actions'],
   video_p100_watched_actions: ['video_p100_watched_actions'],
-  video_continuous_2_sec_watched_actions: ['video_continuous_2_sec_watched_actions'],
+  video_continuous_2_sec_watched_actions: ['actions'],
   purchase_roas: ['purchase_roas', 'conversion_values', 'action_values'],
   landing_page_view: ['actions'],
   cost_per_landing_page_view: ['cost_per_action_type', 'actions']

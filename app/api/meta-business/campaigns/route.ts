@@ -458,7 +458,7 @@ export async function GET(request: NextRequest) {
                 video_p75_watched_actions: processVideoMetric(insight.video_p75_watched_actions),
                 video_p95_watched_actions: processVideoMetric(insight.video_p95_watched_actions),
                 video_p100_watched_actions: processVideoMetric(insight.video_p100_watched_actions),
-                video_continuous_2_sec_watched_actions: processVideoMetric(insight.video_continuous_2_sec_watched_actions),
+                video_continuous_2_sec_watched_actions: extractActionTypeValue(insight.actions, 'video_view'),
                 
                 // Métricas específicas de campanhas (não disponíveis em adsets/ads)
                 cost_per_conversion: processCostPerActionType(insight.cost_per_action_type, 'purchase'),

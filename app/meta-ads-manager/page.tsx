@@ -565,6 +565,15 @@ export default function MetaBusinessPage() {
       ...prev,
       status
     }))
+    // Limpa o drill-down de campanha(s)/conjunto(s) selecionados ao trocar o filtro de status.
+    // Sem isso, uma seleção feita com o filtro em "Ativo" (ex.: "Selecionar todos" na aba
+    // Campanhas) continuava escopando as abas Conjuntos/Anúncios só àquelas campanhas ativas
+    // mesmo depois de o usuário trocar o filtro para "Qualquer" — porque o escopo em
+    // fetchAdSets/fetchAds depende de selectedCampaigns, não do filtro de status. Limpar aqui
+    // também dispara a rebusca automática (ver adSetsDataKey/adsDataKey), já sem esse escopo.
+    setSelectedCampaigns(new Set())
+    setSelectedAdSets(new Set())
+    setSelectedAds(new Set())
   }
 
 

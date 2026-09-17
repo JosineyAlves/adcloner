@@ -75,9 +75,10 @@ export default function AdSetsTable({
 
     if (isNaN(numValue)) return '-'
 
-    // Frequência: arredonda pra 2 casas decimais (ex.: 1.185 -> "1.19"), igual ao Gerenciador de
-    // Anúncios nativo — o formatNumber genérico abaixo deixava até 3 casas por padrão.
-    if (metricId === 'frequency') return numValue.toFixed(2)
+    // Frequência e ROAS de Compra: arredonda pra 2 casas decimais (ex.: 1.185 -> "1.19", 1.053 ->
+    // "1.05"), igual ao Gerenciador de Anúncios nativo — o formatNumber genérico abaixo deixava
+    // até 3 casas por padrão.
+    if (metricId === 'frequency' || metricId === 'purchase_roas') return numValue.toFixed(2)
 
     switch (type) {
       case 'currency':
