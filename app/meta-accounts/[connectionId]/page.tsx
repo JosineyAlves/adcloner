@@ -34,7 +34,6 @@ interface AdAccountSummary {
   businessName: string | null
   connectionFbUserName: string | null
   syncEnabled: boolean
-  lastSyncedAt: string | null
 }
 
 interface BusinessGroup {

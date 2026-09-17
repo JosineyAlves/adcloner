@@ -27,7 +27,6 @@ interface AdAccountSummary {
   businessName: string | null
   connectionFbUserName: string | null
   syncEnabled: boolean
-  lastSyncedAt: string | null
 }
 
 // account_status é um enum numérico da Graph API (ver seção 30 do doc do projeto): só 1 =

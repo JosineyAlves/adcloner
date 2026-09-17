@@ -88,8 +88,12 @@ export function AppProvider({ children }: AppProviderProps) {
               pages: [],
               pixels: [],
               profileName: acc.connectionFbUserName || undefined,
-              createdAt: acc.lastSyncedAt || new Date().toISOString(),
-              updatedAt: acc.lastSyncedAt || new Date().toISOString()
+              // lastSyncedAt não existe mais (era só do pipeline de sync removido, nunca
+              // populada por nada hoje) — createdAt/updatedAt aqui nunca foram lidos em nenhuma
+              // tela mesmo antes disso, mas mantidos por ora só pra não mudar o shape de
+              // FacebookAccount fora do escopo desta limpeza.
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
             }
           })
           setAccounts(nextAccounts)

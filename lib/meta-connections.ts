@@ -47,7 +47,6 @@ export interface AdAccountSummary {
   businessName: string | null
   connectionFbUserName: string | null
   syncEnabled: boolean
-  lastSyncedAt: string | null
 }
 
 async function graphGet(path: string, accessToken: string, params: Record<string, string> = {}) {
@@ -309,7 +308,7 @@ export async function listAdAccounts(
   let query = supabase
     .from('meta_ad_accounts')
     .select(
-      `id, connection_id, meta_account_id, name, currency, account_status, relationship, business_id, sync_enabled, last_synced_at,
+      `id, connection_id, meta_account_id, name, currency, account_status, relationship, business_id, sync_enabled,
        meta_businesses ( name ),
        meta_connections !inner ( fb_user_name, user_id )`
     )
@@ -336,7 +335,6 @@ export async function listAdAccounts(
     businessName: row.meta_businesses?.name ?? null,
     connectionFbUserName: row.meta_connections?.fb_user_name ?? null,
     syncEnabled: row.sync_enabled,
-    lastSyncedAt: row.last_synced_at,
   }))
 }
 
