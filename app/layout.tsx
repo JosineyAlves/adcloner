@@ -6,7 +6,7 @@ import FacebookSDK from '@/components/providers/FacebookSDK'
 import { AppProvider } from '@/contexts/AppContext'
 import { DateProvider } from '@/contexts/DateContext'
 
-// Jura é a fonte principal de toda a interface (design system do AdCloner Pro) — ver
+// Jura é a fonte principal de toda a interface (design system do vmetrics) — ver
 // app/globals.css para os demais tokens visuais (cor de marca, radius, sombras).
 const jura = Jura({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'] })
 

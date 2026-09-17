@@ -1,6 +1,6 @@
 // Cache client-side (localStorage) para dar sensação de "instantâneo" ao recarregar a página.
 //
-// Problema que isso resolve: o AdCloner não tinha nenhuma persistência client-side — toda vez
+// Problema que isso resolve: o vmetrics não tinha nenhuma persistência client-side — toda vez
 // que a página era recarregada, o React remontava do zero e o usuário via telas vazias até
 // que a Graph API respondesse de novo (contas, depois campanhas/conjuntos/anúncios).
 //
@@ -56,16 +56,16 @@ export function isCacheFresh(savedAt: number, maxAgeMs: number): boolean {
 }
 
 export const LOCAL_CACHE_KEYS = {
-  facebookAccounts: 'adcloner:facebook-accounts:v1',
-  metaBusinessData: 'adcloner:meta-business-data:v1',
-  // Prefixo — a chave real inclui o viewKey (ex.: "adcloner:column-preferences:v1:meta_business_metrics"),
+  facebookAccounts: 'vmetrics:facebook-accounts:v1',
+  metaBusinessData: 'vmetrics:meta-business-data:v1',
+  // Prefixo — a chave real inclui o viewKey (ex.: "vmetrics:column-preferences:v1:meta_business_metrics"),
   // ver hooks/useColumnPreferences.ts. Isso permite mais de uma tela com seletor de colunas própria.
-  columnPreferencesPrefix: 'adcloner:column-preferences:v1:',
+  columnPreferencesPrefix: 'vmetrics:column-preferences:v1:',
   // Período de data (datePreset/customRange) compartilhado entre TODAS as telas com seletor de
   // período (Dashboard Financeiro e Meta Business) — pedido do usuário: selecionar "Últimos 30
   // dias" numa tela deve valer para as outras também, em vez de cada uma guardar seu próprio
   // período independente. Ver app/dashboard/page.tsx e app/meta-business/page.tsx.
-  sharedDateFilter: 'adcloner:shared-date-filter:v1',
+  sharedDateFilter: 'vmetrics:shared-date-filter:v1',
 } as const
 
 // Quanto tempo o dado salvo é considerado "fresco" antes de forçar um refetch em primeiro plano.

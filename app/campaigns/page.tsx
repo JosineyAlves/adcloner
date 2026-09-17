@@ -7,8 +7,8 @@ export default function CampaignsRedirect() {
   const router = useRouter()
 
   useEffect(() => {
-    // Redirecionar para Meta Business que tem a funcionalidade de campanhas
-    router.replace('/meta-business')
+    // Redirecionar para Meta Ads (funcionalidade de campanhas) — rota antiga mantida para links/favoritos
+    router.replace('/meta-ads-manager')
   }, [router])
 
   return (

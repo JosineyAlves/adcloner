@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-// Sidebar — elemento mais forte da identidade visual do AdCloner Pro: fundo na cor de marca
+// Sidebar — elemento mais forte da identidade visual do vmetrics: fundo na cor de marca
 // (#CEFF00) com texto/ícones em preto para contraste máximo (ver app/globals.css e
 // tailwind.config.js para os tokens de design). Suporta collapse (ícone-only, com tooltip)
 // persistido em localStorage, sem alterar nenhuma rota existente.
@@ -31,7 +31,7 @@ const navigation = [
   { name: 'Integrações', href: '/meta-accounts', icon: Link2 },
 ]
 
-const COLLAPSE_STORAGE_KEY = 'adcloner:sidebar-collapsed'
+const COLLAPSE_STORAGE_KEY = 'vmetrics:sidebar-collapsed'
 
 export default function Sidebar() {
   const pathname = usePathname()

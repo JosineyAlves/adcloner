@@ -5,7 +5,7 @@ import { getAuthenticatedUserId } from '@/lib/supabase/server'
 export const dynamic = 'force-dynamic'
 
 /**
- * GET  -> lista as conexões (contas do Facebook) já cadastradas no AdCloner.
+ * GET  -> lista as conexões (contas do Facebook) já cadastradas no vmetrics.
  * POST -> registra uma nova conexão a partir de um access_token já obtido via OAuth
  *         (o mesmo fluxo de popup que já existe em app/api/auth/callback/facebook),
  *         e dispara a descoberta de estrutura (Business Managers, contas, páginas, pixels).

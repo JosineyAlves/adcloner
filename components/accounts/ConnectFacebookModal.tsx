@@ -48,17 +48,27 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
         return
       }
 
-      // Permissões mínimas pra ler estrutura de negócio/contas e editar status/orçamento —
-      // nada de pages_show_list/pixel, que só fariam sentido pra "Clonar Campanhas" (não
-      // implementada ainda, ver seção 37).
-      const scope = 'ads_management,ads_read,business_management,public_profile'
+      // Login para Empresas via config_id (vmetrics_config, App Dashboard → Facebook Login for
+      // Business → Configurações) — ao contrário do OAuth clássico com `scope`, gera um Business
+      // Integration System User Access Token, escopado exatamente aos ativos que o cliente
+      // selecionar na tela de autorização (doc oficial: "Access is explicitly delegated at the
+      // time of authorization"). Substitui o fluxo antigo (`scope` cru) que vazava contas de
+      // outros Business Managers não selecionados.
+      const configId = process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID
       const redirectUri = `${appUrl}/api/auth/callback/facebook`
+
+      if (!configId) {
+        setErrorMessage('Configuração do Facebook Login for Business não encontrada (NEXT_PUBLIC_FACEBOOK_CONFIG_ID).')
+        setConnectionStatus('error')
+        setIsConnecting(false)
+        return
+      }
 
       const oauthUrl =
         `https://www.facebook.com/v23.0/dialog/oauth` +
         `?client_id=${encodeURIComponent(appId)}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-        `&scope=${encodeURIComponent(scope)}` +
+        `&config_id=${encodeURIComponent(configId)}` +
         `&response_type=code` +
         `&display=popup`
 
