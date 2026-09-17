@@ -856,13 +856,25 @@ export default function MetaBusinessPage() {
                   <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     Nome da {activeTab === 'campaigns' ? 'Campanha' : activeTab === 'adsets' ? 'Conjunto' : activeTab === 'ads' ? 'Anúncio' : 'Conta'}
                   </label>
-                  <input
-                    type="text"
-                    placeholder="Filtrar por nome"
-                    value={filters.search}
-                    onChange={(e) => handleSearchChange(e.target.value)}
-                    className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-ds-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
-                  />
+                  <div className="relative w-full">
+                    <input
+                      type="text"
+                      placeholder="Filtrar por nome"
+                      value={filters.search}
+                      onChange={(e) => handleSearchChange(e.target.value)}
+                      className="px-3 py-1.5 pr-8 border border-gray-300 dark:border-gray-600 rounded-ds-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
+                    />
+                    {filters.search && (
+                      <button
+                        type="button"
+                        onClick={() => handleSearchChange('')}
+                        aria-label="Limpar busca"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-1">
