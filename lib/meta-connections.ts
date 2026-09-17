@@ -85,17 +85,20 @@ export async function saveConnection(params: {
 
   const { data, error } = await supabase
     .from('meta_connections')
-    .insert({
-      user_id: params.userId,
-      fb_user_id: params.fbUser.id,
-      fb_user_name: params.fbUser.name ?? null,
-      fb_user_email: params.fbUser.email ?? null,
-      access_token_encrypted: encryptSecret(params.accessToken),
-      token_type: params.tokenType ?? 'user',
-      scopes: params.scopes ?? [],
-      status: 'valid',
-      last_validated_at: new Date().toISOString(),
-    })
+    .upsert(
+      {
+        user_id: params.userId,
+        fb_user_id: params.fbUser.id,
+        fb_user_name: params.fbUser.name ?? null,
+        fb_user_email: params.fbUser.email ?? null,
+        access_token_encrypted: encryptSecret(params.accessToken),
+        token_type: params.tokenType ?? 'user',
+        scopes: params.scopes ?? [],
+        status: 'valid',
+        last_validated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,fb_user_id' }
+    )
     .select('id')
     .single()
 
