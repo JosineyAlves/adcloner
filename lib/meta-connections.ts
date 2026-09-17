@@ -75,6 +75,7 @@ async function graphGet(path: string, accessToken: string, params: Record<string
  * Não faz nenhuma chamada de descoberta ainda — isso é feito por discoverBusinessStructure.
  */
 export async function saveConnection(params: {
+  userId: string
   fbUser: MetaUserInfo
   accessToken: string
   tokenType?: 'user' | 'system_user'
@@ -85,6 +86,7 @@ export async function saveConnection(params: {
   const { data, error } = await supabase
     .from('meta_connections')
     .insert({
+      user_id: params.userId,
       fb_user_id: params.fbUser.id,
       fb_user_name: params.fbUser.name ?? null,
       fb_user_email: params.fbUser.email ?? null,
@@ -260,12 +262,13 @@ async function upsertAdAccounts(
   return rows.length
 }
 
-export async function listConnections(): Promise<ConnectionSummary[]> {
+export async function listConnections(userId: string): Promise<ConnectionSummary[]> {
   const supabase = getSupabaseAdmin()
 
   const { data: connections, error } = await supabase
     .from('meta_connections')
     .select('id, fb_user_id, fb_user_name, fb_user_email, token_type, status, created_at')
+    .eq('user_id', userId)
     .order('created_at', { ascending: false })
 
   if (error) throw new Error(`Falha ao listar conexões: ${error.message}`)
@@ -322,16 +325,22 @@ export async function listConnections(): Promise<ConnectionSummary[]> {
  * ser buscada nem contabilizada ali. A tela de Integrações (listagem/toggle por conta) continua
  * chamando sem esse filtro, pois precisa enxergar e reativar contas desabilitadas.
  */
-export async function listAdAccounts(options?: { enabledOnly?: boolean }): Promise<AdAccountSummary[]> {
+export async function listAdAccounts(
+  userId: string,
+  options?: { enabledOnly?: boolean }
+): Promise<AdAccountSummary[]> {
   const supabase = getSupabaseAdmin()
 
+  // !inner força o filtro de meta_connections.user_id a restringir as linhas retornadas
+  // (por padrão o PostgREST trata o embed como left join, que ignoraria o .eq abaixo).
   let query = supabase
     .from('meta_ad_accounts')
     .select(
       `id, connection_id, meta_account_id, name, currency, account_status, relationship, business_id, sync_enabled, last_synced_at,
        meta_businesses ( name ),
-       meta_connections ( fb_user_name )`
+       meta_connections !inner ( fb_user_name, user_id )`
     )
+    .eq('meta_connections.user_id', userId)
     .order('created_at', { ascending: false })
 
   if (options?.enabledOnly) {
@@ -383,15 +392,20 @@ export async function getDecryptedAccessToken(connectionId: string): Promise<str
  * `meta_ad_accounts.meta_account_id`, que é gravado sem o prefixo (vem do campo `account_id` das
  * edges owned_ad_accounts/client_ad_accounts — ver upsertAdAccounts acima).
  */
-export async function getAccessTokenForAdAccount(accountId: string): Promise<string | null> {
-  if (!accountId) return null
+export async function getAccessTokenForAdAccount(accountId: string, userId: string): Promise<string | null> {
+  if (!accountId || !userId) return null
   const supabase = getSupabaseAdmin()
   const normalizedId = accountId.replace(/^act_/, '')
 
+  // !inner + .eq('meta_connections.user_id', userId): só resolve o token se a conta de anúncio
+  // pertencer a uma conexão do PRÓPRIO usuário autenticado. Antes desta checagem, qualquer
+  // accountId informado na URL/body resolvia o token de qualquer cliente — a falha de isolamento
+  // multi-tenant corrigida aqui.
   const { data, error } = await supabase
     .from('meta_ad_accounts')
-    .select('connection_id')
+    .select('connection_id, meta_connections !inner ( user_id )')
     .eq('meta_account_id', normalizedId)
+    .eq('meta_connections.user_id', userId)
     .limit(1)
     .maybeSingle()
 
@@ -412,40 +426,75 @@ export async function getAccessTokenForAdAccount(accountId: string): Promise<str
  */
 export async function resolveMetaAccessToken(
   cookieToken: string | undefined | null,
-  accountId?: string | null
+  accountId: string | null | undefined,
+  userId: string
 ): Promise<string | null> {
   if (accountId) {
-    const tokenFromConnection = await getAccessTokenForAdAccount(accountId)
+    const tokenFromConnection = await getAccessTokenForAdAccount(accountId, userId)
     if (tokenFromConnection) return tokenFromConnection
+    // accountId foi informado mas não pertence a esse usuário (ou não foi encontrado) — não cai
+    // mais para o cookie fb_access_token global, pois esse cookie pode ter sido setado pela
+    // última conexão de QUALQUER usuário que passou pelo fluxo OAuth neste navegador/servidor.
+    return null
   }
+  // Sem accountId (poucas rotas legadas): o cookie da própria sessão do usuário ainda é aceito
+  // como fallback, mas nunca é usado para resolver o token de uma conta de outro dono.
   return cookieToken ?? null
 }
 
 
-export async function removeConnection(connectionId: string): Promise<void> {
+export async function removeConnection(connectionId: string, userId: string): Promise<void> {
   const supabase = getSupabaseAdmin()
-  const { error } = await supabase.from('meta_connections').delete().eq('id', connectionId)
+  const { error, count } = await supabase
+    .from('meta_connections')
+    .delete({ count: 'exact' })
+    .eq('id', connectionId)
+    .eq('user_id', userId)
   if (error) throw new Error(`Falha ao remover conexão: ${error.message}`)
+  if (!count) throw new Error('Conexão não encontrada ou não pertence a este usuário.')
 }
 
 /**
  * Liga/desliga a sincronização de UMA conta de anúncio (linha de `meta_ad_accounts`, pelo `id`
  * interno — não o `meta_account_id`). Usado pela tela de Integrações (checkbox por conta).
  */
-export async function setAdAccountSyncEnabled(id: string, syncEnabled: boolean): Promise<void> {
+export async function setAdAccountSyncEnabled(id: string, syncEnabled: boolean, userId: string): Promise<void> {
   const supabase = getSupabaseAdmin()
+
+  // Confirma que a conta de anúncio pertence a uma conexão do usuário autenticado antes de
+  // aplicar o update — o service-role client não filtra isso sozinho.
+  const { data: account, error: lookupError } = await supabase
+    .from('meta_ad_accounts')
+    .select('id, meta_connections !inner ( user_id )')
+    .eq('id', id)
+    .eq('meta_connections.user_id', userId)
+    .maybeSingle()
+
+  if (lookupError) throw new Error(`Falha ao verificar conta de anúncio: ${lookupError.message}`)
+  if (!account) throw new Error('Conta de anúncio não encontrada ou não pertence a este usuário.')
+
   const { error } = await supabase.from('meta_ad_accounts').update({ sync_enabled: syncEnabled }).eq('id', id)
   if (error) throw new Error(`Falha ao atualizar sincronização da conta: ${error.message}`)
 }
 
 /** Liga/desliga a sincronização de TODAS as contas de anúncio de uma vez ("Ativar todas"). */
-export async function setAllAdAccountsSyncEnabled(syncEnabled: boolean): Promise<void> {
+export async function setAllAdAccountsSyncEnabled(syncEnabled: boolean, userId: string): Promise<void> {
   const supabase = getSupabaseAdmin()
-  // Supabase/PostgREST exige pelo menos um filtro em updates em massa — usamos um que sempre
-  // bate (todo id de UUID é diferente do UUID zerado) para atualizar a tabela inteira.
+
+  // Restringe às conexões do próprio usuário antes de aplicar o "ativar/desativar todas" — antes
+  // desta correção, isso atualizava a tabela inteira, afetando as contas de TODOS os clientes.
+  const { data: ownConnections, error: connError } = await supabase
+    .from('meta_connections')
+    .select('id')
+    .eq('user_id', userId)
+
+  if (connError) throw new Error(`Falha ao carregar conexões do usuário: ${connError.message}`)
+  const connectionIds = (ownConnections ?? []).map((c) => c.id)
+  if (connectionIds.length === 0) return
+
   const { error } = await supabase
     .from('meta_ad_accounts')
     .update({ sync_enabled: syncEnabled })
-    .neq('id', '00000000-0000-0000-0000-000000000000')
+    .in('connection_id', connectionIds)
   if (error) throw new Error(`Falha ao atualizar sincronização das contas: ${error.message}`)
 }

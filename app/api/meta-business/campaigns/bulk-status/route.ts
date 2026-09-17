@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { resolveMetaAccessToken } from '@/lib/meta-connections'
+import { getAuthenticatedUserId } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,6 +16,11 @@ export async function PATCH(request: NextRequest) {
       ? items
       : Array.isArray(ids) ? ids.map((id: string) => ({ id })) : []
     const cookieToken = request.cookies.get('fb_access_token')?.value
+
+    const userId = await getAuthenticatedUserId()
+    if (!userId) {
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+    }
 
     if (targets.length === 0) {
       return NextResponse.json(
@@ -39,7 +45,7 @@ export async function PATCH(request: NextRequest) {
     const resolveToken = async (accountId?: string): Promise<string | null> => {
       if (!accountId) return cookieToken ?? null
       if (tokenCache.has(accountId)) return tokenCache.get(accountId) ?? null
-      const token = await resolveMetaAccessToken(cookieToken, accountId)
+      const token = await resolveMetaAccessToken(cookieToken, accountId, userId)
       tokenCache.set(accountId, token)
       return token
     }

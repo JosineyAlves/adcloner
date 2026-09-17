@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { resolveMetaAccessToken } from '@/lib/meta-connections'
+import { getAuthenticatedUserId } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,7 +13,11 @@ export async function POST(
     const body = await request.json()
     const { budget, budgetType, daily_budget, lifetime_budget, accountId } = body
     // Ver comentário completo em app/api/meta-business/campaigns/[id]/status/route.ts.
-    const accessToken = await resolveMetaAccessToken(request.cookies.get('fb_access_token')?.value, accountId)
+    const userId = await getAuthenticatedUserId()
+    if (!userId) {
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+    }
+    const accessToken = await resolveMetaAccessToken(request.cookies.get('fb_access_token')?.value, accountId, userId)
 
     if (!accessToken) {
       return NextResponse.json(

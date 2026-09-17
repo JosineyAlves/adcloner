@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { resolveMetaAccessToken } from '@/lib/meta-connections'
+import { getAuthenticatedUserId } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,7 +15,11 @@ export async function PATCH(
     // Resolve o token pela conexão dona da conta dessa campanha (enviado pelo cliente, que já
     // conhece o account_id de cada item) em vez de só o cookie único — ver comentário completo
     // em app/api/meta-business/campaigns/route.ts.
-    const accessToken = await resolveMetaAccessToken(request.cookies.get('fb_access_token')?.value, accountId)
+    const userId = await getAuthenticatedUserId()
+    if (!userId) {
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+    }
+    const accessToken = await resolveMetaAccessToken(request.cookies.get('fb_access_token')?.value, accountId, userId)
 
     if (!accessToken) {
       return NextResponse.json(

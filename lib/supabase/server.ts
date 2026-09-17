@@ -34,3 +34,19 @@ export function createClient() {
     }
   )
 }
+
+/**
+ * Retorna o id (auth.users.id) do usuário vmetrics autenticado na sessão atual, ou null se não
+ * houver sessão válida. Usado pelas rotas de API do Meta Business (e pela camada
+ * lib/meta-connections.ts) para checar posse de conexões/contas — o middleware.ts já bloqueia
+ * requests sem sessão nas rotas não-públicas, mas essa checagem aqui é uma segunda camada:
+ * garante que um usuário logado só acesse os PRÓPRIOS ativos conectados, nunca os de outro
+ * cliente.
+ */
+export async function getAuthenticatedUserId(): Promise<string | null> {
+  const supabase = createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  return user?.id ?? null
+}

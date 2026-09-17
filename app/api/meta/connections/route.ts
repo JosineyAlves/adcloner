@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { saveConnection, discoverBusinessStructure, listConnections, removeConnection } from '@/lib/meta-connections'
+import { getAuthenticatedUserId } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,7 +13,11 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const connections = await listConnections()
+    const userId = await getAuthenticatedUserId()
+    if (!userId) {
+      return NextResponse.json({ success: false, error: 'Não autenticado' }, { status: 401 })
+    }
+    const connections = await listConnections(userId)
     return NextResponse.json({ success: true, connections })
   } catch (error) {
     console.error('Erro ao listar conexões Meta:', error)
@@ -25,6 +30,11 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const userId = await getAuthenticatedUserId()
+    if (!userId) {
+      return NextResponse.json({ success: false, error: 'Não autenticado' }, { status: 401 })
+    }
+
     const body = await request.json()
     const { accessToken, fbUser, tokenType, scopes } = body as {
       accessToken?: string
@@ -40,7 +50,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const connectionId = await saveConnection({ fbUser, accessToken, tokenType, scopes })
+    const connectionId = await saveConnection({ userId, fbUser, accessToken, tokenType, scopes })
     const discovery = await discoverBusinessStructure(connectionId, accessToken)
 
     return NextResponse.json({
@@ -59,12 +69,17 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const userId = await getAuthenticatedUserId()
+    if (!userId) {
+      return NextResponse.json({ success: false, error: 'Não autenticado' }, { status: 401 })
+    }
+
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
     if (!id) {
       return NextResponse.json({ success: false, error: 'Parâmetro id é obrigatório' }, { status: 400 })
     }
-    await removeConnection(id)
+    await removeConnection(id, userId)
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Erro ao remover conexão Meta:', error)

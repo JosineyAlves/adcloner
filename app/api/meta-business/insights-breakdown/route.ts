@@ -10,6 +10,7 @@ import {
   retryAfterSecondsFor
 } from '@/lib/meta-rate-limit'
 import { resolveMetaAccessToken } from '@/lib/meta-connections'
+import { getAuthenticatedUserId } from '@/lib/supabase/server'
 
 const facebookBatchAPI = new FacebookBatchAPI()
 
@@ -150,7 +151,11 @@ export async function GET(request: NextRequest) {
     const datePreset = searchParams.get('datePreset') || searchParams.get('date_preset') || 'last_7d'
     const since = searchParams.get('since')
     const until = searchParams.get('until')
-    const accessToken = await resolveMetaAccessToken(request.cookies.get('fb_access_token')?.value, accountId)
+    const userId = await getAuthenticatedUserId()
+    if (!userId) {
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+    }
+    const accessToken = await resolveMetaAccessToken(request.cookies.get('fb_access_token')?.value, accountId, userId)
 
     if (!accessToken) {
       return NextResponse.json({ error: 'Access token is required' }, { status: 401 })

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { saveConnection, discoverBusinessStructure } from '@/lib/meta-connections'
+import { getAuthenticatedUserId } from '@/lib/supabase/server'
 
 // Função POST para processar código do Login para Empresas
 export async function POST(request: NextRequest) {
@@ -13,6 +14,18 @@ export async function POST(request: NextRequest) {
         success: false, 
         error: 'Código de autorização não fornecido' 
       }, { status: 400 })
+    }
+
+    // A conexão de um perfil Meta só pode ser vinculada a um usuário vmetrics já logado
+    // (login continua sendo email/senha via Supabase Auth — o Facebook aqui só conecta o
+    // ativo, nunca autentica no vmetrics). Sem isso, saveConnection() não teria a quem
+    // atribuir a conexão.
+    const userId = await getAuthenticatedUserId()
+    if (!userId) {
+      return NextResponse.json({
+        success: false,
+        error: 'Sessão do vmetrics não encontrada. Faça login antes de conectar uma conta Meta.'
+      }, { status: 401 })
     }
 
     // Variáveis de ambiente
@@ -119,6 +132,7 @@ export async function POST(request: NextRequest) {
     // Best-effort: se isso falhar, não deve quebrar o fluxo de login existente (cookies abaixo).
     try {
       const connectionId = await saveConnection({
+        userId,
         fbUser: {
           id: responseData.fb_user_id,
           name: responseData.fb_user_name ?? undefined,
@@ -128,7 +142,7 @@ export async function POST(request: NextRequest) {
         tokenType: 'user',
       })
       const discovery = await discoverBusinessStructure(connectionId, responseData.access_token)
-      console.log('💾 Conexão salva no Supabase:', { connectionId, ...discovery })
+      console.log('💾 Conexão salva no Supabase:', { connectionId, userId, ...discovery })
     } catch (persistError) {
       console.error('⚠️ Falha ao persistir conexão no Supabase (login continua normalmente):', persistError)
     }
@@ -259,7 +273,17 @@ export async function GET(request: NextRequest) {
     // Se temos o código de autorização
     if (code) {
       console.log('Facebook authorization code received:', code.substring(0, 20) + '...')
-      
+
+      // Mesma checagem do handler POST: a conexão precisa de uma sessão vmetrics ativa para
+      // saber a quem atribuir o ativo conectado.
+      const userId = await getAuthenticatedUserId()
+      if (!userId) {
+        return new NextResponse(
+          '<!DOCTYPE html><html><body><p>Sessão do vmetrics não encontrada. Faça login antes de conectar uma conta Meta.</p><script>if (window.opener) { window.opener.postMessage({ type: \'FACEBOOK_ERROR\', message: \'Sessão do vmetrics não encontrada.\' }, \'*\'); } setTimeout(() => window.close(), 3000);</script></body></html>',
+          { status: 401, headers: { 'Content-Type': 'text/html' } }
+        )
+      }
+
       try {
         // Trocar code por access_token
         const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID
@@ -300,6 +324,7 @@ export async function GET(request: NextRequest) {
         // se falhar, não deve quebrar a tela de sucesso do popup.
         try {
           const connectionId = await saveConnection({
+            userId,
             fbUser: {
               id: userData.id,
               name: userData.name ?? undefined,
@@ -309,7 +334,7 @@ export async function GET(request: NextRequest) {
             tokenType: 'user',
           })
           const discovery = await discoverBusinessStructure(connectionId, tokenData.access_token)
-          console.log('💾 Conexão salva no Supabase (GET/redirect flow):', { connectionId, ...discovery })
+          console.log('💾 Conexão salva no Supabase (GET/redirect flow):', { connectionId, userId, ...discovery })
         } catch (persistError) {
           console.error('⚠️ Falha ao persistir conexão no Supabase (login continua normalmente):', persistError)
         }

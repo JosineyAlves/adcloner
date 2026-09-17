@@ -13,6 +13,7 @@ import {
   retryAfterSecondsFor
 } from '@/lib/meta-rate-limit'
 import { resolveMetaAccessToken } from '@/lib/meta-connections'
+import { getAuthenticatedUserId } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
@@ -231,7 +232,11 @@ export async function GET(request: NextRequest) {
     // Resolve o token pela conexão dona dessa conta (Supabase) em vez de só o cookie único —
     // necessário porque cada conta pode ter sido conectada com um login/token diferente (ver
     // lib/meta-connections.ts::resolveMetaAccessToken e a seção correspondente do doc do projeto).
-    const accessToken = await resolveMetaAccessToken(request.cookies.get('fb_access_token')?.value, accountId)
+    const userId = await getAuthenticatedUserId()
+    if (!userId) {
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+    }
+    const accessToken = await resolveMetaAccessToken(request.cookies.get('fb_access_token')?.value, accountId, userId)
     const datePreset = searchParams.get('datePreset') || 'today'
     const since = searchParams.get('since')
     const until = searchParams.get('until')

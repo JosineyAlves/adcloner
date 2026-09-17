@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { listAdAccounts, setAdAccountSyncEnabled, setAllAdAccountsSyncEnabled } from '@/lib/meta-connections'
+import { getAuthenticatedUserId } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,9 +16,13 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(request: NextRequest) {
   try {
+    const userId = await getAuthenticatedUserId()
+    if (!userId) {
+      return NextResponse.json({ success: false, error: 'Não autenticado', accounts: [] }, { status: 401 })
+    }
     const { searchParams } = new URL(request.url)
     const enabledOnly = searchParams.get('enabledOnly') === 'true'
-    const accounts = await listAdAccounts({ enabledOnly })
+    const accounts = await listAdAccounts(userId, { enabledOnly })
     return NextResponse.json({ success: true, accounts })
   } catch (error) {
     console.error('Erro ao listar contas de anúncio:', error)
@@ -35,6 +40,11 @@ export async function GET(request: NextRequest) {
  */
 export async function PATCH(request: NextRequest) {
   try {
+    const userId = await getAuthenticatedUserId()
+    if (!userId) {
+      return NextResponse.json({ success: false, error: 'Não autenticado' }, { status: 401 })
+    }
+
     const body = await request.json()
     const { id, all, syncEnabled } = body
 
@@ -43,9 +53,9 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (all) {
-      await setAllAdAccountsSyncEnabled(syncEnabled)
+      await setAllAdAccountsSyncEnabled(syncEnabled, userId)
     } else if (id) {
-      await setAdAccountSyncEnabled(id, syncEnabled)
+      await setAdAccountSyncEnabled(id, syncEnabled, userId)
     } else {
       return NextResponse.json({ success: false, error: 'Informe id ou all' }, { status: 400 })
     }
