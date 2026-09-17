@@ -4,7 +4,6 @@ import { motion } from 'framer-motion'
 import { AlertCircle } from 'lucide-react'
 import { MetaAccount } from '@/lib/types'
 import { MetricConfig } from '@/lib/metrics-config'
-import SortIcon from './SortIcon'
 import { useTableSort } from '@/hooks/useTableSort'
 
 interface AccountsTableProps {
@@ -223,21 +222,19 @@ export default function AccountsTable({
               </th>
               <th
                 onClick={() => handleSort('name')}
-                className="group sticky left-24 z-20 w-[240px] bg-gray-50 dark:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.4)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.4)] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom cursor-pointer select-none"
+                title={sortConfig?.key === 'name' ? `Ordenado ${sortConfig.direction === 'asc' ? 'A→Z' : 'Z→A'} — clique para inverter` : 'Clique para ordenar'}
+                className={`sticky left-24 z-20 w-[240px] bg-gray-50 dark:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.4)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.4)] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap align-bottom cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 ${sortConfig?.key === 'name' ? 'text-brand-600 dark:text-brand-400 font-semibold' : 'text-gray-500 dark:text-gray-400'}`}
               >
                 Conta
-                <SortIcon active={sortConfig?.key === 'name'} direction={sortConfig?.key === 'name' ? sortConfig.direction : undefined} />
               </th>
               {showMetrics && metrics.filter(m => m.visible).map((metric) => (
                 <th
                   key={metric.id}
                   onClick={() => handleSort(metric.id)}
-                  className="group px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-normal min-w-[130px] max-w-[220px] leading-tight align-bottom cursor-pointer select-none"
+                  title={`${metric.label} — ${sortConfig?.key === metric.id ? `ordenado ${sortConfig.direction === 'asc' ? 'menor→maior' : 'maior→menor'}, clique para inverter` : 'clique para ordenar'}`}
+                  className={`px-3 py-3 text-left text-xs font-medium uppercase tracking-normal min-w-[130px] max-w-[220px] leading-tight align-bottom cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 ${sortConfig?.key === metric.id ? 'text-brand-600 dark:text-brand-400 font-semibold' : 'text-gray-500 dark:text-gray-400'}`}
                 >
-                  <span className="inline-flex items-start gap-1">
-                    <span title={metric.label} className="line-clamp-2">{metric.label}</span>
-                    <SortIcon active={sortConfig?.key === metric.id} direction={sortConfig?.key === metric.id ? sortConfig.direction : undefined} />
-                  </span>
+                  <span className="block line-clamp-2">{metric.label}</span>
                 </th>
               ))}
             </tr>
