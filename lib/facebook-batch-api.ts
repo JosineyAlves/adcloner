@@ -37,6 +37,18 @@ export class FacebookBatchAPI {
   /**
    * Faz requisições em lote conforme documentação oficial do Meta
    * Limite: 50 requisições por lote
+   *
+   * Os lotes (quando há mais de 50 sub-requisições, ex.: insights de centenas de ad sets/anúncios)
+   * são disparados em PARALELO (Promise.all) — antes eram um de cada vez, com uma pausa de 100ms
+   * entre eles. Medido em produção em 18/09/2026 (pedido do usuário sobre lentidão ao trocar a
+   * data): com 350 ad sets em 7 lotes de até 50, o modo sequencial levava ~20-22s no total, quase
+   * tudo esse tempo sendo a resposta de cada POST de batch da própria Meta (não o código em si —
+   * a pausa de 100ms somava só ~600ms do total). Paralelizar não aumenta o número de chamadas
+   * feitas à Meta (mesmo volume total, só sai tudo de uma vez em vez de esperar cada uma
+   * terminar antes de mandar a próxima) — reduz o tempo total ao tempo do lote mais lento, em vez
+   * da soma de todos. Se isso se mostrar arriscado pra rate limit (ainda não observado, mas
+   * volume concorrente é diferente de volume sequencial na prática de alguns provedores), reverter
+   * é só trazer de volta o for-loop sequencial abaixo, comentado no histórico do git.
    */
   async makeBatchRequest(
     requests: BatchRequest[],
@@ -44,62 +56,78 @@ export class FacebookBatchAPI {
   ): Promise<{ responses: BatchResponse[]; estimatedWaitMinutes: number | null }> {
     // Dividir em lotes de até 50 requisições
     const batches = this.chunkArray(requests, this.maxBatchSize)
+
+    console.log(`🔄 Processando ${requests.length} requisições em ${batches.length} lotes (em paralelo)`)
+
+    const batchResults = await Promise.all(
+      batches.map((batch, i) => this.executeSingleBatch(batch, accessToken, i, batches.length))
+    )
+
     const allResponses: BatchResponse[] = []
     // Maior "estimated_time_to_regain_access" visto nos headers de uso ao longo de todos os
     // lotes desta chamada — repassado pra quem chamou poder decidir bloquear novas tentativas
     // (ver lib/meta-rate-limit.ts), em vez desse dado só ser logado e descartado como antes.
     let estimatedWaitMinutes: number | null = null
-
-    console.log(`🔄 Processando ${requests.length} requisições em ${batches.length} lotes`)
-
-    for (let i = 0; i < batches.length; i++) {
-      const batch = batches[i]
-      console.log(`📦 Processando lote ${i + 1}/${batches.length} (${batch.length} requisições)`)
-
-      try {
-        const response = await fetch(`${this.baseUrl}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: new URLSearchParams({
-            batch: JSON.stringify(batch),
-            access_token: accessToken,
-            include_headers: 'false' // Remover headers para eficiência conforme recomendação
-          })
-        })
-
-        // Verificar rate limit headers
-        const waitMinutesFromThisBatch = this.checkRateLimitHeaders(response)
-        if (waitMinutesFromThisBatch !== null) {
-          estimatedWaitMinutes = Math.max(estimatedWaitMinutes ?? 0, waitMinutesFromThisBatch)
-        }
-
-        const data = await response.json()
-
-        if (Array.isArray(data)) {
-          allResponses.push(...data)
-        } else {
-          console.error('❌ Resposta de batch inválida:', data)
-          // Fallback: fazer requisições individuais
-          const individualResponses = await this.makeIndividualRequests(batch, accessToken)
-          allResponses.push(...individualResponses)
-        }
-      } catch (error) {
-        console.error(`❌ Erro no lote ${i + 1}:`, error)
-        // Fallback: fazer requisições individuais
-        const individualResponses = await this.makeIndividualRequests(batch, accessToken)
-        allResponses.push(...individualResponses)
-      }
-
-      // Pequena pausa entre lotes para evitar rate limiting
-      if (i < batches.length - 1) {
-        await this.delay(100) // 100ms entre lotes
+    // A ordem de batchResults é a mesma ordem de batches (Promise.all preserva o índice de cada
+    // promise, mesmo resolvendo fora de ordem) — crítico aqui porque as rotas que chamam isso
+    // (campaigns/adsets/ads) indexam a resposta de insights pela mesma posição do array de IDs
+    // que foi enviado.
+    for (const result of batchResults) {
+      allResponses.push(...result.responses)
+      if (result.waitMinutes !== null) {
+        estimatedWaitMinutes = Math.max(estimatedWaitMinutes ?? 0, result.waitMinutes)
       }
     }
 
     console.log(`✅ Processamento concluído: ${allResponses.length} respostas`)
     return { responses: allResponses, estimatedWaitMinutes }
+  }
+
+  /**
+   * Executa UM lote de batch request — extraído de makeBatchRequest pra poder rodar vários lotes
+   * em paralelo via Promise.all (ver comentário acima). Mesma lógica de antes (verifica headers
+   * de rate limit, faz fallback pra requisições individuais em caso de erro), só que isolada por
+   * lote em vez de compartilhar estado com um loop sequencial.
+   */
+  private async executeSingleBatch(
+    batch: BatchRequest[],
+    accessToken: string,
+    index: number,
+    total: number
+  ): Promise<{ responses: BatchResponse[]; waitMinutes: number | null }> {
+    console.log(`📦 Processando lote ${index + 1}/${total} (${batch.length} requisições)`)
+
+    try {
+      const response = await fetch(`${this.baseUrl}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          batch: JSON.stringify(batch),
+          access_token: accessToken,
+          include_headers: 'false' // Remover headers para eficiência conforme recomendação
+        })
+      })
+
+      // Verificar rate limit headers
+      const waitMinutes = this.checkRateLimitHeaders(response)
+      const data = await response.json()
+
+      if (Array.isArray(data)) {
+        return { responses: data, waitMinutes }
+      }
+
+      console.error('❌ Resposta de batch inválida:', data)
+      // Fallback: fazer requisições individuais
+      const individualResponses = await this.makeIndividualRequests(batch, accessToken)
+      return { responses: individualResponses, waitMinutes }
+    } catch (error) {
+      console.error(`❌ Erro no lote ${index + 1}:`, error)
+      // Fallback: fazer requisições individuais
+      const individualResponses = await this.makeIndividualRequests(batch, accessToken)
+      return { responses: individualResponses, waitMinutes: null }
+    }
   }
 
   /**
