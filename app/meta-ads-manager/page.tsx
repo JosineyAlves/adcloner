@@ -766,17 +766,32 @@ export default function MetaBusinessPage() {
     }
   }
 
+  // Filtro de Status compara contra effective_status, não status — status é só o "interruptor"
+  // que o próprio item tem (ACTIVE/PAUSED), enquanto effective_status já reflete a herança da
+  // hierarquia da Meta (um conjunto/anúncio com status ACTIVE, mas cuja campanha-mãe está
+  // pausada, vem da API com effective_status CAMPAIGN_PAUSED — ver StatusToggle.tsx). Sem isso,
+  // o filtro "Ativo" nas abas Conjuntos/Anúncios (sem nenhuma campanha selecionada) trazia
+  // também conjuntos/anúncios "ligados" de campanhas pausadas, que na prática não estão
+  // rodando. O dropdown de Status só tem duas opções (Ativo/Pausado — ver options do <Select>
+  // abaixo), então isso vira uma checagem binária: "está de fato ativo" ou não.
+  const matchesStatusFilter = (item: { status: string; effective_status: string }): boolean => {
+    if (filters.status.length === 0) return true
+    const wantsActive = filters.status.includes('ACTIVE')
+    const isEffectivelyActive = item.effective_status === 'ACTIVE'
+    return wantsActive === isEffectivelyActive
+  }
+
   // Filtrar dados baseado nos filtros
   const filteredCampaigns = campaigns.filter(campaign => {
     if (filters.search && !campaign.name.toLowerCase().includes(filters.search.toLowerCase())) return false
-    if (filters.status.length > 0 && !filters.status.includes(campaign.status)) return false
+    if (!matchesStatusFilter(campaign)) return false
     if (filters.accountIds.length > 0 && !filters.accountIds.includes(campaign.account_id)) return false
     return true
   })
 
   const filteredAdSets = adSets.filter(adSet => {
     if (filters.search && !adSet.name.toLowerCase().includes(filters.search.toLowerCase())) return false
-    if (filters.status.length > 0 && !filters.status.includes(adSet.status)) return false
+    if (!matchesStatusFilter(adSet)) return false
     if (filters.accountIds.length > 0 && !filters.accountIds.includes(adSet.account_id)) return false
     // Drill-down: campanhas marcadas na aba Campanhas escopam os Conjuntos exibidos aqui, igual
     // ao Gerenciador de Anúncios nativo (selecionar campanha(s) e abrir "Conjuntos de anúncios
@@ -787,7 +802,7 @@ export default function MetaBusinessPage() {
 
   const filteredAds = ads.filter(ad => {
     if (filters.search && !ad.name.toLowerCase().includes(filters.search.toLowerCase())) return false
-    if (filters.status.length > 0 && !filters.status.includes(ad.status)) return false
+    if (!matchesStatusFilter(ad)) return false
     if (filters.accountIds.length > 0 && !filters.accountIds.includes(ad.account_id)) return false
     // Drill-down: prioriza o escopo de Conjuntos selecionados; sem isso, cai pro escopo de
     // Campanhas selecionadas — mesma hierarquia Campanha > Conjunto > Anúncio do painel nativo.
