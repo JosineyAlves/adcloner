@@ -138,55 +138,55 @@ export default function PerfilPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            <form onSubmit={handleSaveProfile} className="card p-6 space-y-4">
-              <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Dados da conta</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+            <form onSubmit={handleSaveProfile} className="card p-6 flex flex-col h-full">
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Dados da conta</h2>
 
-              <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Nome completo
-                </label>
-                <div className="relative">
-                  <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    id="fullName"
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Seu nome"
-                    className="input-field pl-10"
-                  />
+              <div className="space-y-4 flex-1">
+                <div>
+                  <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Nome completo
+                  </label>
+                  <div className="relative">
+                    <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      id="fullName"
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Seu nome"
+                      className="input-field pl-10"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Email
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      id="email"
+                      type="email"
+                      value={email}
+                      disabled
+                      className="input-field pl-10 opacity-60 cursor-not-allowed"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Email
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    disabled
-                    className="input-field pl-10 opacity-60 cursor-not-allowed"
-                  />
-                </div>
-                <p className="text-xs text-gray-400 mt-1">
-                  O email de acesso não pode ser alterado por aqui.
-                </p>
-              </div>
-
-              <button type="submit" disabled={savingProfile} className="btn-primary flex items-center gap-2">
+              <button type="submit" disabled={savingProfile} className="btn-primary flex items-center gap-2 mt-4 self-start">
                 {savingProfile && <Loader2 className="w-4 h-4 animate-spin" />}
                 Salvar nome
               </button>
             </form>
 
-            <form onSubmit={handleChangePassword} className="card p-6 space-y-4">
-              <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Alterar senha</h2>
+            <form onSubmit={handleChangePassword} className="card p-6 flex flex-col h-full">
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Alterar senha</h2>
 
+              <div className="space-y-4 flex-1">
               <div>
                 <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Nova senha
@@ -230,10 +230,12 @@ export default function PerfilPage() {
                 </div>
               </div>
 
+              </div>
+
               <button
                 type="submit"
                 disabled={savingPassword || !newPassword || !confirmPassword}
-                className="btn-primary flex items-center gap-2"
+                className="btn-primary flex items-center gap-2 mt-4 self-start"
               >
                 {savingPassword && <Loader2 className="w-4 h-4 animate-spin" />}
                 Alterar senha
