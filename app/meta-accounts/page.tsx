@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Search, Trash2, Loader2, Facebook, User } from 'lucide-react'
+import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import Sidebar from '@/components/layout/Sidebar'
 import PageHeader from '@/components/layout/PageHeader'
@@ -99,6 +100,11 @@ export default function MetaAccountsPage() {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <main className="flex-1 overflow-y-auto pt-3 px-6 pb-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
           <div className="mb-3">
             <PageHeader title="Integrações" />
           </div>
@@ -222,6 +228,7 @@ export default function MetaAccountsPage() {
               </section>
             </>
           )}
+          </motion.div>
         </main>
 
         <ConnectFacebookModal

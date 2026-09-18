@@ -7,6 +7,7 @@ import toast from 'react-hot-toast'
 import Sidebar from '@/components/layout/Sidebar'
 import PageHeader from '@/components/layout/PageHeader'
 import ToggleSwitch from '@/components/ui/ToggleSwitch'
+import { motion } from 'framer-motion'
 
 interface ConnectionSummary {
   id: string
@@ -164,6 +165,11 @@ export default function BusinessAccountsPage() {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <main className="flex-1 overflow-y-auto p-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
           <div className="mb-6">
             <PageHeader
               backHref={`/meta-accounts/${connectionId}`}
@@ -281,6 +287,7 @@ export default function BusinessAccountsPage() {
               )}
             </section>
           )}
+          </motion.div>
         </main>
       </div>
     </div>
