@@ -225,6 +225,12 @@ function processInitiateCheckoutMetric(actionsMetric: any): number {
 }
 
 export async function GET(request: NextRequest) {
+  // [PERF-TMP] Instrumentacao temporaria de tempo, pedida pelo usuario pra descobrir onde vai o
+  // delay reportado ao trocar a data. Remover depois de diagnosticado — ver
+  // claude/rate-limit-mitigations.md, secao "Por que ainda existe um delay perceptivel".
+  const __t0 = Date.now()
+  let __videoMetricsTotalMs = 0
+  let __videoMetricsCalls = 0
   try {
     const { searchParams } = new URL(request.url)
     const accountId = searchParams.get('accountId')
@@ -234,6 +240,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
     }
     const accessToken = await resolveMetaAccessToken(request.cookies.get('fb_access_token')?.value, accountId, userId)
+    console.log(`[PERF-TMP][ads] auth+token resolvido em ${Date.now() - __t0}ms`)
     const datePreset = searchParams.get('datePreset') || 'today'
     const since = searchParams.get('since')
     const until = searchParams.get('until')
@@ -288,8 +295,10 @@ export async function GET(request: NextRequest) {
       console.log('🚀 Iniciando busca de ads com Batch Requests')
 
       // PASSO 1: Buscar ads usando batch request
+      const __tPasso1 = Date.now()
       const adsBatch = facebookBatchAPI.createAdsBatch(accountId, datePreset, since || undefined, until || undefined, adSetIds, campaignIds)
       const { responses: adsResponses, estimatedWaitMinutes } = await facebookBatchAPI.makeBatchRequest(adsBatch, accessToken)
+      console.log(`[PERF-TMP][ads] PASSO 1 (lista de ads) levou ${Date.now() - __tPasso1}ms`)
 
       if (adsResponses[0].code !== 200) {
         const errorData = JSON.parse(adsResponses[0].body || '{}')
@@ -324,7 +333,9 @@ export async function GET(request: NextRequest) {
         // PASSO 2: Buscar insights em batch (até 50 por vez)
         const adIds = adsData.data.map((ad: any) => ad.id)
         const insightsBatch = facebookBatchAPI.createAdInsightsBatch(adIds, datePreset, since || undefined, until || undefined, metricIds)
+        const __tPasso2 = Date.now()
         const { responses: insightsResponses } = await facebookBatchAPI.makeBatchRequest(insightsBatch, accessToken)
+        console.log(`[PERF-TMP][ads] PASSO 2 (insights de ${adIds.length} ads, ${Math.ceil(insightsBatch.length / 50)} lote(s)) levou ${Date.now() - __tPasso2}ms`)
         
         console.log(`📈 Buscando insights para ${adIds.length} ads em ${Math.ceil(insightsBatch.length / 50)} lotes`)
         
@@ -479,7 +490,10 @@ export async function GET(request: NextRequest) {
             try {
               // Verificar se o anúncio tem um vídeo
               if (ad.creative?.video_id) {
+                const __tVideo = Date.now()
                 const videoInsights = await videoMetricsAPI.getVideoInsights(ad.creative.video_id, accessToken)
+                __videoMetricsTotalMs += Date.now() - __tVideo
+                __videoMetricsCalls += 1
                 if (videoInsights.video_views > 0) {
                   // Calcular KPIs de vídeo
                   const videoKPIs = videoMetricsAPI.calculateVideoKPIs(
@@ -663,6 +677,8 @@ export async function GET(request: NextRequest) {
       )
       
       console.log(`🔄 Ads únicos após remoção de duplicatas: ${uniqueAds.length} (original: ${ads.length})`)
+      console.log(`[PERF-TMP][ads] métricas de vídeo: ${__videoMetricsCalls} chamada(s) sequencial(is), ${__videoMetricsTotalMs}ms somados`)
+      console.log(`[PERF-TMP][ads] TOTAL da rota: ${Date.now() - __t0}ms`)
 
       const result = { ads: uniqueAds }
       saveLastGood(cacheKey, result)

@@ -225,6 +225,10 @@ function processInitiateCheckoutMetric(actionsMetric: any): number {
 }
 
 export async function GET(request: NextRequest) {
+  // [PERF-TMP] Instrumentacao temporaria de tempo, pedida pelo usuario pra descobrir onde vai o
+  // delay reportado ao trocar a data (~15s pra 50 conjuntos). Remover depois de diagnosticado —
+  // ver claude/rate-limit-mitigations.md, secao "Por que ainda existe um delay perceptivel".
+  const __t0 = Date.now()
   try {
     const { searchParams } = new URL(request.url)
     const accountId = searchParams.get('accountId')
@@ -234,6 +238,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
     }
     const accessToken = await resolveMetaAccessToken(request.cookies.get('fb_access_token')?.value, accountId, userId)
+    console.log(`[PERF-TMP][adsets] auth+token resolvido em ${Date.now() - __t0}ms`)
     const datePreset = searchParams.get('datePreset') || 'today'
     const since = searchParams.get('since')
     const until = searchParams.get('until')
@@ -286,8 +291,10 @@ export async function GET(request: NextRequest) {
       console.log('🚀 Iniciando busca de ad sets com Batch Requests')
 
       // PASSO 1: Buscar ad sets usando batch request
+      const __tPasso1 = Date.now()
       const adSetsBatch = facebookBatchAPI.createAdSetsBatch(accountId, datePreset, since || undefined, until || undefined, campaignIds)
       const { responses: adSetsResponses, estimatedWaitMinutes } = await facebookBatchAPI.makeBatchRequest(adSetsBatch, accessToken)
+      console.log(`[PERF-TMP][adsets] PASSO 1 (lista de ad sets) levou ${Date.now() - __tPasso1}ms`)
 
       if (adSetsResponses[0].code !== 200) {
         const errorData = JSON.parse(adSetsResponses[0].body || '{}')
@@ -322,7 +329,9 @@ export async function GET(request: NextRequest) {
         // PASSO 2: Buscar insights em batch (até 50 por vez)
         const adSetIds = adSetsData.data.map((ads: any) => ads.id)
         const insightsBatch = facebookBatchAPI.createAdSetInsightsBatch(adSetIds, datePreset, since || undefined, until || undefined, metricIds)
+        const __tPasso2 = Date.now()
         const { responses: insightsResponses } = await facebookBatchAPI.makeBatchRequest(insightsBatch, accessToken)
+        console.log(`[PERF-TMP][adsets] PASSO 2 (insights de ${adSetIds.length} ad sets, ${Math.ceil(insightsBatch.length / 50)} lote(s)) levou ${Date.now() - __tPasso2}ms`)
         
         console.log(`📈 Buscando insights para ${adSetIds.length} ad sets em ${Math.ceil(insightsBatch.length / 50)} lotes`)
         
@@ -662,6 +671,7 @@ export async function GET(request: NextRequest) {
       saveLastGood(cacheKey, result)
 
       console.log(`✅ Ad sets processados com sucesso: ${adSets.length} itens`)
+      console.log(`[PERF-TMP][adsets] TOTAL da rota: ${Date.now() - __t0}ms`)
       return NextResponse.json(result)
     } catch (error) {
       console.error('Error fetching ad sets:', error)

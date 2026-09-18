@@ -226,6 +226,10 @@ function processInitiateCheckoutMetric(actionsMetric: any): number {
 }
 
 export async function GET(request: NextRequest) {
+  // [PERF-TMP] Instrumentacao temporaria de tempo, pedida pelo usuario pra descobrir onde vai o
+  // delay reportado ao trocar a data. Remover depois de diagnosticado — ver
+  // claude/rate-limit-mitigations.md, secao "Por que ainda existe um delay perceptivel".
+  const __t0 = Date.now()
   try {
     const { searchParams } = new URL(request.url)
     const accountId = searchParams.get('accountId')
@@ -237,6 +241,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
     }
     const accessToken = await resolveMetaAccessToken(request.cookies.get('fb_access_token')?.value, accountId, userId)
+    console.log(`[PERF-TMP][campaigns] auth+token resolvido em ${Date.now() - __t0}ms`)
     const datePreset = searchParams.get('datePreset') || 'today'
     const since = searchParams.get('since')
     const until = searchParams.get('until')
@@ -288,8 +293,10 @@ export async function GET(request: NextRequest) {
       console.log('🚀 Iniciando busca de campanhas com Batch Requests')
 
       // PASSO 1: Buscar campanhas usando batch request
+      const __tPasso1 = Date.now()
       const campaignsBatch = facebookBatchAPI.createCampaignsBatch(accountId, datePreset, since || undefined, until || undefined)
       const { responses: campaignsResponses, estimatedWaitMinutes } = await facebookBatchAPI.makeBatchRequest(campaignsBatch, accessToken)
+      console.log(`[PERF-TMP][campaigns] PASSO 1 (lista de campanhas) levou ${Date.now() - __tPasso1}ms`)
 
       if (campaignsResponses[0].code !== 200) {
         const errorData = JSON.parse(campaignsResponses[0].body || '{}')
@@ -324,7 +331,9 @@ export async function GET(request: NextRequest) {
         // PASSO 2: Buscar insights em batch (até 50 por vez)
         const campaignIds = campaignsData.data.map((c: any) => c.id)
         const insightsBatch = facebookBatchAPI.createCampaignInsightsBatch(campaignIds, datePreset, since || undefined, until || undefined, metricIds)
+        const __tPasso2 = Date.now()
         const { responses: insightsResponses } = await facebookBatchAPI.makeBatchRequest(insightsBatch, accessToken)
+        console.log(`[PERF-TMP][campaigns] PASSO 2 (insights de ${campaignIds.length} campanhas, ${Math.ceil(insightsBatch.length / 50)} lote(s)) levou ${Date.now() - __tPasso2}ms`)
         
         console.log(`📈 Buscando insights para ${campaignIds.length} campanhas em ${Math.ceil(insightsBatch.length / 50)} lotes`)
         
@@ -668,6 +677,7 @@ export async function GET(request: NextRequest) {
       
       console.log(`🔄 Campaigns únicas após remoção de duplicatas: ${uniqueCampaigns.length} (original: ${campaigns.length})`)
 
+      console.log(`[PERF-TMP][campaigns] TOTAL da rota: ${Date.now() - __t0}ms`)
       const result = { campaigns: uniqueCampaigns }
       saveLastGood(cacheKey, result)
 
