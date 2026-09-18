@@ -126,15 +126,19 @@ export default function PerfilPage() {
           >
             <PageHeader title="Minha Conta" />
 
-            <div className="card p-6 flex items-center gap-4">
-              <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-brand-500 text-lg font-semibold text-black">
+            {/* Mesmo padrao de "barra de identidade" usado no card da plataforma Meta Ads em
+                Integracoes (app/meta-accounts/page.tsx: rounded-xl + border + p-5, badge circular
+                pequeno + texto compacto) - o card anterior (rounded-ds-lg/p-6, avatar h-14) tinha
+                um porte bem maior que qualquer outro card de topo do app. */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 flex items-center gap-3">
+              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-brand-500 text-sm font-semibold text-black">
                 {getInitials(fullName || email)}
               </span>
               <div className="min-w-0">
-                <p className="text-base font-semibold text-gray-900 dark:text-white truncate">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                   {fullName || 'Sem nome definido'}
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{email}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{email}</p>
               </div>
             </div>
 
