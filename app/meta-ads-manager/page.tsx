@@ -215,7 +215,20 @@ export default function MetaBusinessPage() {
     // /api/meta/accounts?enabledOnly=true). Antes, contas com status "Restrita" eram excluídas
     // daqui mesmo estando habilitadas em Integrações, causando divergência de contagem entre as
     // duas telas (ex.: 15 habilitadas em Integrações, só 7 aparecendo aqui).
-    const activeAccounts = facebookAccounts
+    // Se o usuário já restringiu o filtro "Conta de Anúncio" a UMA conta específica (o <Select>
+    // só permite "Todas as Contas" ou exatamente 1 conta por vez — ver o value do Select mais
+    // abaixo), busca só aquela conta na Meta em vez de todas as contas habilitadas. Antes, esse
+    // filtro sempre foi só visual/client-side — a tela buscava TODAS as contas mesmo com uma
+    // selecionada, gastando chamadas à toa e deixando a resposta mais lenta do que precisava (ver
+    // pendência registrada no doc do projeto, seção sobre mitigações de rate limit). Checagem por
+    // "=== 1" (e não "> 0") de propósito: `filters.accountIds` também é preenchido com TODOS os
+    // ids sempre que a aba "Contas" busca de novo (ver useEffect logo abaixo de `accounts`), e
+    // essa lista pode estar temporariamente desatualizada (hidratada do cache local) em relação a
+    // `facebookAccounts` — restringir por ela nesse caso arriscaria deixar de consultar uma conta
+    // recém-habilitada em Integrações que ainda não apareceu no cache da aba Contas.
+    const activeAccounts = filters.accountIds.length === 1
+      ? facebookAccounts.filter((account) => filters.accountIds.includes(account.id))
+      : facebookAccounts
     if (activeAccounts.length === 0) return { items: [], rateLimitedUntil: null }
 
     const dateQuery = customRange ? `&since=${customRange.since}&until=${customRange.until}` : ''
@@ -258,7 +271,7 @@ export default function MetaBusinessPage() {
       items: results.flat(),
       rateLimitedUntil: maxRetryAfterSeconds > 0 ? Date.now() + maxRetryAfterSeconds * 1000 : null
     }
-  }, [facebookAccounts, datePreset, customRange, metrics])
+  }, [facebookAccounts, datePreset, customRange, metrics, filters.accountIds])
 
   const persistCache = useCallback((overrides: Partial<MetaBusinessCachedData>) => {
     const merged: MetaBusinessCachedData = {
@@ -424,6 +437,18 @@ export default function MetaBusinessPage() {
 
   const isRateLimited = !!rateLimitedUntil && nowTick < rateLimitedUntil
   const rateLimitCountdownSeconds = isRateLimited ? Math.max(Math.ceil((rateLimitedUntil! - nowTick) / 1000), 0) : 0
+
+  // Estado de carregamento "real" da aba ativa (busca automática disparada por troca de data,
+  // troca de aba, ou seleção de campanha/conjunto) — separado de isRefreshing, que só cobre o
+  // clique manual no botão "Atualizar". Sem isso, trocar o período de data não fazia o ícone
+  // girar (nem qualquer outro indicativo visual, já que a tabela mantém os dados antigos na tela
+  // enquanto busca os novos), dando a impressão de que nada estava acontecendo durante os ~vários
+  // segundos da busca real na Graph API.
+  const isActiveTabLoading =
+    activeTab === 'accounts' ? isLoadingAccounts :
+    activeTab === 'campaigns' ? isLoadingCampaigns :
+    activeTab === 'adsets' ? isLoadingAdSets :
+    isLoadingAds
 
   // Chave que identifica o "recorte" atual de dados (período de data selecionado). Usada para
   // saber se os dados já carregados numa aba ainda são válidos para o filtro atual, ou se
@@ -943,11 +968,11 @@ export default function MetaBusinessPage() {
                   />
                   <button
                     onClick={handleRefresh}
-                    disabled={isRefreshing || isRateLimited}
+                    disabled={isRefreshing || isActiveTabLoading || isRateLimited}
                     title={isRateLimited ? `Limite de requisições da Meta atingido. Tente novamente em ${rateLimitCountdownSeconds}s.` : 'Atualizar'}
                     className="btn-primary flex items-center justify-center space-x-2 px-3 py-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    <RefreshCw className={`w-4 h-4 ${(isRefreshing || isActiveTabLoading) ? 'animate-spin' : ''}`} />
                     <span className="hidden sm:inline">
                       {isRateLimited ? `Aguarde ${rateLimitCountdownSeconds}s` : 'Atualizar'}
                     </span>
