@@ -124,7 +124,7 @@ export default function PerfilPage() {
             transition={{ duration: 0.5 }}
             className="space-y-6 max-w-2xl"
           >
-            <PageHeader title="Minha Conta" subtitle="Seus dados de acesso ao vmetrics" />
+            <PageHeader title="Minha Conta" />
 
             <div className="card p-6 flex items-center gap-4">
               <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-brand-500 text-lg font-semibold text-black">
