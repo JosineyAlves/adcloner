@@ -124,21 +124,29 @@ export default function PerfilPage() {
             transition={{ duration: 0.5 }}
             className="space-y-6"
           >
-            <PageHeader title="Minha Conta" />
+            {/* PageHeader + card de identidade com espaçamento próprio bem mais justo
+                (space-y-3) do que o space-y-6 usado antes do grid de cards abaixo — mesmo padrão
+                usado em Dashboard/Meta Ads/Integrações (PageHeader + card de filtros/plataforma
+                logo abaixo dele): são duas peças do mesmo "cabeçalho" da tela (identidade), não
+                duas seções de conteúdo distintas, então não usam a folga generosa reservada pra
+                separar seções de conteúdo. */}
+            <div className="space-y-3">
+              <PageHeader title="Minha Conta" />
 
-            {/* Mesmo padrao de "barra de identidade" usado no card da plataforma Meta Ads em
-                Integracoes (app/meta-accounts/page.tsx: rounded-xl + border + p-5, badge circular
-                pequeno + texto compacto) - o card anterior (rounded-ds-lg/p-6, avatar h-14) tinha
-                um porte bem maior que qualquer outro card de topo do app. */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 flex items-center gap-3">
-              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-brand-500 text-sm font-semibold text-black">
-                {getInitials(fullName || email)}
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                  {fullName || 'Sem nome definido'}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{email}</p>
+              {/* Mesmo padrao de "barra de identidade" usado no card da plataforma Meta Ads em
+                  Integracoes (app/meta-accounts/page.tsx: rounded-xl + border + p-5, badge circular
+                  pequeno + texto compacto) - o card anterior (rounded-ds-lg/p-6, avatar h-14) tinha
+                  um porte bem maior que qualquer outro card de topo do app. */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 flex items-center gap-3">
+                <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-brand-500 text-sm font-semibold text-black">
+                  {getInitials(fullName || email)}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    {fullName || 'Sem nome definido'}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{email}</p>
+                </div>
               </div>
             </div>
 
