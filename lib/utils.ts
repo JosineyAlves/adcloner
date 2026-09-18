@@ -61,3 +61,18 @@ export function getStatusIcon(status: string) {
       return '?'
   }
 } 
+// Gera as iniciais pro avatar de "Minha Conta" (Sidebar + página de perfil) a partir do nome de
+// exibição (auth.users.user_metadata.full_name) ou, na falta dele, do email — não fazemos upload
+// de foto de perfil, só um círculo com 1-2 letras, então isso é o "avatar" inteiro.
+export function getInitials(nameOrEmail: string | null | undefined): string {
+  if (!nameOrEmail) return '?'
+  const trimmed = nameOrEmail.trim()
+  if (!trimmed) return '?'
+
+  // Nome com espaço ("Josiney Alves") -> "JA". Sem espaço (nome único ou email) -> só a 1ª letra.
+  const parts = trimmed.split(/\s+/).filter(Boolean)
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  }
+  return trimmed[0].toUpperCase()
+}

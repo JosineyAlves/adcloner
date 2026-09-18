@@ -13,6 +13,8 @@ import {
   ChevronsRight
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { createClient } from '@/lib/supabase/client'
+import { getInitials } from '@/lib/utils'
 
 // Sidebar — elemento mais forte da identidade visual do vmetrics: fundo na cor de marca
 // (#CEFF00) com texto/ícones em preto para contraste máximo (ver app/globals.css e
@@ -46,6 +48,24 @@ export default function Sidebar() {
       // localStorage indisponível (ex.: modo privado) — segue expandida por padrão.
     }
     setHydrated(true)
+  }, [])
+
+  // Nome/email de quem está logado, pro link "Minha Conta" abaixo (ver app/perfil/page.tsx) —
+  // vem do auth.users do Supabase (sem tabela própria: usa user_metadata.full_name, o mesmo
+  // campo que a página de perfil atualiza via supabase.auth.updateUser).
+  const [account, setAccount] = useState<{ name: string; email: string } | null>(null)
+
+  useEffect(() => {
+    let active = true
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!active || !user) return
+      const fullName = (user.user_metadata as { full_name?: string } | null)?.full_name?.trim()
+      setAccount({ name: fullName || user.email || 'Minha conta', email: user.email || '' })
+    })
+    return () => {
+      active = false
+    }
   }, [])
 
   const toggleCollapsed = () => {
@@ -128,8 +148,34 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Área inferior: collapse + perfil/logout */}
+      {/* Área inferior: perfil + collapse + logout */}
       <div className="border-t border-black/10 p-2.5 space-y-1">
+        {account && (
+          <Link
+            href="/perfil"
+            title={collapsed ? 'Minha Conta' : undefined}
+            className={`group relative flex items-center rounded-ds-md text-sm font-medium text-black/70 hover:bg-black/10 hover:text-black transition-colors duration-150 ${
+              collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'
+            }`}
+          >
+            <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-black/10 text-[11px] font-semibold text-black">
+              {getInitials(account.name)}
+            </span>
+            {!collapsed && (
+              <span className="ml-2.5 min-w-0 flex-1 truncate">
+                <span className="block truncate text-sm leading-tight">{account.name}</span>
+                <span className="block truncate text-[11px] font-normal text-black/50 leading-tight">Minha conta</span>
+              </span>
+            )}
+
+            {collapsed && (
+              <span className="pointer-events-none absolute left-full ml-2 whitespace-nowrap rounded-ds-sm bg-black px-2 py-1 text-xs font-medium text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 z-50">
+                Minha Conta
+              </span>
+            )}
+          </Link>
+        )}
+
         <button
           onClick={toggleCollapsed}
           title={collapsed ? 'Expandir menu' : 'Recolher menu'}
