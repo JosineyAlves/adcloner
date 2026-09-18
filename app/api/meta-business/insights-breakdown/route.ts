@@ -164,11 +164,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Account ID is required' }, { status: 400 })
     }
 
+    // Cache de TTL fixo (lib/cache.ts) removido daqui também, pela mesma razão das outras rotas
+    // de meta-business (nenhuma escrita o invalidava). Sempre busca ao vivo agora;
+    // lib/meta-rate-limit.ts continua protegendo contra estouro de rate limit.
     const cacheKey = cache.generateKey('insights-breakdown', { accountId, datePreset, since, until })
-    const cachedData = cache.get(cacheKey)
-    if (cachedData) {
-      return NextResponse.json(cachedData)
-    }
 
     const existingBlock = getRateLimitBlock(accountId)
     if (existingBlock) {
@@ -308,7 +307,6 @@ export async function GET(request: NextRequest) {
 
       const result = { country, hour, weekday: weekdayTotals, platform, placement, age, device }
 
-      cache.set(cacheKey, result, 300)
       saveLastGood(cacheKey, result)
 
       return NextResponse.json(result)

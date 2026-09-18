@@ -262,14 +262,12 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Verificar cache primeiro com TTL inteligente
+    // Cache de TTL fixo (lib/cache.ts) removido: servia anúncios de até 8 min atrás mesmo
+    // depois de uma escrita (status/orçamento) mudar o dado real na Meta, sem invalidação —
+    // mesma causa raiz do bug de status revertendo em campanhas. Sempre busca ao vivo agora;
+    // lib/meta-rate-limit.ts (bloqueio por conta + fallback last-good) continua protegendo
+    // contra estouro de rate limit.
     const cacheKey = cache.generateKey('ads', { accountId, datePreset, since, until, metricIds, adSetIds, campaignIds })
-    const cachedData = cache.get(cacheKey)
-    
-    if (cachedData) {
-      console.log('📦 Retornando ads do cache (TTL inteligente)')
-      return NextResponse.json(cachedData)
-    }
 
     // Se essa conta acabou de bater no limite de requisições da Meta, não tentar de novo agora.
     const existingBlock = getRateLimitBlock(accountId)
@@ -667,9 +665,6 @@ export async function GET(request: NextRequest) {
       console.log(`🔄 Ads únicos após remoção de duplicatas: ${uniqueAds.length} (original: ${ads.length})`)
 
       const result = { ads: uniqueAds }
-      
-      // Salvar no cache com TTL inteligente (8 minutos para ads)
-      cache.setWithIntelligentTTL(cacheKey, result, 'ads')
       saveLastGood(cacheKey, result)
 
       console.log(`✅ Ads processados com sucesso: ${ads.length} itens`)

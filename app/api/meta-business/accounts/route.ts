@@ -42,14 +42,12 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Verificar cache primeiro com TTL inteligente
+    // Cache de TTL fixo (lib/cache.ts) removido: servia respostas de até 15 min atrás mesmo
+    // depois de uma escrita (status/orçamento) ter mudado o dado real na Meta, sem nenhuma
+    // invalidação — ver claude/meta-api-reference.md / estado-integracao-facebook.md no projeto.
+    // Sempre busca ao vivo agora; lib/meta-rate-limit.ts (bloqueio por conta + fallback
+    // last-good) continua protegendo contra estouro de rate limit.
     const cacheKey = cache.generateKey('accounts', { accountId, datePreset, since, until })
-    const cachedData = cache.get(cacheKey)
-
-    if (cachedData) {
-      console.log('📦 Retornando dados da conta do cache (TTL inteligente)')
-      return NextResponse.json(cachedData)
-    }
 
     // Se essa conta acabou de bater no limite de requisições da Meta, não tentar de novo agora —
     // a própria doc da Meta recomenda parar de chamar, já que insistir só aumenta o bloqueio.
@@ -267,8 +265,6 @@ export async function GET(request: NextRequest) {
         summary
       }
 
-      // Salvar no cache com TTL inteligente
-      cache.set(cacheKey, result, 300) // 5 minutos para dados de conta
       saveLastGood(cacheKey, result)
 
       console.log(`✅ Insights da conta processados com sucesso`)

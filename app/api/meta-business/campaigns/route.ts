@@ -262,14 +262,12 @@ export async function GET(request: NextRequest) {
 
     const facebookAPI = new FacebookAPI()
 
-    // Verificar cache primeiro com TTL inteligente
+    // Cache de TTL fixo (lib/cache.ts) removido: servia campanhas de até 15 min atrás mesmo
+    // depois de ativar/pausar uma (nenhuma rota de escrita o invalidava) — era a causa do status
+    // "voltar" pro valor antigo logo após o toggle. Sempre busca ao vivo agora;
+    // lib/meta-rate-limit.ts (bloqueio por conta + fallback last-good) continua protegendo
+    // contra estouro de rate limit.
     const cacheKey = cache.generateKey('campaigns', { accountId, datePreset, since, until, metricIds })
-    const cachedData = cache.get(cacheKey)
-    
-    if (cachedData) {
-      console.log('📦 Retornando campanhas do cache (TTL inteligente)')
-      return NextResponse.json(cachedData)
-    }
 
     // Se essa conta acabou de bater no limite de requisições da Meta, não tentar de novo agora.
     const existingBlock = getRateLimitBlock(accountId)
@@ -671,9 +669,6 @@ export async function GET(request: NextRequest) {
       console.log(`🔄 Campaigns únicas após remoção de duplicatas: ${uniqueCampaigns.length} (original: ${campaigns.length})`)
 
       const result = { campaigns: uniqueCampaigns }
-      
-      // Salvar no cache com TTL inteligente (15 minutos para campanhas)
-      cache.setWithIntelligentTTL(cacheKey, result, 'campaigns')
       saveLastGood(cacheKey, result)
 
       console.log(`✅ Campanhas processadas com sucesso: ${campaigns.length} itens`)
