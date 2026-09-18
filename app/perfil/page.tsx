@@ -138,6 +138,7 @@ export default function PerfilPage() {
               </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
             <form onSubmit={handleSaveProfile} className="card p-6 space-y-4">
               <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Dados da conta</h2>
 
@@ -238,6 +239,7 @@ export default function PerfilPage() {
                 Alterar senha
               </button>
             </form>
+            </div>
           </motion.div>
         </main>
       </div>
