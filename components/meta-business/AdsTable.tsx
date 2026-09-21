@@ -20,6 +20,7 @@ import StatusToggle from './StatusToggle'
 import NameEditor from './NameEditor'
 import MetricsColumn from './MetricsColumn'
 import { useTableSort } from '@/hooks/useTableSort'
+import { useColumnResize } from '@/hooks/useColumnResize'
 import toast from 'react-hot-toast'
 
 interface AdsTableProps {
@@ -156,6 +157,9 @@ export default function AdsTable({
   // orçamento próprio (coluna sempre "N/A"), por isso não entra como coluna ordenável aqui.
   const { sortConfig, handleSort, sortedRows: sortedAds } = useTableSort<MetaAd>(ads, 'name')
 
+  // Largura ajustável (arrastar) da coluna "Nome" — ver hooks/useColumnResize.ts.
+  const { width: nameColWidth, isResizing: isResizingNameCol, handleMouseDown: handleNameColResizeStart } = useColumnResize('ads:name')
+
   const handleSelectAll = () => {
     if (selectedAds.size === ads.length) {
       onSelectionChange(new Set())
@@ -235,8 +239,17 @@ export default function AdsTable({
                 <th className="sticky left-12 z-20 w-24 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
                   Status
                 </th>
-                <th className="sticky left-[144px] z-20 w-[240px] bg-gray-50 dark:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.4)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.4)] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
+                <th
+                  className="sticky left-[144px] z-20 bg-gray-50 dark:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.4)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.4)] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom"
+                  style={{ width: nameColWidth, minWidth: nameColWidth, maxWidth: nameColWidth }}
+                >
                   Anúncio
+                  <div
+                    onMouseDown={handleNameColResizeStart}
+                    onClick={(e) => e.stopPropagation()}
+                    className={`absolute top-0 right-0 h-full w-1.5 cursor-col-resize select-none z-10 ${isResizingNameCol ? 'bg-brand-500/70' : 'hover:bg-brand-400/50'}`}
+                    title="Arraste para redimensionar"
+                  />
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
                   Orçamento
@@ -297,9 +310,16 @@ export default function AdsTable({
               <th
                 onClick={() => handleSort('name')}
                 title={sortConfig?.key === 'name' ? `Ordenado ${sortConfig.direction === 'asc' ? 'A→Z' : 'Z→A'} — clique para inverter` : 'Clique para ordenar'}
-                className={`sticky left-[144px] z-20 w-[240px] bg-gray-50 dark:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.4)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.4)] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap align-bottom cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 ${sortConfig?.key === 'name' ? 'text-brand-600 dark:text-brand-400 font-semibold' : 'text-gray-500 dark:text-gray-400'}`}
+                className={`sticky left-[144px] z-20 bg-gray-50 dark:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.4)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.4)] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap align-bottom cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 ${sortConfig?.key === 'name' ? 'text-brand-600 dark:text-brand-400 font-semibold' : 'text-gray-500 dark:text-gray-400'}`}
+                style={{ width: nameColWidth, minWidth: nameColWidth, maxWidth: nameColWidth }}
               >
                 Anúncio
+                  <div
+                    onMouseDown={handleNameColResizeStart}
+                    onClick={(e) => e.stopPropagation()}
+                    className={`absolute top-0 right-0 h-full w-1.5 cursor-col-resize select-none z-10 ${isResizingNameCol ? 'bg-brand-500/70' : 'hover:bg-brand-400/50'}`}
+                    title="Arraste para redimensionar"
+                  />
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
                 Orçamento
@@ -337,7 +357,7 @@ export default function AdsTable({
                     size="md"
                   />
                 </td>
-                <td className="sticky left-[144px] z-10 w-[240px] bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-3">
+                <td className="sticky left-[144px] z-10 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-3" style={{ width: nameColWidth, minWidth: nameColWidth, maxWidth: nameColWidth }}>
                   <NameEditor
                     id={ad.id}
                     currentName={ad.name}
@@ -384,7 +404,7 @@ export default function AdsTable({
             <tr>
               <td className="sticky left-0 bottom-0 z-20 w-12 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-6 py-3"></td>
               <td className="sticky left-12 bottom-0 z-20 w-24 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-6 py-3"></td>
-              <td className="sticky left-[144px] bottom-0 z-20 w-[240px] bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">
+              <td className="sticky left-[144px] bottom-0 z-20 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap" style={{ width: nameColWidth, minWidth: nameColWidth, maxWidth: nameColWidth }}>
                 {ads.length} {ads.length === 1 ? 'ANÚNCIO' : 'ANÚNCIOS'}
               </td>
               <td className="sticky bottom-0 z-10 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">-</td>
