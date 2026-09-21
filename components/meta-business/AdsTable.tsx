@@ -17,6 +17,7 @@ import {
 import { MetaAd } from '@/lib/types'
 import { MetricConfig } from '@/lib/metrics-config'
 import StatusToggle from './StatusToggle'
+import NameEditor from './NameEditor'
 import MetricsColumn from './MetricsColumn'
 import { useTableSort } from '@/hooks/useTableSort'
 import toast from 'react-hot-toast'
@@ -26,6 +27,7 @@ interface AdsTableProps {
   selectedAds: Set<string>
   onSelectionChange: (selected: Set<string>) => void
   onStatusToggle: (type: 'campaigns' | 'adsets' | 'ads', id: string, currentStatus: string) => void
+  onNameUpdate: (type: 'campaigns' | 'adsets' | 'ads', id: string, name: string) => void
   onBulkStatusUpdate: (type: 'campaigns' | 'adsets' | 'ads', status: string) => void
   metrics?: MetricConfig[]
   showMetrics?: boolean
@@ -42,6 +44,7 @@ export default function AdsTable({
   selectedAds,
   onSelectionChange,
   onStatusToggle,
+  onNameUpdate,
   onBulkStatusUpdate,
   metrics = [],
   showMetrics = false
@@ -335,9 +338,30 @@ export default function AdsTable({
                   />
                 </td>
                 <td className="sticky left-[144px] z-10 w-[240px] bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-3">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white truncate" title={ad.name}>
-                    {ad.name}
-                  </div>
+                  <NameEditor
+                    id={ad.id}
+                    currentName={ad.name}
+                    onUpdate={async (id, name) => {
+                      const response = await fetch(`/api/meta-business/ads/${id}/name`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          name,
+                          accountId: ad.account_id
+                        })
+                      })
+
+                      const result = await response.json()
+
+                      if (result.success) {
+                        onNameUpdate('ads', id, name)
+                      } else {
+                        const error = new Error(result.error || 'Erro ao atualizar nome')
+                        ;(error as any).error = result.error
+                        throw error
+                      }
+                    }}
+                  />
                 </td>
                 <td className="px-6 py-3">
                   <span className="text-sm font-medium text-gray-400 dark:text-gray-500" title="Orçamento é definido no nível do Conjunto de Anúncios">

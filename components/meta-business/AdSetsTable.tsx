@@ -17,6 +17,7 @@ import { MetaAdSet } from '@/lib/types'
 import { MetricConfig } from '@/lib/metrics-config'
 import StatusToggle from './StatusToggle'
 import BudgetEditor from './BudgetEditor'
+import NameEditor from './NameEditor'
 import MetricsColumn from './MetricsColumn'
 import { useTableSort } from '@/hooks/useTableSort'
 import toast from 'react-hot-toast'
@@ -27,6 +28,7 @@ interface AdSetsTableProps {
   onSelectionChange: (selected: Set<string>) => void
   onStatusToggle: (type: 'campaigns' | 'adsets' | 'ads', id: string, currentStatus: string) => void
   onBudgetUpdate: (type: 'campaigns' | 'adsets', id: string, budget: number, budgetType: 'daily' | 'lifetime') => void
+  onNameUpdate: (type: 'campaigns' | 'adsets' | 'ads', id: string, name: string) => void
   onBulkStatusUpdate: (type: 'campaigns' | 'adsets' | 'ads', status: string) => void
   metrics?: MetricConfig[]
   showMetrics?: boolean
@@ -44,6 +46,7 @@ export default function AdSetsTable({
   onSelectionChange,
   onStatusToggle,
   onBudgetUpdate,
+  onNameUpdate,
   onBulkStatusUpdate,
   metrics = [],
   showMetrics = false
@@ -322,9 +325,30 @@ export default function AdSetsTable({
                   />
                 </td>
                 <td className="sticky left-[144px] z-10 w-[240px] bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-3">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white truncate" title={adSet.name}>
-                    {adSet.name}
-                  </div>
+                  <NameEditor
+                    id={adSet.id}
+                    currentName={adSet.name}
+                    onUpdate={async (id, name) => {
+                      const response = await fetch(`/api/meta-business/adsets/${id}/name`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          name,
+                          accountId: adSet.account_id
+                        })
+                      })
+
+                      const result = await response.json()
+
+                      if (result.success) {
+                        onNameUpdate('adsets', id, name)
+                      } else {
+                        const error = new Error(result.error || 'Erro ao atualizar nome')
+                        ;(error as any).error = result.error
+                        throw error
+                      }
+                    }}
+                  />
                 </td>
                 <td className="px-6 py-3">
                   {adSet.campaign_advantage_budget ? (

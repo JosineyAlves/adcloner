@@ -791,6 +791,36 @@ export default function MetaBusinessPage() {
     }
   }
 
+  const handleNameUpdate = async (type: 'campaigns' | 'adsets' | 'ads', id: string, name: string) => {
+    try {
+      // Mesmo padrão de handleBudgetUpdate: a chamada à Graph API já aconteceu dentro do
+      // componente da tabela (NameEditor, via onUpdate) antes deste handler ser chamado — aqui só
+      // refletimos o novo nome no estado local imediatamente e agendamos uma busca de sincronização
+      // em segundo plano.
+      if (type === 'campaigns') {
+        setCampaigns(prev => prev.map(campaign =>
+          campaign.id === id ? { ...campaign, name } : campaign
+        ))
+      } else if (type === 'adsets') {
+        setAdSets(prev => prev.map(adSet =>
+          adSet.id === id ? { ...adSet, name } : adSet
+        ))
+      } else {
+        setAds(prev => prev.map(ad =>
+          ad.id === id ? { ...ad, name } : ad
+        ))
+      }
+
+      setTimeout(() => {
+        if (type === 'campaigns') fetchCampaigns()
+        else if (type === 'adsets') fetchAdSets()
+        else fetchAds()
+      }, 1000)
+    } catch (error) {
+      console.error('Error updating name state:', error)
+    }
+  }
+
   // Filtro de Status compara contra effective_status, não status — status é só o "interruptor"
   // que o próprio item tem (ACTIVE/PAUSED), enquanto effective_status já reflete a herança da
   // hierarquia da Meta (um conjunto/anúncio com status ACTIVE, mas cuja campanha-mãe está
@@ -1095,6 +1125,7 @@ export default function MetaBusinessPage() {
                       onSelectionChange={setSelectedCampaigns}
                       onStatusToggle={handleToggleStatus}
                       onBudgetUpdate={handleBudgetUpdate}
+                      onNameUpdate={handleNameUpdate}
                       onBulkStatusUpdate={handleBulkStatusUpdate}
                       metrics={metrics}
                       showMetrics={true}
@@ -1116,6 +1147,7 @@ export default function MetaBusinessPage() {
                       onSelectionChange={setSelectedAdSets}
                       onStatusToggle={handleToggleStatus}
                       onBudgetUpdate={handleBudgetUpdate}
+                      onNameUpdate={handleNameUpdate}
                       onBulkStatusUpdate={handleBulkStatusUpdate}
                       metrics={metrics}
                       showMetrics={true}
@@ -1137,6 +1169,7 @@ export default function MetaBusinessPage() {
                       selectedAds={selectedAds}
                       onSelectionChange={setSelectedAds}
                       onStatusToggle={handleToggleStatus}
+                      onNameUpdate={handleNameUpdate}
                       onBulkStatusUpdate={handleBulkStatusUpdate}
                       metrics={metrics}
                       showMetrics={true}
