@@ -19,8 +19,9 @@ import { MetricConfig } from '@/lib/metrics-config'
 import StatusToggle from './StatusToggle'
 import BudgetEditor from './BudgetEditor'
 import NameEditor from './NameEditor'
+import ColumnResizeHandle from './ColumnResizeHandle'
 import { useTableSort } from '@/hooks/useTableSort'
-import { useColumnResize } from '@/hooks/useColumnResize'
+import { useResizableColumns } from '@/hooks/useResizableColumns'
 import toast from 'react-hot-toast'
 
 interface CampaignsTableProps {
@@ -192,8 +193,16 @@ export default function CampaignsTable({
     (row, key) => (key === 'budget' ? row.daily_budget || row.lifetime_budget || 0 : (row as any)[key])
   )
 
-  // Largura ajustável (arrastar) da coluna "Nome" — ver hooks/useColumnResize.ts.
-  const { width: nameColWidth, isResizing: isResizingNameCol, handleMouseDown: handleNameColResizeStart } = useColumnResize('campaigns:name')
+  // Largura ajustável (arrastar + duplo-clique pra ajustar ao conteúdo) das colunas Nome,
+  // Orçamento e de cada métrica visível — ver hooks/useResizableColumns.ts.
+  const { getWidth, startResize, autoFit, resizingId } = useResizableColumns('campaigns')
+  const nameColWidth = getWidth('name', 240)
+  const budgetColWidth = getWidth('budget', 140)
+  const handleAutoFitName = () => autoFit('name', [...campaigns.map(c => c.name), 'Campanha'])
+  const handleAutoFitBudget = () => autoFit('budget', [
+    ...campaigns.map(c => formatCurrency(c.daily_budget || c.lifetime_budget || 0)),
+    'Orçamento'
+  ])
 
           if (campaigns.length === 0) {
             return (
@@ -218,21 +227,43 @@ export default function CampaignsTable({
                           style={{ width: nameColWidth, minWidth: nameColWidth, maxWidth: nameColWidth }}
                         >
                           Campanha
-                  <div
-                    onMouseDown={handleNameColResizeStart}
-                    onClick={(e) => e.stopPropagation()}
-                    className={`absolute top-0 right-0 h-full w-1.5 cursor-col-resize select-none z-10 ${isResizingNameCol ? 'bg-brand-500/70' : 'hover:bg-brand-400/50'}`}
-                    title="Arraste para redimensionar"
-                  />
+                          <ColumnResizeHandle
+                            onMouseDown={startResize('name', nameColWidth)}
+                            onDoubleClick={handleAutoFitName}
+                            isResizing={resizingId === 'name'}
+                          />
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
+                        <th
+                          className="relative px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom"
+                          style={{ width: budgetColWidth, minWidth: budgetColWidth, maxWidth: budgetColWidth }}
+                        >
                           Orçamento
+                          <ColumnResizeHandle
+                            onMouseDown={startResize('budget', budgetColWidth)}
+                            onDoubleClick={handleAutoFitBudget}
+                            isResizing={resizingId === 'budget'}
+                          />
                         </th>
-                        {showMetrics && metrics.filter(m => m.visible).map((metric) => (
-                          <th key={metric.id} className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-normal min-w-[130px] max-w-[220px] leading-tight align-bottom">
-                            <span title={metric.label} className="block line-clamp-2">{metric.label}</span>
-                          </th>
-                        ))}
+                        {showMetrics && metrics.filter(m => m.visible).map((metric) => {
+                          const metricColWidth = getWidth(metric.id, 150)
+                          return (
+                            <th
+                              key={metric.id}
+                              className="relative px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-normal leading-tight align-bottom"
+                              style={{ width: metricColWidth, minWidth: metricColWidth, maxWidth: metricColWidth }}
+                            >
+                              <span title={metric.label} className="block line-clamp-2">{metric.label}</span>
+                              <ColumnResizeHandle
+                                onMouseDown={startResize(metric.id, metricColWidth)}
+                                onDoubleClick={() => autoFit(metric.id, [
+                                  ...campaigns.map(c => formatMetricValue((c as any)[metric.id], metric.type, metric.id)),
+                                  metric.label
+                                ])}
+                                isResizing={resizingId === metric.id}
+                              />
+                            </th>
+                          )
+                        })}
                       </tr>
                     </thead>
                     <tbody>
@@ -270,11 +301,12 @@ export default function CampaignsTable({
           <thead className="sticky top-0 z-30 bg-gray-50 dark:bg-gray-700">
             <tr>
               {/* Checkbox/Status/Campanha ficam fixos (sticky left) durante a rolagem horizontal
-                  pelas colunas de métrica — cada um com largura fixa (w-12/w-24/w-[240px]) pra que
-                  os offsets `left-*` das colunas seguintes sejam previsíveis. z-20 no cabeçalho e
-                  z-10 no corpo/z-20 no rodapé evitam que conteúdo role por cima na direção errada.
-                  O próprio <thead> agora é `sticky top-0` também, pra continuar visível durante a
-                  rolagem vertical (antes só a linha de totais no rodapé ficava fixa). */}
+                  pelas colunas de métrica — cada um com largura fixa (w-12/w-24 + a largura
+                  ajustável do Nome) pra que os offsets `left-*` das colunas seguintes sejam
+                  previsíveis. z-20 no cabeçalho e z-10 no corpo/z-20 no rodapé evitam que
+                  conteúdo role por cima na direção errada. O próprio <thead> agora é `sticky
+                  top-0` também, pra continuar visível durante a rolagem vertical (antes só a
+                  linha de totais no rodapé ficava fixa). */}
               <th className="sticky left-0 z-20 w-12 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left align-bottom">
                 <input
                   type="checkbox"
@@ -293,30 +325,47 @@ export default function CampaignsTable({
                 style={{ width: nameColWidth, minWidth: nameColWidth, maxWidth: nameColWidth }}
               >
                 Campanha
-                  <div
-                    onMouseDown={handleNameColResizeStart}
-                    onClick={(e) => e.stopPropagation()}
-                    className={`absolute top-0 right-0 h-full w-1.5 cursor-col-resize select-none z-10 ${isResizingNameCol ? 'bg-brand-500/70' : 'hover:bg-brand-400/50'}`}
-                    title="Arraste para redimensionar"
-                  />
+                <ColumnResizeHandle
+                  onMouseDown={startResize('name', nameColWidth)}
+                  onDoubleClick={handleAutoFitName}
+                  isResizing={resizingId === 'name'}
+                />
               </th>
               <th
                 onClick={() => handleSort('budget')}
                 title={sortConfig?.key === 'budget' ? `Ordenado ${sortConfig.direction === 'asc' ? 'menor→maior' : 'maior→menor'} — clique para inverter` : 'Clique para ordenar'}
-                className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap align-bottom cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 ${sortConfig?.key === 'budget' ? 'text-brand-600 dark:text-brand-400 font-semibold' : 'text-gray-500 dark:text-gray-400'}`}
+                className={`relative px-6 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap align-bottom cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 ${sortConfig?.key === 'budget' ? 'text-brand-600 dark:text-brand-400 font-semibold' : 'text-gray-500 dark:text-gray-400'}`}
+                style={{ width: budgetColWidth, minWidth: budgetColWidth, maxWidth: budgetColWidth }}
               >
                 Orçamento
+                <ColumnResizeHandle
+                  onMouseDown={startResize('budget', budgetColWidth)}
+                  onDoubleClick={handleAutoFitBudget}
+                  isResizing={resizingId === 'budget'}
+                />
               </th>
-              {showMetrics && metrics.filter(m => m.visible).map((metric) => (
-                <th
-                  key={metric.id}
-                  onClick={() => handleSort(metric.id)}
-                  title={`${metric.label} — ${sortConfig?.key === metric.id ? `ordenado ${sortConfig.direction === 'asc' ? 'menor→maior' : 'maior→menor'}, clique para inverter` : 'clique para ordenar'}`}
-                  className={`px-3 py-3 text-left text-xs font-medium uppercase tracking-normal min-w-[130px] max-w-[220px] leading-tight align-bottom cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 ${sortConfig?.key === metric.id ? 'text-brand-600 dark:text-brand-400 font-semibold' : 'text-gray-500 dark:text-gray-400'}`}
-                >
-                  <span className="block line-clamp-2">{metric.label}</span>
-                </th>
-              ))}
+              {showMetrics && metrics.filter(m => m.visible).map((metric) => {
+                const metricColWidth = getWidth(metric.id, 150)
+                return (
+                  <th
+                    key={metric.id}
+                    onClick={() => handleSort(metric.id)}
+                    title={`${metric.label} — ${sortConfig?.key === metric.id ? `ordenado ${sortConfig.direction === 'asc' ? 'menor→maior' : 'maior→menor'}, clique para inverter` : 'clique para ordenar'}`}
+                    className={`relative px-3 py-3 text-left text-xs font-medium uppercase tracking-normal leading-tight align-bottom cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 ${sortConfig?.key === metric.id ? 'text-brand-600 dark:text-brand-400 font-semibold' : 'text-gray-500 dark:text-gray-400'}`}
+                    style={{ width: metricColWidth, minWidth: metricColWidth, maxWidth: metricColWidth }}
+                  >
+                    <span className="block line-clamp-2">{metric.label}</span>
+                    <ColumnResizeHandle
+                      onMouseDown={startResize(metric.id, metricColWidth)}
+                      onDoubleClick={() => autoFit(metric.id, [
+                        ...campaigns.map(c => formatMetricValue((c as any)[metric.id], metric.type, metric.id)),
+                        metric.label
+                      ])}
+                      isResizing={resizingId === metric.id}
+                    />
+                  </th>
+                )
+              })}
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -368,7 +417,7 @@ export default function CampaignsTable({
                     }}
                   />
                 </td>
-                <td className="px-6 py-3">
+                <td className="px-6 py-3" style={{ width: budgetColWidth, minWidth: budgetColWidth, maxWidth: budgetColWidth }}>
                   <BudgetEditor
                     id={campaign.id}
                     currentBudget={campaign.daily_budget || campaign.lifetime_budget || 0}
@@ -411,8 +460,9 @@ export default function CampaignsTable({
                 {showMetrics && metrics.filter(m => m.visible).map((metric) => {
                   const value = (campaign as any)[metric.id]
                   const formattedValue = formatMetricValue(value, metric.type, metric.id)
+                  const metricColWidth = getWidth(metric.id, 150)
                   return (
-                    <td key={metric.id} className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
+                    <td key={metric.id} className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap" style={{ width: metricColWidth, minWidth: metricColWidth, maxWidth: metricColWidth }}>
                       {formattedValue}
                     </td>
                   )
@@ -433,14 +483,17 @@ export default function CampaignsTable({
               <td className="sticky left-[144px] bottom-0 z-20 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap" style={{ width: nameColWidth, minWidth: nameColWidth, maxWidth: nameColWidth }}>
                 {campaigns.length} {campaigns.length === 1 ? 'CAMPANHA' : 'CAMPANHAS'}
               </td>
-              <td className="sticky bottom-0 z-10 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+              <td className="sticky bottom-0 z-10 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap" style={{ width: budgetColWidth, minWidth: budgetColWidth, maxWidth: budgetColWidth }}>
                 {totalBudget > 0 ? formatCurrency(totalBudget) : '-'}
               </td>
-              {showMetrics && visibleMetrics.map((metric, index) => (
-                <td key={metric.id} className="sticky bottom-0 z-10 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
-                  {metricTotals[index] === null ? '-' : formatMetricValue(metricTotals[index], metric.type, metric.id)}
-                </td>
-              ))}
+              {showMetrics && visibleMetrics.map((metric, index) => {
+                const metricColWidth = getWidth(metric.id, 150)
+                return (
+                  <td key={metric.id} className="sticky bottom-0 z-10 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap" style={{ width: metricColWidth, minWidth: metricColWidth, maxWidth: metricColWidth }}>
+                    {metricTotals[index] === null ? '-' : formatMetricValue(metricTotals[index], metric.type, metric.id)}
+                  </td>
+                )
+              })}
             </tr>
           </tfoot>
         </table>

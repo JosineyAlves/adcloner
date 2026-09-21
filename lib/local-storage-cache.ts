@@ -61,9 +61,9 @@ export const LOCAL_CACHE_KEYS = {
   // Prefixo — a chave real inclui o viewKey (ex.: "vmetrics:column-preferences:v1:meta_business_metrics"),
   // ver hooks/useColumnPreferences.ts. Isso permite mais de uma tela com seletor de colunas própria.
   columnPreferencesPrefix: 'vmetrics:column-preferences:v1:',
-  // Largura (em px) da coluna "Nome" redimensionável nas tabelas de Campanhas/Conjuntos/Anúncios
-  // — chave real inclui a tabela (ex.: "vmetrics:name-column-width:v1:campaigns:name"), ver
-  // hooks/useColumnResize.ts.
+  // Largura (em px) das colunas redimensionáveis (Nome/Orçamento/métricas) nas tabelas de
+  // Campanhas/Conjuntos/Anúncios — chave real inclui a tabela e a coluna (ex.:
+  // "vmetrics:name-column-width:v1:campaigns:name"), ver hooks/useResizableColumns.ts.
   nameColumnWidthPrefix: 'vmetrics:name-column-width:v1:',
   // Período de data (datePreset/customRange) compartilhado entre TODAS as telas com seletor de
   // período (Dashboard Financeiro e Meta Business) — pedido do usuário: selecionar "Últimos 30

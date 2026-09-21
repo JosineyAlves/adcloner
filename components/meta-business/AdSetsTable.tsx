@@ -18,9 +18,10 @@ import { MetricConfig } from '@/lib/metrics-config'
 import StatusToggle from './StatusToggle'
 import BudgetEditor from './BudgetEditor'
 import NameEditor from './NameEditor'
+import ColumnResizeHandle from './ColumnResizeHandle'
 import MetricsColumn from './MetricsColumn'
 import { useTableSort } from '@/hooks/useTableSort'
-import { useColumnResize } from '@/hooks/useColumnResize'
+import { useResizableColumns } from '@/hooks/useResizableColumns'
 import toast from 'react-hot-toast'
 
 interface AdSetsTableProps {
@@ -165,8 +166,16 @@ export default function AdSetsTable({
     (row, key) => (key === 'budget' ? row.daily_budget || row.lifetime_budget || 0 : (row as any)[key])
   )
 
-  // Largura ajustável (arrastar) da coluna "Nome" — ver hooks/useColumnResize.ts.
-  const { width: nameColWidth, isResizing: isResizingNameCol, handleMouseDown: handleNameColResizeStart } = useColumnResize('adsets:name')
+  // Largura ajustável (arrastar + duplo-clique pra ajustar ao conteúdo) das colunas Nome,
+  // Orçamento e de cada métrica visível — ver hooks/useResizableColumns.ts.
+  const { getWidth, startResize, autoFit, resizingId } = useResizableColumns('adsets')
+  const nameColWidth = getWidth('name', 240)
+  const budgetColWidth = getWidth('budget', 140)
+  const handleAutoFitName = () => autoFit('name', [...adSets.map(a => a.name), 'Conjunto'])
+  const handleAutoFitBudget = () => autoFit('budget', [
+    ...adSets.map(a => a.campaign_advantage_budget ? 'N/A' : formatCurrency(a.daily_budget || a.lifetime_budget || 0)),
+    'Orçamento'
+  ])
 
   const handleSelectAll = () => {
     if (selectedAdSets.size === adSets.length) {
@@ -227,21 +236,43 @@ export default function AdSetsTable({
                   style={{ width: nameColWidth, minWidth: nameColWidth, maxWidth: nameColWidth }}
                 >
                   Conjunto
-                  <div
-                    onMouseDown={handleNameColResizeStart}
-                    onClick={(e) => e.stopPropagation()}
-                    className={`absolute top-0 right-0 h-full w-1.5 cursor-col-resize select-none z-10 ${isResizingNameCol ? 'bg-brand-500/70' : 'hover:bg-brand-400/50'}`}
-                    title="Arraste para redimensionar"
+                  <ColumnResizeHandle
+                    onMouseDown={startResize('name', nameColWidth)}
+                    onDoubleClick={handleAutoFitName}
+                    isResizing={resizingId === 'name'}
                   />
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
+                <th
+                  className="relative px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom"
+                  style={{ width: budgetColWidth, minWidth: budgetColWidth, maxWidth: budgetColWidth }}
+                >
                   Orçamento
+                  <ColumnResizeHandle
+                    onMouseDown={startResize('budget', budgetColWidth)}
+                    onDoubleClick={handleAutoFitBudget}
+                    isResizing={resizingId === 'budget'}
+                  />
                 </th>
-                {showMetrics && metrics.filter(m => m.visible).map((metric) => (
-                  <th key={metric.id} className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-normal min-w-[130px] max-w-[220px] leading-tight align-bottom">
-                    <span title={metric.label} className="block line-clamp-2">{metric.label}</span>
-                  </th>
-                ))}
+                {showMetrics && metrics.filter(m => m.visible).map((metric) => {
+                  const metricColWidth = getWidth(metric.id, 150)
+                  return (
+                    <th
+                      key={metric.id}
+                      className="relative px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-normal leading-tight align-bottom"
+                      style={{ width: metricColWidth, minWidth: metricColWidth, maxWidth: metricColWidth }}
+                    >
+                      <span title={metric.label} className="block line-clamp-2">{metric.label}</span>
+                      <ColumnResizeHandle
+                        onMouseDown={startResize(metric.id, metricColWidth)}
+                        onDoubleClick={() => autoFit(metric.id, [
+                          ...adSets.map(a => formatMetricValue((a as any)[metric.id], metric.type, metric.id)),
+                          metric.label
+                        ])}
+                        isResizing={resizingId === metric.id}
+                      />
+                    </th>
+                  )
+                })}
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800">
@@ -297,30 +328,47 @@ export default function AdSetsTable({
                 style={{ width: nameColWidth, minWidth: nameColWidth, maxWidth: nameColWidth }}
               >
                 Conjunto
-                  <div
-                    onMouseDown={handleNameColResizeStart}
-                    onClick={(e) => e.stopPropagation()}
-                    className={`absolute top-0 right-0 h-full w-1.5 cursor-col-resize select-none z-10 ${isResizingNameCol ? 'bg-brand-500/70' : 'hover:bg-brand-400/50'}`}
-                    title="Arraste para redimensionar"
-                  />
+                <ColumnResizeHandle
+                  onMouseDown={startResize('name', nameColWidth)}
+                  onDoubleClick={handleAutoFitName}
+                  isResizing={resizingId === 'name'}
+                />
               </th>
               <th
                 onClick={() => handleSort('budget')}
                 title={sortConfig?.key === 'budget' ? `Ordenado ${sortConfig.direction === 'asc' ? 'menor→maior' : 'maior→menor'} — clique para inverter` : 'Clique para ordenar'}
-                className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap align-bottom cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 ${sortConfig?.key === 'budget' ? 'text-brand-600 dark:text-brand-400 font-semibold' : 'text-gray-500 dark:text-gray-400'}`}
+                className={`relative px-6 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap align-bottom cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 ${sortConfig?.key === 'budget' ? 'text-brand-600 dark:text-brand-400 font-semibold' : 'text-gray-500 dark:text-gray-400'}`}
+                style={{ width: budgetColWidth, minWidth: budgetColWidth, maxWidth: budgetColWidth }}
               >
                 Orçamento
+                <ColumnResizeHandle
+                  onMouseDown={startResize('budget', budgetColWidth)}
+                  onDoubleClick={handleAutoFitBudget}
+                  isResizing={resizingId === 'budget'}
+                />
               </th>
-              {showMetrics && metrics.filter(m => m.visible).map((metric) => (
-                <th
-                  key={metric.id}
-                  onClick={() => handleSort(metric.id)}
-                  title={`${metric.label} — ${sortConfig?.key === metric.id ? `ordenado ${sortConfig.direction === 'asc' ? 'menor→maior' : 'maior→menor'}, clique para inverter` : 'clique para ordenar'}`}
-                  className={`px-3 py-3 text-left text-xs font-medium uppercase tracking-normal min-w-[130px] max-w-[220px] leading-tight align-bottom cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 ${sortConfig?.key === metric.id ? 'text-brand-600 dark:text-brand-400 font-semibold' : 'text-gray-500 dark:text-gray-400'}`}
-                >
-                  <span className="block line-clamp-2">{metric.label}</span>
-                </th>
-              ))}
+              {showMetrics && metrics.filter(m => m.visible).map((metric) => {
+                const metricColWidth = getWidth(metric.id, 150)
+                return (
+                  <th
+                    key={metric.id}
+                    onClick={() => handleSort(metric.id)}
+                    title={`${metric.label} — ${sortConfig?.key === metric.id ? `ordenado ${sortConfig.direction === 'asc' ? 'menor→maior' : 'maior→menor'}, clique para inverter` : 'clique para ordenar'}`}
+                    className={`relative px-3 py-3 text-left text-xs font-medium uppercase tracking-normal leading-tight align-bottom cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 ${sortConfig?.key === metric.id ? 'text-brand-600 dark:text-brand-400 font-semibold' : 'text-gray-500 dark:text-gray-400'}`}
+                    style={{ width: metricColWidth, minWidth: metricColWidth, maxWidth: metricColWidth }}
+                  >
+                    <span className="block line-clamp-2">{metric.label}</span>
+                    <ColumnResizeHandle
+                      onMouseDown={startResize(metric.id, metricColWidth)}
+                      onDoubleClick={() => autoFit(metric.id, [
+                        ...adSets.map(a => formatMetricValue((a as any)[metric.id], metric.type, metric.id)),
+                        metric.label
+                      ])}
+                      isResizing={resizingId === metric.id}
+                    />
+                  </th>
+                )
+              })}
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -370,7 +418,7 @@ export default function AdSetsTable({
                     }}
                   />
                 </td>
-                <td className="px-6 py-3">
+                <td className="px-6 py-3" style={{ width: budgetColWidth, minWidth: budgetColWidth, maxWidth: budgetColWidth }}>
                   {adSet.campaign_advantage_budget ? (
                     // Campanha-pai usa CBO (Advantage Campaign Budget) — o orçamento vive na
                     // Campaign, o Ad Set não tem orçamento próprio pra editar (mesmo padrão de
@@ -422,8 +470,9 @@ export default function AdSetsTable({
                 {showMetrics && metrics.filter(m => m.visible).map((metric) => {
                   const value = (adSet as any)[metric.id]
                   const formattedValue = formatMetricValue(value, metric.type, metric.id)
+                  const metricColWidth = getWidth(metric.id, 150)
                   return (
-                    <td key={metric.id} className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
+                    <td key={metric.id} className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap" style={{ width: metricColWidth, minWidth: metricColWidth, maxWidth: metricColWidth }}>
                       {formattedValue}
                     </td>
                   )
@@ -438,14 +487,17 @@ export default function AdSetsTable({
               <td className="sticky left-[144px] bottom-0 z-20 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap" style={{ width: nameColWidth, minWidth: nameColWidth, maxWidth: nameColWidth }}>
                 {adSets.length} {adSets.length === 1 ? 'CONJUNTO' : 'CONJUNTOS'}
               </td>
-              <td className="sticky bottom-0 z-10 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+              <td className="sticky bottom-0 z-10 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap" style={{ width: budgetColWidth, minWidth: budgetColWidth, maxWidth: budgetColWidth }}>
                 {totalBudget > 0 ? formatCurrency(totalBudget) : '-'}
               </td>
-              {showMetrics && visibleMetrics.map((metric, index) => (
-                <td key={metric.id} className="sticky bottom-0 z-10 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
-                  {metricTotals[index] === null ? '-' : formatMetricValue(metricTotals[index], metric.type, metric.id)}
-                </td>
-              ))}
+              {showMetrics && visibleMetrics.map((metric, index) => {
+                const metricColWidth = getWidth(metric.id, 150)
+                return (
+                  <td key={metric.id} className="sticky bottom-0 z-10 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap" style={{ width: metricColWidth, minWidth: metricColWidth, maxWidth: metricColWidth }}>
+                    {metricTotals[index] === null ? '-' : formatMetricValue(metricTotals[index], metric.type, metric.id)}
+                  </td>
+                )
+              })}
             </tr>
           </tfoot>
         </table>

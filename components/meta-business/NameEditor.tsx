@@ -134,7 +134,7 @@ export default function NameEditor({
 
   return (
     <div
-      className={`group flex items-center space-x-1 w-full rounded px-1 py-0.5 -mx-1 transition-all duration-200 ${
+      className={`group relative flex items-center w-full rounded px-1 py-0.5 -mx-1 transition-all duration-200 ${
         disabled
           ? 'cursor-not-allowed opacity-60'
           : 'cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-700'
@@ -142,12 +142,17 @@ export default function NameEditor({
       onClick={handleStartEdit}
       title={disabled ? 'Nome não pode ser editado' : 'Clique para editar o nome'}
     >
-      <div className="text-sm font-medium text-gray-900 dark:text-white truncate flex-1" title={currentName}>
+      {/* O texto ocupa a largura inteira da célula — o ícone de editar (abaixo) fica posicionado
+          por cima dele via `absolute`, só quando visível (hover), em vez de reservar espaço fixo
+          num irmão flex (`shrink-0`). Antes disso, o ícone ficava invisível (opacity-0) mas ainda
+          ocupava layout o tempo todo, roubando ~20px do nome e truncando o texto cedo demais mesmo
+          sem o mouse em cima. */}
+      <div className="text-sm font-medium text-gray-900 dark:text-white truncate w-full" title={currentName}>
         {currentName}
       </div>
       {!disabled && (
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-          <div className="w-3.5 h-3.5 text-gray-400 hover:text-blue-600">
+        <div className="absolute right-0 top-0 bottom-0 flex items-center pl-3 pr-1 rounded-r opacity-0 group-hover:opacity-100 transition-opacity bg-blue-50 dark:bg-gray-700">
+          <div className="w-3.5 h-3.5 text-gray-400 hover:text-blue-600 shrink-0">
             <svg viewBox="0 0 16 16" fill="currentColor">
               <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708L5.707 13.5a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5v-3.207a.5.5 0 0 1 .146-.353L12.146.146zM1.5 10.5V13h2.5L12.5 4.5 10 2 1.5 10.5z"/>
             </svg>
