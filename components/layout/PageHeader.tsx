@@ -2,7 +2,8 @@
 
 import { ReactNode } from 'react'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Menu } from 'lucide-react'
+import { useSidebar } from '@/contexts/SidebarContext'
 
 interface PageHeaderProps {
   title: string
@@ -25,7 +26,15 @@ interface PageHeaderProps {
 // Ações que atuam sobre os dados exibidos (Atualizar, seletor de período) NÃO ficam aqui — elas
 // pertencem ao card de conteúdo que os dados/filtros ocupam (ver o card de filtros do Meta Ads e
 // o card de período do Dashboard).
+//
+// Botão de menu (mobile): como é o primeiro elemento renderizado em toda página que tem Sidebar
+// (ver components/layout/Sidebar.tsx), é aqui — dentro do fluxo normal do <main>, não flutuando
+// por cima do conteúdo — que mora o gatilho que abre o drawer mobile da navegação. Estado
+// compartilhado via contexts/SidebarContext.tsx (Sidebar e PageHeader são irmãos no layout de
+// cada página, não pai/filho).
 export default function PageHeader({ title, subtitle, backHref, backLabel }: PageHeaderProps) {
+  const { openMobile } = useSidebar()
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-2.5">
       {backHref && (
@@ -37,10 +46,22 @@ export default function PageHeader({ title, subtitle, backHref, backLabel }: Pag
           {backLabel}
         </Link>
       )}
-      <h1 className="text-base font-semibold text-gray-900 dark:text-white truncate leading-tight">{title}</h1>
-      {subtitle && (
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{subtitle}</p>
-      )}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={openMobile}
+          aria-label="Abrir menu"
+          className="md:hidden -ml-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-base font-semibold text-gray-900 dark:text-white truncate leading-tight">{title}</h1>
+          {subtitle && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{subtitle}</p>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

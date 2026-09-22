@@ -433,7 +433,7 @@ export default function DashboardPage() {
       <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <main className="flex-1 overflow-y-auto pt-3 px-6 pb-6">
+        <main className="flex-1 overflow-y-auto pt-3 px-4 md:px-6 pb-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

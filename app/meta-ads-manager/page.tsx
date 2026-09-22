@@ -897,7 +897,7 @@ export default function MetaBusinessPage() {
             abas/tabela logo abaixo (flex-1 min-h-0) — a tabela se adapta à altura real da
             primeira dobra em vez de uma altura fixa em vh/calc que sobra ou falta espaço
             dependendo do monitor. */}
-        <main className="flex-1 overflow-y-auto pt-3 px-6 flex flex-col">
+        <main className="flex-1 overflow-y-auto pt-3 px-4 md:px-6 flex flex-col">
           {/* Só opacity na animação de entrada — sem "y" (que o Framer Motion resolve como
               transform: translateY(...) e mantém como estilo inline mesmo depois da animação
               terminar). Esse motion.div é ancestral de toda a área rolável da tabela, e um
@@ -1020,7 +1020,7 @@ export default function MetaBusinessPage() {
                 fixa (natural do conteúdo). */}
             <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex-1 min-h-0 flex flex-col">
               <div className="border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                <nav className="flex items-center space-x-8 px-6">
+                <nav className="flex items-center space-x-4 sm:space-x-8 px-4 sm:px-6 overflow-x-auto">
                   {[
                     { id: 'accounts', label: 'Contas', icon: AccountsIcon, selectedCount: 0, onClearSelection: undefined as (() => void) | undefined },
                     {
@@ -1057,7 +1057,7 @@ export default function MetaBusinessPage() {
                       <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
-                        className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors ${
+                        className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 whitespace-nowrap flex-shrink-0 transition-colors ${
                           activeTab === tab.id || hasSelection
                             ? 'border-brand-500 text-gray-900 dark:text-white'
                             : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'

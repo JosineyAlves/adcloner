@@ -125,13 +125,13 @@ export default function ColumnsCustomizationModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl h-[600px] flex flex-col">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl h-[85vh] max-h-[600px] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between gap-3 p-4 sm:p-6 border-b border-gray-200 flex-wrap">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Colunas</h2>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             <button
               onClick={handleSelectAll}
               className="px-3 py-1.5 text-sm bg-transparent text-gray-700 border border-gray-300 rounded-ds-md hover:bg-gray-50 transition-colors"
@@ -154,9 +154,9 @@ export default function ColumnsCustomizationModal({
         </div>
 
         {/* Content */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
           {/* Left Panel - Available Metrics */}
-          <div className="w-1/2 border-r border-gray-200 flex flex-col">
+          <div className="w-full md:w-1/2 border-b md:border-b-0 md:border-r border-gray-200 flex flex-col min-h-0 flex-1">
             <div className="p-4 border-b border-gray-200">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -200,7 +200,7 @@ export default function ColumnsCustomizationModal({
           </div>
 
           {/* Right Panel - Selected Metrics */}
-          <div className="w-1/2 flex flex-col">
+          <div className="w-full md:w-1/2 flex flex-col min-h-0 flex-1">
             <div className="p-4 border-b border-gray-200">
               <h3 className="font-medium text-gray-900">Colunas selecionadas</h3>
               <p className="text-sm text-gray-600 mt-1">
@@ -267,7 +267,7 @@ export default function ColumnsCustomizationModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
+        <div className="flex items-center justify-end gap-3 p-4 sm:p-6 border-t border-gray-200">
           <button
             onClick={handleCancel}
             className="px-4 py-2 text-gray-700 border border-gray-300 rounded-ds-md hover:bg-gray-50 transition-colors"
