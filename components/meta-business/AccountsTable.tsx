@@ -217,13 +217,13 @@ export default function AccountsTable({
                   sua própria camada de GPU, e como o navegador atualiza cada camada de forma um
                   pouco independente a cada frame, dava pra perceber Status/Conta desalinhando 1-2px
                   durante o scroll, corrigindo sozinho ao parar. */}
-              <th className="sticky left-0 z-20 w-24 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
+              <th className="md:sticky md:left-0 z-20 w-24 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
                 Status
               </th>
               <th
                 onClick={() => handleSort('name')}
                 title={sortConfig?.key === 'name' ? `Ordenado ${sortConfig.direction === 'asc' ? 'A→Z' : 'Z→A'} — clique para inverter` : 'Clique para ordenar'}
-                className={`sticky left-24 z-20 w-[240px] bg-gray-50 dark:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.4)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.4)] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap align-bottom cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 ${sortConfig?.key === 'name' ? 'text-brand-600 dark:text-brand-400 font-semibold' : 'text-gray-500 dark:text-gray-400'}`}
+                className={`md:sticky md:left-24 z-20 w-[240px] bg-gray-50 dark:bg-gray-700 md:shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.4)] md:dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.4)] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap align-bottom cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 ${sortConfig?.key === 'name' ? 'text-brand-600 dark:text-brand-400 font-semibold' : 'text-gray-500 dark:text-gray-400'}`}
               >
                 Conta
               </th>
@@ -253,10 +253,10 @@ export default function AccountsTable({
                 transition={{ duration: 0.3, delay: index * 0.05 }}
                 className="group hover:bg-gray-50 dark:hover:bg-gray-700"
               >
-                <td className="sticky left-0 z-10 w-24 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-3">
+                <td className="md:sticky md:left-0 z-10 w-24 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-3">
                   {getAccountStatusBadge(account.account_status)}
                 </td>
-                <td className="sticky left-24 z-10 w-[240px] bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-3">
+                <td className="md:sticky md:left-24 z-10 w-[240px] bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 md:shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] md:dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-3">
                   <div className="text-sm font-medium text-gray-900 dark:text-white truncate" title={account.name}>
                     {account.name}
                   </div>
@@ -275,8 +275,8 @@ export default function AccountsTable({
           </tbody>
           <tfoot>
             <tr>
-              <td className="sticky left-0 bottom-0 z-20 w-24 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-6 py-3"></td>
-              <td className="sticky left-24 bottom-0 z-20 w-[240px] bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">
+              <td className="sticky bottom-0 z-20 md:left-0 w-24 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-6 py-3"></td>
+              <td className="sticky bottom-0 z-20 md:left-24 w-[240px] bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 md:shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] md:dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">
                 {accounts.length} {accounts.length === 1 ? 'CONTA' : 'CONTAS'}
               </td>
               {showMetrics && visibleMetrics.map((metric, index) => (

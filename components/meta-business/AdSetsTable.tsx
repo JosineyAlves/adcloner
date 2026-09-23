@@ -221,18 +221,18 @@ export default function AdSetsTable({
           <table className="min-w-full">
             <thead className="sticky top-0 z-30 bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="sticky left-0 z-20 w-12 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left align-bottom">
+                <th className="md:sticky md:left-0 z-20 w-12 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left align-bottom">
                   <input
                     type="checkbox"
                     disabled
                     className="rounded border-gray-300 text-brand-500 focus:ring-brand-500"
                   />
                 </th>
-                <th className="sticky left-12 z-20 w-24 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
+                <th className="md:sticky md:left-12 z-20 w-24 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
                   Status
                 </th>
                 <th
-                  className="sticky left-[144px] z-20 bg-gray-50 dark:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.4)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.4)] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom"
+                  className="md:sticky md:left-[144px] z-20 bg-gray-50 dark:bg-gray-700 md:shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.4)] md:dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.4)] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom"
                   style={{ width: nameColWidth, minWidth: nameColWidth, maxWidth: nameColWidth }}
                 >
                   Conjunto
@@ -310,7 +310,7 @@ export default function AdSetsTable({
         <table className="min-w-full">
           <thead className="sticky top-0 z-30 bg-gray-50 dark:bg-gray-700">
             <tr>
-              <th className="sticky left-0 z-20 w-12 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left align-bottom">
+              <th className="md:sticky md:left-0 z-20 w-12 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left align-bottom">
                 <input
                   type="checkbox"
                   checked={selectedAdSets.size === adSets.length && adSets.length > 0}
@@ -318,13 +318,13 @@ export default function AdSetsTable({
                   className="rounded border-gray-300 text-brand-500 focus:ring-brand-500"
                 />
               </th>
-              <th className="sticky left-12 z-20 w-24 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
+              <th className="md:sticky md:left-12 z-20 w-24 bg-gray-50 dark:bg-gray-700 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom">
                 Status
               </th>
               <th
                 onClick={() => handleSort('name')}
                 title={sortConfig?.key === 'name' ? `Ordenado ${sortConfig.direction === 'asc' ? 'A→Z' : 'Z→A'} — clique para inverter` : 'Clique para ordenar'}
-                className={`sticky left-[144px] z-20 bg-gray-50 dark:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.4)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.4)] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap align-bottom cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 ${sortConfig?.key === 'name' ? 'text-brand-600 dark:text-brand-400 font-semibold' : 'text-gray-500 dark:text-gray-400'}`}
+                className={`md:sticky md:left-[144px] z-20 bg-gray-50 dark:bg-gray-700 md:shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.4)] md:dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.4)] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap align-bottom cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 ${sortConfig?.key === 'name' ? 'text-brand-600 dark:text-brand-400 font-semibold' : 'text-gray-500 dark:text-gray-400'}`}
                 style={{ width: nameColWidth, minWidth: nameColWidth, maxWidth: nameColWidth }}
               >
                 Conjunto
@@ -374,7 +374,7 @@ export default function AdSetsTable({
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {sortedAdSets.map((adSet) => (
               <tr key={adSet.id} className="group hover:bg-gray-50 dark:hover:bg-gray-700">
-                <td className="sticky left-0 z-10 w-12 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-3">
+                <td className="md:sticky md:left-0 z-10 w-12 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-3">
                   <input
                     type="checkbox"
                     checked={selectedAdSets.has(adSet.id)}
@@ -382,7 +382,7 @@ export default function AdSetsTable({
                     className="rounded border-gray-300 text-brand-500 focus:ring-brand-500"
                   />
                 </td>
-                <td className="sticky left-12 z-10 w-24 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-3">
+                <td className="md:sticky md:left-12 z-10 w-24 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-3">
                   <StatusToggle
                     id={adSet.id}
                     status={adSet.status}
@@ -392,7 +392,7 @@ export default function AdSetsTable({
                     size="md"
                   />
                 </td>
-                <td className="sticky left-[144px] z-10 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-3" style={{ width: nameColWidth, minWidth: nameColWidth, maxWidth: nameColWidth }}>
+                <td className="md:sticky md:left-[144px] z-10 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 md:shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] md:dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-3" style={{ width: nameColWidth, minWidth: nameColWidth, maxWidth: nameColWidth }}>
                   <NameEditor
                     id={adSet.id}
                     currentName={adSet.name}
@@ -482,9 +482,9 @@ export default function AdSetsTable({
           </tbody>
           <tfoot>
             <tr>
-              <td className="sticky left-0 bottom-0 z-20 w-12 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-6 py-3"></td>
-              <td className="sticky left-12 bottom-0 z-20 w-24 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-6 py-3"></td>
-              <td className="sticky left-[144px] bottom-0 z-20 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap" style={{ width: nameColWidth, minWidth: nameColWidth, maxWidth: nameColWidth }}>
+              <td className="sticky bottom-0 z-20 md:left-0 w-12 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-6 py-3"></td>
+              <td className="sticky bottom-0 z-20 md:left-12 w-24 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-6 py-3"></td>
+              <td className="sticky bottom-0 z-20 md:left-[144px] bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 md:shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] md:dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap" style={{ width: nameColWidth, minWidth: nameColWidth, maxWidth: nameColWidth }}>
                 {adSets.length} {adSets.length === 1 ? 'CONJUNTO' : 'CONJUNTOS'}
               </td>
               <td className="sticky bottom-0 z-10 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap" style={{ width: budgetColWidth, minWidth: budgetColWidth, maxWidth: budgetColWidth }}>
