@@ -119,8 +119,15 @@ export default function Sidebar() {
   // Conteúdo de navegação compartilhado entre a sidebar desktop (colapsável) e o drawer mobile
   // (sempre "expandida", já que mobile não tem o conceito de collapse). `onNavigate` — quando
   // passado — é chamado ao clicar num link/botão de navegação (fecha o drawer no mobile).
+  // overflow-y-auto só no drawer mobile (quando há onNavigate): no desktop, aplicar overflow
+  // em só um eixo (overflow-y) faz o navegador forçar overflow-x pra "auto" também (é assim que
+  // a spec de CSS Overflow resolve visible + não-visible combinados) — e isso criava uma barra de
+  // rolagem horizontal indesejada na sidebar recolhida, porque os tooltips de hover (abaixo,
+  // "absolute left-full", sempre no DOM mesmo com opacity-0) passam a contar como conteúdo que
+  // "estoura" a largura da nav. O drawer mobile nunca renderiza esses tooltips (collapsedStyle
+  // sempre false lá), então não tem esse risco — só ele precisa do scroll vertical mesmo.
   const renderNavLinks = (collapsedStyle: boolean, onNavigate?: () => void) => (
-    <nav className="flex-1 space-y-1 px-2.5 py-4 overflow-y-auto">
+    <nav className={`flex-1 space-y-1 px-2.5 py-4 ${onNavigate ? 'overflow-y-auto' : ''}`}>
       {navigation.map((item) => {
         const isActive = pathname === item.href
         return (
