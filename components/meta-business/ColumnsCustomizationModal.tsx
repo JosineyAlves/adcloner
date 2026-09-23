@@ -203,9 +203,6 @@ export default function ColumnsCustomizationModal({
           <div className="w-full md:w-1/2 flex flex-col min-h-0 flex-1">
             <div className="p-4 border-b border-gray-200">
               <h3 className="font-medium text-gray-900">Colunas selecionadas</h3>
-              <p className="text-sm text-gray-600 mt-1">
-                Arraste para reordenar as colunas
-              </p>
             </div>
             
             <div className="flex-1 overflow-y-auto p-4">
