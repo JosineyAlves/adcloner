@@ -165,7 +165,7 @@ export default function ColumnsCustomizationModal({
                   placeholder="Buscar por coluna"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-ds-md focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  className="w-full h-10 pl-10 pr-4 border border-gray-300 rounded-ds-md focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -202,7 +202,9 @@ export default function ColumnsCustomizationModal({
           {/* Right Panel - Selected Metrics */}
           <div className="w-full md:w-1/2 flex flex-col min-h-0 flex-1">
             <div className="p-4 border-b border-gray-200">
-              <h3 className="font-medium text-gray-900">Colunas selecionadas</h3>
+              <div className="h-10 flex items-center">
+                <h3 className="font-medium text-gray-900">Colunas selecionadas</h3>
+              </div>
             </div>
             
             <div className="flex-1 overflow-y-auto p-4">
