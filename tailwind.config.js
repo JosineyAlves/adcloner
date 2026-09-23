@@ -38,17 +38,24 @@ module.exports = {
           800: '#1e40af',
           900: '#1e3a8a',
         },
+        // Antes era um espelho exato do cinza padrão do Tailwind ("gray"), que tem um viés
+        // frio/azulado perceptível nos tons mais escuros — só ficou visível de fato quando o
+        // modo escuro (dark:bg-gray-900/800 etc., usado em toda a interface) passou a ser
+        // alcançável de verdade (ver contexts/ThemeContext.tsx). Trocado pela escala "neutral"
+        // do Tailwind — R=G=B em cada tom, sem matiz nenhum — pra tirar o azulado tanto no claro
+        // quanto no escuro sem precisar tocar nenhuma classe `gray-*`/`dark:gray-*` do resto do
+        // app (elas continuam existindo, só passam a apontar pra esses valores).
         gray: {
-          50: '#f9fafb',
-          100: '#f3f4f6',
-          200: '#e5e7eb',
-          300: '#d1d5db',
-          400: '#9ca3af',
-          500: '#6b7280',
-          600: '#4b5563',
-          700: '#374151',
-          800: '#1f2937',
-          900: '#111827',
+          50: '#fafafa',
+          100: '#f5f5f5',
+          200: '#e5e5e5',
+          300: '#d4d4d4',
+          400: '#a3a3a3',
+          500: '#737373',
+          600: '#525252',
+          700: '#404040',
+          800: '#262626',
+          900: '#171717',
         }
       },
       fontFamily: {
