@@ -4,7 +4,6 @@ import { ReactNode } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Menu } from 'lucide-react'
 import { useSidebar } from '@/contexts/SidebarContext'
-import ThemeToggle from './ThemeToggle'
 
 interface PageHeaderProps {
   title: string
@@ -33,9 +32,6 @@ interface PageHeaderProps {
 // por cima do conteúdo — que mora o gatilho que abre o drawer mobile da navegação. Estado
 // compartilhado via contexts/SidebarContext.tsx (Sidebar e PageHeader são irmãos no layout de
 // cada página, não pai/filho).
-//
-// Botão de tema (claro/escuro): mesmo raciocínio de lugar — o "bloco superior" de toda página,
-// ao lado do título. Ver contexts/ThemeContext.tsx e components/layout/ThemeToggle.tsx.
 export default function PageHeader({ title, subtitle, backHref, backLabel }: PageHeaderProps) {
   const { openMobile } = useSidebar()
 
@@ -65,7 +61,6 @@ export default function PageHeader({ title, subtitle, backHref, backLabel }: Pag
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{subtitle}</p>
           )}
         </div>
-        <ThemeToggle />
       </div>
     </div>
   )

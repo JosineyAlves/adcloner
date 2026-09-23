@@ -125,28 +125,28 @@ export default function ColumnsCustomizationModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl h-[85vh] max-h-[600px] flex flex-col">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl h-[85vh] max-h-[600px] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between gap-3 p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex-wrap">
+        <div className="flex items-center justify-between gap-3 p-4 sm:p-6 border-b border-gray-200 flex-wrap">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Colunas</h2>
+            <h2 className="text-xl font-semibold text-gray-900">Colunas</h2>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             <button
               onClick={handleSelectAll}
-              className="px-3 py-1.5 text-sm bg-transparent text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-ds-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              className="px-3 py-1.5 text-sm bg-transparent text-gray-700 border border-gray-300 rounded-ds-md hover:bg-gray-50 transition-colors"
             >
               Selecionar Todas
             </button>
             <button
               onClick={handleDeselectAll}
-              className="px-3 py-1.5 text-sm bg-transparent text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-ds-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              className="px-3 py-1.5 text-sm bg-transparent text-gray-700 border border-gray-300 rounded-ds-md hover:bg-gray-50 transition-colors"
             >
               Desmarcar Todas
             </button>
             <button
               onClick={onClose}
-              className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              className="text-gray-400 hover:text-gray-600 transition-colors"
             >
               <X className="w-6 h-6" />
             </button>
@@ -156,16 +156,16 @@ export default function ColumnsCustomizationModal({
         {/* Content */}
         <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
           {/* Left Panel - Available Metrics */}
-          <div className="w-full md:w-1/2 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 flex flex-col min-h-0 flex-1">
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="w-full md:w-1/2 border-b md:border-b-0 md:border-r border-gray-200 flex flex-col min-h-0 flex-1">
+            <div className="p-4 border-b border-gray-200">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="text"
                   placeholder="Buscar por coluna"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-ds-md focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white dark:bg-gray-900/40 text-gray-900 dark:text-gray-100"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-ds-md focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -175,7 +175,7 @@ export default function ColumnsCustomizationModal({
                 {filteredMetrics.map((metric) => (
                   <div
                     key={metric.id}
-                    className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                    className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
                     onClick={() => handleToggleMetric(metric.id)}
                   >
                     <div className="flex items-center justify-center w-5 h-5 mr-3">
@@ -184,14 +184,14 @@ export default function ColumnsCustomizationModal({
                           <Check className="w-3 h-3 text-black" />
                         </div>
                       ) : (
-                        <div className="w-5 h-5 border-2 border-gray-300 dark:border-gray-600 rounded transition-all duration-200 hover:border-brand-400"></div>
+                        <div className="w-5 h-5 border-2 border-gray-300 rounded transition-all duration-200 hover:border-brand-400"></div>
                       )}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center">
-                        <span className="font-medium text-gray-900 dark:text-white">{metric.label}</span>
+                        <span className="font-medium text-gray-900">{metric.label}</span>
                       </div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{metric.description}</p>
+                      <p className="text-sm text-gray-500 mt-1">{metric.description}</p>
                     </div>
                   </div>
                 ))}
@@ -201,9 +201,9 @@ export default function ColumnsCustomizationModal({
 
           {/* Right Panel - Selected Metrics */}
           <div className="w-full md:w-1/2 flex flex-col min-h-0 flex-1">
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="font-medium text-gray-900 dark:text-white">Colunas selecionadas</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <div className="p-4 border-b border-gray-200">
+              <h3 className="font-medium text-gray-900">Colunas selecionadas</h3>
+              <p className="text-sm text-gray-600 mt-1">
                 Arraste para reordenar as colunas
               </p>
             </div>
@@ -225,7 +225,7 @@ export default function ColumnsCustomizationModal({
                         ? 'bg-brand-100 border-2 border-brand-400 shadow-xl transform scale-105 rotate-1' 
                         : dragOverItem === metric.id
                         ? 'bg-brand-50 border-2 border-brand-300 shadow-lg transform scale-102'
-                        : 'bg-gray-50 dark:bg-gray-900/40 hover:bg-gray-100 dark:hover:bg-gray-700 border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-600'
+                        : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent hover:border-gray-200'
                       }
                       ${isDragging && draggedItem !== metric.id ? 'opacity-50' : 'opacity-100'}
                     `}
@@ -240,15 +240,15 @@ export default function ColumnsCustomizationModal({
                   >
                     <div className="flex items-center justify-center w-5 h-5 mr-3">
                       <GripVertical className={`w-4 h-4 transition-colors duration-200 ${
-                        draggedItem === metric.id ? 'text-brand-600 dark:text-brand-400' : 'text-gray-400 dark:text-gray-500'
+                        draggedItem === metric.id ? 'text-brand-600' : 'text-gray-400'
                       }`} />
                     </div>
                     <div className="flex items-center flex-1">
-                      <span className="font-medium text-gray-900 dark:text-white">{metric.label}</span>
+                      <span className="font-medium text-gray-900">{metric.label}</span>
                     </div>
                     <button
                       onClick={() => handleRemoveMetric(metric.id)}
-                      className="text-gray-400 dark:text-gray-500 hover:text-red-500 transition-colors ml-2 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+                      className="text-gray-400 hover:text-red-500 transition-colors ml-2 p-1 rounded hover:bg-red-50"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -256,7 +256,7 @@ export default function ColumnsCustomizationModal({
                 ))}
                 
                 {selectedMetricsConfig.length === 0 && (
-                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <div className="text-center py-8 text-gray-500">
                     <p>Nenhuma coluna selecionada</p>
                     <p className="text-sm mt-1">Selecione métricas do painel à esquerda</p>
                   </div>
@@ -267,10 +267,10 @@ export default function ColumnsCustomizationModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-4 sm:p-6 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-end gap-3 p-4 sm:p-6 border-t border-gray-200">
           <button
             onClick={handleCancel}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-ds-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-ds-md hover:bg-gray-50 transition-colors"
           >
             Cancelar
           </button>
