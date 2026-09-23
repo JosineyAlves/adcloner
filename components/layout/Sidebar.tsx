@@ -16,6 +16,7 @@ import {
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
 import { getInitials } from '@/lib/utils'
+import { readLocalCache, writeLocalCache, LOCAL_CACHE_KEYS } from '@/lib/local-storage-cache'
 import { useSidebar } from '@/contexts/SidebarContext'
 
 // Sidebar — elemento mais forte da identidade visual do vmetrics: fundo na cor de marca
@@ -70,7 +71,17 @@ export default function Sidebar() {
   // Nome/email de quem está logado, pro link "Minha Conta" abaixo (ver app/perfil/page.tsx) —
   // vem do auth.users do Supabase (sem tabela própria: usa user_metadata.full_name, o mesmo
   // campo que a página de perfil atualiza via supabase.auth.updateUser).
-  const [account, setAccount] = useState<{ name: string; email: string } | null>(null)
+  //
+  // Hidratado a partir do cache local (não de `null`): sem layout compartilhado por rota, a
+  // Sidebar inteira é desmontada e remontada a cada navegação entre páginas — sem isso, esse
+  // link sumia por um instante a cada troca de aba (o fetch no Supabase Auth é assíncrono, então
+  // toda remontagem passava por um frame com `account` nulo antes de reaparecer). Com o cache, o
+  // primeiro render já mostra o último nome conhecido; a busca abaixo só atualiza a tela (e o
+  // cache) se algo tiver mudado de verdade.
+  const [account, setAccount] = useState<{ name: string; email: string } | null>(() => {
+    const cached = readLocalCache<{ name: string; email: string }>(LOCAL_CACHE_KEYS.sidebarAccount)
+    return cached?.data ?? null
+  })
 
   useEffect(() => {
     let active = true
@@ -78,7 +89,9 @@ export default function Sidebar() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!active || !user) return
       const fullName = (user.user_metadata as { full_name?: string } | null)?.full_name?.trim()
-      setAccount({ name: fullName || user.email || 'Minha conta', email: user.email || '' })
+      const next = { name: fullName || user.email || 'Minha conta', email: user.email || '' }
+      setAccount(next)
+      writeLocalCache(LOCAL_CACHE_KEYS.sidebarAccount, next)
     })
     return () => {
       active = false

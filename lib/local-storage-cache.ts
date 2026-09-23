@@ -70,6 +70,12 @@ export const LOCAL_CACHE_KEYS = {
   // dias" numa tela deve valer para as outras também, em vez de cada uma guardar seu próprio
   // período independente. Ver app/dashboard/page.tsx e app/meta-business/page.tsx.
   sharedDateFilter: 'vmetrics:shared-date-filter:v1',
+  // Nome/email exibidos no link "Minha conta" da Sidebar (ver components/layout/Sidebar.tsx).
+  // Sem layout compartilhado por rota, a Sidebar é recriada do zero a cada navegação — sem esse
+  // cache, o link sumia (useState começa null) até a busca no Supabase Auth responder de novo,
+  // piscando a cada troca de aba. Com o cache, o primeiro render já mostra o último nome
+  // conhecido, e a busca em segundo plano só atualiza a tela se algo realmente mudou.
+  sidebarAccount: 'vmetrics:sidebar-account:v1',
 } as const
 
 // Quanto tempo o dado salvo é considerado "fresco" antes de forçar um refetch em primeiro plano.
