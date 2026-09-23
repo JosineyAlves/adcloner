@@ -152,7 +152,7 @@ export default function BudgetEditor({
 
   if (isEditing) {
     return (
-      <div className="flex items-center space-x-2 min-w-[160px] bg-white border border-blue-300 rounded-lg shadow-sm">
+      <div className="flex items-center space-x-2 min-w-[160px] bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-500 rounded-lg shadow-sm">
         <div className="relative flex-1">
           <input
             ref={inputRef}
@@ -160,14 +160,14 @@ export default function BudgetEditor({
             value={budget}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            className="w-full px-3 py-2 text-sm border-0 rounded-lg focus:outline-none focus:ring-0"
+            className="w-full px-3 py-2 text-sm border-0 rounded-lg focus:outline-none focus:ring-0 bg-transparent text-gray-900 dark:text-gray-100"
             placeholder="0.00"
             disabled={isUpdating}
           />
         </div>
         
         <div className="flex items-center space-x-1 pr-2">
-          <span className="text-xs text-gray-500 font-medium">
+          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
             {budgetType === 'daily' ? 'Diário' : 'Total'}
           </span>
           

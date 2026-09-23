@@ -93,7 +93,7 @@ export default function NameEditor({
 
   if (isEditing) {
     return (
-      <div className="flex items-center space-x-1 w-full bg-white border border-blue-300 rounded-lg shadow-sm">
+      <div className="flex items-center space-x-1 w-full bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-500 rounded-lg shadow-sm">
         <input
           ref={inputRef}
           type="text"
@@ -101,7 +101,7 @@ export default function NameEditor({
           onChange={(e) => setName(e.target.value)}
           onKeyDown={handleKeyDown}
           maxLength={maxLength}
-          className="w-full px-2 py-1 text-sm border-0 rounded-lg focus:outline-none focus:ring-0 min-w-0"
+          className="w-full px-2 py-1 text-sm border-0 rounded-lg focus:outline-none focus:ring-0 min-w-0 bg-transparent text-gray-900 dark:text-gray-100"
           disabled={isUpdating}
         />
 
