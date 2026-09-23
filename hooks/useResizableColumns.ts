@@ -10,6 +10,29 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
 }
 
+// Mesmo breakpoint `md` (768px) do Tailwind usado em todo o resto da responsividade do app (ver
+// tailwind.config.js — default, sem override). Abaixo dele a largura arrastável não se aplica: a
+// alça de arrastar fica escondida (ColumnResizeHandle.tsx) e a largura da coluna volta a ser
+// sempre a pré-definida (fallbackWidth) em vez da customizada salva em localStorage — arrastar
+// pra redimensionar não é uma interação de toque confiável, então no mobile o ajuste é sempre
+// automático/pré-definido, nunca manual.
+const MOBILE_BREAKPOINT_QUERY = '(max-width: 767px)'
+
+function useIsMobileViewport(): boolean {
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return
+    const mql = window.matchMedia(MOBILE_BREAKPOINT_QUERY)
+    setIsMobile(mql.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mql.addEventListener('change', handler)
+    return () => mql.removeEventListener('change', handler)
+  }, [])
+
+  return isMobile
+}
+
 // Canvas offscreen reaproveitado só pra medir texto (Canvas2D.measureText) — muito mais barato do
 // que montar/desmontar um elemento invisível no DOM pra descobrir a largura real de uma string.
 // É uma estimativa (não usa a fonte computada de cada célula, só uma aproximação fixa), suficiente
@@ -43,6 +66,7 @@ function measureTextWidth(text: string, font: string = DEFAULT_FONT): number {
  * alça — ver ColumnResizeHandle.tsx) que não recalcula sozinho a cada atualização de dados.
  */
 export function useResizableColumns(tableKey: string, defaultWidth = 200) {
+  const isMobile = useIsMobileViewport()
   const [widths, setWidths] = useState<Record<string, number>>({})
   const [resizingId, setResizingId] = useState<string | null>(null)
   const hydratedRef = useRef<Set<string>>(new Set())
@@ -75,8 +99,9 @@ export function useResizableColumns(tableKey: string, defaultWidth = 200) {
 
   const getWidth = useCallback((id: string, fallbackWidth: number = defaultWidth) => {
     ensureHydrated(id)
+    if (isMobile) return fallbackWidth
     return widths[id] ?? fallbackWidth
-  }, [widths, ensureHydrated, defaultWidth])
+  }, [widths, ensureHydrated, defaultWidth, isMobile])
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     const drag = dragRef.current
