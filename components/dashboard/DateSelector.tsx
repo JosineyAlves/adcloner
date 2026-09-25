@@ -57,12 +57,14 @@ const FACEBOOK_DATE_PRESETS: DatePreset[] = [
     description: 'Últimos 30 dias'
   },
   {
-    // 'this_week'/'last_week' (sem sufixo) NÃO são valores válidos de `date_preset` na Graph API
-    // — os enums oficiais exigem o sufixo de convenção de semana (_mon_sun ou _sun_sat). Usamos
-    // mon_sun (segunda a domingo) por bater com a descrição já usada aqui.
-    value: 'this_week_mon_sun',
+    // 'this_week_mon_sun' NÃO é um valor válido de `date_preset` na Graph API — só existe pra
+    // semanas JÁ FECHADAS (ver 'last_week_mon_sun' abaixo, que É válido). Pra semana atual a Meta
+    // só oferece até hoje (não dá pra "fechar" a semana com dias que ainda não aconteceram):
+    // os únicos valores aceitos são 'this_week_mon_today' e 'this_week_sun_today'. Usar o sufixo
+    // errado aqui quebrava esse filtro com erro (#100) da Graph API.
+    value: 'this_week_mon_today',
     label: 'Esta semana',
-    description: 'De segunda a domingo da semana atual'
+    description: 'De segunda-feira até hoje'
   },
   {
     value: 'last_week_mon_sun',
