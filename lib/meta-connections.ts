@@ -33,7 +33,6 @@ export interface ConnectionSummary {
   createdAt: string
   businessCount: number
   adAccountCount: number
-  restrictedAccountCount: number
 }
 
 export interface AdAccountSummary {
@@ -261,16 +260,6 @@ export async function listConnections(userId: string): Promise<ConnectionSummary
       .select('id', { count: 'exact', head: true })
       .eq('connection_id', conn.id)
 
-    // Contas com account_status diferente de 1 (Ativa) contam como "restrita" — mesma regra
-    // usada em getMetaStatusLabel() na tela de detalhe do perfil. null (ainda não descoberto por
-    // nenhuma sincronização) não entra na contagem.
-    const { count: restrictedAccountCount } = await supabase
-      .from('meta_ad_accounts')
-      .select('id', { count: 'exact', head: true })
-      .eq('connection_id', conn.id)
-      .not('account_status', 'is', null)
-      .neq('account_status', 1)
-
     // O fluxo de "Login para Empresas" (Business Login for System Users, usado por
     // ConnectFacebookModal) não devolve um nome de usuário de verdade — a conexão fica salva só
     // com o ID numérico do system user. Nesses casos, usa o nome do Business Manager associado
@@ -298,7 +287,6 @@ export async function listConnections(userId: string): Promise<ConnectionSummary
       createdAt: conn.created_at,
       businessCount: businessCount ?? 0,
       adAccountCount: adAccountCount ?? 0,
-      restrictedAccountCount: restrictedAccountCount ?? 0,
     })
   }
 

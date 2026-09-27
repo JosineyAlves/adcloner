@@ -19,7 +19,6 @@ interface ConnectionSummary {
   createdAt: string
   businessCount: number
   adAccountCount: number
-  restrictedAccountCount: number
 }
 
 // Tela "Integrações" — reorganizada no estilo "Central de Contas" (perfis do Meta como cards
@@ -255,11 +254,6 @@ export default function MetaAccountsPage() {
                                       : conn.status === 'revoked'
                                       ? 'Desconectado'
                                       : 'Erro ao atualizar'}
-                                  </span>
-                                )}
-                                {conn.restrictedAccountCount > 0 && (
-                                  <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded flex-shrink-0">
-                                    {conn.restrictedAccountCount} restrita{conn.restrictedAccountCount === 1 ? '' : 's'}
                                   </span>
                                 )}
                               </div>
