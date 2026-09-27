@@ -136,12 +136,22 @@ export async function discoverBusinessStructure(connectionId: string, accessToke
   // "Contas sem Business Manager").
   const accountIdsWithBusiness = new Set<string>()
 
+  // Todo meta_account_id e meta_business_id vistos NESTA descoberta (BM + pessoais) — usado no
+  // final da função pra reconciliar (deletar) linhas antigas que não apareceram mais. Sem isso,
+  // discoverBusinessStructure só fazia upsert: uma conta/BM removido do lado da Meta (ex.: o
+  // usuário desvinculou uma conta de anúncio de um Business Manager) ficava presa pra sempre em
+  // meta_ad_accounts/meta_businesses, mesmo depois de reconectar ou usar o botão "Atualizar" —
+  // bug relatado pelo usuário (BM com 3 contas removidas continuava mostrando 6 no vmetrics).
+  const seenAccountIds = new Set<string>()
+  const seenBusinessIds = new Set<string>()
+
   // 1) Business Managers visíveis a este token
   const businesses = await graphGet('/me/businesses', accessToken, {
     fields: 'id,name,verification_status',
   })
 
   for (const biz of businesses.data ?? []) {
+    seenBusinessIds.add(biz.id)
     const { data: businessRow, error: businessError } = await supabase
       .from('meta_businesses')
       .upsert(
@@ -167,14 +177,22 @@ export async function discoverBusinessStructure(connectionId: string, accessToke
     const owned = await graphGet(`/${biz.id}/owned_ad_accounts`, accessToken, {
       fields: 'account_id,name,currency,timezone_name,account_status,amount_spent,balance,spend_cap',
     })
-    for (const acc of owned.data ?? []) accountIdsWithBusiness.add(acc.account_id ?? acc.id)
+    for (const acc of owned.data ?? []) {
+      const accId = acc.account_id ?? acc.id
+      accountIdsWithBusiness.add(accId)
+      seenAccountIds.add(accId)
+    }
     accountCount += await upsertAdAccounts(connectionId, businessRowId, owned.data ?? [], 'owned')
 
     // Contas de clientes que compartilharam acesso com esse BM
     const client = await graphGet(`/${biz.id}/client_ad_accounts`, accessToken, {
       fields: 'account_id,name,currency,timezone_name,account_status,amount_spent,balance,spend_cap',
     })
-    for (const acc of client.data ?? []) accountIdsWithBusiness.add(acc.account_id ?? acc.id)
+    for (const acc of client.data ?? []) {
+      const accId = acc.account_id ?? acc.id
+      accountIdsWithBusiness.add(accId)
+      seenAccountIds.add(accId)
+    }
     accountCount += await upsertAdAccounts(connectionId, businessRowId, client.data ?? [], 'client')
 
   }
@@ -189,9 +207,42 @@ export async function discoverBusinessStructure(connectionId: string, accessToke
     const trulyPersonal = (personalAccounts.data ?? []).filter(
       (acc: any) => !accountIdsWithBusiness.has(acc.account_id ?? acc.id)
     )
+    for (const acc of trulyPersonal) seenAccountIds.add(acc.account_id ?? acc.id)
     accountCount += await upsertAdAccounts(connectionId, null, trulyPersonal, 'owned')
   } catch (err: any) {
     console.error('Erro ao buscar contas pessoais:', err.message)
+  }
+
+  // 3) Reconciliação: remove contas e Business Managers desta conexão que NÃO apareceram nesta
+  // descoberta (o usuário removeu a conta/BM do lado da Meta, ou o token perdeu acesso a ela).
+  // Só roda quando a descoberta trouxe pelo menos 1 resultado — se vier vazio (ex.: uma falha
+  // parcial e silenciosa na Graph API), o guard evita um "not in ()" que apagaria TODAS as linhas
+  // da conexão por engano.
+  if (seenAccountIds.size > 0) {
+    const idList = Array.from(seenAccountIds)
+      .map((id) => `"${id.replace(/"/g, '\"')}"`)
+      .join(',')
+    const { error: staleAccountsError } = await supabase
+      .from('meta_ad_accounts')
+      .delete()
+      .eq('connection_id', connectionId)
+      .not('meta_account_id', 'in', `(${idList})`)
+    if (staleAccountsError) {
+      console.error('Erro ao remover contas de anúncio obsoletas:', staleAccountsError.message)
+    }
+  }
+  if (seenBusinessIds.size > 0) {
+    const idList = Array.from(seenBusinessIds)
+      .map((id) => `"${id.replace(/"/g, '\"')}"`)
+      .join(',')
+    const { error: staleBusinessesError } = await supabase
+      .from('meta_businesses')
+      .delete()
+      .eq('connection_id', connectionId)
+      .not('meta_business_id', 'in', `(${idList})`)
+    if (staleBusinessesError) {
+      console.error('Erro ao remover Business Managers obsoletos:', staleBusinessesError.message)
+    }
   }
 
   await supabase
