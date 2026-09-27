@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Search, Trash2, Loader2, Facebook, User } from 'lucide-react'
+import { Search, Trash2, Loader2, Facebook, User, RefreshCw } from 'lucide-react'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import Sidebar from '@/components/layout/Sidebar'
@@ -19,6 +19,7 @@ interface ConnectionSummary {
   createdAt: string
   businessCount: number
   adAccountCount: number
+  restrictedAccountCount: number
 }
 
 // Tela "Integrações" — reorganizada no estilo "Central de Contas" (perfis do Meta como cards
@@ -34,6 +35,7 @@ export default function MetaAccountsPage() {
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [removingId, setRemovingId] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
   const [search, setSearch] = useState('')
 
   const loadData = async () => {
@@ -83,6 +85,38 @@ export default function MetaAccountsPage() {
       toast.error('Erro ao remover perfil')
     } finally {
       setRemovingId(null)
+    }
+  }
+
+  // Botão "Atualizar" — repuxa Business Managers/contas de TODAS as conexões (sequencial no
+  // backend, ver lib/meta-connections.ts) pra trazer o account_status (Ativa/Restrita) mais
+  // recente da Meta e detectar perfis que desconectaram ou tiveram o token expirado desde a
+  // última sincronização, sem precisar remover e reconectar cada um manualmente.
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    try {
+      const res = await fetch('/api/meta/connections/refresh', { method: 'POST' })
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error || 'Erro ao atualizar')
+
+      const results = data.results as { id: string; status: string }[]
+      const needsReconnect = results.filter((r) => r.status === 'expired' || r.status === 'revoked').length
+      const failed = results.filter((r) => r.status === 'error').length
+
+      if (needsReconnect > 0) {
+        toast.error(
+          `${needsReconnect} perfil${needsReconnect === 1 ? '' : 's'} precisa${needsReconnect === 1 ? '' : 'm'} ser reconectado${needsReconnect === 1 ? '' : 's'}`
+        )
+      } else if (failed > 0) {
+        toast.error('Alguns perfis não puderam ser atualizados agora. Tente novamente em instantes.')
+      } else {
+        toast.success('Contas atualizadas com sucesso')
+      }
+    } catch (error) {
+      toast.error('Erro ao atualizar contas')
+    } finally {
+      setRefreshing(false)
+      loadData()
     }
   }
 
@@ -165,7 +199,18 @@ export default function MetaAccountsPage() {
               {/* Perfis conectados */}
               <section className="mb-10">
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Perfis</h2>
+                  <div className="flex items-center justify-between mb-4 gap-3">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Perfis</h2>
+                    <button
+                      onClick={handleRefresh}
+                      disabled={refreshing || connections.length === 0}
+                      title="Atualizar contas restritas, ativas e perfis desconectados"
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                      Atualizar
+                    </button>
+                  </div>
 
                   <div className="relative mb-4">
                     <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -199,9 +244,30 @@ export default function MetaAccountsPage() {
                               <p className="text-xs text-gray-500 dark:text-gray-400">
                                 {new Date(conn.createdAt).toLocaleString('pt-BR')}
                               </p>
-                              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                {conn.fbUserName || conn.fbUserId}
-                              </p>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                  {conn.fbUserName || conn.fbUserId}
+                                </p>
+                                {conn.status !== 'valid' && (
+                                  <span className="text-[10px] font-semibold uppercase tracking-wide bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded flex-shrink-0">
+                                    {conn.status === 'expired'
+                                      ? 'Token expirado'
+                                      : conn.status === 'revoked'
+                                      ? 'Desconectado'
+                                      : 'Erro ao atualizar'}
+                                  </span>
+                                )}
+                                {conn.restrictedAccountCount > 0 && (
+                                  <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded flex-shrink-0">
+                                    {conn.restrictedAccountCount} restrita{conn.restrictedAccountCount === 1 ? '' : 's'}
+                                  </span>
+                                )}
+                              </div>
+                              {(conn.status === 'expired' || conn.status === 'revoked') && (
+                                <p className="text-[11px] text-red-500 dark:text-red-400 mt-0.5">
+                                  Clique em "Conectar Perfil" para reconectar este perfil.
+                                </p>
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center gap-3 flex-shrink-0">

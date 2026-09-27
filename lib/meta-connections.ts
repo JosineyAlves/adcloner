@@ -33,6 +33,7 @@ export interface ConnectionSummary {
   createdAt: string
   businessCount: number
   adAccountCount: number
+  restrictedAccountCount: number
 }
 
 export interface AdAccountSummary {
@@ -62,6 +63,8 @@ async function graphGet(path: string, accessToken: string, params: Record<string
   if (data.error) {
     const error = new Error(data.error.message || 'Erro na Graph API')
     ;(error as any).code = data.error.code
+    ;(error as any).subcode = data.error.error_subcode
+    ;(error as any).type = data.error.type
     ;(error as any).fbtrace_id = data.error.fbtrace_id
     throw error
   }
@@ -258,6 +261,16 @@ export async function listConnections(userId: string): Promise<ConnectionSummary
       .select('id', { count: 'exact', head: true })
       .eq('connection_id', conn.id)
 
+    // Contas com account_status diferente de 1 (Ativa) contam como "restrita" — mesma regra
+    // usada em getMetaStatusLabel() na tela de detalhe do perfil. null (ainda não descoberto por
+    // nenhuma sincronização) não entra na contagem.
+    const { count: restrictedAccountCount } = await supabase
+      .from('meta_ad_accounts')
+      .select('id', { count: 'exact', head: true })
+      .eq('connection_id', conn.id)
+      .not('account_status', 'is', null)
+      .neq('account_status', 1)
+
     // O fluxo de "Login para Empresas" (Business Login for System Users, usado por
     // ConnectFacebookModal) não devolve um nome de usuário de verdade — a conexão fica salva só
     // com o ID numérico do system user. Nesses casos, usa o nome do Business Manager associado
@@ -285,6 +298,7 @@ export async function listConnections(userId: string): Promise<ConnectionSummary
       createdAt: conn.created_at,
       businessCount: businessCount ?? 0,
       adAccountCount: adAccountCount ?? 0,
+      restrictedAccountCount: restrictedAccountCount ?? 0,
     })
   }
 
@@ -423,6 +437,94 @@ export async function removeConnection(connectionId: string, userId: string): Pr
     .eq('user_id', userId)
   if (error) throw new Error(`Falha ao remover conexão: ${error.message}`)
   if (!count) throw new Error('Conexão não encontrada ou não pertence a este usuário.')
+}
+
+/**
+ * Classifica um erro vindo de discoverBusinessStructure num novo status de conexão. Só um erro
+ * de autenticação real (code 190 — token inválido/expirado/revogado, ver documentação oficial de
+ * erros da Graph API) deriva pra "precisa reconectar" (expired/revoked); qualquer outro erro
+ * (rate limit — códigos 4/17/32/613 — falha de rede, timeout, etc.) vira 'error', tratado na UI
+ * como falha temporária de atualização, sem pedir reconexão à toa.
+ */
+function classifyConnectionError(error: any): 'expired' | 'revoked' | 'error' {
+  if (error?.code !== 190) return 'error'
+  // Subcódigos da Meta para OAuthException (code 190): 458 = usuário revogou o app na conta dele,
+  // 460 = senha da conta foi trocada — nos dois casos foi o usuário quem encerrou a sessão.
+  if (error?.subcode === 458 || error?.subcode === 460) return 'revoked'
+  // 463 = token expirado, 467 = token inválido/malformado, e qualquer outro subcódigo de 190 cai
+  // aqui como padrão seguro (mesma ação pro usuário: reconectar).
+  return 'expired'
+}
+
+async function markConnectionStatus(
+  connectionId: string,
+  status: 'valid' | 'expired' | 'revoked' | 'error'
+): Promise<void> {
+  const supabase = getSupabaseAdmin()
+  await supabase
+    .from('meta_connections')
+    .update({ status, last_validated_at: new Date().toISOString() })
+    .eq('id', connectionId)
+}
+
+export interface RefreshConnectionResult {
+  id: string
+  status: 'valid' | 'expired' | 'revoked' | 'error'
+  businessCount?: number
+  accountCount?: number
+  error?: string
+}
+
+/**
+ * Reexecuta discoverBusinessStructure para UMA conexão já existente — usado pelo botão
+ * "Atualizar" em Integrações. Repuxa account_status (Ativa/Restrita) de todas as contas já
+ * conhecidas daquele perfil e detecta token morto (perfil desconectado, senha trocada, token
+ * expirado) em vez de só confiar no que foi salvo na última vez que o perfil foi conectado.
+ */
+export async function refreshConnection(connectionId: string, userId: string): Promise<RefreshConnectionResult> {
+  const supabase = getSupabaseAdmin()
+  const { data: conn, error: lookupError } = await supabase
+    .from('meta_connections')
+    .select('id, user_id')
+    .eq('id', connectionId)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (lookupError || !conn) {
+    return { id: connectionId, status: 'error', error: 'Conexão não encontrada ou não pertence a este usuário.' }
+  }
+
+  try {
+    const accessToken = await getDecryptedAccessToken(connectionId)
+    const discovery = await discoverBusinessStructure(connectionId, accessToken)
+    return { id: connectionId, status: 'valid', ...discovery }
+  } catch (error: any) {
+    const status = classifyConnectionError(error)
+    await markConnectionStatus(connectionId, status)
+    return { id: connectionId, status, error: error?.message || 'Erro desconhecido' }
+  }
+}
+
+/**
+ * Atualiza TODAS as conexões do usuário, uma de cada vez (sequencial, não em paralelo) — mesmo
+ * cuidado de rate limit já usado no resto do app (ver claude/rate-limit-mitigations.md):
+ * atualizar várias conexões ao mesmo tempo multiplicaria as chamadas simultâneas à Graph API por
+ * Business Manager de cada perfil conectado.
+ */
+export async function refreshAllConnections(userId: string): Promise<RefreshConnectionResult[]> {
+  const supabase = getSupabaseAdmin()
+  const { data: connections, error } = await supabase
+    .from('meta_connections')
+    .select('id')
+    .eq('user_id', userId)
+
+  if (error) throw new Error(`Falha ao listar conexões: ${error.message}`)
+
+  const results: RefreshConnectionResult[] = []
+  for (const conn of connections ?? []) {
+    results.push(await refreshConnection(conn.id, userId))
+  }
+  return results
 }
 
 /**
