@@ -219,6 +219,7 @@ export async function GET(request: NextRequest) {
         <!DOCTYPE html>
         <html>
         <head>
+          <meta charset="utf-8">
           <title>Erro de Conexão</title>
           <style>
             body { 
@@ -266,7 +267,7 @@ export async function GET(request: NextRequest) {
       `
       
       return new NextResponse(errorHtml, {
-        headers: { 'Content-Type': 'text/html' }
+        headers: { 'Content-Type': 'text/html; charset=utf-8' }
       })
     }
 
@@ -280,7 +281,7 @@ export async function GET(request: NextRequest) {
       if (!userId) {
         return new NextResponse(
           '<!DOCTYPE html><html><body><p>Sessão do vmetrics não encontrada. Faça login antes de conectar uma conta Meta.</p><script>if (window.opener) { window.opener.postMessage({ type: \'FACEBOOK_ERROR\', message: \'Sessão do vmetrics não encontrada.\' }, \'*\'); } setTimeout(() => window.close(), 3000);</script></body></html>',
-          { status: 401, headers: { 'Content-Type': 'text/html' } }
+          { status: 401, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
         )
       }
 
@@ -344,6 +345,7 @@ export async function GET(request: NextRequest) {
           <!DOCTYPE html>
           <html>
           <head>
+            <meta charset="utf-8">
             <title>Conexão Realizada</title>
             <style>
               body { 
@@ -392,7 +394,7 @@ export async function GET(request: NextRequest) {
         `
         
         const successResponse = new NextResponse(successHtml, {
-          headers: { 'Content-Type': 'text/html' }
+          headers: { 'Content-Type': 'text/html; charset=utf-8' }
         })
 
         // Salvar token em cookie seguro (httpOnly) — mesmo cookie que o handler POST seta,
@@ -415,6 +417,7 @@ export async function GET(request: NextRequest) {
           <!DOCTYPE html>
           <html>
           <head>
+            <meta charset="utf-8">
             <title>Erro na Troca de Token</title>
             <style>
               body { 
@@ -461,7 +464,7 @@ export async function GET(request: NextRequest) {
         `
         
         return new NextResponse(errorHtml, {
-          headers: { 'Content-Type': 'text/html' }
+          headers: { 'Content-Type': 'text/html; charset=utf-8' }
         })
       }
     }
@@ -471,6 +474,7 @@ export async function GET(request: NextRequest) {
       <!DOCTYPE html>
       <html>
       <head>
+        <meta charset="utf-8">
         <title>Erro de Conexão</title>
         <style>
           body { 
@@ -517,7 +521,7 @@ export async function GET(request: NextRequest) {
     `
     
     return new NextResponse(errorHtml, {
-      headers: { 'Content-Type': 'text/html' }
+      headers: { 'Content-Type': 'text/html; charset=utf-8' }
     })
 
   } catch (error: unknown) {
@@ -529,6 +533,7 @@ export async function GET(request: NextRequest) {
       <!DOCTYPE html>
       <html>
       <head>
+        <meta charset="utf-8">
         <title>Erro Interno</title>
         <style>
           body { 
@@ -575,7 +580,7 @@ export async function GET(request: NextRequest) {
     `
     
     return new NextResponse(errorHtml, {
-      headers: { 'Content-Type': 'text/html' }
+      headers: { 'Content-Type': 'text/html; charset=utf-8' }
     })
   }
 } 
