@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Loader2, Building2, Plus, ChevronRight, Search } from 'lucide-react'
+import { Loader2, Building2, Plus, ChevronRight, Search, Facebook } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Sidebar from '@/components/layout/Sidebar'
 import PageHeader from '@/components/layout/PageHeader'
@@ -44,6 +44,18 @@ interface BusinessGroup {
   accounts: AdAccountSummary[]
 }
 
+interface PageSummary {
+  id: string
+  name: string
+  category: string | null
+  fanCount: number | null
+  engagementText: string | null
+  pictureUrl: string | null
+  link: string | null
+  businessId: string | null
+  businessName: string | null
+}
+
 // account_status é um enum numérico da Graph API (ver seção 30 do doc do projeto): só 1 =
 // ACTIVE conta como "Ativa"; qualquer outro valor vira "Restrita".
 function getMetaStatusLabel(accountStatus: number | null): { label: string; className: string } {
@@ -69,6 +81,8 @@ export default function ConnectionBusinessesPage() {
 
   const [connection, setConnection] = useState<ConnectionSummary | null>(null)
   const [accounts, setAccounts] = useState<AdAccountSummary[]>([])
+  const [pages, setPages] = useState<PageSummary[]>([])
+  const [pagesLoading, setPagesLoading] = useState(true)
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   // Qual grupo de Business Manager está expandido no momento — só um por vez, igual a um
@@ -81,13 +95,16 @@ export default function ConnectionBusinessesPage() {
   const loadData = async () => {
     if (!connectionId) return
     setLoading(true)
+    setPagesLoading(true)
     try {
-      const [connectionsRes, accountsRes] = await Promise.all([
+      const [connectionsRes, accountsRes, pagesRes] = await Promise.all([
         fetch('/api/meta/connections'),
         fetch('/api/meta/accounts'),
+        fetch(`/api/meta/pages?connectionId=${connectionId}`),
       ])
       const connectionsData = await connectionsRes.json()
       const accountsData = await accountsRes.json()
+      const pagesData = await pagesRes.json()
 
       if (connectionsData.success) {
         const found = (connectionsData.connections as ConnectionSummary[]).find((c) => c.id === connectionId)
@@ -99,11 +116,13 @@ export default function ConnectionBusinessesPage() {
         )
         setAccounts(scoped)
       }
+      if (pagesData.success) setPages(pagesData.pages)
     } catch (error) {
       console.error('Erro ao carregar dados do perfil:', error)
       toast.error('Erro ao carregar Business Managers')
     } finally {
       setLoading(false)
+      setPagesLoading(false)
     }
   }
 
@@ -221,7 +240,9 @@ export default function ConnectionBusinessesPage() {
                 Perfil não encontrado. Ele pode ter sido removido.
               </p>
             </div>
-          ) : accounts.length === 0 ? (
+          ) : (
+            <>
+            {accounts.length === 0 ? (
             <div className="border border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-10 text-center">
               <Building2 className="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
               <p className="text-gray-500 dark:text-gray-400 mb-4">
@@ -235,7 +256,7 @@ export default function ConnectionBusinessesPage() {
                 Reconectar perfil
               </button>
             </div>
-          ) : (
+            ) : (
             <section>
               <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">
                 Business Managers
@@ -395,6 +416,64 @@ export default function ConnectionBusinessesPage() {
                 })}
               </div>
             </section>
+            )}
+
+            {/* Páginas do Facebook — funcionalidade real por trás de pages_show_list (listar) e
+                pages_read_engagement (fan_count/engagement, só vêm preenchidos com essa
+                permissão concedida). Ver claude/atualizacao-portfolio-app-review-set2026.md. */}
+            <section className="mt-8">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">
+                Páginas do Facebook
+              </h2>
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                {pagesLoading ? (
+                  <div className="flex items-center justify-center py-10 text-gray-400">
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                    Carregando Páginas...
+                  </div>
+                ) : pages.length === 0 ? (
+                  <p className="text-sm text-gray-400 dark:text-gray-500 py-8 text-center">
+                    Nenhuma Página do Facebook encontrada para este perfil.
+                  </p>
+                ) : (
+                  <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                    {pages.map((page) => (
+                      <div key={page.id} className="flex items-center gap-3 px-4 py-3">
+                        {page.pictureUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={page.pictureUrl}
+                            alt={page.name}
+                            className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                            <Facebook className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {page.name}
+                          </div>
+                          <div className="text-xs text-gray-400 truncate">
+                            {page.category || 'Página'}
+                            {page.businessName ? ` · ${page.businessName}` : ''}
+                            {page.engagementText ? ` · ${page.engagementText}` : ''}
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {page.fanCount !== null ? page.fanCount.toLocaleString('pt-BR') : '—'}
+                          </div>
+                          <div className="text-[11px] text-gray-400">curtidas</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+            </>
           )}
           </motion.div>
         </main>

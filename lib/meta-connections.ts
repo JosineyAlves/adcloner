@@ -49,6 +49,18 @@ export interface AdAccountSummary {
   syncEnabled: boolean
 }
 
+export interface PageSummary {
+  id: string
+  name: string
+  category: string | null
+  fanCount: number | null
+  engagementText: string | null
+  pictureUrl: string | null
+  link: string | null
+  businessId: string | null
+  businessName: string | null
+}
+
 async function graphGet(path: string, accessToken: string, params: Record<string, string> = {}) {
   const url = new URL(`${GRAPH_BASE_URL}${path}`)
   url.searchParams.set('access_token', accessToken)
@@ -389,6 +401,92 @@ export async function listAdAccounts(
     connectionFbUserName: row.meta_connections?.fb_user_name ?? null,
     syncEnabled: row.sync_enabled,
   }))
+}
+
+// Campos de Página que exigem pages_read_engagement (fan_count, engagement) além do
+// pages_show_list básico (listar a Página em si) — ver referência oficial da Meta em
+// claude/meta-api-reference.md.
+const PAGE_FIELDS = 'id,name,category,fan_count,engagement,picture{url},link'
+
+function mapGraphPage(
+  page: any,
+  businessId: string | null,
+  businessName: string | null
+): PageSummary {
+  return {
+    id: page.id,
+    name: page.name ?? page.id,
+    category: page.category ?? null,
+    fanCount: typeof page.fan_count === 'number' ? page.fan_count : null,
+    engagementText: page.engagement?.social_sentence ?? null,
+    pictureUrl: page.picture?.data?.url ?? null,
+    link: page.link ?? null,
+    businessId,
+    businessName,
+  }
+}
+
+/**
+ * Lista as Páginas do Facebook visíveis a uma conexão — funcionalidade real por trás das
+ * permissões pages_show_list (listar a Página) e pages_read_engagement (fan_count/engagement,
+ * campos que só vêm preenchidos com essa permissão concedida). Busca ao vivo na Graph API a cada
+ * chamada, sem persistir em Supabase — mesmo padrão já usado pelo resto do app pra dados do Meta
+ * (ver claude/estado-integracao-facebook.md, seção do cache de TTL removido): é uma lista
+ * pequena, sem necessidade de cache.
+ *
+ * Busca em duas frentes, iguais ao padrão já usado para contas de anúncio (owned_ad_accounts/
+ * client_ad_accounts): Páginas de cada Business Manager conhecido da conexão
+ * (owned_pages/client_pages) e Páginas ligadas direto ao perfil sem BM (/me/accounts).
+ */
+export async function listPagesForConnection(connectionId: string, userId: string): Promise<PageSummary[]> {
+  const supabase = getSupabaseAdmin()
+
+  const { data: conn, error: connError } = await supabase
+    .from('meta_connections')
+    .select('id, user_id')
+    .eq('id', connectionId)
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (connError || !conn) throw new Error('Conexão não encontrada ou não pertence a este usuário.')
+
+  const accessToken = await getDecryptedAccessToken(connectionId)
+
+  const { data: businesses } = await supabase
+    .from('meta_businesses')
+    .select('meta_business_id, name')
+    .eq('connection_id', connectionId)
+
+  const pages = new Map<string, PageSummary>()
+
+  for (const biz of businesses ?? []) {
+    try {
+      const owned = await graphGet(`/${biz.meta_business_id}/owned_pages`, accessToken, { fields: PAGE_FIELDS })
+      for (const p of owned.data ?? []) pages.set(p.id, mapGraphPage(p, biz.meta_business_id, biz.name))
+    } catch (err: any) {
+      console.error('Erro ao buscar owned_pages de', biz.meta_business_id, err.message)
+    }
+    try {
+      const client = await graphGet(`/${biz.meta_business_id}/client_pages`, accessToken, { fields: PAGE_FIELDS })
+      for (const p of client.data ?? []) {
+        if (!pages.has(p.id)) pages.set(p.id, mapGraphPage(p, biz.meta_business_id, biz.name))
+      }
+    } catch (err: any) {
+      console.error('Erro ao buscar client_pages de', biz.meta_business_id, err.message)
+    }
+  }
+
+  // Páginas ligadas direto ao perfil (sem Business Manager) — mesmo raciocínio do passo de
+  // contas de anúncio pessoais em discoverBusinessStructure.
+  try {
+    const personal = await graphGet('/me/accounts', accessToken, { fields: PAGE_FIELDS })
+    for (const p of personal.data ?? []) {
+      if (!pages.has(p.id)) pages.set(p.id, mapGraphPage(p, null, null))
+    }
+  } catch (err: any) {
+    console.error('Erro ao buscar páginas pessoais (/me/accounts):', err.message)
+  }
+
+  return Array.from(pages.values())
 }
 
 /** Uso interno futuro (worker de sync) — obtém o token em claro de uma conexão. */
