@@ -356,6 +356,23 @@ export const ALL_METRICS: MetricConfig[] = [
     visible: false,
     order: 32,
     category: 'video'
+  },
+
+  // === LANCE ===
+  // Não é uma métrica da Insights API — vem do próprio objeto do conjunto de anúncios
+  // (bid_amount, já buscado em app/api/meta-business/adsets/route.ts) e é editável (célula com
+  // BidEditor em vez de texto formatado — ver o caso especial pra 'bid_amount' em
+  // components/meta-business/AdSetsTable.tsx). Fica de fora, opt-in (visible: false, fora de
+  // DEFAULT_METRIC_IDS): antes era coluna fixa sempre visível, virou selecionável como qualquer
+  // outra métrica a pedido do usuário.
+  {
+    id: 'bid_amount',
+    label: 'Limite de Lance',
+    description: 'Limite de lance editável do conjunto (lance manual — Cost Cap/Bid Cap). Automático/ROAS mínimo não são editáveis.',
+    type: 'currency',
+    visible: false,
+    order: 33,
+    category: 'cost'
   }
 ]
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ListChecks, Play, Pause, DollarSign, Filter } from 'lucide-react'
+import { ListChecks, CheckSquare, XSquare, PenSquare, Filter } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 interface BulkActionsMenuProps {
@@ -77,14 +77,14 @@ export default function BulkActionsMenu({
             onClick={() => { onActivate(); setMenuOpen(false) }}
             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
-            <Play className={iconClass} />
+            <CheckSquare className={iconClass} />
             Ativar selecionados
           </button>
           <button
             onClick={() => { onDeactivate(); setMenuOpen(false) }}
             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
-            <Pause className={iconClass} />
+            <XSquare className={iconClass} />
             Desativar selecionados
           </button>
           {onBulkBidApply && (
@@ -92,7 +92,7 @@ export default function BulkActionsMenu({
               onClick={() => { setMenuOpen(false); setBidPopoverOpen(true) }}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
             >
-              <DollarSign className={iconClass} />
+              <PenSquare className={iconClass} />
               Alterar limite de lance
             </button>
           )}
