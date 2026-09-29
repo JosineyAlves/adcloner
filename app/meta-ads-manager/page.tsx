@@ -28,6 +28,8 @@ import CampaignsTable from '@/components/meta-business/CampaignsTable'
 import AdSetsTable from '@/components/meta-business/AdSetsTable'
 import AdsTable from '@/components/meta-business/AdsTable'
 import MetaBusinessMetricsSelector from '@/components/meta-business/MetricsSelector'
+import BulkActionsMenu from '@/components/meta-business/BulkActionsMenu'
+import { BID_AMOUNT_STRATEGIES } from '@/lib/bid-strategies'
 import { 
   MetaAccount,
   MetaCampaign, 
@@ -145,6 +147,18 @@ export default function MetaBusinessPage() {
   const [selectedCampaigns, setSelectedCampaigns] = useState<Set<string>>(new Set())
   const [selectedAdSets, setSelectedAdSets] = useState<Set<string>>(new Set())
   const [selectedAds, setSelectedAds] = useState<Set<string>>(new Set())
+
+  // "Filtrar selecionados" do menu de Ações em massa (BulkActionsMenu) — um por aba, já que cada
+  // uma tem sua própria seleção. Reseta sozinho quando a seleção correspondente esvazia, pra não
+  // ficar "preso" filtrado numa seleção futura.
+  const [campaignsFilterToSelected, setCampaignsFilterToSelected] = useState(false)
+  const [adSetsFilterToSelected, setAdSetsFilterToSelected] = useState(false)
+  useEffect(() => {
+    if (selectedCampaigns.size === 0) setCampaignsFilterToSelected(false)
+  }, [selectedCampaigns.size])
+  useEffect(() => {
+    if (selectedAdSets.size === 0) setAdSetsFilterToSelected(false)
+  }, [selectedAdSets.size])
 
   // Estados para métricas avançadas — a seleção/ordem de colunas é persistida por usuário no
   // Supabase (ver hooks/useColumnPreferences.ts e lib/column-preferences.ts), com fallback para
@@ -461,6 +475,13 @@ export default function MetaBusinessPage() {
   // seleção anterior tiver ficado vazia).
   const selectedCampaignsKey = Array.from(selectedCampaigns).sort().join(',')
   const selectedAdSetsKey = Array.from(selectedAdSets).sort().join(',')
+
+  // Quantos dos conjuntos selecionados realmente aceitam bid_amount editável (lance manual) —
+  // usado pelo BulkActionsMenu (aba Conjuntos) pra avisar quando parte da seleção será ignorada.
+  const selectedAdSetsEligibleForBid = Array.from(selectedAdSets).filter(id => {
+    const adSet = adSets.find(a => a.id === id)
+    return !!adSet?.bid_strategy && BID_AMOUNT_STRATEGIES.has(adSet.bid_strategy)
+  }).length
   const adSetsDataKey = `${currentDataKey}|campaigns:${selectedCampaignsKey}`
   const adsDataKey = `${currentDataKey}|adsets:${selectedAdSetsKey}|campaigns:${selectedCampaignsKey}`
   const accountsLoadedKeyRef = useRef<string | null>(null)
@@ -1068,8 +1089,31 @@ export default function MetaBusinessPage() {
 
                 {/* Ícone de engrenagem (Personalizar Colunas) + botão Atualizar ficam dentro do
                     próprio card de filtros, junto dos dados que eles afetam — não no cabeçalho da
-                    página (ver PageHeader), seguindo o padrão da referência da UTMify. */}
+                    página (ver PageHeader), seguindo o padrão da referência da UTMify. O botão de
+                    Ações em massa (BulkActionsMenu) segue o mesmo padrão — ao lado da engrenagem,
+                    só aparece quando há seleção na aba atual — em vez de virar uma barra própria
+                    dentro da tabela. */}
                 <div className="flex items-center gap-2 sm:justify-end">
+                  {activeTab === 'campaigns' && selectedCampaigns.size > 0 && (
+                    <BulkActionsMenu
+                      selectedCount={selectedCampaigns.size}
+                      onActivate={() => handleBulkStatusUpdate('campaigns', 'ACTIVE')}
+                      onDeactivate={() => handleBulkStatusUpdate('campaigns', 'PAUSED')}
+                      filterActive={campaignsFilterToSelected}
+                      onToggleFilter={() => setCampaignsFilterToSelected(prev => !prev)}
+                    />
+                  )}
+                  {activeTab === 'adsets' && selectedAdSets.size > 0 && (
+                    <BulkActionsMenu
+                      selectedCount={selectedAdSets.size}
+                      onActivate={() => handleBulkStatusUpdate('adsets', 'ACTIVE')}
+                      onDeactivate={() => handleBulkStatusUpdate('adsets', 'PAUSED')}
+                      filterActive={adSetsFilterToSelected}
+                      onToggleFilter={() => setAdSetsFilterToSelected(prev => !prev)}
+                      bidEligibleCount={selectedAdSetsEligibleForBid}
+                      onBulkBidApply={(bidAmount) => handleBulkBidUpdate(Array.from(selectedAdSets), bidAmount)}
+                    />
+                  )}
                   <MetaBusinessMetricsSelector
                     selectedMetricIds={selectedMetricIds}
                     onSave={handleMetricsChange}
@@ -1205,6 +1249,7 @@ export default function MetaBusinessPage() {
                       onBudgetUpdate={handleBudgetUpdate}
                       onNameUpdate={handleNameUpdate}
                       onBulkStatusUpdate={handleBulkStatusUpdate}
+                      filterToSelectedOnly={campaignsFilterToSelected}
                       metrics={metrics}
                       showMetrics={true}
                     />
@@ -1228,7 +1273,7 @@ export default function MetaBusinessPage() {
                       onBidUpdate={handleBidUpdate}
                       onNameUpdate={handleNameUpdate}
                       onBulkStatusUpdate={handleBulkStatusUpdate}
-                      onBulkBidUpdate={handleBulkBidUpdate}
+                      filterToSelectedOnly={adSetsFilterToSelected}
                       metrics={metrics}
                       showMetrics={true}
                     />

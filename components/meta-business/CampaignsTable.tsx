@@ -32,6 +32,9 @@ interface CampaignsTableProps {
   onBudgetUpdate: (type: 'campaigns' | 'adsets', id: string, budget: number, budgetType: 'daily' | 'lifetime') => void
   onNameUpdate: (type: 'campaigns' | 'adsets' | 'ads', id: string, name: string) => void
   onBulkStatusUpdate: (type: 'campaigns' | 'adsets' | 'ads', status: string) => void
+  // Filtro "mostrar só selecionados" — controlado pelo pai via BulkActionsMenu, na barra de
+  // filtros da página (mesmo padrão de components/meta-business/AdSetsTable.tsx).
+  filterToSelectedOnly?: boolean
   metrics?: MetricConfig[]
   showMetrics?: boolean
 }
@@ -50,6 +53,7 @@ export default function CampaignsTable({
   onBudgetUpdate,
   onNameUpdate,
   onBulkStatusUpdate,
+  filterToSelectedOnly = false,
   metrics = [],
   showMetrics = false
 }: CampaignsTableProps) {
@@ -369,7 +373,7 @@ export default function CampaignsTable({
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            {sortedCampaigns.map((campaign) => (
+            {(filterToSelectedOnly ? sortedCampaigns.filter(c => selectedCampaigns.has(c.id)) : sortedCampaigns).map((campaign) => (
               <tr key={campaign.id} className="group hover:bg-gray-50 dark:hover:bg-gray-700">
                 <td className="md:sticky md:left-0 z-10 w-12 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-3">
                   <input
