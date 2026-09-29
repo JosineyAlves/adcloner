@@ -1190,11 +1190,12 @@ export default function MetaBusinessPage() {
                         {hasSelection && (
                           // Padrão nativo do Gerenciador de Anúncios da Meta: a aba de ORIGEM da
                           // seleção (ex.: "Campanhas" quando há campanhas selecionadas, cuja
-                          // seleção filtra as abas seguintes) ganha um badge discreto "N
-                          // selecionado" com "×" pra limpar sem sair da aba atual — sem pintar a
-                          // aba inteira, só o badge se destaca.
+                          // seleção filtra as abas seguintes) ganha um badge discreto "N Itens"
+                          // com "×" pra limpar sem sair da aba atual — sem pintar a aba inteira,
+                          // só o badge se destaca. "Itens" em vez de "selecionado(s)" pra ocupar
+                          // menos espaço no badge, principalmente no mobile.
                           <span className="flex items-center gap-1 bg-brand-50 dark:bg-brand-500/10 text-brand-800 dark:text-brand-300 rounded-full pl-2 pr-0.5 py-0.5 text-xs font-semibold">
-                            {tab.selectedCount} selecionado{tab.selectedCount === 1 ? '' : 's'}
+                            {tab.selectedCount} {tab.selectedCount === 1 ? 'Item' : 'Itens'}
                             <span
                               role="button"
                               title="Limpar seleção"
