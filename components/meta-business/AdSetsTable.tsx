@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { 
   Play, 
@@ -11,7 +11,8 @@ import {
   Check, 
   X,
   AlertCircle,
-  Target
+  Target,
+  ChevronDown
 } from 'lucide-react'
 import { MetaAdSet } from '@/lib/types'
 import { MetricConfig } from '@/lib/metrics-config'
@@ -23,6 +24,7 @@ import ColumnResizeHandle from './ColumnResizeHandle'
 import MetricsColumn from './MetricsColumn'
 import { useTableSort } from '@/hooks/useTableSort'
 import { useResizableColumns } from '@/hooks/useResizableColumns'
+import { BID_AMOUNT_STRATEGIES } from '@/lib/bid-strategies'
 import toast from 'react-hot-toast'
 
 interface AdSetsTableProps {
@@ -34,6 +36,7 @@ interface AdSetsTableProps {
   onBidUpdate: (id: string, bidAmount: number) => void
   onNameUpdate: (type: 'campaigns' | 'adsets' | 'ads', id: string, name: string) => void
   onBulkStatusUpdate: (type: 'campaigns' | 'adsets' | 'ads', status: string) => void
+  onBulkBidUpdate: (ids: string[], bidAmount: number) => Promise<void>
   metrics?: MetricConfig[]
   showMetrics?: boolean
 }
@@ -53,6 +56,7 @@ export default function AdSetsTable({
   onBidUpdate,
   onNameUpdate,
   onBulkStatusUpdate,
+  onBulkBidUpdate,
   metrics = [],
   showMetrics = false
 }: AdSetsTableProps) {
@@ -60,6 +64,22 @@ export default function AdSetsTable({
   // Debug: verificar métricas recebidas
   console.log('📊 AdSetsTable - Métricas recebidas:', metrics.filter(m => m.visible).map(m => m.label))
   console.log('📊 AdSetsTable - showMetrics:', showMetrics)
+
+  // Barra de ação em massa — menu estilo Ads Manager/Ratoeira (Ativar, Pausar, Alterar limite de
+  // lance) que aparece quando há conjuntos selecionados.
+  const [bulkMenuOpen, setBulkMenuOpen] = useState(false)
+  const [showBulkBidInput, setShowBulkBidInput] = useState(false)
+  const [bulkBidValue, setBulkBidValue] = useState('')
+  const [isBulkBidUpdating, setIsBulkBidUpdating] = useState(false)
+
+  // Fecha o menu/input de bid em massa quando a seleção é limpa (ex. depois de uma ação em massa
+  // bem-sucedida), pra não reaparecer "preso" aberto numa seleção futura.
+  useEffect(() => {
+    if (selectedAdSets.size === 0) {
+      setBulkMenuOpen(false)
+      setShowBulkBidInput(false)
+    }
+  }, [selectedAdSets.size])
 
   // Funções de formatação
   const formatCurrency = (value: number) => {
@@ -184,6 +204,33 @@ export default function AdSetsTable({
     ...adSets.map(a => a.bid_amount !== undefined ? formatCurrency(a.bid_amount) : 'Automático'),
     'Limite de Lance'
   ])
+
+  // Quantos dos conjuntos selecionados realmente aceitam bid_amount editável (lance manual) —
+  // usado pra avisar o usuário quando parte da seleção vai ser ignorada na aplicação em massa.
+  const selectedEligibleForBid = Array.from(selectedAdSets).filter(id => {
+    const adSet = adSets.find(a => a.id === id)
+    return !!adSet?.bid_strategy && BID_AMOUNT_STRATEGIES.has(adSet.bid_strategy)
+  }).length
+
+  const handleBulkBidApply = async () => {
+    const value = parseFloat(bulkBidValue.replace(',', '.'))
+    if (!value || value < 0.01) {
+      toast.error('Informe um limite de lance válido (mínimo $0,01)')
+      return
+    }
+    if (selectedEligibleForBid === 0) {
+      toast.error('Nenhum conjunto selecionado usa uma estratégia de lance editável')
+      return
+    }
+    setIsBulkBidUpdating(true)
+    try {
+      await onBulkBidUpdate(Array.from(selectedAdSets), value)
+      setBulkBidValue('')
+      setShowBulkBidInput(false)
+    } finally {
+      setIsBulkBidUpdating(false)
+    }
+  }
 
   const handleSelectAll = () => {
     if (selectedAdSets.size === adSets.length) {
@@ -317,6 +364,94 @@ export default function AdSetsTable({
 
   return (
     <div className="flex-1 min-h-0 flex flex-col">
+
+      {/* Barra de ação em massa — só aparece com alguma seleção. Aplica o MESMO limite de lance a
+          todos os conjuntos selecionados de uma vez (atalho de velocidade pra quando tem vários
+          conjuntos em BID Cap/Cost Cap, ex. campanhas CBO); a edição individual por linha (célula
+          "Limite de Lance" abaixo) continua existindo do mesmo jeito pra quando cada conjunto
+          precisa de um valor diferente (ex. campanhas ABO). */}
+      {selectedAdSets.size > 0 && (
+        <div className="flex flex-wrap items-center gap-3 px-4 py-2 mb-2 bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 rounded-lg">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-200 whitespace-nowrap">
+            {selectedAdSets.size} conjunto{selectedAdSets.size === 1 ? '' : 's'} selecionado{selectedAdSets.size === 1 ? '' : 's'}
+            {selectedEligibleForBid !== selectedAdSets.size && (
+              <span className="text-gray-500 dark:text-gray-400 font-normal">
+                {' '}({selectedEligibleForBid} com lance editável)
+              </span>
+            )}
+          </span>
+
+          {/* Menu "Ações em massa" — mesmo padrão do Ads Manager/Ratoeira Ads (Ativar, Pausar,
+              Alterar bid cap num único menu, em vez de um botão fixo pra cada ação). */}
+          <div className="relative">
+            <button
+              onClick={() => setBulkMenuOpen(prev => !prev)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              Ações em massa
+              <ChevronDown className={`w-4 h-4 transition-transform ${bulkMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {bulkMenuOpen && (
+              <div className="absolute top-full left-0 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 py-1">
+                <button
+                  onClick={() => { onBulkStatusUpdate('adsets', 'ACTIVE'); setBulkMenuOpen(false) }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  <Play className="w-4 h-4 text-green-600" />
+                  Ativar selecionados
+                </button>
+                <button
+                  onClick={() => { onBulkStatusUpdate('adsets', 'PAUSED'); setBulkMenuOpen(false) }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  <Pause className="w-4 h-4 text-amber-600" />
+                  Pausar selecionados
+                </button>
+                <button
+                  onClick={() => { setShowBulkBidInput(true); setBulkMenuOpen(false) }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  <DollarSign className="w-4 h-4 text-blue-600" />
+                  Alterar limite de lance
+                </button>
+              </div>
+            )}
+          </div>
+
+          {showBulkBidInput && (
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                Limite de lance para todos:
+              </label>
+              <input
+                type="text"
+                inputMode="decimal"
+                placeholder="0.00"
+                value={bulkBidValue}
+                onChange={(e) => setBulkBidValue(e.target.value)}
+                disabled={isBulkBidUpdating}
+                autoFocus
+                className="w-24 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white disabled:opacity-50"
+              />
+              <button
+                onClick={handleBulkBidApply}
+                disabled={isBulkBidUpdating || !bulkBidValue}
+                className="px-3 py-1 text-sm font-medium text-white bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed rounded transition-colors whitespace-nowrap"
+              >
+                {isBulkBidUpdating ? 'Aplicando...' : 'Aplicar a todos'}
+              </button>
+              <button
+                onClick={() => { setShowBulkBidInput(false); setBulkBidValue('') }}
+                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                aria-label="Cancelar"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Tabela — altura limitada com rolagem própria (max-h + overflow-y-auto) para que a linha
           de totais no rodapé possa ficar fixa (sticky) enquanto as linhas passam por baixo dela. */}

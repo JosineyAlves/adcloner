@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Check, X, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { BID_AMOUNT_STRATEGIES } from '@/lib/bid-strategies'
 
 interface BidEditorProps {
   id: string
@@ -14,10 +15,6 @@ interface BidEditorProps {
   minValue?: number
   maxValue?: number
 }
-
-// Estratégias em que bid_amount é um limite editável — mesma lista do backend
-// (app/api/meta-business/adsets/[id]/bid/route.ts).
-const BID_AMOUNT_STRATEGIES = new Set(['COST_CAP', 'LOWEST_COST_WITH_BID_CAP'])
 
 export default function BidEditor({
   id,

@@ -808,6 +808,67 @@ export default function MetaBusinessPage() {
     }
   }
 
+  const handleBulkBidUpdate = async (ids: string[], bidAmount: number) => {
+    if (ids.length === 0) {
+      toast.error('Nenhum conjunto selecionado')
+      return
+    }
+
+    // Cada item leva sua própria account_id (pro servidor resolver o token certo) e bid_strategy
+    // atual (pra rota decidir, por item, se aplica ou ignora) — mesmo padrão de
+    // handleBulkStatusUpdate, só que aplicando um único valor de bid a todos de uma vez.
+    const items = ids.map(id => {
+      const adSet = adSets.find(a => a.id === id)
+      return { id, accountId: adSet?.account_id, bidStrategy: adSet?.bid_strategy }
+    })
+
+    try {
+      const response = await fetch('/api/meta-business/adsets/bulk-bid', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ items, bidAmount }),
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        const { successful, skipped, failed } = data.results as {
+          successful: string[]
+          skipped: { id: string; reason: string }[]
+          failed: { id: string; error: string }[]
+        }
+
+        if (successful.length > 0) {
+          toast.success(`Limite de lance atualizado em ${successful.length} conjunto${successful.length === 1 ? '' : 's'}!`)
+        }
+        if (skipped.length > 0) {
+          toast(`${skipped.length} conjunto${skipped.length === 1 ? '' : 's'} ignorado${skipped.length === 1 ? '' : 's'} (lance automático/ROAS)`)
+        }
+        if (failed.length > 0) {
+          toast.error(`${failed.length} conjunto${failed.length === 1 ? '' : 's'} falhou ao atualizar o lance`)
+        }
+
+        // Atualização otimista só dos que tiveram sucesso — mesmo padrão de handleBidUpdate.
+        setAdSets(prev => prev.map(adSet =>
+          successful.includes(adSet.id) ? { ...adSet, bid_amount: bidAmount } : adSet
+        ))
+        setSelectedAdSets(new Set())
+
+        setTimeout(() => {
+          fetchAdSets()
+        }, 1000)
+      } else {
+        const error = await response.json()
+        toast.error(error.error || 'Erro ao alterar limite de lance em lote')
+      }
+    } catch (error) {
+      console.error('Error bulk updating bid:', error)
+      toast.error('Erro ao alterar limite de lance em lote')
+    }
+  }
+
   const handleNameUpdate = async (type: 'campaigns' | 'adsets' | 'ads', id: string, name: string) => {
     try {
       // Mesmo padrão de handleBudgetUpdate: a chamada à Graph API já aconteceu dentro do
@@ -1167,6 +1228,7 @@ export default function MetaBusinessPage() {
                       onBidUpdate={handleBidUpdate}
                       onNameUpdate={handleNameUpdate}
                       onBulkStatusUpdate={handleBulkStatusUpdate}
+                      onBulkBidUpdate={handleBulkBidUpdate}
                       metrics={metrics}
                       showMetrics={true}
                     />

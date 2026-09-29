@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { resolveMetaAccessToken } from '@/lib/meta-connections'
 import { getAuthenticatedUserId } from '@/lib/supabase/server'
+import { BID_AMOUNT_STRATEGIES } from '@/lib/bid-strategies'
 
 export const dynamic = 'force-dynamic'
-
-// Estratégias de lance em que bid_amount é um limite editável pelo usuário — ver comentário em
-// lib/types.ts (MetaAdSet.bid_strategy) e BidEditor.tsx.
-const BID_AMOUNT_STRATEGIES = new Set(['COST_CAP', 'LOWEST_COST_WITH_BID_CAP'])
 
 export async function POST(
   request: NextRequest,
