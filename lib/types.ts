@@ -301,6 +301,10 @@ export interface MetaAdSet {
   lifetime_budget?: number
   budget_type: 'daily' | 'lifetime'
   bid_amount?: number
+  // Estratégia de lance do conjunto — só COST_CAP e LOWEST_COST_WITH_BID_CAP usam bid_amount
+  // como um limite de lance editável (ver BidEditor.tsx); LOWEST_COST_WITHOUT_CAP é lance
+  // automático (sem limite) e LOWEST_COST_WITH_MIN_ROAS usa bid_constraints, não bid_amount.
+  bid_strategy?: 'LOWEST_COST_WITHOUT_CAP' | 'LOWEST_COST_WITH_BID_CAP' | 'COST_CAP' | 'LOWEST_COST_WITH_MIN_ROAS'
   targeting: {
     age_min: number
     age_max: number

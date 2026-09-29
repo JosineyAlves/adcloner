@@ -17,6 +17,7 @@ import { MetaAdSet } from '@/lib/types'
 import { MetricConfig } from '@/lib/metrics-config'
 import StatusToggle from './StatusToggle'
 import BudgetEditor from './BudgetEditor'
+import BidEditor from './BidEditor'
 import NameEditor from './NameEditor'
 import ColumnResizeHandle from './ColumnResizeHandle'
 import MetricsColumn from './MetricsColumn'
@@ -30,6 +31,7 @@ interface AdSetsTableProps {
   onSelectionChange: (selected: Set<string>) => void
   onStatusToggle: (type: 'campaigns' | 'adsets' | 'ads', id: string, currentStatus: string) => void
   onBudgetUpdate: (type: 'campaigns' | 'adsets', id: string, budget: number, budgetType: 'daily' | 'lifetime') => void
+  onBidUpdate: (id: string, bidAmount: number) => void
   onNameUpdate: (type: 'campaigns' | 'adsets' | 'ads', id: string, name: string) => void
   onBulkStatusUpdate: (type: 'campaigns' | 'adsets' | 'ads', status: string) => void
   metrics?: MetricConfig[]
@@ -48,6 +50,7 @@ export default function AdSetsTable({
   onSelectionChange,
   onStatusToggle,
   onBudgetUpdate,
+  onBidUpdate,
   onNameUpdate,
   onBulkStatusUpdate,
   metrics = [],
@@ -176,6 +179,11 @@ export default function AdSetsTable({
     ...adSets.map(a => a.campaign_advantage_budget ? 'N/A' : formatCurrency(a.daily_budget || a.lifetime_budget || 0)),
     'Orçamento'
   ])
+  const bidColWidth = getWidth('bid', 140)
+  const handleAutoFitBid = () => autoFit('bid', [
+    ...adSets.map(a => a.bid_amount !== undefined ? formatCurrency(a.bid_amount) : 'Automático'),
+    'Limite de Lance'
+  ])
 
   const handleSelectAll = () => {
     if (selectedAdSets.size === adSets.length) {
@@ -253,6 +261,17 @@ export default function AdSetsTable({
                     isResizing={resizingId === 'budget'}
                   />
                 </th>
+                <th
+                  className="relative px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom"
+                  style={{ width: bidColWidth, minWidth: bidColWidth, maxWidth: bidColWidth }}
+                >
+                  Limite de Lance
+                  <ColumnResizeHandle
+                    onMouseDown={startResize('bid', bidColWidth)}
+                    onDoubleClick={handleAutoFitBid}
+                    isResizing={resizingId === 'bid'}
+                  />
+                </th>
                 {showMetrics && metrics.filter(m => m.visible).map((metric) => {
                   const metricColWidth = getWidth(metric.id, 150)
                   return (
@@ -277,7 +296,7 @@ export default function AdSetsTable({
             </thead>
             <tbody className="bg-white dark:bg-gray-800">
               <tr>
-                <td colSpan={4 + (showMetrics ? metrics.filter(m => m.visible).length : 0)} className="px-6 py-12 text-center">
+                <td colSpan={5 + (showMetrics ? metrics.filter(m => m.visible).length : 0)} className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center">
                     <Target className="w-12 h-12 text-gray-400 mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
@@ -345,6 +364,19 @@ export default function AdSetsTable({
                   onMouseDown={startResize('budget', budgetColWidth)}
                   onDoubleClick={handleAutoFitBudget}
                   isResizing={resizingId === 'budget'}
+                />
+              </th>
+              <th
+                onClick={() => handleSort('bid_amount')}
+                title={sortConfig?.key === 'bid_amount' ? `Ordenado ${sortConfig.direction === 'asc' ? 'menor→maior' : 'maior→menor'} — clique para inverter` : 'Clique para ordenar'}
+                className={`relative px-6 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap align-bottom cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 ${sortConfig?.key === 'bid_amount' ? 'text-brand-600 dark:text-brand-400 font-semibold' : 'text-gray-500 dark:text-gray-400'}`}
+                style={{ width: bidColWidth, minWidth: bidColWidth, maxWidth: bidColWidth }}
+              >
+                Limite de Lance
+                <ColumnResizeHandle
+                  onMouseDown={startResize('bid', bidColWidth)}
+                  onDoubleClick={handleAutoFitBid}
+                  isResizing={resizingId === 'bid'}
                 />
               </th>
               {showMetrics && metrics.filter(m => m.visible).map((metric) => {
@@ -467,6 +499,39 @@ export default function AdSetsTable({
                     />
                   )}
                 </td>
+                <td className="px-6 py-3" style={{ width: bidColWidth, minWidth: bidColWidth, maxWidth: bidColWidth }}>
+                  <BidEditor
+                    id={adSet.id}
+                    currentBid={adSet.bid_amount}
+                    bidStrategy={adSet.bid_strategy}
+                    onUpdate={async (id, bidAmount) => {
+                      const response = await fetch(`/api/meta-business/adsets/${id}/bid`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          bidAmount,
+                          bidStrategy: adSet.bid_strategy,
+                          // Mesmo padrão do BudgetEditor — deixa o servidor resolver o token da
+                          // conexão dona dessa conta (ver lib/meta-connections.ts).
+                          accountId: adSet.account_id
+                        })
+                      })
+
+                      const result = await response.json()
+
+                      if (result.success) {
+                        onBidUpdate(id, bidAmount)
+                      } else {
+                        const error = new Error(result.error || 'Erro ao atualizar limite de lance')
+                        ;(error as any).error = result.error
+                        throw error
+                      }
+                    }}
+                    disabled={false}
+                    minValue={0.01}
+                    maxValue={10000000}
+                  />
+                </td>
                 {showMetrics && metrics.filter(m => m.visible).map((metric) => {
                   const value = (adSet as any)[metric.id]
                   const formattedValue = formatMetricValue(value, metric.type, metric.id)
@@ -489,6 +554,9 @@ export default function AdSetsTable({
               </td>
               <td className="sticky bottom-0 z-10 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap" style={{ width: budgetColWidth, minWidth: budgetColWidth, maxWidth: budgetColWidth }}>
                 {totalBudget > 0 ? formatCurrency(totalBudget) : '-'}
+              </td>
+              <td className="sticky bottom-0 z-10 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap" style={{ width: bidColWidth, minWidth: bidColWidth, maxWidth: bidColWidth }}>
+                -
               </td>
               {showMetrics && visibleMetrics.map((metric, index) => {
                 const metricColWidth = getWidth(metric.id, 150)

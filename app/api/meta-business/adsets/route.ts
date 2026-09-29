@@ -511,7 +511,10 @@ export async function GET(request: NextRequest) {
               daily_budget: adSet.daily_budget ? Math.round(parseInt(adSet.daily_budget) / 100) : undefined,
               lifetime_budget: adSet.lifetime_budget ? Math.round(parseInt(adSet.lifetime_budget) / 100) : undefined,
               budget_type: adSet.daily_budget ? 'daily' : 'lifetime',
-              bid_amount: adSet.bid_amount ? parseFloat(adSet.bid_amount) : undefined,
+              // bid_amount vem da Meta em centavos, igual daily_budget/lifetime_budget —
+              // precisa dividir por 100 pra virar o valor na moeda da conta (ver BidEditor.tsx).
+              bid_amount: adSet.bid_amount ? Math.round(parseInt(adSet.bid_amount)) / 100 : undefined,
+              bid_strategy: adSet.bid_strategy || undefined,
               targeting: {
                 age_min: adSet.targeting?.age_min || 18,
                 age_max: adSet.targeting?.age_max || 65,
@@ -594,7 +597,10 @@ export async function GET(request: NextRequest) {
               daily_budget: adSet.daily_budget ? Math.round(parseInt(adSet.daily_budget) / 100) : undefined,
               lifetime_budget: adSet.lifetime_budget ? Math.round(parseInt(adSet.lifetime_budget) / 100) : undefined,
               budget_type: adSet.daily_budget ? 'daily' : 'lifetime',
-              bid_amount: adSet.bid_amount ? parseFloat(adSet.bid_amount) : undefined,
+              // bid_amount vem da Meta em centavos, igual daily_budget/lifetime_budget —
+              // precisa dividir por 100 pra virar o valor na moeda da conta (ver BidEditor.tsx).
+              bid_amount: adSet.bid_amount ? Math.round(parseInt(adSet.bid_amount)) / 100 : undefined,
+              bid_strategy: adSet.bid_strategy || undefined,
               targeting: {
                 age_min: adSet.targeting?.age_min || 18,
                 age_max: adSet.targeting?.age_max || 65,

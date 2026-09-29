@@ -791,6 +791,23 @@ export default function MetaBusinessPage() {
     }
   }
 
+  const handleBidUpdate = async (id: string, bidAmount: number) => {
+    try {
+      // Mesmo padrão de handleBudgetUpdate: a chamada à Graph API já aconteceu dentro do
+      // BidEditor (via onUpdate) antes deste handler ser chamado — aqui só refletimos o novo
+      // limite de lance no estado local e agendamos uma busca de sincronização em segundo plano.
+      setAdSets(prev => prev.map(adSet =>
+        adSet.id === id ? { ...adSet, bid_amount: bidAmount } : adSet
+      ))
+
+      setTimeout(() => {
+        fetchAdSets()
+      }, 1000)
+    } catch (error) {
+      console.error('Error updating bid state:', error)
+    }
+  }
+
   const handleNameUpdate = async (type: 'campaigns' | 'adsets' | 'ads', id: string, name: string) => {
     try {
       // Mesmo padrão de handleBudgetUpdate: a chamada à Graph API já aconteceu dentro do
@@ -1147,6 +1164,7 @@ export default function MetaBusinessPage() {
                       onSelectionChange={setSelectedAdSets}
                       onStatusToggle={handleToggleStatus}
                       onBudgetUpdate={handleBudgetUpdate}
+                      onBidUpdate={handleBidUpdate}
                       onNameUpdate={handleNameUpdate}
                       onBulkStatusUpdate={handleBulkStatusUpdate}
                       metrics={metrics}
