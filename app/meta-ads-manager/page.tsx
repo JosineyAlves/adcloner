@@ -140,7 +140,10 @@ export default function MetaBusinessPage() {
   // ver seção 27 do doc do projeto).
   const [filters, setFilters] = useState({
     status: ['ACTIVE'] as string[],
-    search: '',
+    // Um valor de busca por aba (Contas/Campanhas/Conjuntos/Anúncios) em vez de uma única string
+    // compartilhada — cada aba "lembra" sua própria busca e aparece vazia ao trocar de aba se
+    // nada foi digitado ali, em vez de herdar o filtro de nome deixado na aba anterior.
+    searchByTab: { accounts: '', campaigns: '', adsets: '', ads: '' } as Record<'accounts' | 'campaigns' | 'adsets' | 'ads', string>,
     accountIds: [] as string[]
   })
   // true só quando o usuário escolheu explicitamente 1+ contas no seletor "Conta de Anúncio"
@@ -612,7 +615,7 @@ export default function MetaBusinessPage() {
   const handleSearchChange = (search: string) => {
     setFilters(prev => ({
       ...prev,
-      search
+      searchByTab: { ...prev.searchByTab, [activeTab]: search }
     }))
   }
 
@@ -948,20 +951,20 @@ export default function MetaBusinessPage() {
 
   // Filtrar dados baseado nos filtros
   const filteredAccounts = accounts.filter(account => {
-    if (filters.search && !account.name.toLowerCase().includes(filters.search.toLowerCase())) return false
+    if (filters.searchByTab.accounts && !account.name.toLowerCase().includes(filters.searchByTab.accounts.toLowerCase())) return false
     if (filters.accountIds.length > 0 && !filters.accountIds.includes(account.id)) return false
     return true
   })
 
   const filteredCampaigns = campaigns.filter(campaign => {
-    if (filters.search && !campaign.name.toLowerCase().includes(filters.search.toLowerCase())) return false
+    if (filters.searchByTab.campaigns && !campaign.name.toLowerCase().includes(filters.searchByTab.campaigns.toLowerCase())) return false
     if (!matchesStatusFilter(campaign)) return false
     if (filters.accountIds.length > 0 && !filters.accountIds.includes(campaign.account_id)) return false
     return true
   })
 
   const filteredAdSets = adSets.filter(adSet => {
-    if (filters.search && !adSet.name.toLowerCase().includes(filters.search.toLowerCase())) return false
+    if (filters.searchByTab.adsets && !adSet.name.toLowerCase().includes(filters.searchByTab.adsets.toLowerCase())) return false
     if (!matchesStatusFilter(adSet)) return false
     if (filters.accountIds.length > 0 && !filters.accountIds.includes(adSet.account_id)) return false
     // Drill-down: campanhas marcadas na aba Campanhas escopam os Conjuntos exibidos aqui, igual
@@ -972,7 +975,7 @@ export default function MetaBusinessPage() {
   })
 
   const filteredAds = ads.filter(ad => {
-    if (filters.search && !ad.name.toLowerCase().includes(filters.search.toLowerCase())) return false
+    if (filters.searchByTab.ads && !ad.name.toLowerCase().includes(filters.searchByTab.ads.toLowerCase())) return false
     if (!matchesStatusFilter(ad)) return false
     if (filters.accountIds.length > 0 && !filters.accountIds.includes(ad.account_id)) return false
     // Drill-down: prioriza o escopo de Conjuntos selecionados; sem isso, cai pro escopo de
@@ -1046,11 +1049,11 @@ export default function MetaBusinessPage() {
                     <input
                       type="text"
                       placeholder="Filtrar por nome"
-                      value={filters.search}
+                      value={filters.searchByTab[activeTab]}
                       onChange={(e) => handleSearchChange(e.target.value)}
                       className="px-3 py-1.5 pr-8 border border-gray-300 dark:border-gray-600 rounded-ds-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-700 dark:text-white w-full min-w-0"
                     />
-                    {filters.search && (
+                    {filters.searchByTab[activeTab] && (
                       <button
                         type="button"
                         onClick={() => handleSearchChange('')}
