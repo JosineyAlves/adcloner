@@ -555,16 +555,12 @@ export default function MetaBusinessPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, facebookAccounts, currentDataKey, adSetsDataKey, adsDataKey, isRateLimited, accountsLoading, persistCache])
 
-  // Mantém o filtro de contas em sincronia sempre que os dados de campanhas/adsets/ads
-  // (que carregam accountIds reais) mudarem.
-  useEffect(() => {
-    if (accounts.length > 0) {
-      setFilters(prev => ({
-        ...prev,
-        accountIds: accounts.map(acc => acc.id)
-      }))
-    }
-  }, [accounts])
+  // (Removido o useEffect que preenchia filters.accountIds com TODOS os ids sempre que `accounts`
+  // mudava. Array vazio já significa "nenhum filtro/todas as contas" em todo lugar que lê
+  // filters.accountIds — fetchEndpointForActiveAccounts usa accountFilterActive pra decidir
+  // quando restringir, e os filteredX tratam length 0 como "não filtra". Preencher com a lista
+  // inteira só causava o MultiSelect de "Conta de Anúncio" mostrar todas as contas marcadas como
+  // selecionadas por padrão, já que ele lê filters.accountIds diretamente.)
 
   const handleRefresh = useDebounce('meta-business-refresh', async () => {
     // Se alguma conta acabou de bater no limite de requisições da Meta, não insiste — a própria

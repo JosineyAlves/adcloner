@@ -19,12 +19,12 @@ interface MultiSelectProps {
   className?: string
 }
 
-// Variante multi-seleção do Select.tsx — mesmo padrão visual (botão + painel flutuante via
-// portal, mesma classe/tamanho/cores do trigger) e mesmo comportamento de abrir/fechar ao
-// clicar fora, mas cada opção clicada entra/sai da seleção sem fechar o painel (precisa dar pra
-// marcar várias antes de fechar) e usa checkbox em vez de um Check único. Usado no filtro
-// "Conta de Anúncio" do Meta Ads Manager para permitir escolher mais de uma conta de uma vez,
-// mantendo a mesma linguagem visual do seletor de conta única usado no resto do painel.
+// Variante multi-seleção do Select.tsx — mesmo visual de lista "limpa" (sem fundo/realce nas
+// opções não marcadas, sem círculo/checkbox ao lado de cada item): cada linha usa exatamente o
+// mesmo estilo de Select.tsx (fundo + negrito só na selecionada, com o ícone de Check à direita
+// dela), e "Todas as Contas" é só mais uma linha da mesma lista — não um bloco separado. A única
+// diferença de fato pro Select de seleção única é que clicar numa opção entra/sai da seleção sem
+// fechar o painel, pra dar pra marcar mais de uma conta antes de fechar.
 export default function MultiSelect({
   value,
   onChange,
@@ -41,7 +41,7 @@ export default function MultiSelect({
   useEffect(() => setMounted(true), [])
 
   const triggerWidth = triggerRef.current?.offsetWidth || 240
-  const position = useFloatingPosition(triggerRef, isOpen, triggerWidth, 288)
+  const position = useFloatingPosition(triggerRef, isOpen, triggerWidth, 264)
 
   useEffect(() => {
     if (!isOpen) return
@@ -100,7 +100,7 @@ export default function MultiSelect({
           <button
             type="button"
             onClick={() => onChange([])}
-            className={`w-full flex items-center justify-between text-left px-3 py-2 text-sm transition-colors border-b border-gray-100 dark:border-gray-700 ${
+            className={`w-full flex items-center justify-between text-left px-3 py-2 text-sm transition-colors ${
               isAllSelected
                 ? 'bg-brand-100 dark:bg-brand-500/10 text-black dark:text-brand-300 font-semibold'
                 : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -111,28 +111,20 @@ export default function MultiSelect({
           </button>
 
           {options.map((option) => {
-            const isSelected = value.includes(option.value)
+            const isSelected = !isAllSelected && value.includes(option.value)
             return (
               <button
                 key={option.value}
                 type="button"
                 onClick={() => toggleOption(option.value)}
-                className={`w-full flex items-center gap-2 text-left px-3 py-2 text-sm transition-colors ${
+                className={`w-full flex items-center justify-between text-left px-3 py-2 text-sm transition-colors ${
                   isSelected
                     ? 'bg-brand-100 dark:bg-brand-500/10 text-black dark:text-brand-300 font-semibold'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
               >
-                <span
-                  className={`w-4 h-4 flex-shrink-0 rounded border flex items-center justify-center ${
-                    isSelected
-                      ? 'bg-brand-500 border-brand-500'
-                      : 'border-gray-300 dark:border-gray-500'
-                  }`}
-                >
-                  {isSelected && <Check className="w-3 h-3 text-white" />}
-                </span>
                 <span className="truncate">{option.label}</span>
+                {isSelected && <Check className="w-4 h-4 flex-shrink-0 ml-2" />}
               </button>
             )
           })}
