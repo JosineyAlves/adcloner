@@ -23,6 +23,7 @@ import Sidebar from '@/components/layout/Sidebar'
 import PageHeader from '@/components/layout/PageHeader'
 import DateSelector, { DateRange } from '@/components/dashboard/DateSelector'
 import Select from '@/components/ui/Select'
+import MultiSelect from '@/components/ui/MultiSelect'
 import AccountsTable from '@/components/meta-business/AccountsTable'
 import CampaignsTable from '@/components/meta-business/CampaignsTable'
 import AdSetsTable from '@/components/meta-business/AdSetsTable'
@@ -142,6 +143,13 @@ export default function MetaBusinessPage() {
     search: '',
     accountIds: [] as string[]
   })
+  // true só quando o usuário escolheu explicitamente 1+ contas no seletor "Conta de Anúncio"
+  // (handleAccountFilter) — nunca setado pelo useEffect de sincronia automática logo abaixo, que
+  // também preenche accountIds com todos os ids conhecidos. Sem essa distinção, não dava pra
+  // saber (só pelo tamanho da lista) se accountIds representa uma restrição real do usuário ou
+  // o preenchimento automático — o que quebraria a otimização de fetch (ver uso mais abaixo) ao
+  // permitir selecionar mais de uma conta (antes só existia o caso "exatamente 1" via Select).
+  const [accountFilterActive, setAccountFilterActive] = useState(false)
 
   // Estados de seleção em massa
   const [selectedCampaigns, setSelectedCampaigns] = useState<Set<string>>(new Set())
@@ -229,18 +237,20 @@ export default function MetaBusinessPage() {
     // /api/meta/accounts?enabledOnly=true). Antes, contas com status "Restrita" eram excluídas
     // daqui mesmo estando habilitadas em Integrações, causando divergência de contagem entre as
     // duas telas (ex.: 15 habilitadas em Integrações, só 7 aparecendo aqui).
-    // Se o usuário já restringiu o filtro "Conta de Anúncio" a UMA conta específica (o <Select>
-    // só permite "Todas as Contas" ou exatamente 1 conta por vez — ver o value do Select mais
-    // abaixo), busca só aquela conta na Meta em vez de todas as contas habilitadas. Antes, esse
-    // filtro sempre foi só visual/client-side — a tela buscava TODAS as contas mesmo com uma
-    // selecionada, gastando chamadas à toa e deixando a resposta mais lenta do que precisava (ver
-    // pendência registrada no doc do projeto, seção sobre mitigações de rate limit). Checagem por
-    // "=== 1" (e não "> 0") de propósito: `filters.accountIds` também é preenchido com TODOS os
-    // ids sempre que a aba "Contas" busca de novo (ver useEffect logo abaixo de `accounts`), e
-    // essa lista pode estar temporariamente desatualizada (hidratada do cache local) em relação a
+    // Se o usuário já restringiu o filtro "Conta de Anúncio" a uma ou mais contas específicas
+    // (MultiSelect — ver seletor mais abaixo), busca só essas contas na Meta em vez de todas as
+    // contas habilitadas. Antes, esse filtro sempre foi só visual/client-side — a tela buscava
+    // TODAS as contas mesmo com uma selecionada, gastando chamadas à toa e deixando a resposta
+    // mais lenta do que precisava (ver pendência registrada no doc do projeto, seção sobre
+    // mitigações de rate limit). Usa o flag `accountFilterActive` (e não o tamanho de
+    // `filters.accountIds`) de propósito: esse array também é preenchido com TODOS os ids sempre
+    // que a aba "Contas" busca de novo (ver useEffect logo abaixo de `accounts`), e essa lista
+    // pode estar temporariamente desatualizada (hidratada do cache local) em relação a
     // `facebookAccounts` — restringir por ela nesse caso arriscaria deixar de consultar uma conta
     // recém-habilitada em Integrações que ainda não apareceu no cache da aba Contas.
-    const activeAccounts = filters.accountIds.length === 1
+    // `accountFilterActive` só fica true quando o próprio usuário mexeu no seletor
+    // (handleAccountFilter), nunca por esse preenchimento automático.
+    const activeAccounts = accountFilterActive && filters.accountIds.length > 0
       ? facebookAccounts.filter((account) => filters.accountIds.includes(account.id))
       : facebookAccounts
     if (activeAccounts.length === 0) return { items: [], rateLimitedUntil: null }
@@ -285,7 +295,7 @@ export default function MetaBusinessPage() {
       items: results.flat(),
       rateLimitedUntil: maxRetryAfterSeconds > 0 ? Date.now() + maxRetryAfterSeconds * 1000 : null
     }
-  }, [facebookAccounts, datePreset, customRange, metrics, filters.accountIds])
+  }, [facebookAccounts, datePreset, customRange, metrics, filters.accountIds, accountFilterActive])
 
   const persistCache = useCallback((overrides: Partial<MetaBusinessCachedData>) => {
     const merged: MetaBusinessCachedData = {
@@ -624,6 +634,7 @@ export default function MetaBusinessPage() {
 
 
   const handleAccountFilter = (accountIds: string[]) => {
+    setAccountFilterActive(accountIds.length > 0)
     setFilters(prev => ({
       ...prev,
       accountIds
@@ -936,6 +947,12 @@ export default function MetaBusinessPage() {
   }
 
   // Filtrar dados baseado nos filtros
+  const filteredAccounts = accounts.filter(account => {
+    if (filters.search && !account.name.toLowerCase().includes(filters.search.toLowerCase())) return false
+    if (filters.accountIds.length > 0 && !filters.accountIds.includes(account.id)) return false
+    return true
+  })
+
   const filteredCampaigns = campaigns.filter(campaign => {
     if (filters.search && !campaign.name.toLowerCase().includes(filters.search.toLowerCase())) return false
     if (!matchesStatusFilter(campaign)) return false
@@ -1065,13 +1082,11 @@ export default function MetaBusinessPage() {
                   <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     Conta de Anúncio
                   </label>
-                  <Select
-                    value={filters.accountIds.length === 1 ? filters.accountIds[0] : ''}
-                    onChange={(v) => handleAccountFilter(v ? [v] : [])}
-                    options={[
-                      { value: '', label: 'Todas as Contas' },
-                      ...accounts.map((account) => ({ value: account.id, label: account.name }))
-                    ]}
+                  <MultiSelect
+                    value={filters.accountIds}
+                    onChange={handleAccountFilter}
+                    allLabel="Todas as Contas"
+                    options={accounts.map((account) => ({ value: account.id, label: account.name }))}
                   />
                 </div>
 
@@ -1228,7 +1243,7 @@ export default function MetaBusinessPage() {
                     </div>
                   ) : (
                     <AccountsTable
-                      accounts={accounts}
+                      accounts={filteredAccounts}
                       metrics={metrics}
                       showMetrics={true}
                     />
