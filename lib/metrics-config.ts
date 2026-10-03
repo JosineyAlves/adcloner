@@ -4,7 +4,7 @@ export interface MetricConfig {
   id: string
   label: string
   description: string
-  type: 'number' | 'currency' | 'percentage'
+  type: 'number' | 'currency' | 'percentage' | 'text'
   visible: boolean
   order: number
   category: 'basic' | 'cost' | 'engagement' | 'video' | 'reach' | 'frequency'
@@ -373,6 +373,23 @@ export const ALL_METRICS: MetricConfig[] = [
     visible: false,
     order: 33,
     category: 'cost'
+  },
+
+  // === IDENTIFICADOR ===
+  // Já vem de graça em toda busca (campaign_id está em CAMPAIGN_ALWAYS_FIELDS/
+  // ADSET_OR_AD_ALWAYS_FIELDS — ver lib/insights-fields.ts), só não era exposto como coluna. Tipo
+  // 'text': é um ID numérico grande (frequentemente 15+ dígitos), não uma métrica pra formatar/
+  // somar — ver tratamento especial desse tipo em formatMetricValue/metricTotals nas 4 tabelas.
+  // Na aba Campanhas o campo equivalente é o próprio `id` da campanha (não existe `campaign_id`
+  // separado no objeto) — ver caso especial em CampaignsTable.tsx.
+  {
+    id: 'campaign_id',
+    label: 'ID da Campanha',
+    description: 'Identificador numérico da campanha na Meta — útil pra cruzar com relatórios externos ou outras ferramentas.',
+    type: 'text',
+    visible: false,
+    order: 34,
+    category: 'basic'
   }
 ]
 

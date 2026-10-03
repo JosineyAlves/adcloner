@@ -72,8 +72,13 @@ export default function AdsTable({
     return `${value.toFixed(2)}%`
   }
 
-  const formatMetricValue = (value: any, type: 'number' | 'currency' | 'percentage', metricId?: string) => {
-    if (value === null || value === undefined) return '-'
+  const formatMetricValue = (value: any, type: 'number' | 'currency' | 'percentage' | 'text', metricId?: string) => {
+    if (value === null || value === undefined || value === '') return '-'
+
+    // Tipo 'text' (ex.: ID da Campanha) nunca passa por parseFloat/Number — um ID da Meta costuma
+    // ter 15+ dígitos, acima de Number.MAX_SAFE_INTEGER, e convertê-lo pra number arriscaria
+    // perder precisão e exibir um ID diferente do real.
+    if (type === 'text') return String(value)
 
     const numValue = typeof value === 'number' ? value : parseFloat(value)
 
@@ -127,6 +132,8 @@ export default function AdsTable({
   }
 
   const metricTotals = visibleMetrics.map((metric) => {
+    // Campos de texto (ex.: ID da Campanha) não têm soma/média com leitura útil.
+    if (metric.type === 'text') return null
     const ratio = RATIO_METRICS[metric.id]
     if (ratio) {
       let totalNumerator = 0

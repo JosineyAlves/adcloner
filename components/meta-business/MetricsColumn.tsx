@@ -9,8 +9,12 @@ interface MetricsColumnProps {
 }
 
 export default function MetricsColumn({ data, metrics, visibleMetrics }: MetricsColumnProps) {
-  const formatValue = (value: any, type: 'number' | 'currency' | 'percentage') => {
-    if (value === null || value === undefined) return '-'
+  const formatValue = (value: any, type: 'number' | 'currency' | 'percentage' | 'text') => {
+    if (value === null || value === undefined || value === '') return '-'
+
+    // Tipo 'text' (ex.: ID da Campanha) não passa por parseFloat — IDs da Meta costumam ter 15+
+    // dígitos, acima de Number.MAX_SAFE_INTEGER.
+    if (type === 'text') return String(value)
     
     const numValue = typeof value === 'number' ? value : parseFloat(value)
     

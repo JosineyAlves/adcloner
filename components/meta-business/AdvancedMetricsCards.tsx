@@ -29,7 +29,11 @@ export default function AdvancedMetricsCards({
     return data.length > 0 ? total / data.length : 0
   }
 
-  const formatValue = (value: number, type: 'number' | 'currency' | 'percentage') => {
+  const formatValue = (value: number, type: 'number' | 'currency' | 'percentage' | 'text') => {
+    // Campos de texto (ex.: ID da Campanha) não têm leitura útil como soma/total — este
+    // componente de cards somados não é usado hoje em nenhuma tela, mas o tipo precisa cobrir
+    // 'text' pra continuar aceitando qualquer MetricConfig.
+    if (type === 'text') return String(value)
     switch (type) {
       case 'currency':
         return `R$ ${value.toFixed(2)}`

@@ -101,8 +101,13 @@ export default function CampaignsTable({
     return `${value.toFixed(2)}%`
   }
 
-  const formatMetricValue = (value: any, type: 'number' | 'currency' | 'percentage', metricId?: string) => {
-    if (value === null || value === undefined) return '-'
+  const formatMetricValue = (value: any, type: 'number' | 'currency' | 'percentage' | 'text', metricId?: string) => {
+    if (value === null || value === undefined || value === '') return '-'
+
+    // Tipo 'text' (ex.: ID da Campanha) nunca passa por parseFloat/Number — um ID da Meta costuma
+    // ter 15+ dígitos, acima de Number.MAX_SAFE_INTEGER, e convertê-lo pra number arriscaria
+    // perder precisão e exibir um ID diferente do real.
+    if (type === 'text') return String(value)
 
     const numValue = typeof value === 'number' ? value : parseFloat(value)
 
@@ -161,6 +166,8 @@ export default function CampaignsTable({
   }
 
   const metricTotals = visibleMetrics.map((metric) => {
+    // Campos de texto (ex.: ID da Campanha) não têm soma/média com leitura útil.
+    if (metric.type === 'text') return null
     const ratio = RATIO_METRICS[metric.id]
     if (ratio) {
       let totalNumerator = 0
@@ -462,7 +469,10 @@ export default function CampaignsTable({
                   />
                 </td>
                 {showMetrics && metrics.filter(m => m.visible).map((metric) => {
-                  const value = (campaign as any)[metric.id]
+                  // MetaCampaign não tem campo `campaign_id` próprio — a campanha É o `id`. Os
+                  // outros 3 níveis (conjunto/anúncio) já têm `campaign_id` como campo real
+                  // (referência ao pai), então essa troca só é necessária aqui.
+                  const value = metric.id === 'campaign_id' ? campaign.id : (campaign as any)[metric.id]
                   const formattedValue = formatMetricValue(value, metric.type, metric.id)
                   const metricColWidth = getWidth(metric.id, 150)
                   return (
