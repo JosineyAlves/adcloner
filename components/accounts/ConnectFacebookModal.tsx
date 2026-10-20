@@ -54,7 +54,9 @@ export default function ConnectFacebookModal({ isOpen, onClose, onSuccess }: Con
       // a ter o efeito colateral de vazamento de contas de outros Business Managers não
       // selecionados (ver discoverBusinessStructure em lib/meta-connections.ts) — trade-off aceito
       // conscientemente em favor de poder conectar múltiplos ativos de uma vez.
-      const scope = 'ads_management,ads_read,business_management,public_profile'
+      // pages_show_list/pages_read_engagement: pedidas no consentimento porque a seção "Páginas do
+      // Facebook" (Integrações > Ver Contas) lista as Páginas e lê fan_count/engajamento delas.
+      const scope = 'ads_management,ads_read,business_management,pages_show_list,pages_read_engagement,public_profile'
       const redirectUri = `${appUrl}/api/auth/callback/facebook`
 
       const oauthUrl =
