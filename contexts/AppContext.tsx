@@ -1,6 +1,7 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react'
+import { usePathname } from 'next/navigation'
 import { FacebookAccount } from '@/lib/types'
 import toast from 'react-hot-toast'
 import {
@@ -13,10 +14,22 @@ interface AppContextType {
   accounts: FacebookAccount[]
   isLoading: boolean
   isRevalidating: boolean
+  // true só depois que a lista de contas foi (re)confirmada no servidor NESTA navegação/carga —
+  // enquanto for false, `accounts` pode ser só o que estava em localStorage ou a lista da tela
+  // anterior (ex.: ainda com contas que acabaram de ser desabilitadas em Integrações). As telas
+  // que buscam dados na Meta esperam isso virar true antes de disparar as chamadas.
+  isFresh: boolean
   refreshAccounts: () => Promise<void>
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
+
+function sameAccountList(a: FacebookAccount[], b: FacebookAccount[]): boolean {
+  return (
+    a.length === b.length &&
+    a.every((acc, i) => acc.id === b[i].id && acc.name === b[i].name && acc.status === b[i].status)
+  )
+}
 
 interface AppProviderProps {
   children: ReactNode
@@ -36,6 +49,7 @@ export function AppProvider({ children }: AppProviderProps) {
   })
   // Indica uma busca em segundo plano (revalidação) sem esconder os dados já exibidos.
   const [isRevalidating, setIsRevalidating] = useState<boolean>(false)
+  const [isFresh, setIsFresh] = useState<boolean>(false)
 
   // Mesmo mapeamento de status numérico da Graph API usado em lib/facebook-api.ts
   // (FacebookAPI.mapAccountStatus, privado naquela classe — duplicado aqui porque
@@ -96,10 +110,13 @@ export function AppProvider({ children }: AppProviderProps) {
               updatedAt: new Date().toISOString()
             }
           })
-          setAccounts(nextAccounts)
+          // Mantém a mesma referência se nada mudou, pra não reexecutar efeitos das telas
+          // (que dependem de `accounts`) a cada revalidação.
+          setAccounts((prev) => (sameAccountList(prev, nextAccounts) ? prev : nextAccounts))
           writeLocalCache(LOCAL_CACHE_KEYS.facebookAccounts, nextAccounts)
           setIsLoading(false)
           setIsRevalidating(false)
+          setIsFresh(true)
           return
         }
       }
@@ -136,6 +153,9 @@ export function AppProvider({ children }: AppProviderProps) {
     } finally {
       setIsLoading(false)
       setIsRevalidating(false)
+      // Mesmo se a busca falhou, libera as telas (elas seguem com o que já tinham) em vez de
+      // ficarem esperando pra sempre.
+      setIsFresh(true)
     }
   }
 
@@ -152,11 +172,34 @@ export function AppProvider({ children }: AppProviderProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Este provider vive no layout raiz: NÃO remonta ao navegar entre telas, então a busca acima só
+  // acontecia na carga inicial (F5). Quem habilitava/desabilitava contas em Integrações e voltava
+  // pra Meta Ads continuava vendo a lista antiga até recarregar a página — às vezes mais de uma
+  // vez, porque o F5 hidrata o localStorage ANTIGO primeiro e só depois revalida. Agora cada troca
+  // de rota revalida a lista (consulta leve no Supabase, não chama a Meta) e marca isFresh=false
+  // até a resposta chegar.
+  const pathname = usePathname()
+  const lastPathnameRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (lastPathnameRef.current === null) {
+      lastPathnameRef.current = pathname
+      return
+    }
+    if (lastPathnameRef.current === pathname) return
+    lastPathnameRef.current = pathname
+    // Telas públicas não têm sessão: a busca devolveria 401 e redirecionaria pro login.
+    if (/^\/(login|register|auth)(\/|$)/.test(pathname || '')) return
+    setIsFresh(false)
+    fetchAccounts(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname])
+
   return (
     <AppContext.Provider value={{
       accounts,
       isLoading,
       isRevalidating,
+      isFresh,
       refreshAccounts
     }}>
       {children}

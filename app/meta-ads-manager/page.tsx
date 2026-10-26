@@ -63,6 +63,9 @@ interface MetaBusinessCachedData {
 // seja de uma busca anterior bem-sucedida, seja de uma atualização otimista recente feita por uma
 // ação de escrita). O fallback do servidor só é aceito quando não há nada melhor localmente ainda
 // (primeiro carregamento da sessão, sem cache nenhum).
+// Os ids de conta chegam com e sem o prefixo "act_" dependendo da origem (Supabase vs. Graph API).
+const normalizeAccountId = (id: string | undefined | null) => (id || '').replace(/^act_/, '')
+
 function resolveFetchedItems<T>(current: T[], result: { items: T[]; rateLimitedUntil: number | null }): T[] {
   if (result.rateLimitedUntil && current.length > 0) {
     return current
@@ -71,7 +74,7 @@ function resolveFetchedItems<T>(current: T[], result: { items: T[]; rateLimitedU
 }
 
 export default function MetaBusinessPage() {
-  const { accounts: facebookAccounts, isLoading: accountsLoading, refreshAccounts } = useApp()
+  const { accounts: facebookAccounts, isLoading: accountsLoading, isFresh: accountsFresh, refreshAccounts } = useApp()
   // Hidratar tudo (contas/campanhas/adsets/ads/stats + filtros de data) a partir do cache local,
   // se houver, para a tela não aparecer vazia enquanto a busca real na Graph API não termina.
   const cachedMetaBusiness = useState(() =>
@@ -502,6 +505,59 @@ export default function MetaBusinessPage() {
   const adSetsLoadedKeyRef = useRef<string | null>(null)
   const adsLoadedKeyRef = useRef<string | null>(null)
 
+  // Quando a lista de contas habilitadas muda (ex.: o usuário desabilitou/habilitou contas em
+  // Integrações > Ver Contas e voltou pra cá): (1) descarta do estado local (hidratado do cache do
+  // navegador) tudo que pertence a contas que não estão mais habilitadas; (2) zera as marcas de
+  // "aba já carregada" pra que a aba aberta busque de novo com o novo conjunto de contas — antes,
+  // essas marcas só olhavam o período de data e a busca nunca repetia sozinha, então a tela
+  // seguia mostrando as contas antigas até recarregar a página. Declarado antes do efeito de busca
+  // abaixo de propósito: os dois rodam na mesma renderização, nesta ordem.
+  const enabledAccountsSigRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (!accountsFresh) return
+    const enabledIds = new Set(facebookAccounts.map((account) => normalizeAccountId(account.id)))
+    const signature = Array.from(enabledIds).sort().join(',')
+
+    if (enabledAccountsSigRef.current !== null && enabledAccountsSigRef.current !== signature) {
+      accountsLoadedKeyRef.current = null
+      campaignsLoadedKeyRef.current = null
+      adSetsLoadedKeyRef.current = null
+      adsLoadedKeyRef.current = null
+    }
+    enabledAccountsSigRef.current = signature
+
+    if (facebookAccounts.length > 0) {
+      const nextAccounts = accountsRef.current.filter((a) => enabledIds.has(normalizeAccountId(a.id)))
+      const nextCampaigns = campaignsRef.current.filter((c) => enabledIds.has(normalizeAccountId(c.account_id)))
+      const nextAdSets = adSetsRef.current.filter((a) => enabledIds.has(normalizeAccountId(a.account_id)))
+      const nextAds = adsRef.current.filter((a) => enabledIds.has(normalizeAccountId(a.account_id)))
+      if (
+        nextAccounts.length !== accountsRef.current.length ||
+        nextCampaigns.length !== campaignsRef.current.length ||
+        nextAdSets.length !== adSetsRef.current.length ||
+        nextAds.length !== adsRef.current.length
+      ) {
+        setAccounts(nextAccounts)
+        setCampaigns(nextCampaigns)
+        setAdSets(nextAdSets)
+        setAds(nextAds)
+        const prunedStats = calculateStats(nextAccounts, nextCampaigns, nextAdSets, nextAds)
+        persistCache({ accounts: nextAccounts, campaigns: nextCampaigns, adSets: nextAdSets, ads: nextAds, stats: prunedStats })
+      }
+    }
+
+    // Se o filtro "Conta de Anúncio" apontava pra contas que foram desabilitadas, tira elas dali
+    // (e desliga o filtro se não sobrou nenhuma) — senão a busca consultaria zero contas.
+    if (filters.accountIds.length > 0) {
+      const stillEnabled = filters.accountIds.filter((id) => enabledIds.has(normalizeAccountId(id)))
+      if (stillEnabled.length !== filters.accountIds.length) {
+        setFilters((prev) => ({ ...prev, accountIds: stillEnabled }))
+        if (stillEnabled.length === 0) setAccountFilterActive(false)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [facebookAccounts, accountsFresh])
+
   // Busca SOB DEMANDA para as 4 abas (Contas/Campanhas/Conjuntos/Anúncios): cada uma só é
   // buscada na Graph API quando o usuário efetivamente abre aquela aba pela primeira vez (ou
   // quando o período de data muda e ele volta a essa aba) — nenhuma busca dispara sozinha ao
@@ -511,6 +567,10 @@ export default function MetaBusinessPage() {
   // Meta, igual ao comportamento observado em ferramentas de tracking de terceiros (ex.
   // ratoeiraads.com.br), que buscam e mostram um spinner por aba, sob demanda.
   useEffect(() => {
+    // Só age depois que a lista de contas foi confirmada no servidor nesta navegação. Antes
+    // disso `facebookAccounts` pode ser a lista antiga (localStorage / tela anterior), e buscar
+    // agora gastaria cota de requisições da Meta com contas que acabaram de ser desabilitadas.
+    if (!accountsFresh) return
     if (facebookAccounts.length === 0) {
       // Nenhuma conta conectada no AppContext. Enquanto ele ainda está carregando a lista real
       // (accountsLoading), não mexe em nada — evita apagar dados válidos por causa de uma
@@ -553,7 +613,7 @@ export default function MetaBusinessPage() {
       fetchAds()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, facebookAccounts, currentDataKey, adSetsDataKey, adsDataKey, isRateLimited, accountsLoading, persistCache])
+  }, [activeTab, facebookAccounts, currentDataKey, adSetsDataKey, adsDataKey, isRateLimited, accountsLoading, accountsFresh, persistCache])
 
   // (Removido o useEffect que preenchia filters.accountIds com TODOS os ids sempre que `accounts`
   // mudava. Array vazio já significa "nenhum filtro/todas as contas" em todo lugar que lê
