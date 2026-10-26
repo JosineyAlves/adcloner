@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { Loader2, Building2, Search, RefreshCw } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useApp } from '@/contexts/AppContext'
 import Sidebar from '@/components/layout/Sidebar'
 import PageHeader from '@/components/layout/PageHeader'
 import ToggleSwitch from '@/components/ui/ToggleSwitch'
@@ -48,6 +49,9 @@ function getMetaStatusLabel(accountStatus: number | null): { label: string; clas
 // contas de anúncio do perfil que não pertencem a nenhum Business Manager. Ver seção 43 do doc
 // do projeto — hierarquia Perfil → Business Manager → Contas, em vez de Perfil → Contas direto.
 export default function BusinessAccountsPage() {
+  // Depois de ligar/desligar contas, atualiza já a lista usada pelas outras telas (Meta Ads,
+  // Dashboard) — assim, ao voltar pra lá, a conta desativada nem chega a aparecer.
+  const { refreshAccounts } = useApp()
   const params = useParams<{ connectionId: string; businessId: string }>()
   const connectionId = params?.connectionId
   const businessId = params?.businessId
@@ -131,6 +135,7 @@ export default function BusinessAccountsPage() {
         )
       )
       if (results.some((r) => !r.success)) throw new Error('Falha ao atualizar uma ou mais contas')
+      void refreshAccounts()
     } catch (error) {
       toast.error('Erro ao atualizar as contas')
       loadData()
@@ -151,6 +156,7 @@ export default function BusinessAccountsPage() {
       })
       const data = await res.json()
       if (!data.success) throw new Error(data.error)
+      void refreshAccounts()
     } catch (error) {
       toast.error('Erro ao atualizar a conta')
       loadData()

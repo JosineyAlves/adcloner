@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Loader2, Building2, Plus, ChevronRight, Search, Facebook } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useApp } from '@/contexts/AppContext'
 import Sidebar from '@/components/layout/Sidebar'
 import PageHeader from '@/components/layout/PageHeader'
 import ToggleSwitch from '@/components/ui/ToggleSwitch'
@@ -76,6 +77,9 @@ function getMetaStatusLabel(accountStatus: number | null): { label: string; clas
 // contas ali mesmo, inline, com animação — sem navegar pra outra página. A rota [businessId] foi
 // mantida no código (não há como excluir arquivos remotamente), mas não é mais linkada daqui.
 export default function ConnectionBusinessesPage() {
+  // Depois de ligar/desligar contas, atualiza já a lista usada pelas outras telas (Meta Ads,
+  // Dashboard) — assim, ao voltar pra lá, a conta desativada nem chega a aparecer.
+  const { refreshAccounts } = useApp()
   const params = useParams<{ connectionId: string }>()
   const connectionId = params?.connectionId
 
@@ -172,6 +176,7 @@ export default function ConnectionBusinessesPage() {
       })
       const data = await res.json()
       if (!data.success) throw new Error(data.error)
+      void refreshAccounts()
     } catch (error) {
       toast.error('Erro ao atualizar a conta')
       loadData()
@@ -196,6 +201,7 @@ export default function ConnectionBusinessesPage() {
         )
       )
       if (results.some((r) => !r.success)) throw new Error('Falha ao atualizar uma ou mais contas')
+      void refreshAccounts()
     } catch (error) {
       toast.error('Erro ao atualizar as contas')
       setAccounts(previous)
