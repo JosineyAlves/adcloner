@@ -502,6 +502,7 @@ export async function GET(request: NextRequest) {
 
             const metaAdSet = {
               id: adSet.id,
+              adset_id: adSet.id,
               name: adSet.name,
               campaign_id: adSet.campaign_id || adSet.campaign?.id || '',
               campaign_name: adSet.campaign?.name || '',
@@ -592,6 +593,7 @@ export async function GET(request: NextRequest) {
             // Adicionar ad set sem insights em caso de erro
             adSets.push({
               id: adSet.id,
+              adset_id: adSet.id,
               name: adSet.name,
               campaign_id: adSet.campaign?.id || '',
               campaign_name: adSet.campaign?.name || '',

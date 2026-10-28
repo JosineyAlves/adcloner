@@ -291,6 +291,10 @@ export interface MetaCampaign {
 
 export interface MetaAdSet {
   id: string
+  // Mesmo valor de `id`, exposto com nome próprio pra ser a coluna opcional "ID do Conjunto"
+  // (lib/metrics-config.ts) sem tratamento especial na tabela/ordenação. Nos anúncios, `adset_id`
+  // já existe como referência real ao conjunto pai (ver MetaAd).
+  adset_id?: string
   name: string
   campaign_id: string
   campaign_name: string

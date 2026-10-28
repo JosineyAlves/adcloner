@@ -401,6 +401,17 @@ export const ALL_METRICS: MetricConfig[] = [
     visible: false,
     order: 35,
     category: 'basic'
+  },
+  // Na aba Conjuntos é o `id` do próprio conjunto (devolvido pela rota como `adset_id`); na aba
+  // Anúncios é a referência real ao conjunto pai de cada anúncio. Escondida em Contas/Campanhas.
+  {
+    id: 'adset_id',
+    label: 'ID do Conjunto',
+    description: 'Identificador numérico do conjunto de anúncios na Meta — útil pra identificar as métricas de cada conjunto e cruzar com relatórios externos ou outras ferramentas.',
+    type: 'text',
+    visible: false,
+    order: 36,
+    category: 'basic'
   }
 ]
 

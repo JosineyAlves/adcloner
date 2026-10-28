@@ -193,6 +193,11 @@ export default function MetaBusinessPage() {
     () => metrics.filter((m) => m.id !== 'ad_id'),
     [metrics]
   )
+  // "ID do Conjunto" só faz sentido em Conjuntos e Anúncios; em Contas/Campanhas também esconde.
+  const metricsForAccountsAndCampaigns = useMemo<MetricConfig[]>(
+    () => metrics.filter((m) => m.id !== 'ad_id' && m.id !== 'adset_id'),
+    [metrics]
+  )
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
 
   // Refs sempre sincronizados com o estado mais recente (atualizados a cada render, antes de
@@ -1308,7 +1313,7 @@ export default function MetaBusinessPage() {
                   ) : (
                     <AccountsTable
                       accounts={filteredAccounts}
-                      metrics={metricsWithoutAdId}
+                      metrics={metricsForAccountsAndCampaigns}
                       showMetrics={true}
                     />
                   )
@@ -1330,7 +1335,7 @@ export default function MetaBusinessPage() {
                       onNameUpdate={handleNameUpdate}
                       onBulkStatusUpdate={handleBulkStatusUpdate}
                       filterToSelectedOnly={campaignsFilterToSelected}
-                      metrics={metricsWithoutAdId}
+                      metrics={metricsForAccountsAndCampaigns}
                       showMetrics={true}
                     />
                   )
