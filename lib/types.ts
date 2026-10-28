@@ -378,6 +378,9 @@ export interface MetaAdSet {
 
 export interface MetaAd {
   id: string
+  // Mesmo valor de `id`, exposto com nome próprio pra poder ser a coluna opcional "ID do Anúncio"
+  // (lib/metrics-config.ts) sem tratamento especial na tabela/ordenação.
+  ad_id?: string
   name: string
   adset_id: string
   adset_name: string

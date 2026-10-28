@@ -390,6 +390,17 @@ export const ALL_METRICS: MetricConfig[] = [
     visible: false,
     order: 34,
     category: 'basic'
+  },
+  // Só faz sentido na aba Anúncios (é o `id` do próprio anúncio, devolvido pela rota de anúncios
+  // como `ad_id`) — a página esconde essa coluna nas abas Contas/Campanhas/Conjuntos.
+  {
+    id: 'ad_id',
+    label: 'ID do Anúncio',
+    description: 'Identificador numérico do anúncio na Meta — útil pra identificar as métricas de cada anúncio e cruzar com relatórios externos ou outras ferramentas.',
+    type: 'text',
+    visible: false,
+    order: 35,
+    category: 'basic'
   }
 ]
 

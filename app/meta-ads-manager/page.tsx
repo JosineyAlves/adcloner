@@ -188,6 +188,11 @@ export default function MetaBusinessPage() {
     () => buildMetricsFromIds(selectedMetricIds),
     [selectedMetricIds]
   )
+  // "ID do Anúncio" só existe no nível de Anúncio — nas outras abas a coluna ficaria sempre "-".
+  const metricsWithoutAdId = useMemo<MetricConfig[]>(
+    () => metrics.filter((m) => m.id !== 'ad_id'),
+    [metrics]
+  )
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
 
   // Refs sempre sincronizados com o estado mais recente (atualizados a cada render, antes de
@@ -1303,7 +1308,7 @@ export default function MetaBusinessPage() {
                   ) : (
                     <AccountsTable
                       accounts={filteredAccounts}
-                      metrics={metrics}
+                      metrics={metricsWithoutAdId}
                       showMetrics={true}
                     />
                   )
@@ -1325,7 +1330,7 @@ export default function MetaBusinessPage() {
                       onNameUpdate={handleNameUpdate}
                       onBulkStatusUpdate={handleBulkStatusUpdate}
                       filterToSelectedOnly={campaignsFilterToSelected}
-                      metrics={metrics}
+                      metrics={metricsWithoutAdId}
                       showMetrics={true}
                     />
                   )
@@ -1349,7 +1354,7 @@ export default function MetaBusinessPage() {
                       onNameUpdate={handleNameUpdate}
                       onBulkStatusUpdate={handleBulkStatusUpdate}
                       filterToSelectedOnly={adSetsFilterToSelected}
-                      metrics={metrics}
+                      metrics={metricsWithoutAdId}
                       showMetrics={true}
                     />
                     </>

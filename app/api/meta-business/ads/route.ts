@@ -515,6 +515,7 @@ export async function GET(request: NextRequest) {
 
                   const metaAd = {
                     id: ad.id,
+                    ad_id: ad.id,
                     name: ad.name,
                     adset_id: ad.adset_id || ad.adset?.id || '',
                     adset_name: ad.adset?.name || '',
@@ -597,6 +598,7 @@ export async function GET(request: NextRequest) {
             // Adicionar ad sem insights em caso de erro
             ads.push({
               id: ad.id,
+              ad_id: ad.id,
               name: ad.name,
               adset_id: ad.adset?.id || '',
               adset_name: ad.adset?.name || '',
