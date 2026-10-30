@@ -142,7 +142,10 @@ export default function MetaBusinessPage() {
   // "Pausado" a qualquer momento no filtro existente ("Arquivado" foi removido do dropdown —
   // ver seção 27 do doc do projeto).
   const [filters, setFilters] = useState({
-    status: ['ACTIVE'] as string[],
+    // Status por aba (Campanhas/Conjuntos/Anúncios): cada nível tem o seu próprio filtro, para
+    // escolher "Ativo" em Campanhas sem esconder conjuntos/anúncios pausados nas outras abas.
+    // Por padrão todas abrem em "Ativo".
+    statusByTab: { accounts: ['ACTIVE'], campaigns: ['ACTIVE'], adsets: ['ACTIVE'], ads: ['ACTIVE'] } as Record<'accounts' | 'campaigns' | 'adsets' | 'ads', string[]>,
     // Um valor de busca por aba (Contas/Campanhas/Conjuntos/Anúncios) em vez de uma única string
     // compartilhada — cada aba "lembra" sua própria busca e aparece vazia ao trocar de aba se
     // nada foi digitado ali, em vez de herdar o filtro de nome deixado na aba anterior.
@@ -692,16 +695,16 @@ export default function MetaBusinessPage() {
   const handleStatusFilter = (status: string[]) => {
     setFilters(prev => ({
       ...prev,
-      status
+      statusByTab: { ...prev.statusByTab, [activeTab]: status }
     }))
-    // Limpa o drill-down de campanha(s)/conjunto(s) selecionados ao trocar o filtro de status.
-    // Sem isso, uma seleção feita com o filtro em "Ativo" (ex.: "Selecionar todos" na aba
-    // Campanhas) continuava escopando as abas Conjuntos/Anúncios só àquelas campanhas ativas
-    // mesmo depois de o usuário trocar o filtro para "Qualquer" — porque o escopo em
-    // fetchAdSets/fetchAds depende de selectedCampaigns, não do filtro de status. Limpar aqui
-    // também dispara a rebusca automática (ver adSetsDataKey/adsDataKey), já sem esse escopo.
-    setSelectedCampaigns(new Set())
-    setSelectedAdSets(new Set())
+    // Ao trocar o status, limpa a seleção do próprio nível e dos níveis abaixo (drill-down).
+    // Sem isso, uma seleção feita com o filtro em "Ativo" (ex.: "Selecionar todos" em
+    // Campanhas) continuava escopando Conjuntos/Anúncios só àquelas campanhas mesmo depois de
+    // trocar para "Qualquer" — o escopo em fetchAdSets/fetchAds depende de selectedCampaigns,
+    // não do filtro. Limpar também dispara a rebusca automática sem esse escopo. Já os níveis
+    // acima NÃO são limpos: mudar o status em Conjuntos não deve desfazer a campanha escolhida.
+    if (activeTab === 'campaigns') setSelectedCampaigns(new Set())
+    if (activeTab === 'campaigns' || activeTab === 'adsets') setSelectedAdSets(new Set())
     setSelectedAds(new Set())
   }
 
@@ -1015,10 +1018,14 @@ export default function MetaBusinessPage() {
   // Opção "Veiculado" ('SPENT'): ignora o status e mantém só quem teve gasto > 0 ou impressões > 0
   // no intervalo de datas escolhido (ativas e pausadas) — esconde campanhas antigas que não
   // entregaram nada no período. Usa os dados já carregados, sem chamada extra à Meta.
-  const matchesStatusFilter = (item: { status: string; effective_status: string; spend?: number; impressions?: number }): boolean => {
-    if (filters.status.length === 0) return true
-    if (filters.status.includes('SPENT')) return (Number(item.spend) || 0) > 0 || (Number(item.impressions) || 0) > 0
-    const wantsActive = filters.status.includes('ACTIVE')
+  const matchesStatusFilter = (
+    item: { status: string; effective_status: string; spend?: number; impressions?: number },
+    tab: 'campaigns' | 'adsets' | 'ads'
+  ): boolean => {
+    const statusFilter = filters.statusByTab[tab]
+    if (statusFilter.length === 0) return true
+    if (statusFilter.includes('SPENT')) return (Number(item.spend) || 0) > 0 || (Number(item.impressions) || 0) > 0
+    const wantsActive = statusFilter.includes('ACTIVE')
     const isEffectivelyActive = item.effective_status === 'ACTIVE'
     return wantsActive === isEffectivelyActive
   }
@@ -1032,14 +1039,14 @@ export default function MetaBusinessPage() {
 
   const filteredCampaigns = campaigns.filter(campaign => {
     if (filters.searchByTab.campaigns && !campaign.name.toLowerCase().includes(filters.searchByTab.campaigns.toLowerCase())) return false
-    if (!matchesStatusFilter(campaign)) return false
+    if (!matchesStatusFilter(campaign, 'campaigns')) return false
     if (filters.accountIds.length > 0 && !filters.accountIds.includes(campaign.account_id)) return false
     return true
   })
 
   const filteredAdSets = adSets.filter(adSet => {
     if (filters.searchByTab.adsets && !adSet.name.toLowerCase().includes(filters.searchByTab.adsets.toLowerCase())) return false
-    if (!matchesStatusFilter(adSet)) return false
+    if (!matchesStatusFilter(adSet, 'adsets')) return false
     if (filters.accountIds.length > 0 && !filters.accountIds.includes(adSet.account_id)) return false
     // Drill-down: campanhas marcadas na aba Campanhas escopam os Conjuntos exibidos aqui, igual
     // ao Gerenciador de Anúncios nativo (selecionar campanha(s) e abrir "Conjuntos de anúncios
@@ -1050,7 +1057,7 @@ export default function MetaBusinessPage() {
 
   const filteredAds = ads.filter(ad => {
     if (filters.searchByTab.ads && !ad.name.toLowerCase().includes(filters.searchByTab.ads.toLowerCase())) return false
-    if (!matchesStatusFilter(ad)) return false
+    if (!matchesStatusFilter(ad, 'ads')) return false
     if (filters.accountIds.length > 0 && !filters.accountIds.includes(ad.account_id)) return false
     // Drill-down: prioriza o escopo de Conjuntos selecionados; sem isso, cai pro escopo de
     // Campanhas selecionadas — mesma hierarquia Campanha > Conjunto > Anúncio do painel nativo.
@@ -1145,7 +1152,7 @@ export default function MetaBusinessPage() {
                     Status
                   </label>
                   <Select
-                    value={filters.status.join(',')}
+                    value={filters.statusByTab[activeTab].join(',')}
                     onChange={(v) => handleStatusFilter(v ? v.split(',') : [])}
                     options={[
                       { value: '', label: 'Qualquer' },
