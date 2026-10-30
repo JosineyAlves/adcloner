@@ -143,6 +143,12 @@ export default function MetaBusinessPage() {
   // ver seção 27 do doc do projeto).
   const [filters, setFilters] = useState({
     status: ['ACTIVE'] as string[],
+    // Filtro de "Entrega" no período selecionado (Campanhas/Conjuntos/Anúncios): 'all' não
+    // filtra nada; 'spend' mantém só quem teve gasto > 0 e 'impressions' só quem teve
+    // impressões > 0 no intervalo de datas escolhido. Combina com o filtro de Status — ex.:
+    // Status "Qualquer" + "Com gasto no período" mostra ativas e pausadas que de fato rodaram,
+    // escondendo campanhas antigas que não entregaram nada naquele período.
+    delivery: 'all' as 'all' | 'spend' | 'impressions',
     // Um valor de busca por aba (Contas/Campanhas/Conjuntos/Anúncios) em vez de uma única string
     // compartilhada — cada aba "lembra" sua própria busca e aparece vazia ao trocar de aba se
     // nada foi digitado ali, em vez de herdar o filtro de nome deixado na aba anterior.
@@ -1015,6 +1021,12 @@ export default function MetaBusinessPage() {
     return wantsActive === isEffectivelyActive
   }
 
+  const matchesDeliveryFilter = (item: { spend?: number; impressions?: number }): boolean => {
+    if (filters.delivery === 'spend') return (Number(item.spend) || 0) > 0
+    if (filters.delivery === 'impressions') return (Number(item.impressions) || 0) > 0
+    return true
+  }
+
   // Filtrar dados baseado nos filtros
   const filteredAccounts = accounts.filter(account => {
     if (filters.searchByTab.accounts && !account.name.toLowerCase().includes(filters.searchByTab.accounts.toLowerCase())) return false
@@ -1025,6 +1037,7 @@ export default function MetaBusinessPage() {
   const filteredCampaigns = campaigns.filter(campaign => {
     if (filters.searchByTab.campaigns && !campaign.name.toLowerCase().includes(filters.searchByTab.campaigns.toLowerCase())) return false
     if (!matchesStatusFilter(campaign)) return false
+    if (!matchesDeliveryFilter(campaign)) return false
     if (filters.accountIds.length > 0 && !filters.accountIds.includes(campaign.account_id)) return false
     return true
   })
@@ -1032,6 +1045,7 @@ export default function MetaBusinessPage() {
   const filteredAdSets = adSets.filter(adSet => {
     if (filters.searchByTab.adsets && !adSet.name.toLowerCase().includes(filters.searchByTab.adsets.toLowerCase())) return false
     if (!matchesStatusFilter(adSet)) return false
+    if (!matchesDeliveryFilter(adSet)) return false
     if (filters.accountIds.length > 0 && !filters.accountIds.includes(adSet.account_id)) return false
     // Drill-down: campanhas marcadas na aba Campanhas escopam os Conjuntos exibidos aqui, igual
     // ao Gerenciador de Anúncios nativo (selecionar campanha(s) e abrir "Conjuntos de anúncios
@@ -1043,6 +1057,7 @@ export default function MetaBusinessPage() {
   const filteredAds = ads.filter(ad => {
     if (filters.searchByTab.ads && !ad.name.toLowerCase().includes(filters.searchByTab.ads.toLowerCase())) return false
     if (!matchesStatusFilter(ad)) return false
+    if (!matchesDeliveryFilter(ad)) return false
     if (filters.accountIds.length > 0 && !filters.accountIds.includes(ad.account_id)) return false
     // Drill-down: prioriza o escopo de Conjuntos selecionados; sem isso, cai pro escopo de
     // Campanhas selecionadas — mesma hierarquia Campanha > Conjunto > Anúncio do painel nativo.
@@ -1106,7 +1121,7 @@ export default function MetaBusinessPage() {
                   UTMify), em vez dos cards de estatísticas + barra de filtros em linha única que
                   existiam antes. */}
               <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 items-end">
+              <div className={`grid grid-cols-1 sm:grid-cols-2 ${activeTab === 'accounts' ? 'lg:grid-cols-5' : 'lg:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,1fr))_auto]'} gap-2 sm:gap-3 items-end`}>
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     Nome da {activeTab === 'campaigns' ? 'Campanha' : activeTab === 'adsets' ? 'Conjunto' : activeTab === 'ads' ? 'Anúncio' : 'Conta'}
@@ -1146,6 +1161,23 @@ export default function MetaBusinessPage() {
                     ]}
                   />
                 </div>
+
+                {activeTab !== 'accounts' && (
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                      Entrega no período
+                    </label>
+                    <Select
+                      value={filters.delivery}
+                      onChange={(v) => setFilters(prev => ({ ...prev, delivery: (v || 'all') as 'all' | 'spend' | 'impressions' }))}
+                      options={[
+                        { value: 'all', label: 'Qualquer' },
+                        { value: 'spend', label: 'Com gasto' },
+                        { value: 'impressions', label: 'Com impressões' }
+                      ]}
+                    />
+                  </div>
+                )}
 
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
