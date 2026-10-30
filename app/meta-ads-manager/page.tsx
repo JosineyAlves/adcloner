@@ -1008,12 +1008,12 @@ export default function MetaBusinessPage() {
   // também conjuntos/anúncios "ligados" de campanhas pausadas, que na prática não estão
   // rodando. O dropdown de Status só tem duas opções (Ativo/Pausado — ver options do <Select>
   // abaixo), então isso vira uma checagem binária: "está de fato ativo" ou não.
-  // Opção "Com gasto no período" ('SPENT'): ignora o status e mantém só quem teve gasto > 0 no
-  // intervalo de datas escolhido (ativas e pausadas) — esconde campanhas antigas que não
+  // Opção "Veiculado" ('SPENT'): ignora o status e mantém só quem teve gasto > 0 ou impressões > 0
+  // no intervalo de datas escolhido (ativas e pausadas) — esconde campanhas antigas que não
   // entregaram nada no período. Usa os dados já carregados, sem chamada extra à Meta.
-  const matchesStatusFilter = (item: { status: string; effective_status: string; spend?: number }): boolean => {
+  const matchesStatusFilter = (item: { status: string; effective_status: string; spend?: number; impressions?: number }): boolean => {
     if (filters.status.length === 0) return true
-    if (filters.status.includes('SPENT')) return (Number(item.spend) || 0) > 0
+    if (filters.status.includes('SPENT')) return (Number(item.spend) || 0) > 0 || (Number(item.impressions) || 0) > 0
     const wantsActive = filters.status.includes('ACTIVE')
     const isEffectivelyActive = item.effective_status === 'ACTIVE'
     return wantsActive === isEffectivelyActive
@@ -1147,7 +1147,7 @@ export default function MetaBusinessPage() {
                       { value: '', label: 'Qualquer' },
                       { value: 'ACTIVE', label: 'Ativo' },
                       { value: 'PAUSED', label: 'Pausado' },
-                      { value: 'SPENT', label: 'Com gasto no período' }
+                      { value: 'SPENT', label: 'Veiculado' }
                     ]}
                   />
                 </div>
