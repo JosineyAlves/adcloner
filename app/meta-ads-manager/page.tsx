@@ -144,8 +144,9 @@ export default function MetaBusinessPage() {
   const [filters, setFilters] = useState({
     // Status por aba (Campanhas/Conjuntos/Anúncios): cada nível tem o seu próprio filtro, para
     // escolher "Ativo" em Campanhas sem esconder conjuntos/anúncios pausados nas outras abas.
-    // Por padrão todas abrem em "Ativo".
-    statusByTab: { accounts: ['ACTIVE'], campaigns: ['ACTIVE'], adsets: ['ACTIVE'], ads: ['ACTIVE'] } as Record<'accounts' | 'campaigns' | 'adsets' | 'ads', string[]>,
+    // Por padrão só Campanhas abre em "Ativo"; Conjuntos e Anúncios abrem em "Qualquer", já que
+    // herdam o filtro de Campanhas (ver allowedCampaignIds).
+    statusByTab: { accounts: [], campaigns: ['ACTIVE'], adsets: [], ads: [] } as Record<'accounts' | 'campaigns' | 'adsets' | 'ads', string[]>,
     // Um valor de busca por aba (Contas/Campanhas/Conjuntos/Anúncios) em vez de uma única string
     // compartilhada — cada aba "lembra" sua própria busca e aparece vazia ao trocar de aba se
     // nada foi digitado ali, em vez de herdar o filtro de nome deixado na aba anterior.
