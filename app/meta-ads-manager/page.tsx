@@ -1161,21 +1161,24 @@ export default function MetaBusinessPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                    Status
-                  </label>
-                  <Select
-                    value={filters.statusByTab[activeTab].join(',')}
-                    onChange={(v) => handleStatusFilter(v ? v.split(',') : [])}
-                    options={[
-                      { value: '', label: 'Qualquer' },
-                      { value: 'ACTIVE', label: 'Ativo' },
-                      { value: 'PAUSED', label: 'Pausado' },
-                      { value: 'SPENT', label: 'Veiculado' }
-                    ]}
-                  />
-                </div>
+                {/* Status não se aplica à aba Contas (ela ignora o filtro), então o campo só aparece nas demais. */}
+                {activeTab !== 'accounts' && (
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                      Status
+                    </label>
+                    <Select
+                      value={filters.statusByTab[activeTab].join(',')}
+                      onChange={(v) => handleStatusFilter(v ? v.split(',') : [])}
+                      options={[
+                        { value: '', label: 'Qualquer' },
+                        { value: 'ACTIVE', label: 'Ativo' },
+                        { value: 'PAUSED', label: 'Pausado' },
+                        { value: 'SPENT', label: 'Veiculado' }
+                      ]}
+                    />
+                  </div>
+                )}
 
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
@@ -1207,7 +1210,7 @@ export default function MetaBusinessPage() {
                     Ações em massa (BulkActionsMenu) segue o mesmo padrão — ao lado da engrenagem,
                     só aparece quando há seleção na aba atual — em vez de virar uma barra própria
                     dentro da tabela. */}
-                <div className="flex items-center gap-2 sm:justify-end">
+                <div className={`flex items-center gap-2 sm:justify-end ${activeTab === 'accounts' ? 'lg:col-span-2' : ''}`}>
                   {activeTab === 'campaigns' && selectedCampaigns.size > 0 && (
                     <BulkActionsMenu
                       selectedCount={selectedCampaigns.size}
