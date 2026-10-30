@@ -99,8 +99,8 @@ export default function AdsTable({
     }
   }
 
-  // Linha de totais no rodapé — mesmo padrão de CampaignsTable.tsx. Anúncios não têm orçamento
-  // próprio (é definido no conjunto), então essa coluna fica "-" no total.
+  // Linha de totais no rodapé — mesmo padrão de CampaignsTable.tsx. Anúncios não têm coluna de
+  // orçamento (ele é definido no conjunto/campanha).
   const visibleMetrics = metrics.filter(m => m.visible)
   // Metricas de razao (custo-por-X, CTR-familia, ROAS, frequencia): somar ou fazer media simples
   // das linhas esta matematicamente errado - ex.: CPM do total NAO e a soma dos CPMs de cada
@@ -162,16 +162,14 @@ export default function AdsTable({
   })
 
   // Ordenação por coluna (clique no cabeçalho) — ver hooks/useTableSort.ts. Anúncios não têm
-  // orçamento próprio (coluna sempre "N/A"), por isso não entra como coluna ordenável aqui.
+  // coluna de orçamento.
   const { sortConfig, handleSort, sortedRows: sortedAds } = useTableSort<MetaAd>(ads, 'name')
 
-  // Largura ajustável (arrastar + duplo-clique pra ajustar ao conteúdo) das colunas Nome,
-  // Orçamento e de cada métrica visível — ver hooks/useResizableColumns.ts.
+  // Largura ajustável (arrastar + duplo-clique pra ajustar ao conteúdo) das colunas Nome
+  // e de cada métrica visível — ver hooks/useResizableColumns.ts.
   const { getWidth, startResize, autoFit, resizingId } = useResizableColumns('ads')
   const nameColWidth = getWidth('name', 240)
-  const budgetColWidth = getWidth('budget', 110)
   const handleAutoFitName = () => autoFit('name', [...ads.map(a => a.name), 'Anúncio'])
-  const handleAutoFitBudget = () => autoFit('budget', ['N/A', 'Orçamento'])
 
   const handleSelectAll = () => {
     if (selectedAds.size === ads.length) {
@@ -263,17 +261,6 @@ export default function AdsTable({
                     isResizing={resizingId === 'name'}
                   />
                 </th>
-                <th
-                  className="relative px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom"
-                  style={{ width: budgetColWidth, minWidth: budgetColWidth, maxWidth: budgetColWidth }}
-                >
-                  Orçamento
-                  <ColumnResizeHandle
-                    onMouseDown={startResize('budget', budgetColWidth)}
-                    onDoubleClick={handleAutoFitBudget}
-                    isResizing={resizingId === 'budget'}
-                  />
-                </th>
                 {showMetrics && metrics.filter(m => m.visible).map((metric) => {
                   const metricColWidth = getWidth(metric.id, 150)
                   return (
@@ -298,7 +285,7 @@ export default function AdsTable({
             </thead>
             <tbody className="bg-white dark:bg-gray-800">
               <tr>
-                <td colSpan={4 + (showMetrics ? metrics.filter(m => m.visible).length : 0)} className="px-6 py-12 text-center">
+                <td colSpan={3 + (showMetrics ? metrics.filter(m => m.visible).length : 0)} className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center">
                     <Eye className="w-12 h-12 text-gray-400 mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
@@ -353,17 +340,6 @@ export default function AdsTable({
                   onMouseDown={startResize('name', nameColWidth)}
                   onDoubleClick={handleAutoFitName}
                   isResizing={resizingId === 'name'}
-                />
-              </th>
-              <th
-                className="relative px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-bottom"
-                style={{ width: budgetColWidth, minWidth: budgetColWidth, maxWidth: budgetColWidth }}
-              >
-                Orçamento
-                <ColumnResizeHandle
-                  onMouseDown={startResize('budget', budgetColWidth)}
-                  onDoubleClick={handleAutoFitBudget}
-                  isResizing={resizingId === 'budget'}
                 />
               </th>
               {showMetrics && metrics.filter(m => m.visible).map((metric) => {
@@ -437,11 +413,6 @@ export default function AdsTable({
                     }}
                   />
                 </td>
-                <td className="px-6 py-3" style={{ width: budgetColWidth, minWidth: budgetColWidth, maxWidth: budgetColWidth }}>
-                  <span className="text-sm font-medium text-gray-400 dark:text-gray-500" title="Orçamento é definido no nível do Conjunto de Anúncios">
-                    N/A
-                  </span>
-                </td>
                 {showMetrics && metrics.filter(m => m.visible).map((metric) => {
                   const value = (ad as any)[metric.id]
                   const formattedValue = formatMetricValue(value, metric.type, metric.id)
@@ -462,7 +433,6 @@ export default function AdsTable({
               <td className="sticky bottom-0 z-20 md:left-[144px] bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 md:shadow-[inset_-2px_0_0_0_rgba(100,116,139,0.25)] md:dark:shadow-[inset_-2px_0_0_0_rgba(148,163,184,0.3)] px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap" style={{ width: nameColWidth, minWidth: nameColWidth, maxWidth: nameColWidth }}>
                 {ads.length} {ads.length === 1 ? 'ANÚNCIO' : 'ANÚNCIOS'}
               </td>
-              <td className="sticky bottom-0 z-10 bg-gray-200 dark:bg-black border-t-[3px] border-gray-400 dark:border-gray-400 px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap" style={{ width: budgetColWidth, minWidth: budgetColWidth, maxWidth: budgetColWidth }}>-</td>
               {showMetrics && visibleMetrics.map((metric, index) => {
                 const metricColWidth = getWidth(metric.id, 150)
                 return (
