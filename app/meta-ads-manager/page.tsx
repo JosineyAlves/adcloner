@@ -1044,7 +1044,19 @@ export default function MetaBusinessPage() {
     return true
   })
 
+  // Conjuntos e Anúncios herdam o filtro de Status do nível de Campanhas: só entram os que
+  // pertencem a campanhas que passam no Status escolhido na aba Campanhas (ex.: "Veiculado" ou
+  // "Ativo"), além do próprio filtro de Status da aba. Só vale quando as campanhas do período
+  // atual já foram carregadas (a busca é sob demanda por aba, então abrir direto Conjuntos/
+  // Anúncios sem passar por Campanhas não tem essa lista) e quando o Status de Campanhas não é
+  // "Qualquer".
+  const allowedCampaignIds: Set<string> | null =
+    filters.statusByTab.campaigns.length > 0 && campaigns.length > 0 && campaignsLoadedKeyRef.current === currentDataKey
+      ? new Set(campaigns.filter(c => matchesStatusFilter(c, 'campaigns')).map(c => c.id))
+      : null
+
   const filteredAdSets = adSets.filter(adSet => {
+    if (allowedCampaignIds && !allowedCampaignIds.has(adSet.campaign_id)) return false
     if (filters.searchByTab.adsets && !adSet.name.toLowerCase().includes(filters.searchByTab.adsets.toLowerCase())) return false
     if (!matchesStatusFilter(adSet, 'adsets')) return false
     if (filters.accountIds.length > 0 && !filters.accountIds.includes(adSet.account_id)) return false
@@ -1056,6 +1068,7 @@ export default function MetaBusinessPage() {
   })
 
   const filteredAds = ads.filter(ad => {
+    if (allowedCampaignIds && !allowedCampaignIds.has(ad.campaign_id)) return false
     if (filters.searchByTab.ads && !ad.name.toLowerCase().includes(filters.searchByTab.ads.toLowerCase())) return false
     if (!matchesStatusFilter(ad, 'ads')) return false
     if (filters.accountIds.length > 0 && !filters.accountIds.includes(ad.account_id)) return false
