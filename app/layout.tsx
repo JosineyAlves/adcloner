@@ -13,7 +13,7 @@ const jura = Jura({ subsets: ['latin'], weight: ['300', '400', '500', '600', '70
 
 export const metadata: Metadata = {
   title: 'vmetrics',
-  description: 'Acompanhe métricas e gerencie campanhas do Meta Ads em múltiplas contas e Business Managers',
+  description: 'Acompanhe métricas e gerencie campanhas do Meta Ads em múltiplas contas',
 }
 
 // Explícito em vez de depender só do default implícito do App Router — garante
