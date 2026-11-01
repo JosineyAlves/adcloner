@@ -73,6 +73,20 @@ function resolveFetchedItems<T>(current: T[], result: { items: T[]; rateLimitedU
   return result.items
 }
 
+// Versão por conta de resolveFetchedItems: a busca pode cobrir só ALGUMAS contas (as que ainda não
+// foram carregadas no período atual), então o resultado SUBSTITUI só os itens daquelas contas e
+// mantém os das outras já carregadas — é isso que faz trocar de conta no filtro reaproveitar o que
+// já foi buscado em vez de apagar tudo e exigir "Atualizar" de novo.
+function mergeFetchedByAccount<T>(
+  current: T[],
+  result: { items: T[]; rateLimitedUntil: number | null; fetchedIds: string[] },
+  accountOf: (item: T) => string | undefined
+): T[] {
+  if (result.rateLimitedUntil && current.length > 0) return current
+  const fetched = new Set(result.fetchedIds.map(normalizeAccountId))
+  return [...current.filter((item) => !fetched.has(normalizeAccountId(accountOf(item)))), ...result.items]
+}
+
 export default function MetaBusinessPage() {
   const { accounts: facebookAccounts, isLoading: accountsLoading, isFresh: accountsFresh, refreshAccounts } = useApp()
   // Hidratar tudo (contas/campanhas/adsets/ads/stats + filtros de data) a partir do cache local,
@@ -253,8 +267,11 @@ export default function MetaBusinessPage() {
     // Query extra (ex.: &campaignIds=...&adSetIds=...) pra pedir à Meta só os dados da
     // campanha/conjunto já selecionado na tela, em vez de baixar tudo da conta — ver
     // fetchAdSets/fetchAds abaixo.
-    scopeQuery: string = ''
-  ): Promise<{ items: T[]; rateLimitedUntil: number | null }> => {
+    scopeQuery: string = '',
+    // Se informado, busca SÓ estas contas (as que ainda não foram carregadas para o período/escopo
+    // atual); sem ele, usa o filtro "Conta de Anúncio" (ou todas as habilitadas).
+    onlyAccountIds?: string[]
+  ): Promise<{ items: T[]; rateLimitedUntil: number | null; fetchedIds: string[] }> => {
     // Não filtra mais por account_status (status real da conta perante a Meta, ex.: "Restrita").
     // O único controle de quais contas entram aqui é o toggle habilitar/desabilitar da tela de
     // Integrações (sync_enabled) — já aplicado antes disso, no AppContext (fetchAccounts usa
@@ -274,10 +291,12 @@ export default function MetaBusinessPage() {
     // recém-habilitada em Integrações que ainda não apareceu no cache da aba Contas.
     // `accountFilterActive` só fica true quando o próprio usuário mexeu no seletor
     // (handleAccountFilter), nunca por esse preenchimento automático.
-    const activeAccounts = accountFilterActive && filters.accountIds.length > 0
-      ? facebookAccounts.filter((account) => filters.accountIds.includes(account.id))
-      : facebookAccounts
-    if (activeAccounts.length === 0) return { items: [], rateLimitedUntil: null }
+    const activeAccounts = onlyAccountIds
+      ? facebookAccounts.filter((account) => onlyAccountIds.includes(account.id))
+      : accountFilterActive && filters.accountIds.length > 0
+        ? facebookAccounts.filter((account) => filters.accountIds.includes(account.id))
+        : facebookAccounts
+    if (activeAccounts.length === 0) return { items: [], rateLimitedUntil: null, fetchedIds: [] }
 
     const dateQuery = customRange ? `&since=${customRange.since}&until=${customRange.until}` : ''
     // Só pede à Meta os campos das colunas que o usuário deixou visíveis no seletor de métricas
@@ -317,7 +336,8 @@ export default function MetaBusinessPage() {
 
     return {
       items: results.flat(),
-      rateLimitedUntil: maxRetryAfterSeconds > 0 ? Date.now() + maxRetryAfterSeconds * 1000 : null
+      rateLimitedUntil: maxRetryAfterSeconds > 0 ? Date.now() + maxRetryAfterSeconds * 1000 : null,
+      fetchedIds: activeAccounts.map((account) => account.id)
     }
   }, [facebookAccounts, datePreset, customRange, metrics, filters.accountIds, accountFilterActive])
 
@@ -339,11 +359,11 @@ export default function MetaBusinessPage() {
   // Atualizar estando nela). Cada aba tem sua própria busca independente agora — nenhuma delas
   // dispara sozinha ao carregar a página, e nenhuma sai "de carona" junto com outra, para nunca
   // gastar cota de rate limit de uma conta com dados que o usuário ainda nem foi olhar.
-  const fetchAccounts = useCallback(async () => {
+  const fetchAccounts = useCallback(async (targetAccountIds?: string[]) => {
     try {
       setIsLoadingAccounts(true)
-      const accountsResult = await fetchEndpointForActiveAccounts<MetaAccount>('accounts', 'accounts')
-      const resolvedAccounts = resolveFetchedItems(accountsRef.current, accountsResult)
+      const accountsResult = await fetchEndpointForActiveAccounts<MetaAccount>('accounts', 'accounts', '', targetAccountIds)
+      const resolvedAccounts = mergeFetchedByAccount(accountsRef.current, accountsResult, (a) => a.id)
       setAccounts(resolvedAccounts)
       if (accountsResult.rateLimitedUntil) {
         setRateLimitedUntil(prev => Math.max(prev || 0, accountsResult.rateLimitedUntil!))
@@ -363,11 +383,11 @@ export default function MetaBusinessPage() {
   // Busca SOB DEMANDA: mesma lógica de fetchAccounts, para a aba "Campanhas". Antes essa busca
   // saía sempre junto com a de contas (mesmo useCallback); separar as duas faz cada aba consumir
   // só a sua própria fatia de rate limit, e só quando o usuário efetivamente abre aquela aba.
-  const fetchCampaigns = useCallback(async () => {
+  const fetchCampaigns = useCallback(async (targetAccountIds?: string[]) => {
     try {
       setIsLoadingCampaigns(true)
-      const campaignsResult = await fetchEndpointForActiveAccounts<MetaCampaign>('campaigns', 'campaigns')
-      const resolvedCampaigns = resolveFetchedItems(campaignsRef.current, campaignsResult)
+      const campaignsResult = await fetchEndpointForActiveAccounts<MetaCampaign>('campaigns', 'campaigns', '', targetAccountIds)
+      const resolvedCampaigns = mergeFetchedByAccount(campaignsRef.current, campaignsResult, (c) => c.account_id)
       setCampaigns(resolvedCampaigns)
       if (campaignsResult.rateLimitedUntil) {
         setRateLimitedUntil(prev => Math.max(prev || 0, campaignsResult.rateLimitedUntil!))
@@ -388,7 +408,7 @@ export default function MetaBusinessPage() {
   // Atualizar estando nela). Antes disso, essa chamada saía sempre junto com contas/campanhas/
   // anúncios, disparando 4 requisições simultâneas por conta e estourando o rate limit
   // "Limited Access" da Marketing API do Meta bem mais rápido do que o necessário.
-  const fetchAdSets = useCallback(async () => {
+  const fetchAdSets = useCallback(async (targetAccountIds?: string[]) => {
     try {
       setIsLoadingAdSets(true)
       // Se já há campanha(s) selecionada(s) na aba Campanhas, pede à Meta só os ad sets
@@ -399,8 +419,8 @@ export default function MetaBusinessPage() {
       const campaignScope = selectedCampaigns.size > 0
         ? `&campaignIds=${Array.from(selectedCampaigns).map(encodeURIComponent).join(',')}`
         : ''
-      const adSetsResult = await fetchEndpointForActiveAccounts<MetaAdSet>('adsets', 'adSets', campaignScope)
-      const resolvedAdSets = resolveFetchedItems(adSetsRef.current, adSetsResult)
+      const adSetsResult = await fetchEndpointForActiveAccounts<MetaAdSet>('adsets', 'adSets', campaignScope, targetAccountIds)
+      const resolvedAdSets = mergeFetchedByAccount(adSetsRef.current, adSetsResult, (a) => a.account_id)
       setAdSets(resolvedAdSets)
       if (adSetsResult.rateLimitedUntil) {
         setRateLimitedUntil(prev => Math.max(prev || 0, adSetsResult.rateLimitedUntil!))
@@ -417,7 +437,7 @@ export default function MetaBusinessPage() {
   }, [fetchEndpointForActiveAccounts, persistCache, selectedCampaigns])
 
   // Busca LAZY: mesma lógica de fetchAdSets, para a aba "Anúncios".
-  const fetchAds = useCallback(async () => {
+  const fetchAds = useCallback(async (targetAccountIds?: string[]) => {
     try {
       setIsLoadingAds(true)
       // Mesma lógica de fetchAdSets acima: conjunto selecionado é mais específico que campanha,
@@ -427,8 +447,8 @@ export default function MetaBusinessPage() {
         : selectedCampaigns.size > 0
           ? `&campaignIds=${Array.from(selectedCampaigns).map(encodeURIComponent).join(',')}`
           : ''
-      const adsResult = await fetchEndpointForActiveAccounts<MetaAd>('ads', 'ads', adsScope)
-      const resolvedAds = resolveFetchedItems(adsRef.current, adsResult)
+      const adsResult = await fetchEndpointForActiveAccounts<MetaAd>('ads', 'ads', adsScope, targetAccountIds)
+      const resolvedAds = mergeFetchedByAccount(adsRef.current, adsResult, (a) => a.account_id)
       setAds(resolvedAds)
       if (adsResult.rateLimitedUntil) {
         setRateLimitedUntil(prev => Math.max(prev || 0, adsResult.rateLimitedUntil!))
@@ -522,6 +542,27 @@ export default function MetaBusinessPage() {
   const campaignsLoadedKeyRef = useRef<string | null>(null)
   const adSetsLoadedKeyRef = useRef<string | null>(null)
   const adsLoadedKeyRef = useRef<string | null>(null)
+  // Cache por conta: para cada aba, guarda em qual "recorte" (período + seleção de campanha/
+  // conjunto) cada conta já foi buscada. Trocar a conta no filtro só busca as contas que ainda não
+  // estão aqui com o recorte atual — as demais são mostradas na hora a partir do que já está em
+  // memória, sem precisar clicar em Atualizar.
+  const loadedAccountsRef = useRef<Record<'accounts' | 'campaigns' | 'adsets' | 'ads', Map<string, string>>>({
+    accounts: new Map(),
+    campaigns: new Map(),
+    adsets: new Map(),
+    ads: new Map()
+  })
+  const clearLoadedAccounts = () => {
+    Object.values(loadedAccountsRef.current).forEach((m) => m.clear())
+  }
+  const tabDataKey = (tab: 'accounts' | 'campaigns' | 'adsets' | 'ads') =>
+    tab === 'adsets' ? adSetsDataKey : tab === 'ads' ? adsDataKey : currentDataKey
+  // Contas que a tela precisa mostrar agora: as do filtro "Conta de Anúncio" ou, sem filtro, todas.
+  const neededAccountIds = () =>
+    (accountFilterActive && filters.accountIds.length > 0
+      ? facebookAccounts.filter((account) => filters.accountIds.includes(account.id))
+      : facebookAccounts
+    ).map((account) => account.id)
 
   // Quando a lista de contas habilitadas muda (ex.: o usuário desabilitou/habilitou contas em
   // Integrações > Ver Contas e voltou pra cá): (1) descarta do estado local (hidratado do cache do
@@ -541,6 +582,7 @@ export default function MetaBusinessPage() {
       campaignsLoadedKeyRef.current = null
       adSetsLoadedKeyRef.current = null
       adsLoadedKeyRef.current = null
+      clearLoadedAccounts()
     }
     enabledAccountsSigRef.current = signature
 
@@ -603,6 +645,7 @@ export default function MetaBusinessPage() {
         campaignsLoadedKeyRef.current = null
         adSetsLoadedKeyRef.current = null
         adsLoadedKeyRef.current = null
+        clearLoadedAccounts()
         setAccounts([])
         setCampaigns([])
         setAdSets([])
@@ -617,21 +660,29 @@ export default function MetaBusinessPage() {
     // trocar de aba de novo ou clicar em Atualizar para tentar de fato.
     if (isRateLimited) return
 
-    if (activeTab === 'accounts' && accountsLoadedKeyRef.current !== currentDataKey) {
-      accountsLoadedKeyRef.current = currentDataKey
-      fetchAccounts()
-    } else if (activeTab === 'campaigns' && campaignsLoadedKeyRef.current !== currentDataKey) {
-      campaignsLoadedKeyRef.current = currentDataKey
-      fetchCampaigns()
-    } else if (activeTab === 'adsets' && adSetsLoadedKeyRef.current !== adSetsDataKey) {
-      adSetsLoadedKeyRef.current = adSetsDataKey
-      fetchAdSets()
-    } else if (activeTab === 'ads' && adsLoadedKeyRef.current !== adsDataKey) {
-      adsLoadedKeyRef.current = adsDataKey
-      fetchAds()
+    // Busca só as contas que ainda não foram carregadas para o recorte atual desta aba. Trocar a
+    // conta no filtro, ou voltar a uma já vista, não rebusca o que já está em memória.
+    const key = tabDataKey(activeTab)
+    const loadedMap = loadedAccountsRef.current[activeTab]
+    const missing = neededAccountIds().filter((id) => loadedMap.get(id) !== key)
+    if (missing.length === 0) return
+    missing.forEach((id) => loadedMap.set(id, key))
+
+    if (activeTab === 'accounts') {
+      accountsLoadedKeyRef.current = key
+      fetchAccounts(missing)
+    } else if (activeTab === 'campaigns') {
+      campaignsLoadedKeyRef.current = key
+      fetchCampaigns(missing)
+    } else if (activeTab === 'adsets') {
+      adSetsLoadedKeyRef.current = key
+      fetchAdSets(missing)
+    } else if (activeTab === 'ads') {
+      adsLoadedKeyRef.current = key
+      fetchAds(missing)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, facebookAccounts, currentDataKey, adSetsDataKey, adsDataKey, isRateLimited, accountsLoading, accountsFresh, persistCache])
+  }, [activeTab, facebookAccounts, currentDataKey, adSetsDataKey, adsDataKey, isRateLimited, accountsLoading, accountsFresh, persistCache, filters.accountIds, accountFilterActive])
 
   // (Removido o useEffect que preenchia filters.accountIds com TODOS os ids sempre que `accounts`
   // mudava. Array vazio já significa "nenhum filtro/todas as contas" em todo lugar que lê
@@ -652,6 +703,11 @@ export default function MetaBusinessPage() {
     try {
       setIsRefreshing(true)
       await refreshAccounts()
+      // O botão Atualizar rebusca as contas do filtro atual (mesclando com as já carregadas de
+      // outras contas) e marca todas como carregadas para o recorte atual.
+      const refreshIds = neededAccountIds()
+      const refreshKey = tabDataKey(activeTab)
+      refreshIds.forEach((id) => loadedAccountsRef.current[activeTab].set(id, refreshKey))
       // Atualiza só a aba que está aberta no momento — um refresh manual não precisa (e não deve)
       // gastar rate limit buscando as outras 3 abas que o usuário nem está olhando agora.
       if (activeTab === 'accounts') {
