@@ -74,15 +74,26 @@ function findZones(slots: Slot[]): Zone[] {
   return zones
 }
 
+const PLOT_H = 180
+
+function HourLabels({ slots }: { slots: Slot[] }) {
+  return (
+    <div className="grid mt-1 text-[11px] text-gray-500 dark:text-gray-400 tabular-nums text-center" style={{ gridTemplateColumns: 'repeat(24, minmax(0, 1fr))' }}>
+      {slots.map((s, i) => (
+        <span key={i} className={`whitespace-nowrap ${i % 3 !== 0 ? 'invisible' : ''}`}>{hh(s.hour)}</span>
+      ))}
+    </div>
+  )
+}
+
 export default function HoursWithoutSalesChart({ rows, loading, valueFormatter, singleDay, timezoneWarning, incomplete }: Props) {
-  const [hover, setHover] = useState<number | null>(null)
   const roiRef = useRef<HTMLDivElement>(null)
-  const [roiWidth, setRoiWidth] = useState(800)
+  const [roiWidth, setRoiWidth] = useState(400)
 
   useEffect(() => {
     const el = roiRef.current
     if (!el) return
-    const update = () => setRoiWidth(el.clientWidth || 800)
+    const update = () => setRoiWidth(el.clientWidth || 400)
     update()
     const observer = new ResizeObserver(update)
     observer.observe(el)
@@ -113,12 +124,8 @@ export default function HoursWithoutSalesChart({ rows, loading, valueFormatter, 
     const slots: Slot[] = SLOTS.map((i) => byHour[(start + i) % 24])
 
     const totalSpend = slots.reduce((a, s) => a + s.spend, 0)
-    const totalRevenue = slots.reduce((a, s) => a + s.revenue, 0)
-
     const zones = findZones(slots)
     const zonesTotal = zones.reduce((a, z) => a + z.spend, 0)
-    const salesHoursSpend = slots.reduce((a, s) => a + (s.conversions > 0 ? s.spend : 0), 0)
-    const otherNoSaleSpend = Math.max(totalSpend - zonesTotal - salesHoursSpend, 0)
 
     // Gasto depois da última venda do dia (só no modo de um dia). Sem nenhuma venda no dia, o gasto
     // inteiro conta como "sem venda".
@@ -137,12 +144,12 @@ export default function HoursWithoutSalesChart({ rows, loading, valueFormatter, 
       acc.push({ spend: cs, revenue: cr })
     })
 
-    return { slots, acc, zones, zonesTotal, salesHoursSpend, otherNoSaleSpend, totalSpend, totalRevenue, afterLastSale, lastSaleSlot }
+    return { slots, acc, zones, zonesTotal, totalSpend, afterLastSale, lastSaleSlot }
   }, [rows, singleDay])
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-40">
+      <div className="flex items-center justify-center h-32">
         <RefreshCw className="w-5 h-5 animate-spin text-gray-400" />
       </div>
     )
@@ -156,58 +163,41 @@ export default function HoursWithoutSalesChart({ rows, loading, valueFormatter, 
     )
   }
 
-  const { slots, acc, zones, zonesTotal, salesHoursSpend, otherNoSaleSpend, totalSpend, afterLastSale, lastSaleSlot } = model
+  const { slots, acc, zones, zonesTotal, totalSpend, afterLastSale, lastSaleSlot } = model
   const maxV = Math.max(...slots.map((s) => Math.max(s.spend, s.revenue)), 1)
-  const biggest = zones.slice().sort((a, b) => b.spend - a.spend)[0]
   const zoneLabel = (z: Zone) => `${hh(slots[z.from].hour)}–${hh(slots[z.to].hour)}`
 
   const roiValues = acc.map((a) => roiOf(a.spend, a.revenue) ?? 0)
   const lo = Math.min(0, ...roiValues)
   const hi = Math.max(0, ...roiValues)
-  const H = 110
-  const padY = 10
-  const yOf = (v: number) => padY + ((hi - v) / (hi - lo || 1)) * (H - padY * 2)
+  const padY = 12
+  const yOf = (v: number) => padY + ((hi - v) / (hi - lo || 1)) * (PLOT_H - padY * 2)
   const xOf = (i: number) => ((i + 0.5) * roiWidth) / 24
-  const peakSlot = roiValues.indexOf(hi)
+
+  const zoneBand = 'absolute top-0 bottom-0 bg-gray-100 dark:bg-gray-700/40 border-x border-dashed border-gray-300 dark:border-gray-600 pointer-events-none'
 
   return (
     <div className="space-y-4">
-      <div className={`grid grid-cols-1 gap-3 ${singleDay ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
+      {/* Indicadores novos (gasto, receita e ROI totais já estão nos cards do topo) */}
+      <div className="flex flex-wrap gap-x-8 gap-y-3">
         {singleDay && (
-          <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
-            <div className="text-xs text-gray-500 dark:text-gray-400">Gasto após a última venda do dia</div>
-            <div className="text-xl font-semibold text-gray-900 dark:text-white tabular-nums">{valueFormatter(afterLastSale)}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              {lastSaleSlot === -1
-                ? 'Nenhuma venda no dia: todo o gasto está sem venda'
-                : `${((afterLastSale / totalSpend) * 100).toFixed(0)}% do gasto · a partir da hora seguinte à última venda (${hh(slots[lastSaleSlot].hour)})`}
-            </div>
+          <div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Gasto após a última venda do dia</p>
+            <p className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">{valueFormatter(afterLastSale)}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {lastSaleSlot === -1 ? 'Nenhuma venda no dia' : `${((afterLastSale / totalSpend) * 100).toFixed(0)}% do gasto · última venda às ${hh(slots[lastSaleSlot].hour)}`}
+            </p>
           </div>
         )}
-        <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
-          <div className="text-xs text-gray-500 dark:text-gray-400">Gasto em faixas sem venda</div>
-          <div className="text-xl font-semibold text-gray-900 dark:text-white tabular-nums">{valueFormatter(zonesTotal)}</div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            {zones.length} faixa{zones.length === 1 ? '' : 's'} de 3h+ seguidas · {((zonesTotal / totalSpend) * 100).toFixed(0)}% do gasto
-          </div>
+        <div>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Gasto em faixas sem venda (3h+ seguidas)</p>
+          <p className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">{valueFormatter(zonesTotal)}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {zones.length === 0
+              ? 'Nenhuma faixa'
+              : `${((zonesTotal / totalSpend) * 100).toFixed(0)}% do gasto · ${zones.map((z) => `${zoneLabel(z)} (${valueFormatter(z.spend)})`).join(' · ')}`}
+          </p>
         </div>
-        <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
-          <div className="text-xs text-gray-500 dark:text-gray-400">Maior faixa sem venda</div>
-          <div className="text-xl font-semibold text-gray-900 dark:text-white tabular-nums">{biggest ? zoneLabel(biggest) : '–'}</div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            {biggest ? `${valueFormatter(biggest.spend)} gastos, nenhuma venda` : 'Nenhuma faixa de 3h+ sem venda'}
-          </div>
-        </div>
-      </div>
-
-      <p className="text-xs text-gray-600 dark:text-gray-300 tabular-nums">
-        <b>Conferência do gasto ({valueFormatter(totalSpend)}):</b> {valueFormatter(salesHoursSpend)} em horas com venda +{' '}
-        {valueFormatter(zonesTotal)} em faixas sem venda (3h+) + {valueFormatter(otherNoSaleSpend)} em outras horas sem venda.
-      </p>
-
-      <div className="flex flex-wrap items-center gap-4 text-xs text-gray-600 dark:text-gray-300">
-        <span className="flex items-center gap-1.5"><i className="inline-block w-2.5 h-2.5 rounded-sm bg-[#2a78d6] dark:bg-[#3987e5]" />Receita (para cima)</span>
-        <span className="flex items-center gap-1.5"><i className="inline-block w-2.5 h-2.5 rounded-sm bg-[#eb6834] dark:bg-[#d95926]" />Gasto (para baixo)</span>
       </div>
 
       {(timezoneWarning || incomplete) && (
@@ -217,81 +207,70 @@ export default function HoursWithoutSalesChart({ rows, loading, valueFormatter, 
         </p>
       )}
 
-      {/* Colunas por hora */}
-      <div className="mt-8 relative">
-        <div className="relative">
-          {zones.map((z) => (
-            <div
-              key={z.from}
-              className="absolute top-0 bottom-0 bg-orange-500/10 dark:bg-orange-400/15 border-x border-dashed border-orange-400/50 pointer-events-none"
-              style={{ left: `${(z.from * 100) / 24}%`, width: `${((z.to - z.from + 1) * 100) / 24}%` }}
-            >
-              <span className="absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap text-[11px] text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 border border-orange-400/60 rounded-full px-2">
-                {zoneLabel(z)} · {valueFormatter(z.spend)} sem venda
-              </span>
+      <div className={`grid grid-cols-1 gap-6 ${singleDay ? 'lg:grid-cols-2' : ''}`}>
+        {/* Receita × Gasto por hora */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-xs font-medium text-gray-600 dark:text-gray-300">Receita × Gasto por hora</h4>
+            <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+              <span className="flex items-center gap-1"><i className="inline-block w-2 h-2 rounded-full bg-brand-500" />Receita</span>
+              <span className="flex items-center gap-1"><i className="inline-block w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500" />Gasto</span>
             </div>
-          ))}
-          <div className="relative grid h-[220px] sm:h-[250px]" style={{ gridTemplateColumns: 'repeat(24, minmax(0, 1fr))' }}>
-            {slots.map((s, i) => (
-              <div
-                key={i}
-                className="relative hover:bg-gray-100 dark:hover:bg-gray-700/40"
-                onMouseEnter={() => setHover(i)}
-                onMouseLeave={() => setHover(null)}
-                aria-label={`${hh(s.hour)}: gasto ${valueFormatter(s.spend)}, receita ${valueFormatter(s.revenue)}, ${s.conversions} vendas`}
-              >
-                <div className="absolute left-0 right-0 top-0 h-1/2 flex items-end justify-center">
-                  <div className="w-[62%] max-w-[26px] rounded-t bg-[#2a78d6] dark:bg-[#3987e5]" style={{ height: `${(s.revenue / maxV) * 92}%` }} />
-                </div>
-                <div className="absolute left-0 right-0 bottom-0 h-1/2 flex items-start justify-center">
-                  <div className="w-[62%] max-w-[26px] rounded-b bg-[#eb6834] dark:bg-[#d95926]" style={{ height: `${(s.spend / maxV) * 92}%` }} />
-                </div>
-              </div>
-            ))}
           </div>
-          <div className="absolute left-0 right-0 top-1/2 h-px bg-gray-400/70 pointer-events-none" />
-          <span className="absolute left-0.5 top-0 text-[10px] text-gray-400 dark:text-gray-500 pointer-events-none">{valueFormatter(maxV)} ↑</span>
-          <span className="absolute left-0.5 bottom-0 text-[10px] text-gray-400 dark:text-gray-500 pointer-events-none">↓ {valueFormatter(maxV)}</span>
+          <div className="relative" style={{ height: PLOT_H }}>
+            {zones.map((z) => (
+              <div key={z.from} className={zoneBand} style={{ left: `${(z.from * 100) / 24}%`, width: `${((z.to - z.from + 1) * 100) / 24}%` }} />
+            ))}
+            <div className="relative grid h-full" style={{ gridTemplateColumns: 'repeat(24, minmax(0, 1fr))' }}>
+              {slots.map((s, i) => (
+                <div
+                  key={i}
+                  className="relative hover:bg-gray-100/70 dark:hover:bg-gray-700/40"
+                  title={`${hh(s.hour)}–${hh((s.hour + 1) % 24)} · gasto ${valueFormatter(s.spend)} · receita ${valueFormatter(s.revenue)} · ${s.conversions} venda${s.conversions === 1 ? '' : 's'}`}
+                >
+                  <div className="absolute left-0 right-0 top-0 h-1/2 flex items-end justify-center">
+                    <div className="w-[62%] max-w-[22px] rounded-t bg-brand-500" style={{ height: `${(s.revenue / maxV) * 92}%` }} />
+                  </div>
+                  <div className="absolute left-0 right-0 bottom-0 h-1/2 flex items-start justify-center">
+                    <div className="w-[62%] max-w-[22px] rounded-b bg-gray-400 dark:bg-gray-500" style={{ height: `${(s.spend / maxV) * 92}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="absolute left-0 right-0 top-1/2 h-px bg-gray-300 dark:bg-gray-600 pointer-events-none" />
+          </div>
+          <HourLabels slots={slots} />
         </div>
-        <div className="grid mt-1 text-[11px] text-gray-500 dark:text-gray-400 tabular-nums text-center" style={{ gridTemplateColumns: 'repeat(24, minmax(0, 1fr))' }}>
-          {slots.map((s, i) => (
-            <span key={i} className={`whitespace-nowrap ${i % 3 !== 0 ? 'hidden sm:block' : ''}`}>{hh(s.hour)}</span>
-          ))}
-        </div>
-        <div className="min-h-[20px] mt-2 text-xs text-gray-600 dark:text-gray-300 tabular-nums">
-          {hover !== null
-            ? `${hh(slots[hover].hour)}–${hh((slots[hover].hour + 1) % 24)} · gasto ${valueFormatter(slots[hover].spend)} · receita ${valueFormatter(slots[hover].revenue)} · ${slots[hover].conversions} venda${slots[hover].conversions === 1 ? '' : 's'}${singleDay ? ` · ROI acumulado do dia ${fmtRoi(roiOf(acc[hover].spend, acc[hover].revenue))}` : ''}`
-            : 'Passe o mouse sobre uma hora para ver os detalhes.'}
-        </div>
+
+        {/* ROI acumulado do dia — só em análise de um dia */}
+        {singleDay && (
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-xs font-medium text-gray-600 dark:text-gray-300">ROI acumulado do dia</h4>
+              <span className="text-xs text-gray-500 dark:text-gray-400">até cada hora</span>
+            </div>
+            <div ref={roiRef} className="relative w-full" style={{ height: PLOT_H }}>
+              <svg width={roiWidth} height={PLOT_H} className="overflow-visible" role="img" aria-label="ROI acumulado por hora">
+                {zones.map((z) => (
+                  <rect key={z.from} x={(z.from * roiWidth) / 24} y={0} width={((z.to - z.from + 1) * roiWidth) / 24} height={PLOT_H} className="fill-gray-100 dark:fill-gray-700/40" />
+                ))}
+                <line x1={0} x2={roiWidth} y1={yOf(0)} y2={yOf(0)} className="stroke-gray-300 dark:stroke-gray-600" strokeDasharray="3 3" />
+                <text x={2} y={yOf(0) - 3} fontSize={10} className="fill-gray-400">0%</text>
+                <polyline points={roiValues.map((v, i) => `${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(' ')} fill="none" className="stroke-gray-700 dark:stroke-gray-200" strokeWidth={2} strokeLinejoin="round" />
+                {roiValues.map((v, i) => (
+                  <circle key={i} cx={xOf(i)} cy={yOf(v)} r={3.5} className={`${v >= 0 ? 'fill-brand-600' : 'fill-gray-400'} stroke-white dark:stroke-gray-800`} strokeWidth={2}>
+                    <title>{`${hh(slots[i].hour)} · ROI acumulado ${fmtRoi(roiOf(acc[i].spend, acc[i].revenue))}`}</title>
+                  </circle>
+                ))}
+              </svg>
+            </div>
+            <HourLabels slots={slots} />
+          </div>
+        )}
       </div>
 
-      {/* ROI acumulado do dia — só em análise de um dia (eixo próprio, em %, alinhado às colunas) */}
-      {singleDay && (
-        <div>
-          <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1 gap-2">
-            <span>ROI acumulado do dia, hora a hora</span>
-            <span className="text-right">pico {fmtRoi(hi)} às {hh(slots[peakSlot].hour)} · fim do dia {fmtRoi(roiValues[23])}</span>
-          </div>
-          <div ref={roiRef} className="relative w-full" style={{ height: H }}>
-            <svg width={roiWidth} height={H} className="overflow-visible" role="img" aria-label="ROI acumulado por hora">
-              {zones.map((z) => (
-                <rect key={z.from} x={(z.from * roiWidth) / 24} y={0} width={((z.to - z.from + 1) * roiWidth) / 24} height={H} className="fill-orange-500/10 dark:fill-orange-400/15" />
-              ))}
-              <line x1={0} x2={roiWidth} y1={yOf(0)} y2={yOf(0)} className="stroke-gray-400" strokeDasharray="3 3" />
-              <text x={2} y={yOf(0) - 3} fontSize={10} className="fill-gray-400">ROI 0%</text>
-              <polyline points={roiValues.map((v, i) => `${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(' ')} fill="none" className="stroke-gray-900 dark:stroke-gray-100" strokeWidth={2} strokeLinejoin="round" />
-              {roiValues.map((v, i) => (
-                <circle key={i} cx={xOf(i)} cy={yOf(v)} r={3} className={`${v >= 0 ? 'fill-[#2a78d6] dark:fill-[#3987e5]' : 'fill-[#eb6834] dark:fill-[#d95926]'} stroke-white dark:stroke-gray-800`} strokeWidth={2} />
-              ))}
-            </svg>
-          </div>
-        </div>
-      )}
-
-      <p className="text-xs text-gray-500 dark:text-gray-400">
-        Horário de Brasília. O gasto é o valor que a Meta registra em cada hora; a venda é atribuída à hora em que o anúncio foi exibido, não à
-        hora da compra, e as vendas mais recentes podem demorar para aparecer. Faixas sombreadas = 3 horas seguidas ou mais com gasto e nenhuma venda.
-        {singleDay && ' O dia da conta começa às 02h (Brasília), por isso as colunas partem dessa hora.'}
+      <p className="text-xs text-gray-400 dark:text-gray-500">
+        Horário de Brasília · gasto registrado pela Meta em cada hora · vendas atribuídas à hora em que o anúncio foi exibido · faixa cinza = 3h+ seguidas sem venda.
       </p>
     </div>
   )
