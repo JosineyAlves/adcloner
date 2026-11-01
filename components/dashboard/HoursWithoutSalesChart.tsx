@@ -161,6 +161,10 @@ export default function HoursWithoutSalesChart({ rows, loading, valueFormatter, 
       ? Math.max(...hours.map((h) => Math.max(h.spend, h.revenue)), 1)
       : Math.max(acc[23].spend, acc[23].revenue, 1)
   const zonesTotal = zones.reduce((a, z) => a + z.spend, 0)
+  // Conferência: o gasto total se divide em horas COM venda, faixas sem venda (3h+ seguidas) e as
+  // demais horas sem venda (faixas curtas, de 1 a 2h). A soma dos três é sempre o gasto do período.
+  const salesHoursSpend = hours.reduce((a, h) => a + (h.conversions > 0 ? h.spend : 0), 0)
+  const otherNoSaleSpend = Math.max(totalSpend - zonesTotal - salesHoursSpend, 0)
   const biggest = zones.slice().sort((a, b) => b.spend - a.spend)[0]
 
   const before = acc[cut]
@@ -185,7 +189,7 @@ export default function HoursWithoutSalesChart({ rows, loading, valueFormatter, 
           <div className="text-xs text-gray-500 dark:text-gray-400">Gasto após a última venda do dia</div>
           <div className="text-xl font-semibold text-gray-900 dark:text-white tabular-nums">{valueFormatter(afterLastSale)}</div>
           <div className="text-xs text-gray-500 dark:text-gray-400">
-            {((afterLastSale / totalSpend) * 100).toFixed(0)}% do gasto
+            {((afterLastSale / totalSpend) * 100).toFixed(0)}% do gasto · a partir da hora seguinte à última venda
             {daysWithoutSale > 0 ? ` · inclui ${daysWithoutSale} dia${daysWithoutSale > 1 ? 's' : ''} sem nenhuma venda` : ''}
           </div>
         </div>
@@ -206,6 +210,11 @@ export default function HoursWithoutSalesChart({ rows, loading, valueFormatter, 
           </div>
         </div>
       </div>
+
+      <p className="text-xs text-gray-600 dark:text-gray-300 tabular-nums">
+        <b>Conferência do gasto ({valueFormatter(totalSpend)}):</b> {valueFormatter(salesHoursSpend)} em horas com venda +{' '}
+        {valueFormatter(zonesTotal)} em faixas sem venda (3h+) + {valueFormatter(otherNoSaleSpend)} em outras horas sem venda.
+      </p>
 
       <div className="flex flex-wrap items-center gap-3 text-xs">
         <div className="inline-flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden" role="group" aria-label="Modo do gráfico">
