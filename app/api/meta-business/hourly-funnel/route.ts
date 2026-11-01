@@ -39,14 +39,24 @@ function sumActionStats(metric: any): number {
   return parseFloat(metric.toString() || '0')
 }
 
-function extractPurchaseValue(actionsMetric: any): number {
+// Mesmas variantes de action_type de checkout iniciado usadas em campaigns/route.ts.
+const CHECKOUT_ACTION_TYPES = [
+  'omni_initiated_checkout',
+  'onsite_web_initiate_checkout',
+  'offsite_conversion.fb_pixel_initiate_checkout',
+  'initiate_checkout'
+]
+
+function extractActionValue(actionsMetric: any, types: string[]): number {
   if (!actionsMetric || !Array.isArray(actionsMetric)) return 0
-  for (const candidateType of PURCHASE_ACTION_TYPES) {
+  for (const candidateType of types) {
     const action = actionsMetric.find((item: any) => item.action_type === candidateType)
     if (action) return parseFloat(action.value || '0')
   }
   return 0
 }
+
+const extractPurchaseValue = (actionsMetric: any) => extractActionValue(actionsMetric, PURCHASE_ACTION_TYPES)
 
 interface HourlyRow {
   date: string // AAAA-MM-DD em horário de Brasília
@@ -54,6 +64,7 @@ interface HourlyRow {
   spend: number
   conversions: number
   conversionValues: number
+  checkouts: number
 }
 
 const EMPTY = { rows: [] as HourlyRow[], timezone: null as string | null }
@@ -150,13 +161,15 @@ export async function GET(request: NextRequest) {
         const spend = parseFloat(row.spend || '0')
         const conversions = sumActionStats(row.conversions) || extractPurchaseValue(row.actions)
         const conversionValues = sumActionStats(row.conversion_values) || extractPurchaseValue(row.action_values)
+        const checkouts = extractActionValue(row.actions, CHECKOUT_ACTION_TYPES)
         const existing = merged.get(key)
         if (existing) {
           existing.spend += spend
           existing.conversions += conversions
           existing.conversionValues += conversionValues
+          existing.checkouts += checkouts
         } else {
-          merged.set(key, { date: converted.date, hour: converted.hour, spend, conversions, conversionValues })
+          merged.set(key, { date: converted.date, hour: converted.hour, spend, conversions, conversionValues, checkouts })
         }
       }
 

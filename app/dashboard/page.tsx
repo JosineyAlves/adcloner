@@ -371,6 +371,7 @@ export default function DashboardPage() {
                 existing.spend += row.spend
                 existing.conversions += row.conversions
                 existing.conversionValues += row.conversionValues
+                existing.checkouts = (existing.checkouts || 0) + (row.checkouts || 0)
               } else {
                 merged.set(key, { ...row })
               }

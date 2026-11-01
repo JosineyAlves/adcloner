@@ -21,6 +21,7 @@ export interface HourlyFunnelRow {
   spend: number
   conversions: number
   conversionValues: number
+  checkouts?: number // checkouts iniciados (pode faltar em respostas antigas em cache)
 }
 
 interface Props {
@@ -40,6 +41,7 @@ interface Slot {
   spend: number
   revenue: number
   conversions: number
+  checkouts: number
 }
 
 interface Zone {
@@ -76,6 +78,28 @@ function findZones(slots: Slot[]): Zone[] {
 
 const PLOT_H = 180
 
+function Stat({ label, value, sub }: { label: string; value: string; sub: string }) {
+  return (
+    <div>
+      <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
+      <p className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">{value}</p>
+      <p className="text-xs text-gray-500 dark:text-gray-400">{sub}</p>
+    </div>
+  )
+}
+
+// Balão de detalhes no padrão visual do vmetrics (fundo do card, borda cinza, sombra leve).
+function Tip({ xPct, children }: { xPct: number; children: React.ReactNode }) {
+  return (
+    <div
+      className="absolute z-10 pointer-events-none rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-md px-2.5 py-1.5 text-xs text-gray-700 dark:text-gray-200 whitespace-nowrap"
+      style={{ left: `clamp(80px, ${xPct}%, calc(100% - 80px))`, top: -4, transform: 'translate(-50%, -100%)' }}
+    >
+      {children}
+    </div>
+  )
+}
+
 function HourLabels({ slots }: { slots: Slot[] }) {
   return (
     <div className="grid mt-1 text-[11px] text-gray-500 dark:text-gray-400 tabular-nums text-center" style={{ gridTemplateColumns: 'repeat(24, minmax(0, 1fr))' }}>
@@ -89,6 +113,8 @@ function HourLabels({ slots }: { slots: Slot[] }) {
 export default function HoursWithoutSalesChart({ rows, loading, valueFormatter, singleDay, timezoneWarning, incomplete }: Props) {
   const roiRef = useRef<HTMLDivElement>(null)
   const [roiWidth, setRoiWidth] = useState(400)
+  const [hoverBar, setHoverBar] = useState<number | null>(null)
+  const [hoverRoi, setHoverRoi] = useState<number | null>(null)
 
   useEffect(() => {
     const el = roiRef.current
@@ -101,7 +127,7 @@ export default function HoursWithoutSalesChart({ rows, loading, valueFormatter, 
   }, [loading, rows.length, singleDay])
 
   const model = useMemo(() => {
-    const byHour = SLOTS.map((h) => ({ hour: h, spend: 0, revenue: 0, conversions: 0 }))
+    const byHour = SLOTS.map((h) => ({ hour: h, spend: 0, revenue: 0, conversions: 0, checkouts: 0 }))
     let firstKey = ''
     let firstHour = 0
     for (const r of rows) {
@@ -110,6 +136,7 @@ export default function HoursWithoutSalesChart({ rows, loading, valueFormatter, 
       h.spend += r.spend
       h.revenue += r.conversionValues
       h.conversions += r.conversions
+      h.checkouts += r.checkouts || 0
       const key = `${r.date}|${String(r.hour).padStart(2, '0')}`
       if (!firstKey || key < firstKey) {
         firstKey = key
@@ -135,6 +162,13 @@ export default function HoursWithoutSalesChart({ rows, loading, valueFormatter, 
     })
     const afterLastSale = slots.slice(lastSaleSlot + 1).reduce((a, s) => a + s.spend, 0)
 
+    // Mesmo cálculo para o último checkout iniciado. Sem checkout registrado, não há referência.
+    let lastCheckoutSlot = -1
+    slots.forEach((s, i) => {
+      if (s.checkouts > 0) lastCheckoutSlot = i
+    })
+    const afterLastCheckout = slots.slice(lastCheckoutSlot + 1).reduce((a, s) => a + s.spend, 0)
+
     const acc: { spend: number; revenue: number }[] = []
     let cs = 0
     let cr = 0
@@ -144,7 +178,7 @@ export default function HoursWithoutSalesChart({ rows, loading, valueFormatter, 
       acc.push({ spend: cs, revenue: cr })
     })
 
-    return { slots, acc, zones, zonesTotal, totalSpend, afterLastSale, lastSaleSlot }
+    return { slots, acc, zones, zonesTotal, totalSpend, afterLastSale, lastSaleSlot, afterLastCheckout, lastCheckoutSlot }
   }, [rows, singleDay])
 
   if (loading) {
@@ -163,7 +197,7 @@ export default function HoursWithoutSalesChart({ rows, loading, valueFormatter, 
     )
   }
 
-  const { slots, acc, zones, zonesTotal, totalSpend, afterLastSale, lastSaleSlot } = model
+  const { slots, acc, zones, zonesTotal, totalSpend, afterLastSale, lastSaleSlot, afterLastCheckout, lastCheckoutSlot } = model
   const maxV = Math.max(...slots.map((s) => Math.max(s.spend, s.revenue)), 1)
   const zoneLabel = (z: Zone) => `${hh(slots[z.from].hour)}–${hh(slots[z.to].hour)}`
 
@@ -179,25 +213,26 @@ export default function HoursWithoutSalesChart({ rows, loading, valueFormatter, 
   return (
     <div className="space-y-4">
       {/* Indicadores novos (gasto, receita e ROI totais já estão nos cards do topo) */}
-      <div className="flex flex-wrap gap-x-8 gap-y-3">
+      <div className="flex flex-wrap gap-x-10 gap-y-3">
         {singleDay && (
-          <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-            <p className="text-xs text-gray-500 dark:text-gray-400">Gasto após a última venda do dia</p>
-            <p className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">{valueFormatter(afterLastSale)}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {lastSaleSlot === -1 ? 'Nenhuma venda no dia' : `${((afterLastSale / totalSpend) * 100).toFixed(0)}% do gasto · última venda às ${hh(slots[lastSaleSlot].hour)}`}
-            </p>
-          </div>
+          <>
+            <Stat
+              label="Gasto após a última venda do dia"
+              value={valueFormatter(afterLastSale)}
+              sub={lastSaleSlot === -1 ? 'Nenhuma venda no dia' : `${((afterLastSale / totalSpend) * 100).toFixed(0)}% do gasto · última venda às ${hh(slots[lastSaleSlot].hour)}`}
+            />
+            <Stat
+              label="Gasto após o último checkout"
+              value={valueFormatter(afterLastCheckout)}
+              sub={lastCheckoutSlot === -1 ? 'Nenhum checkout no dia' : `${((afterLastCheckout / totalSpend) * 100).toFixed(0)}% do gasto · último checkout às ${hh(slots[lastCheckoutSlot].hour)}`}
+            />
+          </>
         )}
-        <div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Gasto em faixas sem venda (3h+ seguidas)</p>
-          <p className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">{valueFormatter(zonesTotal)}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {zones.length === 0
-              ? 'Nenhuma faixa'
-              : `${((zonesTotal / totalSpend) * 100).toFixed(0)}% do gasto · ${zones.map((z) => `${zoneLabel(z)} (${valueFormatter(z.spend)})`).join(' · ')}`}
-          </p>
-        </div>
+        <Stat
+          label="Gasto em faixas sem venda"
+          value={valueFormatter(zonesTotal)}
+          sub={zones.length === 0 ? 'Nenhuma faixa' : `${((zonesTotal / totalSpend) * 100).toFixed(0)}% do gasto · ${zones.map((z) => `${zoneLabel(z)} (${valueFormatter(z.spend)})`).join(' · ')}`}
+        />
       </div>
 
       {(timezoneWarning || incomplete) && (
@@ -217,7 +252,15 @@ export default function HoursWithoutSalesChart({ rows, loading, valueFormatter, 
               <span className="flex items-center gap-1"><i className="inline-block w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500" />Gasto</span>
             </div>
           </div>
-          <div className="relative" style={{ height: PLOT_H }}>
+          <div className="relative" style={{ height: PLOT_H }} onMouseLeave={() => setHoverBar(null)}>
+            {hoverBar !== null && (
+              <Tip xPct={((hoverBar + 0.5) * 100) / 24}>
+                <p className="font-medium text-gray-900 dark:text-white">{hh(slots[hoverBar].hour)}–{hh((slots[hoverBar].hour + 1) % 24)}</p>
+                <p>Gasto: <span className="tabular-nums">{valueFormatter(slots[hoverBar].spend)}</span></p>
+                <p>Receita: <span className="tabular-nums">{valueFormatter(slots[hoverBar].revenue)}</span></p>
+                <p>{slots[hoverBar].conversions} venda{slots[hoverBar].conversions === 1 ? '' : 's'} · {slots[hoverBar].checkouts} checkout{slots[hoverBar].checkouts === 1 ? '' : 's'}</p>
+              </Tip>
+            )}
             {zones.map((z) => (
               <div key={z.from} className={zoneBand} style={{ left: `${(z.from * 100) / 24}%`, width: `${((z.to - z.from + 1) * 100) / 24}%` }} />
             ))}
@@ -226,7 +269,7 @@ export default function HoursWithoutSalesChart({ rows, loading, valueFormatter, 
                 <div
                   key={i}
                   className="relative hover:bg-gray-100/70 dark:hover:bg-gray-700/40"
-                  title={`${hh(s.hour)}–${hh((s.hour + 1) % 24)} · gasto ${valueFormatter(s.spend)} · receita ${valueFormatter(s.revenue)} · ${s.conversions} venda${s.conversions === 1 ? '' : 's'}`}
+                  onMouseEnter={() => setHoverBar(i)}
                 >
                   <div className="absolute left-0 right-0 top-0 h-1/2 flex items-end justify-center">
                     <div className="w-[62%] max-w-[22px] rounded-t bg-brand-500" style={{ height: `${(s.revenue / maxV) * 92}%` }} />
@@ -247,20 +290,25 @@ export default function HoursWithoutSalesChart({ rows, loading, valueFormatter, 
           <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-xs font-medium text-gray-600 dark:text-gray-300">ROI acumulado do dia</h4>
-              <span className="text-xs text-gray-500 dark:text-gray-400">até cada hora</span>
+              
             </div>
-            <div ref={roiRef} className="relative w-full" style={{ height: PLOT_H }}>
+            <div ref={roiRef} className="relative w-full" style={{ height: PLOT_H }} onMouseLeave={() => setHoverRoi(null)}>
+              {hoverRoi !== null && (
+                <Tip xPct={((hoverRoi + 0.5) * 100) / 24}>
+                  <p className="font-medium text-gray-900 dark:text-white">{hh(slots[hoverRoi].hour)} · ROI acumulado {fmtRoi(roiOf(acc[hoverRoi].spend, acc[hoverRoi].revenue))}</p>
+                  <p>Gasto até aqui: <span className="tabular-nums">{valueFormatter(acc[hoverRoi].spend)}</span></p>
+                  <p>Receita até aqui: <span className="tabular-nums">{valueFormatter(acc[hoverRoi].revenue)}</span></p>
+                </Tip>
+              )}
               <svg width={roiWidth} height={PLOT_H} className="overflow-visible" role="img" aria-label="ROI acumulado por hora">
-                {zones.map((z) => (
-                  <rect key={z.from} x={(z.from * roiWidth) / 24} y={0} width={((z.to - z.from + 1) * roiWidth) / 24} height={PLOT_H} className="fill-gray-100 dark:fill-gray-700/40" />
-                ))}
                 <line x1={0} x2={roiWidth} y1={yOf(0)} y2={yOf(0)} className="stroke-gray-300 dark:stroke-gray-600" strokeDasharray="3 3" />
                 <text x={2} y={yOf(0) - 3} fontSize={10} className="fill-gray-400">0%</text>
                 <polyline points={roiValues.map((v, i) => `${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(' ')} fill="none" className="stroke-gray-700 dark:stroke-gray-200" strokeWidth={2} strokeLinejoin="round" />
                 {roiValues.map((v, i) => (
-                  <circle key={i} cx={xOf(i)} cy={yOf(v)} r={3.5} className={`${v >= 0 ? 'fill-brand-600' : 'fill-gray-400'} stroke-white dark:stroke-gray-800`} strokeWidth={2}>
-                    <title>{`${hh(slots[i].hour)} · ROI acumulado ${fmtRoi(roiOf(acc[i].spend, acc[i].revenue))}`}</title>
-                  </circle>
+                  <g key={i} onMouseEnter={() => setHoverRoi(i)}>
+                    <circle cx={xOf(i)} cy={yOf(v)} r={10} fill="transparent" />
+                    <circle cx={xOf(i)} cy={yOf(v)} r={hoverRoi === i ? 5.5 : 3.5} className={`${v >= 0 ? 'fill-brand-600' : 'fill-gray-400'} stroke-white dark:stroke-gray-800`} strokeWidth={2} />
+                  </g>
                 ))}
               </svg>
             </div>
