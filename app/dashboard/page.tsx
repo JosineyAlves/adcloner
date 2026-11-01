@@ -736,6 +736,7 @@ export default function DashboardPage() {
                   rows={hourlyRows}
                   loading={hourlyLoading}
                   valueFormatter={formatCurrency}
+                  singleDay={datePreset === 'today' || datePreset === 'yesterday' || (datePreset === 'custom' && !!customRange && customRange.since === customRange.until)}
                   timezoneWarning={hourlyFlags.timezoneWarning}
                   incomplete={hourlyFlags.incomplete}
                 />
