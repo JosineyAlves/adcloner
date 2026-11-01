@@ -24,6 +24,9 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
 
+// Telas sem sessão (mesma lista usada na troca de rota mais abaixo).
+const PUBLIC_ROUTE_REGEX = /^\/(login|register|auth)(\/|$)/
+
 function sameAccountList(a: FacebookAccount[], b: FacebookAccount[]): boolean {
   return (
     a.length === b.length &&
@@ -64,6 +67,16 @@ export function AppProvider({ children }: AppProviderProps) {
   }
 
   const fetchAccounts = async (isBackground: boolean) => {
+    // Telas públicas (login/cadastro) não têm sessão: este provider vive no layout raiz e também
+    // monta nelas (ex.: depois do logout, que recarrega a página em /login). Buscar contas ali cai
+    // no middleware, que redireciona a API para /login e devolve HTML — o que antes virava o
+    // toast "Erro ao carregar contas do Facebook" na tela de login.
+    if (typeof window !== 'undefined' && PUBLIC_ROUTE_REGEX.test(window.location.pathname)) {
+      setIsLoading(false)
+      setIsRevalidating(false)
+      setIsFresh(true)
+      return
+    }
     if (isBackground) {
       setIsRevalidating(true)
     }
@@ -80,6 +93,13 @@ export function AppProvider({ children }: AppProviderProps) {
       const response = await fetch('/api/meta/accounts?enabledOnly=true', {
         credentials: 'include'
       })
+
+      // Sessão expirada: o middleware redireciona a API para /login (HTML com status 200).
+      // Não é erro de contas — manda para o login em vez de mostrar toast.
+      if (response.redirected) {
+        window.location.href = '/login'
+        return
+      }
 
       if (response.ok) {
         const data = await response.json()
@@ -128,6 +148,11 @@ export function AppProvider({ children }: AppProviderProps) {
       const legacyResponse = await fetch('/api/facebook/accounts', {
         credentials: 'include'
       })
+
+      if (legacyResponse.redirected) {
+        window.location.href = '/login'
+        return
+      }
 
       if (legacyResponse.ok) {
         const legacyData = await legacyResponse.json()
@@ -188,7 +213,7 @@ export function AppProvider({ children }: AppProviderProps) {
     if (lastPathnameRef.current === pathname) return
     lastPathnameRef.current = pathname
     // Telas públicas não têm sessão: a busca devolveria 401 e redirecionaria pro login.
-    if (/^\/(login|register|auth)(\/|$)/.test(pathname || '')) return
+    if (PUBLIC_ROUTE_REGEX.test(pathname || '')) return
     setIsFresh(false)
     fetchAccounts(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
