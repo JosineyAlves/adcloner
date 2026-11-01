@@ -181,7 +181,7 @@ export default function HoursWithoutSalesChart({ rows, loading, valueFormatter, 
       {/* Indicadores novos (gasto, receita e ROI totais já estão nos cards do topo) */}
       <div className="flex flex-wrap gap-x-8 gap-y-3">
         {singleDay && (
-          <div>
+          <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
             <p className="text-xs text-gray-500 dark:text-gray-400">Gasto após a última venda do dia</p>
             <p className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">{valueFormatter(afterLastSale)}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -209,7 +209,7 @@ export default function HoursWithoutSalesChart({ rows, loading, valueFormatter, 
 
       <div className={`grid grid-cols-1 gap-6 ${singleDay ? 'lg:grid-cols-2' : ''}`}>
         {/* Receita × Gasto por hora */}
-        <div>
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between mb-2">
             <h4 className="text-xs font-medium text-gray-600 dark:text-gray-300">Receita × Gasto por hora</h4>
             <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
@@ -244,7 +244,7 @@ export default function HoursWithoutSalesChart({ rows, loading, valueFormatter, 
 
         {/* ROI acumulado do dia — só em análise de um dia */}
         {singleDay && (
-          <div>
+          <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-xs font-medium text-gray-600 dark:text-gray-300">ROI acumulado do dia</h4>
               <span className="text-xs text-gray-500 dark:text-gray-400">até cada hora</span>
@@ -268,10 +268,6 @@ export default function HoursWithoutSalesChart({ rows, loading, valueFormatter, 
           </div>
         )}
       </div>
-
-      <p className="text-xs text-gray-400 dark:text-gray-500">
-        Horário de Brasília · gasto registrado pela Meta em cada hora · vendas atribuídas à hora em que o anúncio foi exibido · faixa cinza = 3h+ seguidas sem venda.
-      </p>
     </div>
   )
 }
