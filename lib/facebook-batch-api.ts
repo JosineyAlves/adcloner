@@ -456,6 +456,28 @@ export class FacebookBatchAPI {
   }
 
   /**
+   * Batch do gráfico "Horas sem Venda" do Dashboard: [0] fuso horário da conta de anúncio
+   * (timezone_name) e [1] insights por hora E por dia (time_increment=1 + breakdown de hora) — a
+   * rota de breakdowns tradicional (createAccountInsightsBreakdownBatch) já devolve a hora, mas
+   * somada no período inteiro, sem separar por dia, o que não permite calcular "gasto depois da
+   * última venda de cada dia". 1 única chamada HTTP de batch por conta.
+   */
+  createHourlyByDayBatch(accountId: string, datePreset: string, since?: string, until?: string): BatchRequest[] {
+    const dateParam = this.buildDateQueryParam(datePreset, since, until)
+    const fields = ['spend', 'actions', 'action_values', 'conversions', 'conversion_values', 'date_start'].join(',')
+    return [
+      {
+        method: 'GET',
+        relative_url: `${accountId}?fields=timezone_name`
+      },
+      {
+        method: 'GET',
+        relative_url: `${accountId}/insights?fields=${fields}&level=account&limit=500&time_increment=1&breakdowns=hourly_stats_aggregated_by_advertiser_time_zone${dateParam}`
+      }
+    ]
+  }
+
+  /**
    * Cria batch de requisições para ad sets
    */
   createAdSetsBatch(accountId: string, datePreset: string, since?: string, until?: string, campaignIds?: string[]): BatchRequest[] {

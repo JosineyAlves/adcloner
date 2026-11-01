@@ -9,6 +9,7 @@ import StatsCard from '@/components/dashboard/StatsCard'
 import DateSelector, { DateRange } from '@/components/dashboard/DateSelector'
 import Select from '@/components/ui/Select'
 import BreakdownBarChart from '@/components/dashboard/BreakdownBarChart'
+import HoursWithoutSalesChart, { HourlyFunnelRow } from '@/components/dashboard/HoursWithoutSalesChart'
 import { useApp } from '@/contexts/AppContext'
 import { useDebounce } from '@/lib/debounce'
 import {
@@ -106,6 +107,14 @@ export default function DashboardPage() {
   // especificamente a visão simples Mobile/Desktop).
   const [deviceBreakdown, setDeviceBreakdown] = useState<BreakdownRow[]>([])
   const [breakdownsLoading, setBreakdownsLoading] = useState<boolean>(false)
+  // "Horas sem Venda": gasto/vendas/receita por dia e por hora, já em horário de Brasília (ver
+  // /api/meta-business/hourly-funnel e components/dashboard/HoursWithoutSalesChart.tsx).
+  const [hourlyRows, setHourlyRows] = useState<HourlyFunnelRow[]>([])
+  const [hourlyLoading, setHourlyLoading] = useState<boolean>(false)
+  const [hourlyFlags, setHourlyFlags] = useState<{ timezoneWarning: boolean; incomplete: boolean }>({
+    timezoneWarning: false,
+    incomplete: false
+  })
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -318,6 +327,68 @@ export default function DashboardPage() {
     }
   }, [accounts, datePreset, customRange, selectedAccountId])
 
+  // Busca os dados do gráfico "Horas sem Venda" — 1 chamada de batch por conta (2 sub-requisições:
+  // fuso da conta + insights por dia/hora). Soma as contas ativas por (dia, hora); a rota já
+  // converte cada conta para horário de Brasília, então contas em fusos diferentes não misturam.
+  const fetchHourlyData = useCallback(async () => {
+    const activeAccounts = selectedAccountId
+      ? accounts.filter((account) => account.id === selectedAccountId)
+      : accounts
+
+    if (activeAccounts.length === 0) {
+      setHourlyRows([])
+      return
+    }
+
+    setHourlyLoading(true)
+    try {
+      const merged = new Map<string, HourlyFunnelRow>()
+      let timezoneWarning = false
+      let incomplete = false
+
+      await Promise.all(
+        activeAccounts.map(async (account) => {
+          try {
+            const response = await fetch(
+              `/api/meta-business/hourly-funnel?accountId=${account.id}&datePreset=${datePreset}${customRange ? `&since=${customRange.since}&until=${customRange.until}` : ''}`,
+              { credentials: 'include' }
+            )
+            const data = await response.json().catch(() => null)
+            if (!data) {
+              incomplete = true
+              return
+            }
+            if (data.rateLimited || data.truncated) incomplete = true
+            if (!Array.isArray(data.rows)) {
+              incomplete = true
+              return
+            }
+            if (data.rows.length > 0 && !data.timezone) timezoneWarning = true
+            for (const row of data.rows as HourlyFunnelRow[]) {
+              const key = `${row.date}|${row.hour}`
+              const existing = merged.get(key)
+              if (existing) {
+                existing.spend += row.spend
+                existing.conversions += row.conversions
+                existing.conversionValues += row.conversionValues
+              } else {
+                merged.set(key, { ...row })
+              }
+            }
+          } catch (error) {
+            incomplete = true
+            console.error(`Error fetching hourly data for account ${account.id}:`, error)
+          }
+        })
+      )
+
+      setHourlyRows(Array.from(merged.values()))
+      setHourlyFlags({ timezoneWarning, incomplete })
+    } finally {
+      setHourlyLoading(false)
+    }
+  }, [accounts, datePreset, customRange, selectedAccountId])
+
   // Ref para evitar dependências desnecessárias
   const fetchDashboardDataRef = useRef(fetchDashboardData)
   fetchDashboardDataRef.current = fetchDashboardData
@@ -325,17 +396,24 @@ export default function DashboardPage() {
   const fetchBreakdownDataRef = useRef(fetchBreakdownData)
   fetchBreakdownDataRef.current = fetchBreakdownData
 
+  const fetchHourlyDataRef = useRef(fetchHourlyData)
+  fetchHourlyDataRef.current = fetchHourlyData
+
   // Debounce da função fetchDashboardData para evitar múltiplos refreshs
   const debouncedFetchDashboardData = useDebounce('dashboard-fetch', fetchDashboardData, 3000)
   const debouncedFetchBreakdownData = useDebounce('dashboard-fetch-breakdowns', fetchBreakdownData, 3000)
+  const debouncedFetchHourlyData = useDebounce('dashboard-fetch-hourly', fetchHourlyData, 3000)
 
   useEffect(() => {
     if (accounts.length > 0) {
       // Usar ref para evitar dependência circular
       fetchDashboardDataRef.current()
-      fetchBreakdownDataRef.current()
+      // O gráfico "Horas sem Venda" espera os breakdowns terminarem para não somar mais uma
+      // rajada de chamadas à Meta no mesmo instante (limite de requisições já é um ponto sensível).
+      void Promise.resolve(fetchBreakdownDataRef.current()).then(() => fetchHourlyDataRef.current())
       return
     }
+    setHourlyRows([])
     setCountryBreakdown([])
     setHourBreakdown([])
     setWeekdayBreakdown([])
@@ -368,7 +446,7 @@ export default function DashboardPage() {
 
   const handleRefresh = useDebounce('dashboard-refresh', async () => {
     await refreshAccounts()
-    await Promise.all([debouncedFetchDashboardData(), debouncedFetchBreakdownData()])
+    await Promise.all([debouncedFetchDashboardData(), debouncedFetchBreakdownData(), debouncedFetchHourlyData()])
     toast.success('Dados atualizados!')
   }, 2000)
 
@@ -644,6 +722,23 @@ export default function DashboardPage() {
                     <BreakdownBarChart data={deviceBreakdown} valueFormatter={formatCurrency} />
                   )}
                 </div>
+              </div>
+            </section>
+
+            {/* Horas sem Venda — em quais horários (Brasília) o gasto não vira venda. Os totais de
+                gasto/receita/ROI já estão nos cards do topo; aqui só o que é novo. */}
+            <section>
+              <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                Horas sem Venda
+              </h2>
+              <div className="card p-4">
+                <HoursWithoutSalesChart
+                  rows={hourlyRows}
+                  loading={hourlyLoading}
+                  valueFormatter={formatCurrency}
+                  timezoneWarning={hourlyFlags.timezoneWarning}
+                  incomplete={hourlyFlags.incomplete}
+                />
               </div>
             </section>
 
