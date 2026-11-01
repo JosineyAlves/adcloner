@@ -85,7 +85,7 @@ export default function LoginForm() {
             </motion.div>
 
             <p className="text-gray-600 dark:text-gray-400">
-              Gerencie e clone campanhas do Meta Ads em múltiplas contas e Business Managers
+              Acompanhe métricas e gerencie campanhas do Meta Ads em múltiplas contas e Business Managers
             </p>
           </div>
 
