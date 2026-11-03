@@ -11,7 +11,8 @@ import {
   Archive,
   Layers,
   Megaphone,
-  X
+  X,
+  Clock
 } from 'lucide-react'
 import { DEFAULT_METRIC_IDS, buildMetricsFromIds, MetricConfig } from '@/lib/metrics-config'
 import { useColumnPreferences } from '@/hooks/useColumnPreferences'
@@ -30,6 +31,7 @@ import AdSetsTable from '@/components/meta-business/AdSetsTable'
 import AdsTable from '@/components/meta-business/AdsTable'
 import MetaBusinessMetricsSelector from '@/components/meta-business/MetricsSelector'
 import BulkActionsMenu from '@/components/meta-business/BulkActionsMenu'
+import CampaignSchedulesModal from '@/components/meta-business/CampaignSchedulesModal'
 import { BID_AMOUNT_STRATEGIES } from '@/lib/bid-strategies'
 import { 
   MetaAccount,
@@ -184,6 +186,8 @@ export default function MetaBusinessPage() {
   // uma tem sua própria seleção. Reseta sozinho quando a seleção correspondente esvazia, pra não
   // ficar "preso" filtrado numa seleção futura.
   const [campaignsFilterToSelected, setCampaignsFilterToSelected] = useState(false)
+  // Modal de pausa/ativação automáticas (só campanhas) — ver lib/campaign-schedules.ts.
+  const [schedulesModalOpen, setSchedulesModalOpen] = useState(false)
   const [adSetsFilterToSelected, setAdSetsFilterToSelected] = useState(false)
   useEffect(() => {
     if (selectedCampaigns.size === 0) setCampaignsFilterToSelected(false)
@@ -1274,7 +1278,18 @@ export default function MetaBusinessPage() {
                       onDeactivate={() => handleBulkStatusUpdate('campaigns', 'PAUSED')}
                       filterActive={campaignsFilterToSelected}
                       onToggleFilter={() => setCampaignsFilterToSelected(prev => !prev)}
+                      onSchedule={() => setSchedulesModalOpen(true)}
                     />
+                  )}
+                  {activeTab === 'campaigns' && (
+                    <button
+                      onClick={() => setSchedulesModalOpen(true)}
+                      title="Pausa e ativação automáticas"
+                      aria-label="Pausa e ativação automáticas"
+                      className="flex items-center justify-center p-2 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-ds-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors"
+                    >
+                      <Clock className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                    </button>
                   )}
                   {activeTab === 'adsets' && selectedAdSets.size > 0 && (
                     <BulkActionsMenu
@@ -1481,6 +1496,13 @@ export default function MetaBusinessPage() {
           </motion.div>
         </main>
       </div>
+      <CampaignSchedulesModal
+        open={schedulesModalOpen}
+        onClose={() => setSchedulesModalOpen(false)}
+        selectedCampaigns={campaigns
+          .filter(c => selectedCampaigns.has(c.id))
+          .map(c => ({ id: c.id, name: c.name, account_id: c.account_id }))}
+      />
     </div>
   )
 }
