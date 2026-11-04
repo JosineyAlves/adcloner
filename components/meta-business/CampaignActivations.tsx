@@ -6,8 +6,8 @@
  * (useActivationAccess). Ver lib/campaign-activations.ts.
  */
 
-import { useCallback, useEffect, useState } from 'react'
-import { X, Clock, Trash2, Loader2, CheckCircle2, AlertCircle, MinusCircle } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { X, Clock, Trash2, Pencil, Loader2, CheckCircle2, AlertCircle, MinusCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import ToggleSwitch from '@/components/ui/ToggleSwitch'
 
@@ -20,10 +20,12 @@ interface SelectedCampaign {
 interface Activation {
   id: string
   meta_campaign_id: string
+  meta_account_id: string
   campaign_name: string | null
   activate_time: string
   days_of_week: number[]
   enabled: boolean
+  last_run_date: string | null
   last_run_at: string | null
   last_result: 'success' | 'skipped' | 'error' | null
   last_message: string | null
@@ -39,6 +41,9 @@ function describeDays(days: number[]): string {
   if (s === '1,2,3,4,5') return 'Seg a Sex'
   return [...days].sort().map(d => DAY_NAMES[d]).join(', ')
 }
+
+// Dia de hoje em Brasília (AAAA-MM-DD), para saber se o agendamento já rodou hoje.
+const todayBR = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' })
 
 function formatWhen(iso: string | null): string {
   if (!iso) return ''
@@ -66,6 +71,8 @@ export default function CampaignActivationsModal({
   const [busyId, setBusyId] = useState<string | null>(null)
   const [time, setTime] = useState('07:00')
   const [days, setDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6])
+  const [editing, setEditing] = useState<Activation | null>(null)
+  const formRef = useRef<HTMLElement | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -77,6 +84,7 @@ export default function CampaignActivationsModal({
   }, [])
 
   useEffect(() => { if (open) load() }, [open, load])
+  useEffect(() => { if (!open) setEditing(null) }, [open])
 
   const call = async (init: RequestInit, url = '/api/campaign-activations') => {
     const res = await fetch(url, { ...init, headers: { 'Content-Type': 'application/json' } })
@@ -87,6 +95,18 @@ export default function CampaignActivationsModal({
 
   if (!open) return null
 
+  // Em modo de edição o formulário vale para a campanha editada; senão, para a seleção da tabela.
+  const targets: SelectedCampaign[] = editing
+    ? [{ id: editing.meta_campaign_id, name: editing.campaign_name || editing.meta_campaign_id, account_id: editing.meta_account_id }]
+    : selectedCampaigns
+
+  const startEdit = (a: Activation) => {
+    setEditing(a)
+    setTime(hhmm(a.activate_time))
+    setDays(a.days_of_week)
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
+  }
+
   const handleSave = async () => {
     if (days.length === 0) return toast.error('Selecione pelo menos um dia')
     setSaving(true)
@@ -94,12 +114,13 @@ export default function CampaignActivationsModal({
       await call({
         method: 'POST',
         body: JSON.stringify({
-          activations: selectedCampaigns.map(c => ({
+          activations: targets.map(c => ({
             campaignId: c.id, accountId: c.account_id, campaignName: c.name, activateTime: time, daysOfWeek: days
           }))
         })
       })
-      toast.success(`${selectedCampaigns.length} campanha${selectedCampaigns.length === 1 ? '' : 's'} agendada${selectedCampaigns.length === 1 ? '' : 's'}`)
+      toast.success(editing ? 'Agendamento atualizado' : `${targets.length} campanha${targets.length === 1 ? '' : 's'} agendada${targets.length === 1 ? '' : 's'}`)
+      setEditing(null)
     } catch (err: any) {
       toast.error(err.message)
     } finally {
@@ -143,10 +164,12 @@ export default function CampaignActivationsModal({
             </div>
 
             <div className="overflow-y-auto px-5 py-4 space-y-6">
-              {selectedCampaigns.length > 0 && (
-                <section className="space-y-4">
+              {targets.length > 0 && (
+                <section ref={formRef} className="space-y-4">
                   <p className="text-sm text-gray-600 dark:text-gray-300">
-                    Agendar {selectedCampaigns.length} campanha{selectedCampaigns.length === 1 ? '' : 's'} selecionada{selectedCampaigns.length === 1 ? '' : 's'}
+                    {editing
+                      ? <>Editando: <span className="font-medium text-gray-900 dark:text-white">{targets[0].name}</span></>
+                      : <>Agendar {targets.length} campanha{targets.length === 1 ? '' : 's'} selecionada{targets.length === 1 ? '' : 's'}</>}
                   </p>
                   <label className="block">
                     <span className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Ativar às</span>
@@ -164,20 +187,25 @@ export default function CampaignActivationsModal({
                           onClick={() => setDays(p => (p.includes(d) ? p.filter(x => x !== d) : [...p, d]))}
                           className={`w-9 h-9 rounded-full text-xs font-medium transition-colors ${
                             days.includes(d)
-                              ? 'bg-brand-500 text-white'
+                              ? 'bg-brand-500 text-black'
                               : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                           }`}
                         >{label}</button>
                       ))}
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                    Horário de Brasília. Só ativa a campanha se ela estiver pausada naquele horário — se já estiver ativa, não faz nada. Não pausa nada.
-                  </p>
-                  <div className="flex justify-end">
+                  <div className="flex justify-end gap-2">
+                    {editing && (
+                      <button
+                        onClick={() => setEditing(null)} disabled={saving}
+                        className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-ds-md transition-colors"
+                      >
+                        Cancelar
+                      </button>
+                    )}
                     <button
                       onClick={handleSave} disabled={saving}
-                      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-brand-500 hover:bg-brand-600 disabled:opacity-50 rounded-ds-md transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-black bg-brand-500 hover:bg-brand-400 disabled:opacity-50 rounded-ds-md transition-colors"
                     >
                       {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                       Salvar agendamento
@@ -217,6 +245,20 @@ export default function CampaignActivationsModal({
                             </p>
                           )}
                         </div>
+                        {(() => {
+                          const ranToday = a.last_run_date === todayBR()
+                          return (
+                            <button
+                              onClick={() => startEdit(a)}
+                              disabled={busyId === a.id || ranToday}
+                              title={ranToday ? 'Já executado hoje — edite a partir de amanhã' : 'Editar agendamento'}
+                              aria-label="Editar agendamento"
+                              className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:hover:bg-transparent"
+                            >
+                              <Pencil className="w-4 h-4 text-gray-400" />
+                            </button>
+                          )
+                        })()}
                         <button
                           onClick={() => handleDelete(a)} disabled={busyId === a.id} title="Remover agendamento"
                           className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
