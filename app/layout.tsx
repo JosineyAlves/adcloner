@@ -3,6 +3,7 @@ import { Jura } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
 import FacebookSDK from '@/components/providers/FacebookSDK'
+import VmetricsTooltip from '@/components/providers/VmetricsTooltip'
 import { AppProvider } from '@/contexts/AppContext'
 import { DateProvider } from '@/contexts/DateContext'
 import { SidebarProvider } from '@/contexts/SidebarContext'
@@ -38,6 +39,7 @@ export default function RootLayout({
               renderizados independentemente em cada página (não há layout aninhado por rota). */}
           <SidebarProvider>
             <FacebookSDK />
+            <VmetricsTooltip />
             {children}
             <Toaster
               position="top-right"
