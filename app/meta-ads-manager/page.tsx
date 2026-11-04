@@ -30,6 +30,7 @@ import AdSetsTable from '@/components/meta-business/AdSetsTable'
 import AdsTable from '@/components/meta-business/AdsTable'
 import MetaBusinessMetricsSelector from '@/components/meta-business/MetricsSelector'
 import BulkActionsMenu from '@/components/meta-business/BulkActionsMenu'
+import CampaignActivationsButton from '@/components/meta-business/CampaignActivationsButton'
 import { BID_AMOUNT_STRATEGIES } from '@/lib/bid-strategies'
 import { 
   MetaAccount,
@@ -1274,6 +1275,13 @@ export default function MetaBusinessPage() {
                       onDeactivate={() => handleBulkStatusUpdate('campaigns', 'PAUSED')}
                       filterActive={campaignsFilterToSelected}
                       onToggleFilter={() => setCampaignsFilterToSelected(prev => !prev)}
+                    />
+                  )}
+                  {activeTab === 'campaigns' && (
+                    <CampaignActivationsButton
+                      selectedCampaigns={campaigns
+                        .filter(c => selectedCampaigns.has(c.id))
+                        .map(c => ({ id: c.id, name: c.name, account_id: c.account_id }))}
                     />
                   )}
                   {activeTab === 'adsets' && selectedAdSets.size > 0 && (
