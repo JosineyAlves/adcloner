@@ -1,8 +1,9 @@
 'use client'
 
 /**
- * Botão (ícone de relógio) + modal de "Ativação agendada" de campanhas. Recurso restrito: o botão só
- * aparece se /api/campaign-activations responder allowed=true. Ver lib/campaign-activations.ts.
+ * Modal de "Ativação agendada" de campanhas + hook de acesso. Recurso restrito: o item de menu
+ * "Agendar ativação" só aparece se /api/campaign-activations responder allowed=true
+ * (useActivationAccess). Ver lib/campaign-activations.ts.
  */
 
 import { useCallback, useEffect, useState } from 'react'
@@ -46,9 +47,20 @@ function formatWhen(iso: string | null): string {
   })
 }
 
-export default function CampaignActivationsButton({ selectedCampaigns }: { selectedCampaigns: SelectedCampaign[] }) {
+export function useActivationAccess(): boolean {
   const [allowed, setAllowed] = useState(false)
-  const [open, setOpen] = useState(false)
+  useEffect(() => {
+    fetch('/api/campaign-activations', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => setAllowed(!!d?.allowed))
+      .catch(() => { /* recurso opcional: falha silenciosa */ })
+  }, [])
+  return allowed
+}
+
+export default function CampaignActivationsModal({
+  open, onClose, selectedCampaigns
+}: { open: boolean; onClose: () => void; selectedCampaigns: SelectedCampaign[] }) {
   const [items, setItems] = useState<Activation[]>([])
   const [saving, setSaving] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -60,12 +72,11 @@ export default function CampaignActivationsButton({ selectedCampaigns }: { selec
       const res = await fetch('/api/campaign-activations', { cache: 'no-store' })
       if (!res.ok) return
       const data = await res.json()
-      setAllowed(!!data.allowed)
       setItems(data.activations || [])
     } catch { /* recurso opcional: falha silenciosa */ }
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { if (open) load() }, [open, load])
 
   const call = async (init: RequestInit, url = '/api/campaign-activations') => {
     const res = await fetch(url, { ...init, headers: { 'Content-Type': 'application/json' } })
@@ -74,7 +85,7 @@ export default function CampaignActivationsButton({ selectedCampaigns }: { selec
     setItems(data.activations || [])
   }
 
-  if (!allowed) return null
+  if (!open) return null
 
   const handleSave = async () => {
     if (days.length === 0) return toast.error('Selecione pelo menos um dia')
@@ -118,24 +129,15 @@ export default function CampaignActivationsButton({ selectedCampaigns }: { selec
 
   return (
     <>
-      <button
-        onClick={() => { setOpen(true); load() }}
-        title="Ativação agendada de campanhas"
-        aria-label="Ativação agendada de campanhas"
-        className="flex items-center justify-center p-2 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-ds-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors"
-      >
-        <Clock className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-      </button>
-
       {open && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setOpen(false)}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => onClose()}>
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-xl max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-2">
                 <Clock className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                 <h2 className="text-base font-semibold text-gray-900 dark:text-white">Ativação agendada</h2>
               </div>
-              <button onClick={() => setOpen(false)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="Fechar">
+              <button onClick={() => onClose()} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="Fechar">
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>

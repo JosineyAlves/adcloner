@@ -30,7 +30,7 @@ import AdSetsTable from '@/components/meta-business/AdSetsTable'
 import AdsTable from '@/components/meta-business/AdsTable'
 import MetaBusinessMetricsSelector from '@/components/meta-business/MetricsSelector'
 import BulkActionsMenu from '@/components/meta-business/BulkActionsMenu'
-import CampaignActivationsButton from '@/components/meta-business/CampaignActivationsButton'
+import CampaignActivationsModal, { useActivationAccess } from '@/components/meta-business/CampaignActivations'
 import { BID_AMOUNT_STRATEGIES } from '@/lib/bid-strategies'
 import { 
   MetaAccount,
@@ -185,6 +185,9 @@ export default function MetaBusinessPage() {
   // uma tem sua própria seleção. Reseta sozinho quando a seleção correspondente esvazia, pra não
   // ficar "preso" filtrado numa seleção futura.
   const [campaignsFilterToSelected, setCampaignsFilterToSelected] = useState(false)
+  // Ativação agendada (recurso restrito; ver lib/campaign-activations.ts).
+  const activationAllowed = useActivationAccess()
+  const [activationsOpen, setActivationsOpen] = useState(false)
   const [adSetsFilterToSelected, setAdSetsFilterToSelected] = useState(false)
   useEffect(() => {
     if (selectedCampaigns.size === 0) setCampaignsFilterToSelected(false)
@@ -1275,13 +1278,7 @@ export default function MetaBusinessPage() {
                       onDeactivate={() => handleBulkStatusUpdate('campaigns', 'PAUSED')}
                       filterActive={campaignsFilterToSelected}
                       onToggleFilter={() => setCampaignsFilterToSelected(prev => !prev)}
-                    />
-                  )}
-                  {activeTab === 'campaigns' && (
-                    <CampaignActivationsButton
-                      selectedCampaigns={campaigns
-                        .filter(c => selectedCampaigns.has(c.id))
-                        .map(c => ({ id: c.id, name: c.name, account_id: c.account_id }))}
+                      onSchedule={activationAllowed ? () => setActivationsOpen(true) : undefined}
                     />
                   )}
                   {activeTab === 'adsets' && selectedAdSets.size > 0 && (
@@ -1489,6 +1486,13 @@ export default function MetaBusinessPage() {
           </motion.div>
         </main>
       </div>
+      <CampaignActivationsModal
+        open={activationsOpen}
+        onClose={() => setActivationsOpen(false)}
+        selectedCampaigns={campaigns
+          .filter(c => selectedCampaigns.has(c.id))
+          .map(c => ({ id: c.id, name: c.name, account_id: c.account_id }))}
+      />
     </div>
   )
 }

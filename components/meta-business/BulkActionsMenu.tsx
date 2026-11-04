@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ListChecks, CheckSquare, XSquare, PenSquare, Filter } from 'lucide-react'
+import { ListChecks, CheckSquare, XSquare, PenSquare, Filter, Clock } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 interface BulkActionsMenuProps {
@@ -15,6 +15,8 @@ interface BulkActionsMenuProps {
   // ver comentário em app/api/meta-business/adsets/[id]/bid/route.ts).
   bidEligibleCount?: number
   onBulkBidApply?: (bidAmount: number) => Promise<void>
+  // Só passado a usuários liberados (ver lib/campaign-activations.ts): item "Agendar ativação".
+  onSchedule?: () => void
 }
 
 // Botão único "Ações em massa", ao lado da engrenagem de colunas na barra de filtros — mesmo
@@ -28,7 +30,8 @@ export default function BulkActionsMenu({
   filterActive,
   onToggleFilter,
   bidEligibleCount,
-  onBulkBidApply
+  onBulkBidApply,
+  onSchedule
 }: BulkActionsMenuProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [bidPopoverOpen, setBidPopoverOpen] = useState(false)
@@ -94,6 +97,15 @@ export default function BulkActionsMenu({
             >
               <PenSquare className={iconClass} />
               Alterar limite de lance
+            </button>
+          )}
+          {onSchedule && (
+            <button
+              onClick={() => { setMenuOpen(false); onSchedule() }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              <Clock className={iconClass} />
+              Agendar ativação
             </button>
           )}
           <div className="my-1 border-t border-gray-100 dark:border-gray-700" />
