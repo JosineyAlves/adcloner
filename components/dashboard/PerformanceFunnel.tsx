@@ -26,8 +26,10 @@ interface Props {
 }
 
 const fmtInt = (n: number) => n.toLocaleString('pt-BR')
-const fmtPct = (n: number) =>
-  `${n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`
+const fmtPct = (n: number) => {
+  const d = n > 0 && n < 1 ? 2 : 1 // taxas pequenas (ex.: 0,04%) não podem virar "0,0%"
+  return `${n.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d })}%`
+}
 
 // Tamanho (em % do máximo) de cada segmento: [lado esquerdo, lado direito]. Cada segmento afunila
 // bastante por dentro e o próximo recomeça um pouco menor (como na referência de funil).
@@ -122,7 +124,7 @@ export default function PerformanceFunnel({ impressions, linkClicks, pageViews, 
               className="absolute -translate-y-1/2 px-1 text-center text-black"
               style={{ left: `${i * 20}%`, width: '20%', top: '50%' }}
             >
-              <div className="text-xl lg:text-2xl font-bold leading-tight tabular-nums">{fmtInt(s.value)}</div>
+              <div className={`${fmtInt(s.value).length >= 9 ? 'text-base' : fmtInt(s.value).length >= 7 ? 'text-lg' : 'text-xl'} font-bold leading-tight tabular-nums`}>{fmtInt(s.value)}</div>
               <div className="text-[11px] font-semibold leading-tight opacity-80">{s.label}</div>
             </div>
           ))}
