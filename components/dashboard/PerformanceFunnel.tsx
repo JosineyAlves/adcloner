@@ -1,19 +1,19 @@
 'use client'
 
 /**
- * Funil de performance do Dashboard: Impressões → Cliques no link → Page View (visualização da
- * página de destino) → Initiate Checkout (IC) → Conversões (compras), com a taxa de passagem entre
- * etapas e a perda em cada uma. Desktop: horizontal (esquerda → direita); mobile: vertical.
+ * Funil de performance do Dashboard: Impressões → Cliques no link → Page View → Initiate Checkout (IC)
+ * → Conversões, com a taxa de passagem e a perda de cada etapa.
  *
- * As alturas/larguras das formas são ESTILIZADAS (decrescentes e iguais para qualquer dado) —
- * proporcional de verdade deixaria compras invisíveis perto de milhões de impressões. Os números e
- * as porcentagens são sempre os reais.
+ * Desktop: funil horizontal contínuo (cada segmento é um trapézio que termina na altura em que o
+ * próximo começa; nomes/taxas alternam acima e abaixo). Mobile: o mesmo funil na vertical.
+ * O formato (larguras/alturas) é ESTILIZADO — igual para qualquer dado, senão as compras
+ * ficariam invisíveis perto de milhões de impressões. Os números e % são sempre os reais.
  */
 
 interface Stage {
   key: string
   label: string
-  short: string // rótulo curto (mobile)
+  short: string
   value: number
 }
 
@@ -26,27 +26,28 @@ interface Props {
 }
 
 const fmtInt = (n: number) => n.toLocaleString('pt-BR')
+const fmtPct = (n: number) =>
+  `${n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`
 
-function fmtPct(n: number): string {
-  const digits = n < 1 ? 2 : n < 10 ? 1 : 1
-  return `${n.toLocaleString('pt-BR', { minimumFractionDigits: digits, maximumFractionDigits: digits })}%`
-}
+// Tamanho (em % do máximo) nas 6 fronteiras do funil: segmento i vai de B[i] até B[i+1].
+const B = [100, 80, 62, 46, 33, 22]
 
-// Alturas (desktop, em unidades de um viewBox de 40) e larguras (mobile, em %) estilizadas.
-const HEIGHTS = [36, 29, 22, 15, 9]
-const WIDTHS = [100, 82, 64, 46, 30]
-const OPACITY = [1, 0.9, 0.8, 0.7, 0.6]
+// Desktop
+const FUNNEL_H = 220 // altura máxima do funil (px)
+const AREA_H = 380 // altura total (funil + rótulos acima/abaixo)
+const SEG_W = 200 // largura de cada segmento no viewBox (1000 / 5)
+const GAP = 4 // vão entre segmentos
 
 export default function PerformanceFunnel({ impressions, linkClicks, pageViews, checkouts, conversions }: Props) {
   const stages: Stage[] = [
     { key: 'impressions', label: 'Impressões', short: 'Impressões', value: impressions },
     { key: 'clicks', label: 'Cliques no link', short: 'Cliques', value: linkClicks },
     { key: 'pageViews', label: 'Page View', short: 'Page View', value: pageViews },
-    { key: 'checkouts', label: 'Initiate Checkout (IC)', short: 'IC', value: checkouts },
+    { key: 'checkouts', label: 'Initiate Checkout', short: 'IC', value: checkouts },
     { key: 'conversions', label: 'Conversões', short: 'Conversões', value: conversions }
   ]
 
-  // Taxa de passagem da etapa anterior para esta (null = sem base para calcular).
+  // Taxa de passagem da etapa anterior para esta (rate null = sem base para calcular).
   const steps = stages.map((s, i) => {
     if (i === 0) return null
     const prev = stages[i - 1].value
@@ -55,15 +56,18 @@ export default function PerformanceFunnel({ impressions, linkClicks, pageViews, 
     return {
       rate,
       loss: Math.max(0, 100 - rate),
-      hint: `${s.short} ÷ ${stages[i - 1].short}: ${fmtInt(s.value)} de ${fmtInt(prev)}`
+      hint: `${fmtInt(s.value)} de ${fmtInt(prev)} (${stages[i - 1].short} → ${s.short})`
     }
   })
 
-  const StepPill = ({ i }: { i: number }) => {
+  const StepInfo = ({ i, align = 'center' }: { i: number; align?: 'center' | 'start' }) => {
     const step = steps[i]
     if (!step) return null
     return (
-      <div className="flex flex-col items-center leading-tight" title={step.hint || undefined}>
+      <div
+        className={`flex flex-col leading-tight ${align === 'center' ? 'items-center' : 'items-start'}`}
+        title={step.hint || undefined}
+      >
         <span className="rounded-full bg-gray-100 dark:bg-gray-700 px-2.5 py-0.5 text-xs font-semibold text-gray-900 dark:text-white tabular-nums">
           {step.rate === null ? '—' : fmtPct(step.rate)}
         </span>
@@ -74,72 +78,110 @@ export default function PerformanceFunnel({ impressions, linkClicks, pageViews, 
     )
   }
 
-  // ---- Desktop: SVG 100 x 40 com 5 colunas de 20 unidades; barra [4,16] + conector [16,24] ----
-  const bar = (i: number) => {
-    const h = HEIGHTS[i]
-    const x = i * 20 + 4
-    return { x, y: 20 - h / 2, w: 12, h }
+  // Trapézio i no viewBox 1000 x 100 (centralizado em y = 50).
+  const trapezoid = (i: number, pad = 0) => {
+    const x1 = i * SEG_W + GAP / 2
+    const x2 = (i + 1) * SEG_W - GAP / 2
+    const a = B[i] / 2 + pad
+    const b = B[i + 1] / 2 + pad
+    return `${x1},${50 - a} ${x2},${50 - b} ${x2},${50 + b} ${x1},${50 + a}`
   }
-  const connector = (i: number) => {
-    const a = HEIGHTS[i] / 2
-    const b = HEIGHTS[i + 1] / 2
-    const x1 = i * 20 + 16
-    const x2 = (i + 1) * 20 + 4
-    return `${x1},${20 - a} ${x2},${20 - b} ${x2},${20 + b} ${x1},${20 + a}`
-  }
+  const fill = (i: number) => (i % 2 === 0 ? 'fill-brand-500' : 'fill-brand-600')
+  const bg = (i: number) => (i % 2 === 0 ? 'bg-brand-500' : 'bg-brand-600')
 
   return (
     <div>
       {/* ===== Desktop (horizontal) ===== */}
-      <div className="hidden md:block">
-        <div className="grid grid-cols-5">
-          {stages.map(s => (
-            <div key={s.key} className="text-center px-1">
-              <div className="text-xs text-gray-500 dark:text-gray-400">{s.label}</div>
-              <div className="mt-0.5 text-2xl font-bold text-gray-900 dark:text-white tabular-nums">{fmtInt(s.value)}</div>
-            </div>
+      <div className="hidden md:block relative w-full" style={{ height: AREA_H }}>
+        {/* Funil */}
+        <svg
+          viewBox="0 0 1000 100"
+          preserveAspectRatio="none"
+          className="absolute left-0 w-full"
+          style={{ top: (AREA_H - FUNNEL_H) / 2, height: FUNNEL_H }}
+          aria-hidden="true"
+        >
+          <defs>
+            <linearGradient id="funnelShadow" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0" stopColor="currentColor" stopOpacity="0.28" />
+              <stop offset="1" stopColor="currentColor" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          {/* Sombra suave atrás de cada segmento (efeito de profundidade) */}
+          {stages.map((s, i) => (
+            <polygon
+              key={`s${s.key}`}
+              points={trapezoid(i, 4.5)}
+              fill="url(#funnelShadow)"
+              className="text-gray-400 dark:text-gray-500"
+            />
           ))}
-        </div>
-
-        <svg viewBox="0 0 100 40" preserveAspectRatio="none" className="mt-3 block w-full h-24" aria-hidden="true">
-          {stages.slice(0, -1).map((_, i) => (
-            <polygon key={`c${i}`} points={connector(i)} className="fill-brand-500" fillOpacity={0.28} />
+          {stages.map((s, i) => (
+            <polygon key={s.key} points={trapezoid(i)} className={fill(i)} />
           ))}
-          {stages.map((s, i) => {
-            const b = bar(i)
-            return <rect key={s.key} x={b.x} y={b.y} width={b.w} height={b.h} className="fill-brand-500" fillOpacity={OPACITY[i]} />
-          })}
         </svg>
 
-        {/* Taxas centradas na fronteira entre uma coluna e a seguinte */}
-        <div className="relative mt-2 h-10">
-          {stages.slice(1).map((_, k) => (
-            <div key={k} className="absolute top-0 -translate-x-1/2" style={{ left: `${(k + 1) * 20}%` }}>
-              <StepPill i={k + 1} />
+        {/* Valores dentro de cada segmento */}
+        {stages.map((s, i) => (
+          <div
+            key={`v${s.key}`}
+            className="absolute -translate-y-1/2 text-center font-bold text-black tabular-nums text-xl lg:text-2xl"
+            style={{ left: `${i * 20}%`, width: '20%', top: '50%' }}
+          >
+            {fmtInt(s.value)}
+          </div>
+        ))}
+
+        {/* Nome + taxa: pares acima do funil, ímpares abaixo (como na referência) */}
+        {stages.map((s, i) => {
+          const above = i % 2 === 1
+          const offset = (B[i] / 100) * (FUNNEL_H / 2) + 12 // distância da linha central até a borda mais alta do segmento
+          const style: React.CSSProperties = {
+            left: `${i * 20}%`,
+            width: '20%',
+            ...(above ? { bottom: `calc(50% + ${offset}px)` } : { top: `calc(50% + ${offset}px)` })
+          }
+          return (
+            <div key={`l${s.key}`} className="absolute px-2 text-center" style={style}>
+              {above && i > 0 && (
+                <div className="mb-1.5">
+                  <StepInfo i={i} />
+                </div>
+              )}
+              <div className="text-sm font-semibold text-gray-900 dark:text-white">{s.label}</div>
+              {!above && i > 0 && (
+                <div className="mt-1.5">
+                  <StepInfo i={i} />
+                </div>
+              )}
             </div>
-          ))}
-        </div>
+          )
+        })}
       </div>
 
       {/* ===== Mobile (vertical) ===== */}
-      <div className="md:hidden flex flex-col items-center">
-        {stages.map((s, i) => (
-          <div key={s.key} className="w-full flex flex-col items-center">
-            {i > 0 && (
-              <div className="my-1.5 flex items-center gap-1.5">
-                <span className="text-gray-400 text-xs">▼</span>
-                <StepPill i={i} />
+      <div className="md:hidden flex flex-col">
+        {stages.map((s, i) => {
+          const top = B[i]
+          const bottom = B[i + 1]
+          const clip = `polygon(${(100 - top) / 2}% 0, ${(100 + top) / 2}% 0, ${(100 + bottom) / 2}% 100%, ${(100 - bottom) / 2}% 100%)`
+          return (
+            <div key={s.key}>
+              {i > 0 && (
+                <div className="flex justify-center py-1.5">
+                  <StepInfo i={i} />
+                </div>
+              )}
+              <div
+                className={`${bg(i)} flex flex-col items-center justify-center text-black`}
+                style={{ clipPath: clip, height: 68 }}
+              >
+                <span className="text-[11px] font-semibold leading-none opacity-80">{s.short}</span>
+                <span className="mt-1 text-lg font-bold leading-none tabular-nums">{fmtInt(s.value)}</span>
               </div>
-            )}
-            <div className="text-xs text-gray-500 dark:text-gray-400">{s.label}</div>
-            <div
-              className="mt-1 rounded-lg bg-brand-500 py-2 text-center text-lg font-bold text-black tabular-nums"
-              style={{ width: `${WIDTHS[i]}%`, opacity: OPACITY[i] }}
-            >
-              {fmtInt(s.value)}
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
