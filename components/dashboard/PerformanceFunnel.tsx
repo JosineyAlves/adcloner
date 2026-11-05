@@ -60,7 +60,7 @@ export default function PerformanceFunnel({ impressions, linkClicks, pageViews, 
     { key: 'impressions', label: 'Impressões', short: 'Impressões', value: impressions },
     { key: 'clicks', label: 'Cliques no link', short: 'Cliques', value: linkClicks },
     { key: 'pageViews', label: 'Page View', short: 'Page View', value: pageViews },
-    { key: 'checkouts', label: 'Initiate Checkout', short: 'IC', value: checkouts },
+    { key: 'checkouts', label: 'IC', short: 'IC', value: checkouts },
     { key: 'conversions', label: 'Conversões', short: 'Conversões', value: conversions }
   ]
 
