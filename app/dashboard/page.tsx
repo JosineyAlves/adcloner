@@ -749,7 +749,7 @@ export default function DashboardPage() {
             <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="card p-6">
                 <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
-                  Resumo de Performance
+                  Funil
                 </h2>
                 <PerformanceFunnel
                   impressions={metrics.totalImpressions}
