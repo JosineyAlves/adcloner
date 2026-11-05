@@ -10,6 +10,7 @@ import DateSelector, { DateRange } from '@/components/dashboard/DateSelector'
 import Select from '@/components/ui/Select'
 import BreakdownBarChart from '@/components/dashboard/BreakdownBarChart'
 import HoursWithoutSalesChart, { HourlyFunnelRow } from '@/components/dashboard/HoursWithoutSalesChart'
+import PerformanceFunnel from '@/components/dashboard/PerformanceFunnel'
 import { useApp } from '@/contexts/AppContext'
 import { useDebounce } from '@/lib/debounce'
 import {
@@ -41,12 +42,13 @@ interface DashboardMetrics {
   cpa: number | null
   epc: number | null
 
-  // Métricas de Performance
-  totalCampaigns: number
-  activeCampaigns: number
-  pausedCampaigns: number
+  // Métricas de Performance (funil: impressões → cliques no link → page view → IC → conversões).
+  // totalClicks = todos os cliques (usado no EPC); o funil usa totalLinkClicks.
   totalImpressions: number
   totalClicks: number
+  totalLinkClicks: number
+  totalLandingPageViews: number
+  totalCheckouts: number
   totalConversions: number
 }
 
@@ -62,11 +64,11 @@ export default function DashboardPage() {
     averageTicket: null,
     cpa: null,
     epc: null,
-    totalCampaigns: 0,
-    activeCampaigns: 0,
-    pausedCampaigns: 0,
     totalImpressions: 0,
     totalClicks: 0,
+    totalLinkClicks: 0,
+    totalLandingPageViews: 0,
+    totalCheckouts: 0,
     totalConversions: 0
   })
   
@@ -138,10 +140,10 @@ export default function DashboardPage() {
       let totalRevenue = 0
       let totalImpressions = 0
       let totalClicks = 0
+      let totalLinkClicks = 0
+      let totalLandingPageViews = 0
+      let totalCheckouts = 0
       let totalConversions = 0
-      let totalCampaigns = 0
-      let activeCampaigns = 0
-      let pausedCampaigns = 0
 
       for (const account of activeAccounts) {
         try {
@@ -154,10 +156,6 @@ export default function DashboardPage() {
             const campaignsData = await campaignsResponse.json()
             const campaigns = campaignsData.campaigns || []
             
-            totalCampaigns += campaigns.length
-            activeCampaigns += campaigns.filter((c: any) => c.status === 'ACTIVE').length
-            pausedCampaigns += campaigns.filter((c: any) => c.status === 'PAUSED').length
-            
             // Somar métricas — tudo dado real vindo da Meta, nada calculado/estimado aqui.
             // "conversion_values" é o valor de compra que o Pixel/API de Conversões da Meta atribuiu
             // àquela campanha (mesmo campo já exibido em "Valor das Conversões" na aba Campanhas).
@@ -166,6 +164,9 @@ export default function DashboardPage() {
               totalRevenue += campaign.conversion_values || 0
               totalImpressions += campaign.impressions || 0
               totalClicks += campaign.clicks || 0
+              totalLinkClicks += campaign.inline_link_clicks || 0
+              totalLandingPageViews += campaign.landing_page_view || 0
+              totalCheckouts += campaign.initiate_checkout || 0
               totalConversions += campaign.conversions || 0
             })
           }
@@ -199,11 +200,11 @@ export default function DashboardPage() {
         averageTicket,
         cpa,
         epc,
-        totalCampaigns,
-        activeCampaigns,
-        pausedCampaigns,
         totalImpressions,
         totalClicks,
+        totalLinkClicks,
+        totalLandingPageViews,
+        totalCheckouts,
         totalConversions
       })
       
@@ -436,11 +437,11 @@ export default function DashboardPage() {
       averageTicket: null,
       cpa: null,
       epc: null,
-      totalCampaigns: 0,
-      activeCampaigns: 0,
-      pausedCampaigns: 0,
       totalImpressions: 0,
       totalClicks: 0,
+      totalLinkClicks: 0,
+      totalLandingPageViews: 0,
+      totalCheckouts: 0,
       totalConversions: 0
     })
   }, [accounts, datePreset, customRange, selectedAccountId])
@@ -744,40 +745,18 @@ export default function DashboardPage() {
               </div>
             </section>
 
-            {/* Operação — visão rápida de campanhas/impressões/cliques */}
+            {/* Operação — funil de performance (impressões → cliques → page view → IC → conversões) */}
             <section className="card p-6">
               <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
                 Resumo de Performance
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 divide-y divide-gray-100 dark:divide-gray-700 md:divide-y-0 md:divide-x">
-                <div className="text-center md:px-4 pb-4 md:pb-0">
-                  <div className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {metrics.totalCampaigns}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    Total de Campanhas
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                    {metrics.activeCampaigns} ativas • {metrics.pausedCampaigns} pausadas
-                  </div>
-                </div>
-                <div className="text-center md:px-4 py-4 md:py-0">
-                  <div className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {metrics.totalImpressions.toLocaleString()}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    Total de Impressões
-                  </div>
-                </div>
-                <div className="text-center md:px-4 pt-4 md:pt-0">
-                  <div className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {metrics.totalClicks.toLocaleString()}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    Total de Cliques
-                  </div>
-                </div>
-              </div>
+              <PerformanceFunnel
+                impressions={metrics.totalImpressions}
+                linkClicks={metrics.totalLinkClicks}
+                pageViews={metrics.totalLandingPageViews}
+                checkouts={metrics.totalCheckouts}
+                conversions={metrics.totalConversions}
+              />
             </section>
           </motion.div>
         </main>
