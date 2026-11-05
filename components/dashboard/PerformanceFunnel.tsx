@@ -85,10 +85,10 @@ export default function PerformanceFunnel({ impressions, linkClicks, pageViews, 
         className={`flex flex-col leading-tight ${align === 'center' ? 'items-center' : 'items-start'}`}
         title={step.hint || undefined}
       >
-        <span className="rounded-full bg-gray-100 dark:bg-gray-700 px-2.5 py-0.5 text-xs font-semibold text-gray-900 dark:text-white tabular-nums">
+        <span className="rounded-full bg-gray-100 dark:bg-gray-700 px-3 py-0.5 text-sm font-semibold text-gray-900 dark:text-white tabular-nums">
           {step.rate === null ? '—' : fmtPct(step.rate)}
         </span>
-        <span className="mt-0.5 text-[10px] text-gray-500 dark:text-gray-400 tabular-nums">
+        <span className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 tabular-nums">
           {step.loss === null ? '' : `perda ${fmtPct(step.loss)}`}
         </span>
       </div>
