@@ -29,14 +29,30 @@ const fmtInt = (n: number) => n.toLocaleString('pt-BR')
 const fmtPct = (n: number) =>
   `${n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`
 
-// Tamanho (em % do máximo) nas 6 fronteiras do funil: segmento i vai de B[i] até B[i+1].
-const B = [100, 80, 62, 46, 33, 22]
+// Tamanho (em % do máximo) de cada segmento: [lado esquerdo, lado direito]. Cada segmento afunila
+// bastante por dentro e o próximo recomeça um pouco menor (como na referência de funil).
+const SEG: [number, number][] = [
+  [100, 74],
+  [72, 46],
+  [44, 31],
+  [29, 20],
+  [18, 11]
+]
+
+// Mobile: afunila menos que no desktop para o texto das etapas finais caber.
+const SEG_MOBILE: [number, number][] = [
+  [100, 80],
+  [78, 62],
+  [60, 48],
+  [46, 38],
+  [36, 30]
+]
 
 // Desktop
-const FUNNEL_H = 220 // altura máxima do funil (px)
-const AREA_H = 380 // altura total (funil + rótulos acima/abaixo)
+const FUNNEL_H = 260 // altura máxima do funil (px)
+const AREA_H = 440 // altura total (funil + rótulos acima/abaixo)
 const SEG_W = 200 // largura de cada segmento no viewBox (1000 / 5)
-const GAP = 4 // vão entre segmentos
+const GAP = 10 // vão entre segmentos
 
 export default function PerformanceFunnel({ impressions, linkClicks, pageViews, checkouts, conversions }: Props) {
   const stages: Stage[] = [
@@ -79,12 +95,21 @@ export default function PerformanceFunnel({ impressions, linkClicks, pageViews, 
   }
 
   // Trapézio i no viewBox 1000 x 100 (centralizado em y = 50).
-  const trapezoid = (i: number, pad = 0) => {
+  const trapezoid = (i: number) => {
     const x1 = i * SEG_W + GAP / 2
     const x2 = (i + 1) * SEG_W - GAP / 2
-    const a = B[i] / 2 + pad
-    const b = B[i + 1] / 2 + pad
+    const a = SEG[i][0] / 2
+    const b = SEG[i][1] / 2
     return `${x1},${50 - a} ${x2},${50 - b} ${x2},${50 + b} ${x1},${50 + a}`
+  }
+  // Sombra: cunha cinza que sai do topo/base do segmento, abre para a direita e some (gradiente).
+  const shadow = (i: number) => {
+    const x1 = i * SEG_W + GAP / 2
+    const x2 = (i + 1) * SEG_W + 8
+    const a = SEG[i][0] / 2
+    const b = SEG[i][1] / 2
+    const ext = 7
+    return `${x1},${50 - a} ${x2},${50 - b - ext} ${x2},${50 + b + ext} ${x1},${50 + a}`
   }
   const fill = (i: number) => (i % 2 === 0 ? 'fill-brand-500' : 'fill-brand-600')
   const bg = (i: number) => (i % 2 === 0 ? 'bg-brand-500' : 'bg-brand-600')
@@ -103,7 +128,7 @@ export default function PerformanceFunnel({ impressions, linkClicks, pageViews, 
         >
           <defs>
             <linearGradient id="funnelShadow" x1="0" x2="1" y1="0" y2="0">
-              <stop offset="0" stopColor="currentColor" stopOpacity="0.28" />
+              <stop offset="0" stopColor="currentColor" stopOpacity="0.55" />
               <stop offset="1" stopColor="currentColor" stopOpacity="0" />
             </linearGradient>
           </defs>
@@ -111,7 +136,7 @@ export default function PerformanceFunnel({ impressions, linkClicks, pageViews, 
           {stages.map((s, i) => (
             <polygon
               key={`s${s.key}`}
-              points={trapezoid(i, 4.5)}
+              points={shadow(i)}
               fill="url(#funnelShadow)"
               className="text-gray-400 dark:text-gray-500"
             />
@@ -132,27 +157,40 @@ export default function PerformanceFunnel({ impressions, linkClicks, pageViews, 
           </div>
         ))}
 
-        {/* Nome + taxa: pares acima do funil, ímpares abaixo (como na referência) */}
+        {/* Nome + taxa: ímpares acima do funil, pares abaixo; com linha de ligação como na referência */}
         {stages.map((s, i) => {
           const above = i % 2 === 1
-          const offset = (B[i] / 100) * (FUNNEL_H / 2) + 12 // distância da linha central até a borda mais alta do segmento
+          const offset = (SEG[i][0] / 100) * (FUNNEL_H / 2) + 14 // da linha central até a borda mais alta do segmento
           const style: React.CSSProperties = {
-            left: `${i * 20}%`,
-            width: '20%',
+            left: `calc(${i * 20}% + ${GAP / 2}px)`,
+            width: `calc(20% - ${GAP}px)`,
             ...(above ? { bottom: `calc(50% + ${offset}px)` } : { top: `calc(50% + ${offset}px)` })
           }
+          const line = above ? 'border-b' : 'border-t'
           return (
-            <div key={`l${s.key}`} className="absolute px-2 text-center" style={style}>
-              {above && i > 0 && (
-                <div className="mb-1.5">
-                  <StepInfo i={i} />
-                </div>
-              )}
-              <div className="text-sm font-semibold text-gray-900 dark:text-white">{s.label}</div>
-              {!above && i > 0 && (
-                <div className="mt-1.5">
-                  <StepInfo i={i} />
-                </div>
+            <div
+              key={`l${s.key}`}
+              className={`absolute border-l ${line} border-gray-300 dark:border-gray-600 px-3 ${above ? 'pb-2' : 'pt-2'} text-left`}
+              style={style}
+            >
+              {above ? (
+                <>
+                  {i > 0 && (
+                    <div className="mb-1.5">
+                      <StepInfo i={i} align="start" />
+                    </div>
+                  )}
+                  <div className="text-sm font-semibold text-gray-900 dark:text-white">{s.label}</div>
+                </>
+              ) : (
+                <>
+                  <div className="text-sm font-semibold text-gray-900 dark:text-white">{s.label}</div>
+                  {i > 0 && (
+                    <div className="mt-1.5">
+                      <StepInfo i={i} align="start" />
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )
@@ -162,8 +200,7 @@ export default function PerformanceFunnel({ impressions, linkClicks, pageViews, 
       {/* ===== Mobile (vertical) ===== */}
       <div className="md:hidden flex flex-col">
         {stages.map((s, i) => {
-          const top = B[i]
-          const bottom = B[i + 1]
+          const [top, bottom] = SEG_MOBILE[i]
           const clip = `polygon(${(100 - top) / 2}% 0, ${(100 + top) / 2}% 0, ${(100 + bottom) / 2}% 100%, ${(100 - bottom) / 2}% 100%)`
           return (
             <div key={s.key}>
