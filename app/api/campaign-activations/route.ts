@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUserId } from '@/lib/supabase/server'
 import {
-  isActivationUser, listActivations, upsertActivations, setActivationEnabled, deleteActivation,
+  isActivationUser, listActivations, listRuns, upsertActivations, setActivationEnabled, deleteActivation,
   validateInput, ActivationInput
 } from '@/lib/campaign-activations'
 
@@ -20,7 +20,8 @@ export async function GET() {
   if (!userId) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
   if (!allowed) return NextResponse.json({ allowed: false, activations: [] })
   try {
-    return NextResponse.json({ allowed: true, activations: await listActivations(userId) })
+    const [activations, history] = await Promise.all([listActivations(userId), listRuns(userId)])
+    return NextResponse.json({ allowed: true, activations, history })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }

@@ -11,8 +11,8 @@
  * seguinte, dentro da janela.
  *
  * COMO REMOVER: apagar os arquivos campaign-activation* (lib, components, app/api/campaign-activations,
- * app/api/cron/campaign-activations), a linha <CampaignActivationsButton/> em
- * app/meta-ads-manager/page.tsx e rodar sql/campaign-activations-remove.sql.
+ * app/api/cron/campaign-activations), o botão de relógio + <CampaignActivationsModal/> e o hook
+ * useActivationAccess em app/meta-ads-manager/page.tsx e rodar sql/campaign-activations-remove.sql.
  *
  * ⚠️ Server-only (service_role key).
  */
@@ -40,6 +40,16 @@ export interface CampaignActivation {
   last_message: string | null
 }
 
+export interface ActivationRun {
+  id: string
+  activation_id: string | null
+  meta_campaign_id: string
+  campaign_name: string | null
+  ran_at: string
+  result: 'success' | 'skipped' | 'error'
+  message: string | null
+}
+
 export interface ActivationInput {
   campaignId: string
   accountId: string
@@ -62,6 +72,18 @@ export async function isActivationUser(userId: string): Promise<boolean> {
 }
 
 // ---- CRUD (sempre filtrando por user_id) ------------------------------------------------------
+
+// Histórico de execuções (tabela campaign_activation_runs). Falha aqui nunca derruba a tela.
+export async function listRuns(userId: string, limit = 60): Promise<ActivationRun[]> {
+  const { data, error } = await getSupabaseAdmin()
+    .from('campaign_activation_runs')
+    .select('id, activation_id, meta_campaign_id, campaign_name, ran_at, result, message')
+    .eq('user_id', userId)
+    .order('ran_at', { ascending: false })
+    .limit(limit)
+  if (error) return []
+  return (data ?? []) as ActivationRun[]
+}
 
 export function validateInput(i: ActivationInput): string | null {
   if (!i.campaignId || !i.accountId) return 'Campanha ou conta ausente.'
@@ -158,7 +180,19 @@ async function graph(campaignId: string, token: string, method: 'GET' | 'POST') 
   return data
 }
 
-async function record(id: string, result: 'success' | 'skipped' | 'error', message: string, doneDate?: string) {
+async function record(a: CampaignActivation, result: 'success' | 'skipped' | 'error', message: string, doneDate?: string) {
+  const id = a.id
+  // Histórico (1 linha por tentativa). Best-effort: se falhar, o agendamento segue normalmente.
+  await getSupabaseAdmin()
+    .from('campaign_activation_runs')
+    .insert({
+      user_id: a.user_id,
+      activation_id: a.id,
+      meta_campaign_id: a.meta_campaign_id,
+      campaign_name: a.campaign_name,
+      result,
+      message
+    })
   await getSupabaseAdmin()
     .from('campaign_activations')
     .update({
@@ -178,21 +212,21 @@ async function processOne(a: CampaignActivation, at: Date): Promise<string | nul
 
   const token = await getAccessTokenForAdAccount(a.meta_account_id, a.user_id)
   if (!token) {
-    await record(a.id, 'error', 'Conexão com o Facebook não encontrada para esta conta. Reconecte em Integrações.')
+    await record(a, 'error', 'Conexão com o Facebook não encontrada para esta conta. Reconecte em Integrações.')
     return 'error: sem token'
   }
   try {
     const { status } = await graph(a.meta_campaign_id, token, 'GET')
     if (status !== 'PAUSED') {
-      await record(a.id, 'skipped', `Não ativada: a campanha já estava ${status}.`, now.date)
+      await record(a, 'skipped', `Não ativada: a campanha já estava ${status}.`, now.date)
       return `skipped: ${status}`
     }
     await graph(a.meta_campaign_id, token, 'POST')
-    await record(a.id, 'success', 'Campanha ativada pelo agendamento.', now.date)
+    await record(a, 'success', 'Campanha ativada pelo agendamento.', now.date)
     return 'success'
   } catch (err: any) {
     // Não marca o dia como feito: o cron seguinte (5 min) tenta de novo, ainda dentro da janela.
-    await record(a.id, 'error', `Erro da Meta: ${err?.message || 'desconhecido'}`)
+    await record(a, 'error', `Erro da Meta: ${err?.message || 'desconhecido'}`)
     return `error: ${err?.message}`
   }
 }

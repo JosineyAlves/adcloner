@@ -19,6 +19,20 @@ create table if not exists public.campaign_activations (
 -- Só o service_role acessa (sem policies = anon/authenticated bloqueados).
 alter table public.campaign_activations enable row level security;
 
+-- Histórico de execuções (1 linha por tentativa do cron).
+create table if not exists public.campaign_activation_runs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  activation_id uuid,
+  meta_campaign_id text not null,
+  campaign_name text,
+  ran_at timestamptz not null default now(),
+  result text not null,
+  message text
+);
+create index if not exists campaign_activation_runs_user_ran_idx on public.campaign_activation_runs (user_id, ran_at desc);
+alter table public.campaign_activation_runs enable row level security;
+
 -- Job (rodar depois de criar o segredo no Vault com nome campaign_activations_cron_secret):
 -- select cron.schedule('campaign-activations-runner', '*/5 * * * *', $$
 --   select net.http_post(

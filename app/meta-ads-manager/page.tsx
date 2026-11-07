@@ -6,6 +6,7 @@ import {
   TrendingUp,
   RefreshCw,
   Settings,
+  Clock,
   Play,
   Pause,
   Archive,
@@ -1278,7 +1279,6 @@ export default function MetaBusinessPage() {
                       onDeactivate={() => handleBulkStatusUpdate('campaigns', 'PAUSED')}
                       filterActive={campaignsFilterToSelected}
                       onToggleFilter={() => setCampaignsFilterToSelected(prev => !prev)}
-                      onSchedule={activationAllowed ? () => setActivationsOpen(true) : undefined}
                     />
                   )}
                   {activeTab === 'adsets' && selectedAdSets.size > 0 && (
@@ -1291,6 +1291,16 @@ export default function MetaBusinessPage() {
                       bidEligibleCount={selectedAdSetsEligibleForBid}
                       onBulkBidApply={(bidAmount) => handleBulkBidUpdate(Array.from(selectedAdSets), bidAmount)}
                     />
+                  )}
+                  {activationAllowed && (
+                    <button
+                      onClick={() => setActivationsOpen(true)}
+                      title="Ativação agendada de campanhas"
+                      aria-label="Ativação agendada de campanhas"
+                      className="flex items-center justify-center p-2 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-ds-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors"
+                    >
+                      <Clock className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                    </button>
                   )}
                   <MetaBusinessMetricsSelector
                     selectedMetricIds={selectedMetricIds}

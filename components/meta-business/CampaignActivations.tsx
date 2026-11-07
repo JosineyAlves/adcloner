@@ -1,9 +1,10 @@
 'use client'
 
 /**
- * Modal de "Ativação agendada" de campanhas + hook de acesso. Recurso restrito: o item de menu
- * "Agendar ativação" só aparece se /api/campaign-activations responder allowed=true
- * (useActivationAccess). Ver lib/campaign-activations.ts.
+ * Modal de "Ativação agendada" de campanhas + hook de acesso. Recurso restrito: o botão (relógio, ao
+ * lado da engrenagem de colunas) só aparece se /api/campaign-activations responder allowed=true
+ * (useActivationAccess). O modal abre direto na lista de agendamentos (sem precisar selecionar
+ * campanha) e tem a aba Histórico. Ver lib/campaign-activations.ts.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -31,6 +32,15 @@ interface Activation {
   last_message: string | null
 }
 
+interface Run {
+  id: string
+  campaign_name: string | null
+  meta_campaign_id: string
+  ran_at: string
+  result: 'success' | 'skipped' | 'error'
+  message: string | null
+}
+
 const DAYS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
 const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 const hhmm = (t: string) => t.slice(0, 5)
@@ -52,6 +62,24 @@ function formatWhen(iso: string | null): string {
   })
 }
 
+// Próxima execução (Brasília) a partir de agora; considera dias marcados, a janela de 30 min e se já rodou hoje.
+function nextRunLabel(a: Activation): string {
+  if (!a.enabled) return 'Desligado'
+  const nowBR = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
+  const [h, m] = a.activate_time.split(':').map(Number)
+  const nowMin = nowBR.getHours() * 60 + nowBR.getMinutes()
+  for (let off = 0; off < 8; off++) {
+    const d = new Date(nowBR)
+    d.setDate(d.getDate() + off)
+    const dow = d.getDay()
+    if (!a.days_of_week.includes(dow)) continue
+    if (off === 0 && (a.last_run_date === todayBR() || nowMin >= h * 60 + m + 30)) continue
+    const when = off === 0 ? 'hoje' : off === 1 ? 'amanhã' : DAY_NAMES[dow]
+    return `${when} ${hhmm(a.activate_time)}`
+  }
+  return '—'
+}
+
 export function useActivationAccess(): boolean {
   const [allowed, setAllowed] = useState(false)
   useEffect(() => {
@@ -67,6 +95,8 @@ export default function CampaignActivationsModal({
   open, onClose, selectedCampaigns
 }: { open: boolean; onClose: () => void; selectedCampaigns: SelectedCampaign[] }) {
   const [items, setItems] = useState<Activation[]>([])
+  const [history, setHistory] = useState<Run[]>([])
+  const [view, setView] = useState<'schedules' | 'history'>('schedules')
   const [saving, setSaving] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [time, setTime] = useState('07:00')
@@ -80,17 +110,19 @@ export default function CampaignActivationsModal({
       if (!res.ok) return
       const data = await res.json()
       setItems(data.activations || [])
+      setHistory(data.history || [])
     } catch { /* recurso opcional: falha silenciosa */ }
   }, [])
 
   useEffect(() => { if (open) load() }, [open, load])
-  useEffect(() => { if (!open) setEditing(null) }, [open])
+  useEffect(() => { if (!open) { setEditing(null); setView('schedules') } }, [open])
 
   const call = async (init: RequestInit, url = '/api/campaign-activations') => {
     const res = await fetch(url, { ...init, headers: { 'Content-Type': 'application/json' } })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
     setItems(data.activations || [])
+    if (data.history) setHistory(data.history)
   }
 
   if (!open) return null
@@ -143,7 +175,7 @@ export default function CampaignActivationsModal({
     finally { setBusyId(null) }
   }
 
-  const icon = (r: Activation['last_result']) =>
+  const icon = (r: Activation['last_result'] | Run['result']) =>
     r === 'success' ? <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" />
       : r === 'error' ? <AlertCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />
       : <MinusCircle className="w-3.5 h-3.5 text-gray-400 shrink-0" />
@@ -163,8 +195,44 @@ export default function CampaignActivationsModal({
               </button>
             </div>
 
+            <div className="flex gap-1 px-5 pt-3 border-b border-gray-200 dark:border-gray-700">
+              {([['schedules', `Agendamentos (${items.length})`], ['history', 'Histórico']] as const).map(([id, label]) => (
+                <button
+                  key={id}
+                  onClick={() => setView(id)}
+                  className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                    view === id
+                      ? 'border-brand-500 text-gray-900 dark:text-white'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                  }`}
+                >{label}</button>
+              ))}
+            </div>
+
             <div className="overflow-y-auto px-5 py-4 space-y-6">
-              {targets.length > 0 && (
+              {view === 'history' && (
+                <section>
+                  {history.length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 py-2">Nenhuma execução registrada ainda.</p>
+                  ) : (
+                    <ul className="divide-y divide-gray-100 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg">
+                      {history.map(r => (
+                        <li key={r.id} className="flex items-start gap-2 px-3 py-2.5">
+                          <span className="pt-0.5">{icon(r.result)}</span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate" title={r.campaign_name || ''}>
+                              {r.campaign_name || r.meta_campaign_id}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{formatWhen(r.ran_at)} — {r.message}</p>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              )}
+
+              {view === 'schedules' && targets.length > 0 && (
                 <section ref={formRef} className="space-y-4">
                   <p className="text-sm text-gray-600 dark:text-gray-300">
                     {editing
@@ -214,11 +282,12 @@ export default function CampaignActivationsModal({
                 </section>
               )}
 
+              {view === 'schedules' && (
               <section>
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Campanhas agendadas</h3>
                 {items.length === 0 ? (
                   <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
-                    Nenhuma campanha agendada. Selecione campanhas na tabela e abra este painel de novo.
+                    Nenhuma campanha agendada. Para agendar, selecione campanhas na tabela e abra este painel de novo.
                   </p>
                 ) : (
                   <ul className="divide-y divide-gray-100 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg">
@@ -237,6 +306,9 @@ export default function CampaignActivationsModal({
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
                             Ativa às {hhmm(a.activate_time)} · {describeDays(a.days_of_week)}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Próxima: <span className="font-medium text-gray-700 dark:text-gray-200">{nextRunLabel(a)}</span>
                           </p>
                           {a.last_result && (
                             <p className="flex items-center gap-1 mt-0.5 text-xs text-gray-500 dark:text-gray-400">
@@ -270,6 +342,7 @@ export default function CampaignActivationsModal({
                   </ul>
                 )}
               </section>
+              )}
             </div>
           </div>
         </div>
