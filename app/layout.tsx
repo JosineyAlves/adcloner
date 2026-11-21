@@ -15,6 +15,11 @@ const jura = Jura({ subsets: ['latin'], weight: ['300', '400', '500', '600', '70
 export const metadata: Metadata = {
   title: 'vmetrics',
   description: 'Acompanhe métricas e gerencie campanhas do Meta Ads em múltiplas contas',
+  // PWA (instalar na tela inicial do celular e receber notificações de venda — ver
+  // app/notificacoes/page.tsx). No iPhone o push só funciona com o app adicionado pelo Safari.
+  manifest: '/manifest.webmanifest',
+  icons: { apple: '/icons/apple-touch-icon.png' },
+  appleWebApp: { capable: true, title: 'vmetrics', statusBarStyle: 'default' },
 }
 
 // Explícito em vez de depender só do default implícito do App Router — garante
@@ -23,6 +28,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  themeColor: '#CEFF00',
 }
 
 export default function RootLayout({

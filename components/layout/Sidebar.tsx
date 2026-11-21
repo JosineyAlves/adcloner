@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Facebook,
   Link2,
+  Bell,
   LogOut,
   ChevronsLeft,
   ChevronsRight,
@@ -18,6 +19,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getInitials } from '@/lib/utils'
 import { readLocalCache, writeLocalCache, LOCAL_CACHE_KEYS } from '@/lib/local-storage-cache'
 import { useSidebar } from '@/contexts/SidebarContext'
+import { useSalesNotifyAccess } from '@/components/notifications/useSalesNotifyAccess'
 
 // Sidebar — elemento mais forte da identidade visual do vmetrics: fundo na cor de marca
 // (#CEFF00) com texto/ícones em preto para contraste máximo (ver app/globals.css e
@@ -37,11 +39,15 @@ import { useSidebar } from '@/contexts/SidebarContext'
 //
 // "Contas" (/accounts) segue fora do menu (set/2026) — duplicava a listagem de contas de
 // anúncio já disponível em "Integrações". Ver seção 40 do doc do projeto.
-const navigation = [
+const baseNavigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Meta Ads', href: '/meta-ads-manager', icon: Facebook },
   { name: 'Integrações', href: '/meta-accounts', icon: Link2 },
 ]
+
+// "Notificações" (vendas da H&W + push) é recurso restrito — só aparece para os e-mails liberados
+// em SALES_NOTIFY_EMAILS (ver lib/sales-notifications.ts).
+const notificationsItem = { name: 'Notificações', href: '/notificacoes', icon: Bell }
 
 const COLLAPSE_STORAGE_KEY = 'vmetrics:sidebar-collapsed'
 
@@ -50,6 +56,8 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
   const [hydrated, setHydrated] = useState(false)
   const { mobileOpen, closeMobile } = useSidebar()
+  const salesNotifyAllowed = useSalesNotifyAccess()
+  const navigation = salesNotifyAllowed ? [...baseNavigation, notificationsItem] : baseNavigation
 
   // Lê a preferência salva só no client (evita mismatch de hidratação do Next).
   useEffect(() => {

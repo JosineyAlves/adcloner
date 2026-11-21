@@ -8,7 +8,9 @@ import { NextResponse, type NextRequest } from 'next/server'
 // risco de quebrar o fluxo de conexão de contas hoje em produção.
 // /api/meta/sync removido daqui junto com a rota (app/api/meta/sync/route.ts) e o cron em
 // vercel.json — pipeline de sync sem nenhum consumidor, ver claude/estado-integracao-facebook.md.
-const PUBLIC_PATHS = ['/login', '/register', '/api/auth', '/api/cron']
+// /api/postbacks: destino do postback de venda da H&W (protegido por token secreto na URL).
+// /sw.js e /manifest.webmanifest: o navegador os busca sem sessão (PWA / Web Push).
+const PUBLIC_PATHS = ['/login', '/register', '/api/auth', '/api/cron', '/api/postbacks', '/sw.js', '/manifest.webmanifest']
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`))
