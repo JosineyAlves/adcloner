@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUserId } from '@/lib/supabase/server'
 import {
-  isSalesNotifyUser, getOrCreateToken, rotateToken, listSales, countSubscriptions,
+  isSalesNotifyUser, getOrCreateToken, rotateToken, listSales, listPostbackLog, countSubscriptions,
   saveSubscription, removeSubscription, sendPushToUser,
 } from '@/lib/sales-notifications'
 
@@ -27,13 +27,16 @@ export async function GET(request: NextRequest) {
   if (!allowed) return NextResponse.json({ allowed: false })
   if (request.nextUrl.searchParams.get('access') === '1') return NextResponse.json({ allowed: true })
   try {
-    const [token, sales, devices] = await Promise.all([getOrCreateToken(userId), listSales(userId), countSubscriptions(userId)])
+    const [token, sales, devices, postbacks] = await Promise.all([
+      getOrCreateToken(userId), listSales(userId), countSubscriptions(userId), listPostbackLog(userId),
+    ])
     return NextResponse.json({
       allowed: true,
       postbackUrl: `${baseUrl(request)}/api/postbacks/hw/${token}`,
       vapidPublicKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || null,
       devices,
       sales,
+      postbacks,
     })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })

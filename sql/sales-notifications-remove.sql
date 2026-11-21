@@ -1,4 +1,5 @@
 -- Remove por completo as notificações de venda (rodar no Supabase SQL editor).
+drop table if exists public.hw_postback_log;
 drop table if exists public.push_subscriptions;
 drop table if exists public.hw_sales;
 drop table if exists public.hw_integrations;

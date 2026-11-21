@@ -28,12 +28,25 @@ interface Sale {
   is_test: boolean
 }
 
+interface PostbackEntry {
+  id: string
+  received_at: string
+  method: string | null
+  content_type: string | null
+  user_agent: string | null
+  event_type: string | null
+  order_number: string | null
+  outcome: string
+  payload: Record<string, string> | null
+}
+
 interface Data {
   allowed: boolean
   postbackUrl?: string
   vapidPublicKey?: string | null
   devices?: number
   sales?: Sale[]
+  postbacks?: PostbackEntry[]
 }
 
 type PushState = 'loading' | 'unsupported' | 'ios-needs-install' | 'denied' | 'off' | 'on'
@@ -68,6 +81,7 @@ export default function NotificacoesPage() {
   const [loading, setLoading] = useState(true)
   const [pushState, setPushState] = useState<PushState>('loading')
   const [busy, setBusy] = useState(false)
+  const [openLog, setOpenLog] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -350,6 +364,39 @@ export default function NotificacoesPage() {
                         </tbody>
                       </table>
                     </div>
+                  )}
+                </section>
+
+                {/* 4. Registro bruto dos postbacks (diagnóstico) */}
+                <section className={card}>
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Postbacks recebidos (diagnóstico)</h2>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                    Tudo o que a H&W enviou para a URL acima, inclusive eventos ignorados — para entender o formato dos dados. Dados pessoais do comprador não são guardados. Toque numa linha para ver os campos.
+                  </p>
+                  {(data.postbacks ?? []).length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Nada recebido ainda.</p>
+                  ) : (
+                    <ul className="divide-y divide-gray-100 dark:divide-gray-700/60">
+                      {(data.postbacks ?? []).map((p) => (
+                        <li key={p.id} className="py-2 text-xs text-gray-800 dark:text-gray-100">
+                          <button
+                            onClick={() => setOpenLog(openLog === p.id ? null : p.id)}
+                            className="w-full text-left flex flex-wrap items-center gap-x-3 gap-y-1"
+                          >
+                            <span className="whitespace-nowrap text-gray-500 dark:text-gray-400">{formatDate(p.received_at)}</span>
+                            <span className="font-medium">{p.event_type || '(sem event_type)'}</span>
+                            <span className="text-gray-500 dark:text-gray-400">{p.method}</span>
+                            {p.order_number && <span className="text-gray-500 dark:text-gray-400">pedido {p.order_number}</span>}
+                            <span className="text-gray-600 dark:text-gray-300">{p.outcome}</span>
+                          </button>
+                          {openLog === p.id && (
+                            <pre className="mt-2 max-h-72 overflow-auto rounded-ds-md bg-gray-50 dark:bg-gray-900 p-3 text-[11px] leading-relaxed whitespace-pre-wrap break-all">
+{JSON.stringify({ content_type: p.content_type, user_agent: p.user_agent, campos: p.payload }, null, 2)}
+                            </pre>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
                   )}
                 </section>
               </>

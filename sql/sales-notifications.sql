@@ -46,3 +46,20 @@ create table if not exists public.push_subscriptions (
 );
 create index if not exists push_subscriptions_user_idx on public.push_subscriptions (user_id);
 alter table public.push_subscriptions enable row level security;
+
+-- Registro de TUDO que chega no postback (inclusive eventos ignorados), para entender o formato
+-- real da H&W. Sem dados pessoais (mesmo filtro do hw_sales.raw).
+create table if not exists public.hw_postback_log (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  received_at timestamptz not null default now(),
+  method text,
+  content_type text,
+  user_agent text,
+  event_type text,
+  order_number text,
+  outcome text not null,
+  payload jsonb
+);
+create index if not exists hw_postback_log_user_received_idx on public.hw_postback_log (user_id, received_at desc);
+alter table public.hw_postback_log enable row level security;

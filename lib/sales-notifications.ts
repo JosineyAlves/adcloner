@@ -144,6 +144,70 @@ export function formatMoney(cents: number | null, currency: string | null): stri
   return `${symbol} ${value}`
 }
 
+/** Corpo sem chaves que possam ter dado pessoal, com limite de tamanho (para o registro bruto). */
+export function sanitizePayload(payload: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {}
+  let n = 0
+  for (const [k, v] of Object.entries(payload)) {
+    if (PII_KEY.test(k)) continue
+    if (n++ >= 100) break
+    out[k] = v.slice(0, 500)
+  }
+  return out
+}
+
+export interface PostbackLogEntry {
+  id: string
+  received_at: string
+  method: string | null
+  content_type: string | null
+  user_agent: string | null
+  event_type: string | null
+  order_number: string | null
+  outcome: string
+  payload: Record<string, string> | null
+}
+
+/** Registra uma chamada recebida no postback. Nunca derruba o fluxo principal. */
+export async function logPostback(
+  userId: string,
+  entry: {
+    method: string
+    contentType: string | null
+    userAgent: string | null
+    payload: Record<string, string>
+    outcome: string
+    orderNumber?: string | null
+  }
+) {
+  try {
+    const event = entry.payload['event_type'] || entry.payload['event'] || entry.payload['type'] || null
+    await getSupabaseAdmin().from('hw_postback_log').insert({
+      user_id: userId,
+      method: entry.method,
+      content_type: entry.contentType?.slice(0, 120) ?? null,
+      user_agent: entry.userAgent?.slice(0, 200) ?? null,
+      event_type: event?.slice(0, 120) ?? null,
+      order_number: entry.orderNumber ?? entry.payload['order_number'] ?? null,
+      outcome: entry.outcome.slice(0, 200),
+      payload: sanitizePayload(entry.payload),
+    })
+  } catch (err) {
+    console.error('[sales-notifications] falha ao registrar postback:', err)
+  }
+}
+
+export async function listPostbackLog(userId: string, limit = 40): Promise<PostbackLogEntry[]> {
+  const { data, error } = await getSupabaseAdmin()
+    .from('hw_postback_log')
+    .select('id, received_at, method, content_type, user_agent, event_type, order_number, outcome, payload')
+    .eq('user_id', userId)
+    .order('received_at', { ascending: false })
+    .limit(limit)
+  if (error) return []
+  return (data ?? []) as PostbackLogEntry[]
+}
+
 export interface ParsedSale {
   isSale: boolean
   orderNumber: string | null
