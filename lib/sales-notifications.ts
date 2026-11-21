@@ -223,6 +223,22 @@ export interface ParsedSale {
   raw: Record<string, string>
 }
 
+/** Evento de checkout iniciado (IC) do postback tipo Pixel. Não é venda. */
+export function parseCheckoutPostback(payload: Record<string, string>): { isCheckout: boolean; offerTitle: string | null } {
+  const event = (pick(payload, ['event_type', 'event', 'type']) || '').toLowerCase()
+  const isCheckout = /checkout/.test(event) && !/payment|pagamento|complet|paid|purchase/.test(event)
+  return { isCheckout, offerTitle: pick(payload, ['offer_title', 'buy_link_title', 'product_name']) }
+}
+
+export function checkoutMessage(offerTitle: string | null, tag: string): PushMessage {
+  return {
+    title: 'Checkout iniciado (IC)',
+    body: offerTitle ? `Oferta: ${offerTitle}` : 'Alguém iniciou o checkout',
+    tag,
+    url: '/notificacoes',
+  }
+}
+
 export function parseSalePostback(payload: Record<string, string>): ParsedSale {
   const event = (pick(payload, ['event_type', 'event', 'type']) || '').toLowerCase()
   const status = (pick(payload, ['order_status', 'status']) || '').toLowerCase()

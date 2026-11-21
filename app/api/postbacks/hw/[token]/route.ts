@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHash } from 'crypto'
 import {
-  findUserByToken, flattenPayload, parseSalePostback, saveSale, sendPushToUser, saleMessage,
+  findUserByToken, flattenPayload, parseSalePostback, parseCheckoutPostback, checkoutMessage, saveSale, sendPushToUser, saleMessage,
   isSalesNotifyUser, logPostback,
 } from '@/lib/sales-notifications'
 
@@ -47,6 +47,13 @@ async function handle(request: NextRequest, { params }: { params: { token: strin
 
     const sale = parseSalePostback(payload)
     if (!sale.isSale) {
+      // IC (checkout iniciado): só notifica (para testes) — NOTIFY_CHECKOUT=0 desliga. Não grava em hw_sales.
+      const ic = parseCheckoutPostback(payload)
+      if (ic.isCheckout && process.env.NOTIFY_CHECKOUT !== '0') {
+        const r = await sendPushToUser(userId, checkoutMessage(ic.offerTitle, `ic-${Date.now()}`))
+        await logPostback(userId, { ...meta, payload, outcome: `IC notificado · push: ${r.sent} enviado(s), ${r.failed} falha(s)` })
+        return NextResponse.json({ ok: true, checkout: true, push: r })
+      }
       await logPostback(userId, { ...meta, payload, outcome: 'ignorado: não é evento de venda' })
       return NextResponse.json({ ok: true, ignored: 'not a sale event' })
     }
