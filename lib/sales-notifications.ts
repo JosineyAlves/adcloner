@@ -12,7 +12,6 @@
  */
 
 import { randomBytes } from 'crypto'
-import webpush from 'web-push'
 import { getSupabaseAdmin } from './supabase-admin'
 
 export interface HwSale {
@@ -232,11 +231,18 @@ export async function listSales(userId: string, limit = 100): Promise<HwSale[]> 
   return (data ?? []) as HwSale[]
 }
 
+// web-push é CommonJS: o `import webpush from` virava undefined no bundle do Next ("reading
+// 'setVapidDetails'"). O require direto, só no servidor e sob demanda, resolve.
+function getWebPush(): typeof import('web-push') {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  return require('web-push')
+}
+
 function configurePush(): boolean {
   const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
   const priv = process.env.VAPID_PRIVATE_KEY
   if (!pub || !priv) return false
-  webpush.setVapidDetails(process.env.VAPID_SUBJECT || 'mailto:contato@vmetrics.app', pub, priv)
+  getWebPush().setVapidDetails(process.env.VAPID_SUBJECT || 'mailto:contato@vmetrics.app', pub, priv)
   return true
 }
 
@@ -283,7 +289,7 @@ export async function sendPushToUser(userId: string, message: PushMessage): Prom
   await Promise.all(
     (subs ?? []).map(async (s) => {
       try {
-        await webpush.sendNotification(
+        await getWebPush().sendNotification(
           { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
           JSON.stringify(message),
           { TTL: 60 * 60 * 24, urgency: 'high' }
