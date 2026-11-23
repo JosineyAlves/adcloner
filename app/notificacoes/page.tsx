@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { Bell, BellOff, Copy, Loader2, RefreshCw, Send, Smartphone, Plug } from 'lucide-react'
+import { Bell, BellOff, Copy, Loader2, RefreshCw, Send, Plug } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Sidebar from '@/components/layout/Sidebar'
 import PageHeader from '@/components/layout/PageHeader'
@@ -228,7 +228,7 @@ export default function NotificacoesPage() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <main className="flex-1 overflow-y-auto pt-3 px-4 md:px-6 pb-6">
           <div className="space-y-4 max-w-4xl">
-            <PageHeader title="Notificações" subtitle="Avisos de venda da H&W neste aparelho e histórico" />
+            <PageHeader title="Notificações" />
 
             {loading ? (
               <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
@@ -240,13 +240,10 @@ export default function NotificacoesPage() {
               <>
                 {/* 1. Push neste aparelho */}
                 <section className={card}>
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-3">
                     <Bell className="w-4 h-4 text-gray-700 dark:text-gray-200" />
                     <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Notificação neste aparelho</h2>
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                    A cada venda você recebe: <b>Venda realizada</b> · <b>Sua comissão: US$ X,XX</b>. Aparelhos ativos: {data.devices ?? 0}.
-                  </p>
 
                   {pushState === 'loading' && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
                   {pushState === 'unsupported' && (
@@ -284,18 +281,11 @@ export default function NotificacoesPage() {
                     </div>
                   )}
 
-                  <div className="mt-4 flex items-start gap-2 text-xs text-gray-500 dark:text-gray-400">
-                    <Smartphone className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                    <p>
-                      Para chegar com o app fechado, instale o vmetrics na tela inicial. <b>Android:</b> Chrome → menu ⋮ → Instalar app / Adicionar à tela inicial.
-                      {' '}<b>iPhone:</b> Safari → Compartilhar → Adicionar à Tela de Início (iOS 16.4 ou superior; no Chrome do iPhone não funciona). Ative as notificações dentro do app instalado.
-                    </p>
-                  </div>
                 </section>
 
                 {/* 2. Integração H&W */}
                 <section className={card}>
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-3">
                     <Plug className="w-4 h-4 text-gray-700 dark:text-gray-200" />
                     <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Integração com a H&W (postback de venda)</h2>
                   </div>
@@ -310,14 +300,7 @@ export default function NotificacoesPage() {
                       <Copy className="w-4 h-4" /> Copiar
                     </button>
                   </div>
-                  <ol className="mt-3 list-decimal pl-5 space-y-1 text-xs text-gray-600 dark:text-gray-300">
-                    <li>Na H&W: Integrações → Postback → Novo postback.</li>
-                    <li>Cole a URL acima como destino, método <b>POST</b>, modo <b>Global</b>, tipo <b>Normal</b>.</li>
-                    <li>Evento: <b>Pedido concluído</b>.</li>
-                    <li>Etapa 2: template <b>RatoeiraAds - Compra Aprovada</b>; remova os campos <code>customer_*</code> e <code>subscription_*</code> (não precisamos de dados do comprador).</li>
-                    <li>Salve. A próxima venda aparece abaixo e chega no celular.</li>
-                  </ol>
-                  <button onClick={rotate} disabled={busy} className="mt-3 text-xs text-gray-500 dark:text-gray-400 underline">
+                  <button onClick={rotate} disabled={busy} className="mt-2 text-xs text-gray-500 dark:text-gray-400 underline">
                     Gerar nova URL
                   </button>
                 </section>
@@ -369,10 +352,7 @@ export default function NotificacoesPage() {
 
                 {/* 4. Registro bruto dos postbacks (diagnóstico) */}
                 <section className={card}>
-                  <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Postbacks recebidos (diagnóstico)</h2>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                    Tudo o que a H&W enviou para a URL acima, inclusive eventos ignorados — para entender o formato dos dados. Dados pessoais do comprador não são guardados. Toque numa linha para ver os campos.
-                  </p>
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Postbacks recebidos (diagnóstico)</h2>
                   {(data.postbacks ?? []).length === 0 ? (
                     <p className="text-sm text-gray-500 dark:text-gray-400">Nada recebido ainda.</p>
                   ) : (
