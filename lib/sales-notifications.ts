@@ -223,11 +223,30 @@ export interface ParsedSale {
   raw: Record<string, string>
 }
 
-/** Evento de checkout iniciado (IC) do postback tipo Pixel. Não é venda. */
-export function parseCheckoutPostback(payload: Record<string, string>): { isCheckout: boolean; offerTitle: string | null } {
+/**
+ * Evento de checkout iniciado (IC) do postback tipo Pixel. Não é venda.
+ * Observado em 22/11/2026: o gatilho "Checkout iniciado" da H&W chega com event_type = "PAGE_VIEW"
+ * (visualização da página de checkout), não com "checkout" no nome — por isso PAGE_VIEW também conta.
+ */
+export function parseCheckoutPostback(payload: Record<string, string>): { isCheckout: boolean; offerTitle: string | null; hcid: string | null } {
   const event = (pick(payload, ['event_type', 'event', 'type']) || '').toLowerCase()
-  const isCheckout = /checkout/.test(event) && !/payment|pagamento|complet|paid|purchase/.test(event)
-  return { isCheckout, offerTitle: pick(payload, ['offer_title', 'buy_link_title', 'product_name']) }
+  const isCheckout =
+    (/checkout|page_?view|initiate/.test(event)) && !/payment|pagamento|complet|paid|purchase|cart/.test(event)
+  return { isCheckout, offerTitle: pick(payload, ['offer_title', 'buy_link_title', 'product_name']), hcid: pick(payload, ['hcid']) }
+}
+
+/** Já notificamos um IC desta sessão de checkout (mesmo hcid) nos últimos 30 min? (recarregar a página repete o evento) */
+export async function checkoutRecentlyNotified(userId: string, hcid: string | null): Promise<boolean> {
+  if (!hcid) return false
+  const since = new Date(Date.now() - 30 * 60 * 1000).toISOString()
+  const { count } = await getSupabaseAdmin()
+    .from('hw_postback_log')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('payload->>hcid', hcid)
+    .like('outcome', 'IC notificado%')
+    .gte('received_at', since)
+  return (count ?? 0) > 0
 }
 
 export function checkoutMessage(offerTitle: string | null, tag: string): PushMessage {
