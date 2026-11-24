@@ -162,6 +162,21 @@ export function sanitizePayload(payload: Record<string, string>): Record<string,
   return out
 }
 
+/**
+ * Corpo COMPLETO do postback, inclusive dados pessoais (nome, e-mail, telefone, IP, user agent...).
+ * Fica só em colunas *_full, lidas apenas pelo servidor (RLS sem policies). NUNCA devolver estas
+ * colunas à interface. Objetivo: histórico bruto para a futura Conversions API / S2S.
+ */
+export function fullPayload(payload: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {}
+  let n = 0
+  for (const [k, v] of Object.entries(payload)) {
+    if (n++ >= 300) break
+    out[k.slice(0, 120)] = String(v).slice(0, 2000)
+  }
+  return out
+}
+
 export interface PostbackLogEntry {
   id: string
   received_at: string
@@ -197,6 +212,7 @@ export async function logPostback(
       order_number: entry.orderNumber ?? entry.payload['order_number'] ?? null,
       outcome: entry.outcome.slice(0, 200),
       payload: sanitizePayload(entry.payload),
+      payload_full: fullPayload(entry.payload),
     })
   } catch (err) {
     console.error('[sales-notifications] falha ao registrar postback:', err)
@@ -227,6 +243,7 @@ export interface ParsedSale {
   placement: string | null
   isTest: boolean
   raw: Record<string, string>
+  rawFull: Record<string, string>
 }
 
 /**
@@ -295,6 +312,7 @@ export function parseSalePostback(payload: Record<string, string>): ParsedSale {
     placement: pick(payload, ['utm_term']),
     isTest: testFlag === 'true' || testFlag === '1',
     raw,
+    rawFull: fullPayload(payload),
   }
 }
 
@@ -318,6 +336,7 @@ export async function saveSale(userId: string, sale: ParsedSale, orderNumber: st
     placement: sale.placement,
     is_test: sale.isTest,
     raw: sale.raw,
+    raw_full: sale.rawFull,
   })
   if (error) {
     if (error.code === '23505') return false

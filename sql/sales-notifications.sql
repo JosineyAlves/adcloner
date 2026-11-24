@@ -63,3 +63,7 @@ create table if not exists public.hw_postback_log (
 );
 create index if not exists hw_postback_log_user_received_idx on public.hw_postback_log (user_id, received_at desc);
 alter table public.hw_postback_log enable row level security;
+
+-- Corpo completo do postback (inclusive dados pessoais), só lido pelo servidor. Base futura da Conversions API.
+alter table public.hw_postback_log add column if not exists payload_full jsonb;
+alter table public.hw_sales add column if not exists raw_full jsonb;
