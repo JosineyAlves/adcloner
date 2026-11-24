@@ -122,17 +122,23 @@ export function splitNameId(value: string | null): { name: string | null; id: st
 }
 
 /**
- * Converte o valor de comissão do postback em CENTAVOS.
- * Formato não verificado na H&W: inteiro puro ("1500") é tratado como centavos (padrão da H&W em
- * todo o resto), valor com ponto/vírgula ("15.00", "15,00") como unidade. O valor cru fica salvo
- * (payout_raw) e aparece no histórico para conferência.
+ * Converte o valor de comissão do postback (order_payout) em CENTAVOS.
+ * CONFIRMADO com a primeira venda real (24/11/2026): no postback o valor vem em UNIDADES da moeda
+ * (order_payout = "100" para uma comissão de US$ 100,00) — diferente do webhook da H&W, que usa
+ * centavos. Aceita "100", "100.50" e "100,50". O valor cru fica salvo em payout_raw.
  */
 export function payoutToCents(raw: string | null): number | null {
   if (!raw) return null
   const s = raw.replace(/[^\d.,-]/g, '')
   if (!s) return null
-  if (/^-?\d+$/.test(s)) return parseInt(s, 10)
-  const n = parseFloat(s.includes(',') && !s.includes('.') ? s.replace(',', '.') : s.replace(/,/g, ''))
+  // "1.234,56" (pt-BR) -> vírgula é o decimal; "1,234.56" (en) -> ponto é o decimal.
+  let normalized = s
+  if (s.includes(',') && s.includes('.')) {
+    normalized = s.lastIndexOf(',') > s.lastIndexOf('.') ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '')
+  } else if (s.includes(',')) {
+    normalized = s.replace(',', '.')
+  }
+  const n = parseFloat(normalized)
   return Number.isFinite(n) ? Math.round(n * 100) : null
 }
 
